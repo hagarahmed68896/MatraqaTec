@@ -1,0 +1,27 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class CorporateCustomer extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'user_id',
+        'company_name_ar',
+        'company_name_en',
+        'commercial_record_number',
+        'commercial_record_file',
+        'tax_number',
+        'address',
+        'order_count',
+    ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+}
