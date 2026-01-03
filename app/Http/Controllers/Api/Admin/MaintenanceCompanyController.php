@@ -14,8 +14,30 @@ class MaintenanceCompanyController extends Controller
 {
     public function index()
     {
-        $companies = MaintenanceCompany::with('user')->orderBy('created_at', 'desc')->paginate(10);
+        $companies = MaintenanceCompany::with(['user', 'technicians.service', 'orders', 'financialSettlements'])->orderBy('created_at', 'desc')->paginate(10);
+        
+        // Extract unique services for each company
+        $companies->getCollection()->transform(function ($company) {
+            $company->services = $company->technicians->pluck('service')->unique('id')->values();
+            return $company;
+        });
+        
         return response()->json(['status' => true, 'message' => 'Companies retrieved', 'data' => $companies]);
+    }
+
+    public function blockedIndex()
+    {
+        $companies = MaintenanceCompany::whereHas('user', function ($query) {
+            $query->where('status', 'blocked');
+        })->with(['user', 'technicians.service', 'orders', 'financialSettlements'])->orderBy('created_at', 'desc')->paginate(10);
+        
+        // Extract unique services for each company
+        $companies->getCollection()->transform(function ($company) {
+            $company->services = $company->technicians->pluck('service')->unique('id')->values();
+            return $company;
+        });
+        
+        return response()->json(['status' => true, 'message' => 'Blocked companies retrieved', 'data' => $companies]);
     }
 
     public function store(Request $request)
@@ -25,7 +47,7 @@ class MaintenanceCompanyController extends Controller
             'company_name_ar' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'nullable|string|min:8',
-            'phone' => 'nullable|string',
+            'phone' => 'nullable|string|unique:users',
         ]);
 
         if ($validator->fails()) {
@@ -60,8 +82,11 @@ class MaintenanceCompanyController extends Controller
 
     public function show($id)
     {
-        $company = MaintenanceCompany::with('user')->where('user_id', $id)->orWhere('id', $id)->first();
+        $company = MaintenanceCompany::with(['user', 'technicians.service', 'orders', 'financialSettlements'])->where('user_id', $id)->orWhere('id', $id)->first();
         if (!$company) return response()->json(['status' => false, 'message' => 'Company not found'], 404);
+        
+        $company->services = $company->technicians->pluck('service')->unique('id')->values();
+        
         return response()->json(['status' => true, 'message' => 'Company retrieved', 'data' => $company]);
     }
 
@@ -122,7 +147,20 @@ class MaintenanceCompanyController extends Controller
     public function download()
     {
         $companies = MaintenanceCompany::with('user')->get();
-        $filename = "maintenance_companies.csv";
+        return $this->generateCsv($companies, "maintenance_companies.csv");
+    }
+
+    public function downloadBlocked()
+    {
+        $companies = MaintenanceCompany::whereHas('user', function ($query) {
+            $query->where('status', 'blocked');
+        })->with('user')->get();
+        
+        return $this->generateCsv($companies, "blocked_maintenance_companies.csv");
+    }
+
+    private function generateCsv($companies, $filename)
+    {
         $handle = fopen('php://memory', 'w');
         fputcsv($handle, ['ID', 'Name (AR)', 'Name (EN)', 'Email', 'Phone']); 
 

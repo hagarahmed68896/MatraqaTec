@@ -13,13 +13,21 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
-        User::create([
-            'name' => 'Super Admin',
+        $admin = User::firstOrCreate([
             'email' => 'admin@matraqa.com',
-            'password' => Hash::make('password'), // Change this in production
+        ], [
+            'name' => 'Super Admin',
+            'password' => Hash::make('password'),
             'type' => 'admin',
             'phone' => '0000000000',
             'status' => 'active',
         ]);
+
+        $role = \App\Models\Role::where('name', 'Super Admin')->first();
+        if ($role) {
+            $admin->roles()->syncWithoutDetaching([
+                $role->id => ['model_type' => User::class]
+            ]);
+        }
     }
 }

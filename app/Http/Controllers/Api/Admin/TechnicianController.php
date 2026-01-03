@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-
+ 
 class TechnicianController extends Controller
 {
     public function index()
@@ -18,13 +18,29 @@ class TechnicianController extends Controller
         return response()->json(['status' => true, 'message' => 'Technicians retrieved', 'data' => $technicians]);
     }
 
+    public function blockedIndex()
+    {
+        $technicians = Technician::whereHas('user', function ($query) {
+            $query->where('status', 'blocked');
+        })->with('user', 'service')->orderBy('created_at', 'desc')->paginate(10);
+        
+        return response()->json(['status' => true, 'message' => 'Blocked technicians retrieved', 'data' => $technicians]);
+    }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
+            'name_en' => 'required|string|max:255',
+            'name_ar' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'nullable|string|min:8',
-            'phone' => 'nullable|string',
+            'phone' => 'nullable|string|unique:users',
+            'service_id' => 'nullable|exists:services,id',
+            'years_experience' => 'nullable|integer',
+            'status' => 'nullable|string', // Account status for user
+            'bio_en' => 'nullable|string',
+            'bio_ar' => 'nullable|string',
+            'image' => 'nullable|image|max:2048', // Allow image upload
         ]);
 
         if ($validator->fails()) {
@@ -32,21 +48,33 @@ class TechnicianController extends Controller
         }
 
         $password = $request->password ?? Str::random(10);
+        $name = $request->name_en; // Use English name for User model
 
         $user = User::create([
-            'name' => $request->name,
+            'name' => $name,
             'email' => $request->email,
             'password' => Hash::make($password),
             'type' => 'technician',
             'phone' => $request->phone,
-            'status' => 'active',
+            'status' => $request->status ?? 'active',
         ]);
+        
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('technicians', 'public');
+        }
 
         $technician = Technician::create([
             'user_id' => $user->id,
             'service_id' => $request->service_id,
             'maintenance_company_id' => $request->maintenance_company_id,
-            'national_id' => $request->national_id,
+            'national_id' => $request->national_id, // Ensure this is handled if passed
+            'name_en' => $request->name_en,
+            'name_ar' => $request->name_ar,
+            'bio_en' => $request->bio_en,
+            'bio_ar' => $request->bio_ar,
+            'years_experience' => $request->years_experience ?? 0,
+            'image' => $imagePath,
         ]);
         
         $technician->load('user');
@@ -66,9 +94,19 @@ class TechnicianController extends Controller
         $technician = Technician::where('user_id', $id)->orWhere('id', $id)->first();
         if (!$technician) return response()->json(['status' => false, 'message' => 'Technician not found'], 404);
         
+        $validator = Validator::make($request->all(), [
+            'email' => 'nullable|string|email|max:255|unique:users,email,'.$technician->user_id,
+            'phone' => 'nullable|string|unique:users,phone,'.$technician->user_id,
+            'image' => 'nullable|image|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+             return response()->json(['status' => false, 'message' => $validator->errors()->first(), 'errors' => $validator->errors()], 422);
+        }
+        
         $user = $technician->user;
         if ($user) {
-            if ($request->has('name')) $user->name = $request->name;
+            if ($request->has('name_en')) $user->name = $request->name_en; // Sync EN name to User
             if ($request->has('email')) $user->email = $request->email;
             if ($request->has('password') && $request->password) $user->password = Hash::make($request->password);
             if ($request->has('phone')) $user->phone = $request->phone;
@@ -76,7 +114,15 @@ class TechnicianController extends Controller
             $user->save();
         }
 
-        $technician->update($request->except(['name', 'email', 'password', 'phone', 'status', 'type']));
+        $data = $request->except(['email', 'password', 'phone', 'status', 'type', 'image']);
+        
+        if ($request->hasFile('image')) {
+            // Delete old image if exists? 
+            // if ($technician->image) Storage::disk('public')->delete($technician->image);
+            $data['image'] = $request->file('image')->store('technicians', 'public');
+        }
+
+        $technician->update($data);
         
         return response()->json(['status' => true, 'message' => 'Technician updated', 'data' => $technician->load('user')]);
     }
@@ -118,7 +164,20 @@ class TechnicianController extends Controller
     public function download()
     {
         $technicians = Technician::with('user')->get();
-        $filename = "technicians.csv";
+        return $this->generateCsv($technicians, "technicians.csv");
+    }
+
+    public function downloadBlocked()
+    {
+        $technicians = Technician::whereHas('user', function ($query) {
+            $query->where('status', 'blocked');
+        })->with('user')->get();
+        
+        return $this->generateCsv($technicians, "blocked_technicians.csv");
+    }
+
+    private function generateCsv($technicians, $filename)
+    {
         $handle = fopen('php://memory', 'w');
         fputcsv($handle, ['ID', 'Name', 'Email', 'Phone', 'Service ID', 'National ID']); 
 

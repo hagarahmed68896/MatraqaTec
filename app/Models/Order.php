@@ -13,6 +13,7 @@ class Order extends Model
         'order_number',
         'user_id',
         'technician_id',
+        'maintenance_company_id',
         'service_id',
         'status',
         'sub_status',
@@ -39,6 +40,11 @@ class Order extends Model
     public function technician()
     {
         return $this->belongsTo(Technician::class);
+    }
+
+    public function maintenanceCompany()
+    {
+        return $this->belongsTo(MaintenanceCompany::class);
     }
 
     public function service()

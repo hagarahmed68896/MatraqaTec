@@ -51,6 +51,10 @@ use App\Http\Controllers\Api\Admin\PaymentController as AdminPaymentController;
 use App\Http\Controllers\Api\Admin\InquiryController as AdminInquiryController;
 use App\Http\Controllers\Api\Admin\NotificationController as AdminNotificationController;
 use App\Http\Controllers\Api\Admin\TechnicianRequestController as AdminTechnicianRequestController;
+use App\Http\Controllers\Api\Admin\SupervisorController as AdminSupervisorController;
+use App\Http\Controllers\Api\Admin\RoleController as AdminRoleController;
+use App\Http\Controllers\Api\Admin\PermissionController as AdminPermissionController;
+use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -110,22 +114,45 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // --- ADMIN Routes ---
     Route::prefix('admin')->group(function () {
+        // Global User Actions
+        Route::get('blocked-users/download-all', [AdminUserController::class, 'downloadAllBlocked']);
+        Route::post('users/{id}/toggle-block', [AdminUserController::class, 'toggleBlock']);
+        Route::post('users/bulk-toggle-block', [AdminUserController::class, 'bulkToggleBlock']);
+
         // User Management
         Route::get('individual-customers/download', [AdminIndividualCustomerController::class, 'download']);
+        Route::get('individual-customers/blocked', [AdminIndividualCustomerController::class, 'blockedIndex']);
+        Route::get('individual-customers/blocked-download', [AdminIndividualCustomerController::class, 'downloadBlocked']);
         Route::apiResource('individual-customers', AdminIndividualCustomerController::class);
         Route::post('individual-customers/bulk-delete', [AdminIndividualCustomerController::class, 'bulkDestroy']);
         
         Route::get('corporate-customers/download', [AdminCorporateCustomerController::class, 'download']);
+        Route::get('corporate-customers/blocked', [AdminCorporateCustomerController::class, 'blockedIndex']);
+        Route::get('corporate-customers/blocked-download', [AdminCorporateCustomerController::class, 'downloadBlocked']);
         Route::apiResource('corporate-customers', AdminCorporateCustomerController::class);
         Route::post('corporate-customers/bulk-delete', [AdminCorporateCustomerController::class, 'bulkDestroy']);
         
         Route::get('technicians/download', [AdminTechnicianController::class, 'download']);
+        Route::get('technicians/blocked', [AdminTechnicianController::class, 'blockedIndex']);
+        Route::get('technicians/blocked-download', [AdminTechnicianController::class, 'downloadBlocked']);
         Route::apiResource('technicians', AdminTechnicianController::class);
         Route::post('technicians/bulk-delete', [AdminTechnicianController::class, 'bulkDestroy']);
         
         Route::get('maintenance-companies/download', [AdminMaintenanceCompanyController::class, 'download']);
+        Route::get('maintenance-companies/blocked', [AdminMaintenanceCompanyController::class, 'blockedIndex']);
+        Route::get('maintenance-companies/blocked-download', [AdminMaintenanceCompanyController::class, 'downloadBlocked']);
         Route::apiResource('maintenance-companies', AdminMaintenanceCompanyController::class);
         Route::post('maintenance-companies/bulk-delete', [AdminMaintenanceCompanyController::class, 'bulkDestroy']);
+
+        // Supervisor & Role Management
+        Route::get('supervisors/download', [AdminSupervisorController::class, 'download']);
+        Route::get('supervisors/blocked', [AdminSupervisorController::class, 'blockedIndex']);
+        Route::get('supervisors/blocked-download', [AdminSupervisorController::class, 'downloadBlocked']);
+        Route::apiResource('supervisors', AdminSupervisorController::class);
+        Route::get('roles/download', [AdminRoleController::class, 'download']);
+        Route::apiResource('roles', AdminRoleController::class);
+        Route::get('permissions/grouped', [AdminPermissionController::class, 'grouped']);
+        Route::apiResource('permissions', AdminPermissionController::class);
 
         // System Management
         Route::apiResource('cities', AdminCityController::class);
@@ -138,6 +165,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('faqs', AdminFaqController::class);
 
         // Operational Management
+        Route::post('orders/{id}/accept', [AdminOrderController::class, 'accept']);
+        Route::post('orders/{id}/refuse', [AdminOrderController::class, 'refuse']);
         Route::apiResource('orders', AdminOrderController::class);
         Route::apiResource('appointments', AdminAppointmentController::class);
         Route::apiResource('reviews', AdminReviewController::class);

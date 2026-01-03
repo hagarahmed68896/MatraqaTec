@@ -16,6 +16,12 @@ class Technician extends Model
         'years_experience',
         'availability_status',
         'order_count',
+        'name_en',
+        'name_ar',
+        'bio_en',
+        'bio_ar',
+        'image',
+        'national_id',
     ];
 
     public function user()

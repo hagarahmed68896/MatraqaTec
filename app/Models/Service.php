@@ -15,6 +15,9 @@ class Service extends Model
         'code',
         'price',
         'image',
+        'icon',
+        'description_ar',
+        'description_en',
         'parent_id',
     ];
 

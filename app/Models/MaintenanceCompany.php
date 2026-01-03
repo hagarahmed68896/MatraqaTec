@@ -31,4 +31,14 @@ class MaintenanceCompany extends Model
     {
         return $this->hasMany(Technician::class);
     }
+
+    public function orders()
+    {
+        return $this->hasManyThrough(Order::class, Technician::class);
+    }
+
+    public function financialSettlements()
+    {
+        return $this->hasMany(FinancialSettlement::class);
+    }
 }

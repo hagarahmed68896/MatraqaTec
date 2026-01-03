@@ -18,6 +18,15 @@ class IndividualCustomerController extends Controller
         return response()->json(['status' => true, 'message' => 'Customers retrieved', 'data' => $customers]);
     }
 
+    public function blockedIndex()
+    {
+        $customers = IndividualCustomer::whereHas('user', function ($query) {
+            $query->where('status', 'blocked');
+        })->with('user')->orderBy('created_at', 'desc')->paginate(10);
+        
+        return response()->json(['status' => true, 'message' => 'Blocked customers retrieved', 'data' => $customers]);
+    }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -125,7 +134,20 @@ class IndividualCustomerController extends Controller
     public function download()
     {
         $customers = IndividualCustomer::with('user')->get();
-        $filename = "individual_customers.csv";
+        return $this->generateCsv($customers, "individual_customers.csv");
+    }
+
+    public function downloadBlocked()
+    {
+        $customers = IndividualCustomer::whereHas('user', function ($query) {
+            $query->where('status', 'blocked');
+        })->with('user')->get();
+        
+        return $this->generateCsv($customers, "blocked_individual_customers.csv");
+    }
+
+    private function generateCsv($customers, $filename)
+    {
         $handle = fopen('php://memory', 'w');
         fputcsv($handle, ['ID', 'Name', 'Email', 'Phone', 'Created At']); 
 

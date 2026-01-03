@@ -18,6 +18,15 @@ class CorporateCustomerController extends Controller
         return response()->json(['status' => true, 'message' => 'Customers retrieved', 'data' => $customers]);
     }
 
+    public function blockedIndex()
+    {
+        $customers = CorporateCustomer::whereHas('user', function ($query) {
+            $query->where('status', 'blocked');
+        })->with('user')->orderBy('created_at', 'desc')->paginate(10);
+        
+        return response()->json(['status' => true, 'message' => 'Blocked corporate customers retrieved', 'data' => $customers]);
+    }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -25,7 +34,7 @@ class CorporateCustomerController extends Controller
             'company_name_ar' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'nullable|string|min:8',
-            'phone' => 'nullable|string',
+            'phone' => 'nullable|string|unique:users',
             'commercial_record_number' => 'nullable|string',
         ]);
 
@@ -124,7 +133,20 @@ class CorporateCustomerController extends Controller
     public function download()
     {
         $customers = CorporateCustomer::with('user')->get();
-        $filename = "corporate_customers.csv";
+        return $this->generateCsv($customers, "corporate_customers.csv");
+    }
+
+    public function downloadBlocked()
+    {
+        $customers = CorporateCustomer::whereHas('user', function ($query) {
+            $query->where('status', 'blocked');
+        })->with('user')->get();
+        
+        return $this->generateCsv($customers, "blocked_corporate_customers.csv");
+    }
+
+    private function generateCsv($customers, $filename)
+    {
         $handle = fopen('php://memory', 'w');
         fputcsv($handle, ['ID', 'Company Name (AR)', 'Company Name (EN)', 'Email', 'Phone']); 
 
