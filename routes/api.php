@@ -48,6 +48,7 @@ use App\Http\Controllers\Api\Admin\ContractController as AdminContractController
 use App\Http\Controllers\Api\Admin\FinancialSettlementController as AdminFinancialSettlementController;
 use App\Http\Controllers\Api\Admin\PlatformProfitController as AdminPlatformProfitController;
 use App\Http\Controllers\Api\Admin\PaymentController as AdminPaymentController;
+use App\Http\Controllers\Api\Admin\InvoiceController as AdminInvoiceController;
 use App\Http\Controllers\Api\Admin\InquiryController as AdminInquiryController;
 use App\Http\Controllers\Api\Admin\NotificationController as AdminNotificationController;
 use App\Http\Controllers\Api\Admin\TechnicianRequestController as AdminTechnicianRequestController;
@@ -174,7 +175,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('contracts', AdminContractController::class);
         Route::apiResource('settlements', AdminFinancialSettlementController::class);
         Route::apiResource('profits', AdminPlatformProfitController::class);
-        Route::apiResource('payments', AdminPaymentController::class);
+        Route::get('payments/download', [AdminPaymentController::class, 'download']);
+        Route::apiResource('payments', AdminPaymentController::class)->except(['store']);
+
+        // Invoices
+        Route::get('invoices/download', [AdminInvoiceController::class, 'download']);
+        Route::post('invoices/{id}/send', [AdminInvoiceController::class, 'send']);
+        Route::apiResource('invoices', AdminInvoiceController::class)->only(['index', 'show']);
+
         Route::apiResource('inquiries', AdminInquiryController::class);
         Route::apiResource('notifications', AdminNotificationController::class);
         Route::apiResource('technician-requests', AdminTechnicianRequestController::class);

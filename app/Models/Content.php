@@ -12,15 +12,15 @@ class Content extends Model
     protected $fillable = [
         'title_ar',
         'title_en',
-        'description_ar',
-        'description_en',
-        'image',
-        'button_text_ar',
-        'button_text_en',
         'is_visible',
     ];
 
     protected $casts = [
         'is_visible' => 'boolean',
     ];
+
+    public function items()
+    {
+        return $this->hasMany(ContentItem::class);
+    }
 }
