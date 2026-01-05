@@ -12,11 +12,58 @@ use Illuminate\Support\Str;
  
 class TechnicianController extends Controller
 {
-    public function index()
-    {
-        $technicians = Technician::with('user', 'service')->orderBy('created_at', 'desc')->paginate(10);
-        return response()->json(['status' => true, 'message' => 'Technicians retrieved', 'data' => $technicians]);
+  public function index(Request $request)
+{
+    $query = Technician::with('user', 'service');
+
+    // 1. Search Logic (Existing)
+    if ($request->has('search')) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('name_en', 'like', "%{$search}%")
+              ->orWhere('name_ar', 'like', "%{$search}%")
+              ->orWhereHas('user', function ($q2) use ($search) {
+                  $q2->where('email', 'like', "%{$search}%")
+                     ->orWhere('phone', 'like', "%{$search}%")
+                     ->orWhere('name', 'like', "%{$search}%");
+              });
+        });
     }
+
+    // 2. NEW: Filter by Status (Active/Inactive)
+    // This will filter the results to only show active or inactive
+    if ($request->has('status')) {
+        $status = $request->status; // 'active' or 'inactive'
+        $query->whereHas('user', function ($q) use ($status) {
+            $q->where('status', $status);
+        });
+    }
+
+    // 3. Sorting Logic (Existing)
+    if ($request->has('sort_by')) {
+        switch ($request->sort_by) {
+            case 'name':
+                $query->orderBy('name_en', 'asc');
+                break;
+            case 'status':
+                $query->join('users', 'technicians.user_id', '=', 'users.id')
+                      ->orderBy('users.status', 'asc')
+                      ->select('technicians.*');
+                break;
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+            default:
+                $query->orderBy('created_at', 'desc');
+                break;
+        }
+    } else {
+        $query->orderBy('created_at', 'desc');
+    }
+
+    $technicians = $query->paginate(10);
+    return response()->json(['status' => true, 'message' => 'Technicians retrieved', 'data' => $technicians]);
+}
 
     public function blockedIndex()
     {

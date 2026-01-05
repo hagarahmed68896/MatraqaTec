@@ -12,9 +12,48 @@ use Illuminate\Support\Str;
 
 class CorporateCustomerController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $customers = CorporateCustomer::with('user')->orderBy('created_at', 'desc')->paginate(10);
+        $query = CorporateCustomer::with('user');
+
+        // Search by company name, email, or phone
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('company_name_en', 'like', "%{$search}%")
+                  ->orWhere('company_name_ar', 'like', "%{$search}%")
+                  ->orWhereHas('user', function ($q2) use ($search) {
+                      $q2->where('email', 'like', "%{$search}%")
+                         ->orWhere('phone', 'like', "%{$search}%")
+                         ->orWhere('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Sorting
+        if ($request->has('sort_by')) {
+            switch ($request->sort_by) {
+                case 'name':
+                    $query->orderBy('company_name_en', 'asc');
+                    break;
+                case 'status':
+                    $query->join('users', 'corporate_customers.user_id', '=', 'users.id')
+                          ->orderBy('users.status', 'asc')
+                          ->select('corporate_customers.*');
+                    break;
+                case 'oldest':
+                    $query->orderBy('created_at', 'asc');
+                    break;
+                case 'newest':
+                default:
+                    $query->orderBy('created_at', 'desc');
+                    break;
+            }
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $customers = $query->paginate(10);
         return response()->json(['status' => true, 'message' => 'Customers retrieved', 'data' => $customers]);
     }
 

@@ -9,17 +9,28 @@ use Illuminate\Support\Facades\Validator;
 
 class ServiceController extends Controller
 {
-    public function index()
-    {
-        $services = Service::withCount(['technicians', 'children'])->orderBy('id', 'desc')->get();
-        
-        $services->map(function ($service) {
-            $service->companies_count = $service->technicians()->distinct('maintenance_company_id')->count('maintenance_company_id');
-            return $service;
-        });
-        
-        return response()->json(['status' => true, 'message' => 'Services retrieved', 'data' => $services]);
-    }
+  public function index(Request $request)
+{
+    // 1. Use paginate() instead of get(). Default to 10 items per page.
+    $services = Service::withCount(['technicians', 'children'])
+        ->orderBy('id', 'desc')
+        ->paginate($request->per_page ?? 9); 
+
+    // 2. When using paginate(), the data is inside a "Collection". 
+    // We use getCollection() to loop through and add the companies_count.
+    $services->getCollection()->transform(function ($service) {
+        $service->companies_count = $service->technicians()
+            ->distinct('maintenance_company_id')
+            ->count('maintenance_company_id');
+        return $service;
+    });
+    
+    return response()->json([
+        'status' => true, 
+        'message' => 'Services retrieved', 
+        'data' => $services
+    ]);
+}
 
     public function store(Request $request)
     {

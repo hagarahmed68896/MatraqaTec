@@ -19,6 +19,7 @@ class Service extends Model
         'description_ar',
         'description_en',
         'parent_id',
+        'city_id',
     ];
 
     public function parent()
@@ -34,5 +35,10 @@ class Service extends Model
     public function technicians()
     {
         return $this->hasMany(Technician::class);
+    }
+
+    public function city()
+    {
+        return $this->belongsTo(City::class);
     }
 }

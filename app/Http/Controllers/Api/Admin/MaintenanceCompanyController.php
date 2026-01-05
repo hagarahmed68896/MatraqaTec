@@ -12,19 +12,64 @@ use Illuminate\Support\Str;
 
 class MaintenanceCompanyController extends Controller
 {
-    public function index()
-    {
-        $companies = MaintenanceCompany::with(['user', 'technicians.service', 'orders', 'financialSettlements'])->orderBy('created_at', 'desc')->paginate(10);
-        
-        // Extract unique services for each company
-        $companies->getCollection()->transform(function ($company) {
-            $company->services = $company->technicians->pluck('service')->unique('id')->values();
-            return $company;
+public function index(Request $request)
+{
+    $query = MaintenanceCompany::with(['user', 'technicians.service', 'orders', 'financialSettlements']);
+
+    // 1. Search Logic (Existing)
+    if ($request->has('search')) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('company_name_en', 'like', "%{$search}%")
+              ->orWhere('company_name_ar', 'like', "%{$search}%")
+              ->orWhereHas('user', function ($q2) use ($search) {
+                  $q2->where('email', 'like', "%{$search}%")
+                     ->orWhere('phone', 'like', "%{$search}%")
+                     ->orWhere('name', 'like', "%{$search}%");
+              });
         });
-        
-        return response()->json(['status' => true, 'message' => 'Companies retrieved', 'data' => $companies]);
     }
 
+    // 2. NEW: Filter by Status (Active/Inactive)
+    if ($request->has('status')) {
+        $status = $request->status; 
+        $query->whereHas('user', function ($q) use ($status) {
+            $q->where('status', $status);
+        });
+    }
+
+    // 3. Sorting Logic (Existing)
+    if ($request->has('sort_by')) {
+        switch ($request->sort_by) {
+            case 'name':
+                $query->orderBy('company_name_en', 'asc');
+                break;
+            case 'status':
+                $query->join('users', 'maintenance_companies.user_id', '=', 'users.id')
+                      ->orderBy('users.status', 'asc')
+                      ->select('maintenance_companies.*');
+                break;
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+            default:
+                $query->orderBy('created_at', 'desc');
+                break;
+        }
+    } else {
+        $query->orderBy('created_at', 'desc');
+    }
+
+    $companies = $query->paginate(10);
+    
+    // Extract unique services
+    $companies->getCollection()->transform(function ($company) {
+        $company->services = $company->technicians->pluck('service')->unique('id')->values();
+        return $company;
+    });
+    
+    return response()->json(['status' => true, 'message' => 'Companies retrieved', 'data' => $companies]);
+}
     public function blockedIndex()
     {
         $companies = MaintenanceCompany::whereHas('user', function ($query) {

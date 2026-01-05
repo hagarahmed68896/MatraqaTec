@@ -22,6 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'city_id',
         'type', // admin, individual, corporate_company, technician, maintenance_company
         'phone',
         'avatar',
@@ -102,5 +103,10 @@ class User extends Authenticatable
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function city()
+    {
+        return $this->belongsTo(City::class);
     }
 }

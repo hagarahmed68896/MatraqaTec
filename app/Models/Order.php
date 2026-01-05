@@ -12,6 +12,7 @@ class Order extends Model
     protected $fillable = [
         'order_number',
         'user_id',
+        'city_id',
         'technician_id',
         'maintenance_company_id',
         'service_id',
@@ -70,5 +71,10 @@ class Order extends Model
     public function payments()
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function city()
+    {
+        return $this->belongsTo(City::class);
     }
 }

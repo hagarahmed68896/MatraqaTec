@@ -11,9 +11,9 @@ class OrderController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Order::with(['user', 'technician.user', 'maintenanceCompany.user', 'service']);
+        $query = Order::with(['user', 'technician.user', 'maintenanceCompany.user', 'service.parent']);
 
-        // Filter by tab/status
+        // 1. Filter by tab/status
         if ($request->has('tab')) {
             switch ($request->tab) {
                 case 'new':
@@ -38,6 +38,47 @@ class OrderController extends Controller
             $query->where('status', $request->status);
         }
 
+        // 2. Search Logic
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('id', 'like', "%{$search}%")
+                  ->orWhereHas('user', function ($q2) use ($search) {
+                      $q2->where('name', 'like', "%{$search}%")
+                         ->orWhere('phone', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // 3. NEW: Filter by Customer Type
+        if ($request->has('customer_type')) {
+            $query->whereHas('user', function ($q) use ($request) {
+                $q->where('type', $request->customer_type);
+            });
+        }
+
+        // 4. NEW: Filter by Service Category (Parent)
+        if ($request->has('service_category_id')) {
+            $query->whereHas('service', function ($q) use ($request) {
+                $q->where('parent_id', $request->service_category_id);
+            });
+        }
+
+        // 5. NEW: Filter by Specific Service IDs (Child Services)
+        if ($request->has('service_ids')) {
+            $serviceIds = is_array($request->service_ids) ? $request->service_ids : explode(',', $request->service_ids);
+            $query->whereIn('service_id', $serviceIds);
+        }
+
+        // 6. NEW: Filter by Technician Type (Platform vs Company)
+        if ($request->has('technician_type')) {
+            if ($request->technician_type === 'platform') {
+                $query->whereNotNull('technician_id')->whereNull('maintenance_company_id');
+            } elseif ($request->technician_type === 'company') {
+                $query->whereNotNull('maintenance_company_id');
+            }
+        }
+
         if ($request->has('user_id')) {
             $query->where('user_id', $request->user_id);
         }
@@ -46,13 +87,27 @@ class OrderController extends Controller
             $query->where('technician_id', $request->technician_id);
         }
 
-        if ($request->has('service_category')) {
-            $query->whereHas('service', function($q) use ($request) {
-                $q->where('category', $request->service_category);
-            });
+        // 7. Enhanced Sorting
+        if ($request->has('sort_by')) {
+            switch ($request->sort_by) {
+                case 'name':
+                    $query->join('users', 'orders.user_id', '=', 'users.id')
+                          ->orderBy('users.name', 'asc')
+                          ->select('orders.*');
+                    break;
+                case 'oldest':
+                    $query->orderBy('created_at', 'asc');
+                    break;
+                case 'newest':
+                default:
+                    $query->orderBy('created_at', 'desc');
+                    break;
+            }
+        } else {
+            $query->orderBy('created_at', 'desc');
         }
 
-        $orders = $query->orderBy('created_at', 'desc')->paginate(10);
+        $orders = $query->paginate(10);
 
         // Stats for the dashboard
         $stats = [

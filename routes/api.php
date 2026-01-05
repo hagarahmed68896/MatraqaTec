@@ -170,6 +170,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('orders', AdminOrderController::class);
         Route::apiResource('appointments', AdminAppointmentController::class);
         Route::apiResource('reviews', AdminReviewController::class);
+        Route::get('contracts/download', [AdminContractController::class, 'download']);
         Route::apiResource('contracts', AdminContractController::class);
         Route::apiResource('settlements', AdminFinancialSettlementController::class);
         Route::apiResource('profits', AdminPlatformProfitController::class);

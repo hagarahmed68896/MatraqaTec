@@ -11,6 +11,7 @@ class MaintenanceCompany extends Model
 
     protected $fillable = [
         'user_id',
+        'city_id',
         'company_name_ar',
         'company_name_en',
         'commercial_record_number',
@@ -40,5 +41,10 @@ class MaintenanceCompany extends Model
     public function financialSettlements()
     {
         return $this->hasMany(FinancialSettlement::class);
+    }
+
+    public function city()
+    {
+        return $this->belongsTo(City::class);
     }
 }

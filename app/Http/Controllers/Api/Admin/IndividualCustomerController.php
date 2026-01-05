@@ -12,11 +12,59 @@ use Illuminate\Support\Str;
 
 class IndividualCustomerController extends Controller
 {
-    public function index()
-    {
-        $customers = IndividualCustomer::with('user')->orderBy('created_at', 'desc')->paginate(10);
-        return response()->json(['status' => true, 'message' => 'Customers retrieved', 'data' => $customers]);
+   public function index(Request $request)
+{
+    $query = IndividualCustomer::with('user');
+
+    // 1. Search Logic
+    if ($request->has('search')) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('first_name_en', 'like', "%{$search}%")
+              ->orWhere('last_name_en', 'like', "%{$search}%")
+              ->orWhere('first_name_ar', 'like', "%{$search}%")
+              ->orWhere('last_name_ar', 'like', "%{$search}%")
+              ->orWhereHas('user', function ($q2) use ($search) {
+                  $q2->where('email', 'like', "%{$search}%")
+                     ->orWhere('phone', 'like', "%{$search}%")
+                     ->orWhere('name', 'like', "%{$search}%");
+              });
+        });
     }
+
+    // 2. NEW: Filter by Status (Active/Inactive)
+    if ($request->has('status')) {
+        $status = $request->status; // 'active' or 'inactive'
+        $query->whereHas('user', function ($q) use ($status) {
+            $q->where('status', $status);
+        });
+    }
+
+    // 3. Sorting Logic
+    if ($request->has('sort_by')) {
+        switch ($request->sort_by) {
+            case 'name':
+                $query->orderBy('first_name_en', 'asc');
+                break;
+            case 'status':
+                $query->join('users', 'individual_customers.user_id', '=', 'users.id')
+                      ->orderBy('users.status', 'asc')
+                      ->select('individual_customers.*');
+                break;
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+            default:
+                $query->orderBy('created_at', 'desc');
+                break;
+        }
+    } else {
+        $query->orderBy('created_at', 'desc');
+    }
+
+    $customers = $query->paginate(10);
+    return response()->json(['status' => true, 'message' => 'Customers retrieved', 'data' => $customers]);
+}
 
     public function blockedIndex()
     {

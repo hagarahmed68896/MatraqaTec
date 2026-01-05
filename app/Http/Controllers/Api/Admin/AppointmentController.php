@@ -35,7 +35,31 @@ class AppointmentController extends Controller
             $query->where('technician_id', $request->technician_id);
         }
 
-        $appointments = $query->orderBy('created_at', 'desc')->paginate(15);
+        // Search by technician name
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->whereHas('technician', function ($q) use ($search) {
+                $q->where('name_en', 'like', "%{$search}%")
+                  ->orWhere('name_ar', 'like', "%{$search}%");
+            });
+        }
+
+        // Sorting
+        if ($request->has('sort_by')) {
+            switch ($request->sort_by) {
+                case 'oldest':
+                    $query->orderBy('created_at', 'asc');
+                    break;
+                case 'newest':
+                default:
+                    $query->orderBy('created_at', 'desc');
+                    break;
+            }
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $appointments = $query->paginate(15);
 
         // Stats for the dashboard
         $stats = [

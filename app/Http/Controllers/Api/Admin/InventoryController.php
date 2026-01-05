@@ -9,11 +9,31 @@ use Illuminate\Support\Facades\Validator;
 
 class InventoryController extends Controller
 {
-    public function index()
-    {
-        $inventory = Inventory::all();
-        return response()->json(['status' => true, 'message' => 'Inventory retrieved successfully', 'data' => $inventory]);
+public function index(Request $request)
+{
+    $query = Inventory::query();
+
+    // Search by name_ar or name_en
+    if ($request->has('search')) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('name_ar', 'like', "%{$search}%")
+              ->orWhere('name_en', 'like', "%{$search}%");
+        });
     }
+
+    // Default sorting (Optional but recommended: newest first)
+    $query->orderBy('created_at', 'desc');
+
+    // Paginate with 9 items per page
+    $inventory = $query->paginate($request->per_page ?? 9);
+
+    return response()->json([
+        'status' => true, 
+        'message' => 'Inventory retrieved successfully', 
+        'data' => $inventory
+    ]);
+}
 
     public function store(Request $request)
     {
@@ -21,6 +41,7 @@ class InventoryController extends Controller
             'name_ar' => 'required|string',
             'name_en' => 'required|string',
             'price' => 'required|numeric',
+            'status'  => 'required|in:available,not_available', // Strict status check
         ]);
 
         if ($validator->fails()) {
@@ -43,12 +64,23 @@ class InventoryController extends Controller
         return response()->json(['status' => true, 'message' => 'Item retrieved successfully', 'data' => $item]);
     }
 
-    public function update(Request $request, $id)
+  public function update(Request $request, $id)
     {
         $item = Inventory::find($id);
 
         if (!$item) {
             return response()->json(['status' => false, 'message' => 'Item not found'], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name_ar' => 'sometimes|string|max:255',
+            'name_en' => 'sometimes|string|max:255',
+            'price'   => 'sometimes|numeric|min:0',
+            'status'  => 'sometimes|in:available,not_available', // Optional update
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'message' => $validator->errors()->first(), 'errors' => $validator->errors()], 422);
         }
 
         $item->update($request->all());
