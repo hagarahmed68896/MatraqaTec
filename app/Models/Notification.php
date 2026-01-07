@@ -9,6 +9,10 @@ class Notification extends Model
 {
     use HasFactory;
 
+    const TYPES = ['alert', 'reminder', 'notification'];
+    const TARGET_AUDIENCES = ['clients', 'companies', 'technicians', 'all'];
+    const STATUSES = ['sent', 'scheduled', 'not_sent'];
+
     protected $fillable = [
         'type',
         'title_ar',

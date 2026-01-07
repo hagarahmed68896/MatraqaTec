@@ -57,6 +57,7 @@ use App\Http\Controllers\Api\Admin\RoleController as AdminRoleController;
 use App\Http\Controllers\Api\Admin\PermissionController as AdminPermissionController;
 use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\Admin\RefundController as AdminRefundController;
+use App\Http\Controllers\Api\Admin\ReportController as AdminReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -194,7 +195,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('invoices', AdminInvoiceController::class)->only(['index', 'show']);
 
         Route::apiResource('inquiries', AdminInquiryController::class);
+        // Notifications
+        Route::post('notifications/bulk-delete', [AdminNotificationController::class, 'bulkDestroy']);
         Route::apiResource('notifications', AdminNotificationController::class);
         Route::apiResource('technician-requests', AdminTechnicianRequestController::class);
+
+        // Reports
+        Route::prefix('reports')->group(function () {
+            Route::get('summary', [AdminReportController::class, 'index']);
+            Route::get('users', [AdminReportController::class, 'users']);
+            Route::get('financials', [AdminReportController::class, 'financials']);
+            Route::get('services', [AdminReportController::class, 'services']);
+            Route::get('technicians', [AdminReportController::class, 'technicians']);
+        });
     });
 });
