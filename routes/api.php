@@ -56,6 +56,7 @@ use App\Http\Controllers\Api\Admin\SupervisorController as AdminSupervisorContro
 use App\Http\Controllers\Api\Admin\RoleController as AdminRoleController;
 use App\Http\Controllers\Api\Admin\PermissionController as AdminPermissionController;
 use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Api\Admin\RefundController as AdminRefundController;
 
 /*
 |--------------------------------------------------------------------------
@@ -155,6 +156,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('permissions/grouped', [AdminPermissionController::class, 'grouped']);
         Route::apiResource('permissions', AdminPermissionController::class);
 
+        // Refunds
+        Route::get('refunds', [AdminRefundController::class, 'index']);
+        Route::get('refunds/export', [AdminRefundController::class, 'export']);
+        Route::get('refunds/{id}', [AdminRefundController::class, 'show']);
+        Route::post('refunds/{id}/change-status', [AdminRefundController::class, 'changeStatus']);
+
         // System Management
         Route::apiResource('cities', AdminCityController::class);
         Route::apiResource('districts', AdminDistrictController::class);
@@ -170,10 +177,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('orders/{id}/refuse', [AdminOrderController::class, 'refuse']);
         Route::apiResource('orders', AdminOrderController::class);
         Route::apiResource('appointments', AdminAppointmentController::class);
+        Route::get('reviews/download', [AdminReviewController::class, 'download']);
         Route::apiResource('reviews', AdminReviewController::class);
         Route::get('contracts/download', [AdminContractController::class, 'download']);
         Route::apiResource('contracts', AdminContractController::class);
-        Route::apiResource('settlements', AdminFinancialSettlementController::class);
+        Route::get('financial-settlements/download', [AdminFinancialSettlementController::class, 'download']);
+        Route::post('financial-settlements/{id}/change-status', [AdminFinancialSettlementController::class, 'changeStatus']);
+        Route::apiResource('financial-settlements', AdminFinancialSettlementController::class);
         Route::apiResource('profits', AdminPlatformProfitController::class);
         Route::get('payments/download', [AdminPaymentController::class, 'download']);
         Route::apiResource('payments', AdminPaymentController::class)->except(['store']);
