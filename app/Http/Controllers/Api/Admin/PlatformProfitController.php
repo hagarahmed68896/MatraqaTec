@@ -10,7 +10,7 @@ class PlatformProfitController extends Controller
 {
     public function index()
     {
-        $profits = PlatformProfit::with('order')->get();
+        $profits = PlatformProfit::get();
         return response()->json(['status' => true, 'message' => 'Profits retrieved', 'data' => $profits]);
     }
 

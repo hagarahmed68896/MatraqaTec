@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('social_links', function (Blueprint $table) {
+        Schema::create('admin_profiles', function (Blueprint $table) {
             $table->id();
-            $table->string('mobile')->nullable();
-            $table->string('email')->nullable();
-            $table->string('name')->nullable();
-            $table->string('url')->nullable();
-            $table->string('icon')->nullable();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('first_name_ar')->nullable();
+            $table->string('last_name_ar')->nullable();
+            $table->string('first_name_en')->nullable();
+            $table->string('last_name_en')->nullable();
             $table->timestamps();
         });
     }
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('social_links');
+        Schema::dropIfExists('admin_profiles');
     }
 };

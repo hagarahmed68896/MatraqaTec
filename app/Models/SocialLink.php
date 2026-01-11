@@ -12,11 +12,8 @@ class SocialLink extends Model
     protected $fillable = [
         'mobile',
         'email',
-        'facebook',
-        'instagram',
-        'twitter',
-        'linkedin',
-        'tiktok',
-        'platform_url',
+        'name',
+        'url',
+        'icon',
     ];
 }

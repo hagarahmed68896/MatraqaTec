@@ -10,14 +10,7 @@ class PlatformProfit extends Model
     use HasFactory;
 
     protected $fillable = [
-        'order_id',
-        'amount',
         'fees',
-        'percentage',
+        'amount',
     ];
-
-    public function order()
-    {
-        return $this->belongsTo(Order::class);
-    }
 }

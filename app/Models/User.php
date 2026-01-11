@@ -109,4 +109,9 @@ class User extends Authenticatable
     {
         return $this->belongsTo(City::class);
     }
+
+    public function adminProfile()
+    {
+        return $this->hasOne(AdminProfile::class);
+    }
 }

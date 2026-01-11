@@ -9,12 +9,26 @@ use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
+    use \App\Traits\ValidatesOrderPhotos;
+
     public function index(Request $request)
     {
         $user = $request->user();
         if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
 
-        $query = Order::with(['user', 'technician', 'service'])->where('user_id', $user->id);
+        $query = Order::with(['user', 'technician', 'service']);
+
+        if ($user->type === 'technician') {
+            // Find the technician profile for this user
+            $technician = \App\Models\Technician::where('user_id', $user->id)->first();
+            if ($technician) {
+                $query->where('technician_id', $technician->id);
+            } else {
+                return response()->json(['status' => true, 'message' => 'No assigned orders', 'data' => []]);
+            }
+        } else {
+            $query->where('user_id', $user->id);
+        }
 
         if ($request->has('status')) {
             $query->where('status', $request->status);
@@ -61,6 +75,38 @@ class OrderController extends Controller
         $order->update($request->all());
 
         return response()->json(['status' => true, 'message' => 'Order updated successfully', 'data' => $order]);
+    }
+
+    public function startWork(Request $request, $id)
+    {
+        $order = Order::find($id);
+        if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+
+        // Validate photo requirements
+        $result = $this->validatePhotoCount($order, 'before');
+        if ($result !== true) {
+            return response()->json(['status' => false, 'message' => $result], 422);
+        }
+
+        $order->update(['status' => 'in_progress']);
+
+        return response()->json(['status' => true, 'message' => 'Work started', 'data' => $order]);
+    }
+
+    public function finishWork(Request $request, $id)
+    {
+        $order = Order::find($id);
+        if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+
+        // Validate photo requirements
+        $result = $this->validatePhotoCount($order, 'after');
+        if ($result !== true) {
+            return response()->json(['status' => false, 'message' => $result], 422);
+        }
+
+        $order->update(['status' => 'completed']);
+
+        return response()->json(['status' => true, 'message' => 'Work finished', 'data' => $order]);
     }
 
     public function destroy($id)

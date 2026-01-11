@@ -157,7 +157,7 @@ class OrderController extends Controller
         $order->update([
             'technician_id' => $request->technician_id,
             'maintenance_company_id' => $request->maintenance_company_id,
-            'status' => 'scheduled', // Or 'accepted' depending on your workflow
+            'status' => 'scheduled',
             'scheduled_at' => $request->scheduled_at ?? $order->scheduled_at,
         ]);
 

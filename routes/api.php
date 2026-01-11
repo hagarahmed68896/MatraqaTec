@@ -58,6 +58,9 @@ use App\Http\Controllers\Api\Admin\PermissionController as AdminPermissionContro
 use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\Admin\RefundController as AdminRefundController;
 use App\Http\Controllers\Api\Admin\ReportController as AdminReportController;
+use App\Http\Controllers\Api\Admin\ProfileController as AdminProfileController;
+use App\Http\Controllers\Api\Admin\ComplaintController as AdminComplaintController;
+use App\Http\Controllers\Api\Admin\SettingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -102,6 +105,8 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // User Operations (Scoped to Auth User)
+    Route::post('orders/{id}/start-work', [OrderController::class, 'startWork']);
+    Route::post('orders/{id}/finish-work', [OrderController::class, 'finishWork']);
     Route::apiResource('orders', OrderController::class);
     Route::apiResource('appointments', AppointmentController::class);
     // Reviews: Store (Create). Index/Show are public but can be accessed here too. Update/Destroy managed by logic in controller.
@@ -121,6 +126,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('blocked-users/download-all', [AdminUserController::class, 'downloadAllBlocked']);
         Route::post('users/{id}/toggle-block', [AdminUserController::class, 'toggleBlock']);
         Route::post('users/bulk-toggle-block', [AdminUserController::class, 'bulkToggleBlock']);
+
+        // Admin Profile
+        Route::get('profile', [AdminProfileController::class, 'show']);
+        Route::post('profile', [AdminProfileController::class, 'update']);
+        Route::delete('profile/avatar', [AdminProfileController::class, 'deleteAvatar']);
+        Route::post('profile/password', [AdminProfileController::class, 'updatePassword']);
 
         // User Management
         Route::get('individual-customers/download', [AdminIndividualCustomerController::class, 'download']);
@@ -169,9 +180,22 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('services', AdminServiceController::class);
         Route::apiResource('inventory', AdminInventoryController::class);
         Route::apiResource('contents', AdminContentController::class);
+        Route::post('terms/bulk-delete', [AdminTermController::class, 'bulkDestroy']);
         Route::apiResource('terms', AdminTermController::class);
-        Route::apiResource('social-links', AdminSocialLinkController::class);
+        Route::get('social-links', [AdminSocialLinkController::class, 'index']);
+        Route::post('social-links', [AdminSocialLinkController::class, 'update']);
+        Route::get('faqs/download', [AdminFaqController::class, 'download']);
+        Route::post('faqs/bulk-delete', [AdminFaqController::class, 'bulkDestroy']);
         Route::apiResource('faqs', AdminFaqController::class);
+        
+        // Customer Service & Complaints
+        Route::get('complaints/download', [AdminComplaintController::class, 'download']);
+        Route::post('complaints/{id}/action', [AdminComplaintController::class, 'takeAction']);
+        Route::apiResource('complaints', AdminComplaintController::class);
+        
+        // Platform Settings
+        Route::get('settings', [SettingController::class, 'index']);
+        Route::post('settings', [SettingController::class, 'update']);
 
         // Operational Management
         Route::post('orders/{id}/accept', [AdminOrderController::class, 'accept']);
@@ -185,7 +209,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('financial-settlements/download', [AdminFinancialSettlementController::class, 'download']);
         Route::post('financial-settlements/{id}/change-status', [AdminFinancialSettlementController::class, 'changeStatus']);
         Route::apiResource('financial-settlements', AdminFinancialSettlementController::class);
-        Route::apiResource('profits', AdminPlatformProfitController::class);
+        Route::apiResource('platform-profits', AdminPlatformProfitController::class);
         Route::get('payments/download', [AdminPaymentController::class, 'download']);
         Route::apiResource('payments', AdminPaymentController::class)->except(['store']);
 
