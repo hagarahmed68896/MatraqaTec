@@ -14,12 +14,33 @@ class NotificationController extends Controller
         return response()->json(['status' => true, 'message' => 'Notifications retrieved', 'data' => $notifications]);
     }
     
-    public function show($id)
+    public function markAsRead($id)
     {
         $notification = Notification::where('user_id', auth()->id())->where('id', $id)->first();
         if (!$notification) return response()->json(['status' => false, 'message' => 'Not found'], 404);
-        return response()->json(['status' => true, 'message' => 'Notification retrieved', 'data' => $notification]);
+        
+        $notification->update(['is_read' => true]);
+        return response()->json(['status' => true, 'message' => 'Notification marked as read']);
     }
-    
-    // Store/Destroy removed.
+
+    public function markAllAsRead()
+    {
+        Notification::where('user_id', auth()->id())->unread()->update(['is_read' => true]);
+        return response()->json(['status' => true, 'message' => 'All notifications marked as read']);
+    }
+
+    public function destroy($id)
+    {
+        $notification = Notification::where('user_id', auth()->id())->where('id', $id)->first();
+        if (!$notification) return response()->json(['status' => false, 'message' => 'Not found'], 404);
+        
+        $notification->delete();
+        return response()->json(['status' => true, 'message' => 'Notification deleted']);
+    }
+
+    public function destroyAll()
+    {
+        Notification::where('user_id', auth()->id())->delete();
+        return response()->json(['status' => true, 'message' => 'All notifications deleted']);
+    }
 }

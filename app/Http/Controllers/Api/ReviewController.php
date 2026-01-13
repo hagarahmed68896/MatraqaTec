@@ -21,9 +21,31 @@ class ReviewController extends Controller
 
     public function store(Request $request)
     {
-        // User creates review.
-        $request->merge(['user_id' => auth()->id()]); // Force user_id
-        $review = Review::create($request->all());
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'order_id' => 'required|exists:orders,id',
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        $order = \App\Models\Order::find($request->order_id);
+
+        // Create review and automatically link technician/service from order
+        $review = Review::create([
+            'user_id' => auth()->id(),
+            'order_id' => $order->id,
+            'technician_id' => $order->technician_id,
+            'service_id' => $order->service_id,
+            'rating' => $request->rating,
+            'comment' => $request->comment,
+        ]);
+
         return response()->json(['status' => true, 'message' => 'Review created', 'data' => $review]);
     }
 

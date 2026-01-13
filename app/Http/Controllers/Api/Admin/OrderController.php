@@ -154,14 +154,20 @@ class OrderController extends Controller
             return response()->json(['status' => false, 'message' => 'Please select a technician or a maintenance company'], 422);
         }
 
-        $order->update([
-            'technician_id' => $request->technician_id,
-            'maintenance_company_id' => $request->maintenance_company_id,
-            'status' => 'scheduled',
-            'scheduled_at' => $request->scheduled_at ?? $order->scheduled_at,
-        ]);
+        $order->technician_id = $request->technician_id;
+        $order->maintenance_company_id = $request->maintenance_company_id;
+        $order->status = 'scheduled';
+        $order->scheduled_at = $request->scheduled_at ?? $order->scheduled_at;
+        
+        if ($order->save()) {
+            return response()->json([
+                'status' => true, 
+                'message' => 'Order accepted and assigned successfully', 
+                'data' => $order->fresh(['technician.user', 'maintenanceCompany.user'])
+            ]);
+        }
 
-        return response()->json(['status' => true, 'message' => 'Order accepted and assigned successfully', 'data' => $order]);
+        return response()->json(['status' => false, 'message' => 'Failed to update order status'], 500);
     }
 
     public function refuse(Request $request, $id)
@@ -176,12 +182,14 @@ class OrderController extends Controller
             'rejection_reason' => 'required|string|max:500',
         ]);
 
-        $order->update([
-            'status' => 'rejected',
-            'rejection_reason' => $request->rejection_reason,
-        ]);
+        $order->status = 'rejected';
+        $order->rejection_reason = $request->rejection_reason;
+        
+        if ($order->save()) {
+            return response()->json(['status' => true, 'message' => 'Order refused successfully', 'data' => $order]);
+        }
 
-        return response()->json(['status' => true, 'message' => 'Order refused successfully', 'data' => $order]);
+        return response()->json(['status' => false, 'message' => 'Failed to refuse order'], 500);
     }
 
     public function update(Request $request, $id)

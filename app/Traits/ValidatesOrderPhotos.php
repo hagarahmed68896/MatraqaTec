@@ -19,7 +19,7 @@ trait ValidatesOrderPhotos
         $settingKey = $phase === 'before' ? 'required_photos_before_count' : 'required_photos_after_count';
         $requiredCount = Setting::getByKey($settingKey, 1);
 
-        $currentCount = $order->attachments()->where('description', $phase)->count();
+        $currentCount = $order->attachments()->where('type', $phase)->count();
 
         if ($currentCount < $requiredCount) {
             return "At least {$requiredCount} photos are required {$phase} work.";

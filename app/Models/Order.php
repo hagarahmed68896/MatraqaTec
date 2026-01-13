@@ -33,6 +33,44 @@ class Order extends Model
         'spare_parts_metadata' => 'array',
     ];
 
+    protected $appends = ['status_label', 'status_color'];
+
+    public function getStatusLabelAttribute()
+    {
+        $labels = [
+            'new' => 'طلب جديد',
+            'accepted' => 'مقبول',
+            'scheduled' => 'مجدولة',
+            'in_progress' => 'قيد التنفيذ',
+            'completed' => 'مكتملة',
+            'rejected' => 'مرفوضة',
+            'cancelled' => 'ملغية',
+        ];
+
+        // Specific logic for "On the way" or "Arrived" based on sub_status if needed
+        if ($this->status === 'in_progress') {
+            if ($this->sub_status === 'on_the_way') return 'في الطريق';
+            if ($this->sub_status === 'arrived') return 'وصل';
+        }
+
+        return $labels[$this->status] ?? $this->status;
+    }
+
+    public function getStatusColorAttribute()
+    {
+        $colors = [
+            'new' => '#FFA500', // Orange
+            'accepted' => '#4CAF50', // Green
+            'scheduled' => '#2196F3', // Blue
+            'in_progress' => '#2196F3', // Blue
+            'completed' => '#4CAF50', // Green
+            'rejected' => '#F44336', // Red
+            'cancelled' => '#9E9E9E', // Grey
+        ];
+
+        return $colors[$this->status] ?? '#000000';
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -71,6 +109,11 @@ class Order extends Model
     public function payments()
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function services()
+    {
+        return $this->belongsToMany(Service::class, 'order_services');
     }
 
     public function city()

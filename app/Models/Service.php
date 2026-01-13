@@ -20,7 +20,20 @@ class Service extends Model
         'description_en',
         'parent_id',
         'city_id',
+        'is_featured',
     ];
+
+    protected $appends = ['image_url', 'icon_url'];
+
+    public function getImageUrlAttribute()
+    {
+        return $this->image ? asset($this->image) : null;
+    }
+
+    public function getIconUrlAttribute()
+    {
+        return $this->icon ? asset($this->icon) : null;
+    }
 
     public function parent()
     {
@@ -30,6 +43,11 @@ class Service extends Model
     public function children()
     {
         return $this->hasMany(Service::class, 'parent_id');
+    }
+
+    public function favoritedBy()
+    {
+        return $this->hasMany(Favorite::class);
     }
 
     public function technicians()

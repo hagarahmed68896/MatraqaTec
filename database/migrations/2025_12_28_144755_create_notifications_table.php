@@ -19,6 +19,8 @@ return new class extends Migration
             $table->text('body_ar');
             $table->text('body_en');
             $table->enum('target_audience', ['clients', 'companies', 'technicians', 'all'])->default('all');
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
+            $table->boolean('is_read')->default(false);
             $table->enum('status', ['sent', 'unsent', 'scheduled'])->default('sent');
             $table->timestamp('scheduled_at')->nullable();
             $table->timestamps();

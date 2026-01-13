@@ -28,6 +28,11 @@ class User extends Authenticatable
         'avatar',
         'status',
         'blocked_at',
+        'otp',
+        'otp_expires_at',
+        'wallet_balance',
+        'fcm_token',
+        'is_online',
     ];
 
     /**
@@ -51,6 +56,9 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'blocked_at' => 'datetime',
+            'otp_expires_at' => 'datetime',
+            'wallet_balance' => 'decimal:2',
+            'is_online' => 'boolean',
         ];
     }
 
@@ -113,5 +121,15 @@ class User extends Authenticatable
     public function adminProfile()
     {
         return $this->hasOne(AdminProfile::class);
+    }
+
+    public function walletTransactions()
+    {
+        return $this->hasMany(WalletTransaction::class);
+    }
+
+    public function favorites()
+    {
+        return $this->hasMany(Favorite::class);
     }
 }

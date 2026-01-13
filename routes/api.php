@@ -27,6 +27,9 @@ use App\Http\Controllers\Api\FinancialSettlementController;
 use App\Http\Controllers\Api\PlatformProfitController;
 use App\Http\Controllers\Api\InquiryController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\WalletController;
+use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\Api\TrackingController;
 
 // Admin Controllers
 use App\Http\Controllers\Api\Admin\IndividualCustomerController as AdminIndividualCustomerController;
@@ -71,6 +74,10 @@ use App\Http\Controllers\Api\Admin\SettingController;
 // --- Public Routes ---
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
+Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 // Public Read-Only Resources
 Route::apiResource('cities', CityController::class)->only(['index', 'show']);
@@ -88,6 +95,7 @@ Route::post('/technician-requests', [TechnicianRequestController::class, 'store'
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/profile', [AuthController::class, 'profile']); // Generic profile info
+    Route::get('/home', [\App\Http\Controllers\Api\HomeController::class, 'index']);
 
     // User Profile Management (Self)
     Route::prefix('profile')->group(function () {
@@ -107,18 +115,43 @@ Route::middleware('auth:sanctum')->group(function () {
     // User Operations (Scoped to Auth User)
     Route::post('orders/{id}/start-work', [OrderController::class, 'startWork']);
     Route::post('orders/{id}/finish-work', [OrderController::class, 'finishWork']);
+    Route::post('orders/{id}/reschedule', [OrderController::class, 'reschedule']);
+    Route::post('orders/{id}/cancel', [OrderController::class, 'cancel']);
     Route::apiResource('orders', OrderController::class);
     Route::apiResource('appointments', AppointmentController::class);
     // Reviews: Store (Create). Index/Show are public but can be accessed here too. Update/Destroy managed by logic in controller.
     Route::post('reviews', [ReviewController::class, 'store']);
 
     // User Financials/Misc
+    Route::post('payments/pay-order', [PaymentController::class, 'payOrder']);
     Route::apiResource('payments', PaymentController::class)->only(['index', 'store', 'show']);
     Route::apiResource('inquiries', InquiryController::class)->only(['index', 'store', 'show']);
-    Route::apiResource('notifications', NotificationController::class)->only(['index', 'show']);
+    Route::apiResource('notifications', NotificationController::class)->only(['index']);
+    Route::post('notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead']);
+    Route::post('notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead']);
+    Route::delete('notifications/all', [NotificationController::class, 'destroyAll']);
+    Route::delete('notifications/{id}', [NotificationController::class, 'destroy']);
     Route::apiResource('contracts', ContractController::class)->only(['index', 'show']);
     Route::apiResource('settlements', FinancialSettlementController::class)->only(['index', 'store', 'show']);
     Route::apiResource('technician-requests', TechnicianRequestController::class)->only(['index', 'show']); // View own requests
+
+    // Wallet
+    Route::get('wallet', [WalletController::class, 'index']);
+    Route::post('wallet/deposit', [WalletController::class, 'deposit']);
+
+    // Chat
+    Route::get('chat/conversations', [ChatController::class, 'conversations']);
+    Route::get('chat/{receiver_id}', [ChatController::class, 'index']);
+    Route::post('chat', [ChatController::class, 'store']);
+
+    // Tracking
+    Route::post('tracking/update', [TrackingController::class, 'updateLocation']);
+    Route::get('tracking/{technician_id}', [TrackingController::class, 'getLocation']);
+
+    // Search History
+    Route::delete('search-history/{id}', [ServiceController::class, 'destroySearchHistory']);
+    Route::delete('search-history', [ServiceController::class, 'clearSearchHistory']);
+    Route::post('services/toggle-favorite', [ServiceController::class, 'toggleFavorite']);
 
     // --- ADMIN Routes ---
     Route::prefix('admin')->group(function () {
