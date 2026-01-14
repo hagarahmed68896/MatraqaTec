@@ -28,13 +28,21 @@ class OrderController extends Controller
             $query->where('user_id', $user->id);
         }
 
-        // 2. Tab Filter (Current vs Previous)
-        if ($request->tab === 'previous') {
+
+        // 2. Tab Filter (Under Review / Current / Previous)
+        if ($request->tab === 'under_review') {
+            // قيد المراجعة - Pending admin approval
+            $query->where('status', 'new');
+        } elseif ($request->tab === 'previous') {
+            // السابقة - Completed/Cancelled/Rejected
             $query->whereIn('status', ['completed', 'cancelled', 'rejected']);
         } else {
-            // Default to 'current' if not specified or explicitly 'current'
-            $query->whereIn('status', ['new', 'accepted', 'scheduled', 'in_progress']);
+            // Default to 'current' - الحالية
+            // في الطريق, وصل, مجدولة, بدأ العمل
+            // Maps to: accepted, scheduled, in_progress (and sub_status variations)
+            $query->whereIn('status', ['accepted', 'scheduled', 'in_progress']);
         }
+
 
         // 3. Advanced Filtering
         // Date Filter
@@ -258,9 +266,12 @@ class OrderController extends Controller
             return response()->json(['status' => false, 'message' => $result], 422);
         }
 
-        $order->update(['status' => 'in_progress']);
+        $order->update([
+            'status' => 'in_progress',
+            'sub_status' => 'on_way' // Default: في الطريق (On the way)
+        ]);
 
-        return response()->json(['status' => true, 'message' => 'Work started', 'data' => $order]);
+        return response()->json(['status' => true, 'message' => 'Work started - Technician is on the way', 'data' => $order]);
     }
 
     public function finishWork(Request $request, $id)
@@ -344,6 +355,29 @@ class OrderController extends Controller
         return response()->json(['status' => true, 'message' => 'Order rescheduled successfully', 'data' => $order]);
     }
 
+    public function updateSubStatus(Request $request, $id)
+    {
+        $order = Order::find($id);
+        if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+
+        // Only allow if order is in_progress
+        if ($order->status !== 'in_progress') {
+            return response()->json(['status' => false, 'message' => 'Order must be in progress to update sub-status'], 422);
+        }
+
+        $request->validate([
+            'sub_status' => 'required|string|in:on_way,arrived,work_started,additional_visit'
+        ]);
+
+        $order->update(['sub_status' => $request->sub_status]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Sub-status updated successfully',
+            'data' => $order
+        ]);
+    }
+
     public function cancel(Request $request, $id)
     {
         $request->validate([
@@ -397,5 +431,74 @@ class OrderController extends Controller
         if (!$order) return response()->json(['status' => false, 'message' => 'Not found'], 404);
         $order->delete();
         return response()->json(['status' => true, 'message' => 'Order deleted']);
+    }
+
+    public function resend(Request $request, $id)
+    {
+        $oldOrder = Order::where('id', $id)->where('user_id', $request->user()->id)->first();
+        if (!$oldOrder) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+
+        if (!in_array($oldOrder->status, ['cancelled', 'completed', 'rejected'])) {
+            return response()->json(['status' => false, 'message' => 'Can only resend cancelled/completed orders'], 422);
+        }
+
+        $newOrder = Order::create([
+            'order_number' => 'ORD-' . strtoupper(Str::random(10)),
+            'user_id' => $oldOrder->user_id,
+            'city_id' => $oldOrder->city_id,
+            'service_id' => $oldOrder->service_id,
+            'status' => 'new',
+            'total_price' => $oldOrder->total_price,
+            'payment_method' => $oldOrder->payment_method,
+            'scheduled_at' => $request->scheduled_at ?? now()->addDay(),
+            'address' => $oldOrder->address,
+            'notes' => $oldOrder->notes,
+        ]);
+
+        return response()->json(['status' => true, 'message' => 'Order resent', 'data' => $newOrder]);
+    }
+
+    public function getInvoice($id)
+    {
+        $order = Order::with(['service', 'user'])->find($id);
+        if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+
+        $base = $order->total_price / 1.15;
+        $tax = $order->total_price - $base;
+
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'invoice_number' => 'INV-' . $order->order_number,
+                'date' => $order->created_at->format('Y-m-d'),
+                'client' => $order->user->name,
+                'service' => $order->service->name_ar,
+                'base_amount' => number_format($base, 2),
+                'tax' => number_format($tax, 2),
+                'total' => number_format($order->total_price, 2),
+                'spare_parts' => $order->spare_parts_metadata ?? [],
+            ]
+        ]);
+    }
+
+    public function getTechnicianLocation($id)
+    {
+        $order = Order::with('technician')->find($id);
+        if (!$order || !$order->technician_id) {
+            return response()->json(['status' => false, 'message' => 'Technician not assigned'], 404);
+        }
+
+        $loc = \App\Models\TechnicianLocation::where('technician_id', $order->technician_id)->first();
+        if (!$loc) return response()->json(['status' => false, 'message' => 'Location unavailable'], 404);
+
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'name' => $order->technician->user->name ?? 'Unknown',
+                'latitude' => $loc->latitude,
+                'longitude' => $loc->longitude,
+                'updated' => $loc->updated_at->diffForHumans(),
+            ]
+        ]);
     }
 }

@@ -80,6 +80,7 @@ Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 // Public Read-Only Resources
+Route::get('services/favorites', [\App\Http\Controllers\Api\ServiceController::class, 'favorites'])->middleware('auth:sanctum'); // Must be before apiResource('services')
 Route::apiResource('cities', CityController::class)->only(['index', 'show']);
 Route::apiResource('districts', DistrictController::class)->only(['index', 'show']);
 Route::apiResource('services', ServiceController::class)->only(['index', 'show']);
@@ -98,7 +99,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/home', [\App\Http\Controllers\Api\HomeController::class, 'index']);
 
     // User Profile Management (Self)
+    // User Profile Management (Self)
     Route::prefix('profile')->group(function () {
+        // Consolidated Client Profile (For Mobile App)
+        Route::get('/', [\App\Http\Controllers\Api\ClientProfileController::class, 'show']);
+        Route::post('/update', [\App\Http\Controllers\Api\ClientProfileController::class, 'update']);
+        Route::post('/change-password', [\App\Http\Controllers\Api\ClientProfileController::class, 'changePassword']);
+
+        // Legacy / Specific Controller Routes (Keep if needed for specific granular updates)
         Route::get('individual-customer', [IndividualCustomerController::class, 'show']);
         Route::put('individual-customer', [IndividualCustomerController::class, 'update']);
         
@@ -114,9 +122,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // User Operations (Scoped to Auth User)
     Route::post('orders/{id}/start-work', [OrderController::class, 'startWork']);
+    Route::post('orders/{id}/update-sub-status', [OrderController::class, 'updateSubStatus']);
     Route::post('orders/{id}/finish-work', [OrderController::class, 'finishWork']);
     Route::post('orders/{id}/reschedule', [OrderController::class, 'reschedule']);
     Route::post('orders/{id}/cancel', [OrderController::class, 'cancel']);
+    Route::post('orders/{id}/resend', [OrderController::class, 'resend']);
+    Route::get('orders/{id}/invoice', [OrderController::class, 'getInvoice']);
+    Route::get('orders/{id}/technician-location', [OrderController::class, 'getTechnicianLocation']);
     Route::apiResource('orders', OrderController::class);
     Route::apiResource('appointments', AppointmentController::class);
     // Reviews: Store (Create). Index/Show are public but can be accessed here too. Update/Destroy managed by logic in controller.
@@ -151,7 +163,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Search History
     Route::delete('search-history/{id}', [ServiceController::class, 'destroySearchHistory']);
     Route::delete('search-history', [ServiceController::class, 'clearSearchHistory']);
+    // Search History & Favorites
     Route::post('services/toggle-favorite', [ServiceController::class, 'toggleFavorite']);
+    Route::delete('search-history/{id}', [ServiceController::class, 'destroySearchHistory']);
 
     // --- ADMIN Routes ---
     Route::prefix('admin')->group(function () {

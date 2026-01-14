@@ -33,6 +33,9 @@ class User extends Authenticatable
         'wallet_balance',
         'fcm_token',
         'is_online',
+        'address',
+        'latitude',
+        'longitude',
     ];
 
     /**
@@ -131,5 +134,10 @@ class User extends Authenticatable
     public function favorites()
     {
         return $this->hasMany(Favorite::class);
+    }
+
+    public function searchHistories()
+    {
+        return $this->hasMany(SearchHistory::class);
     }
 }

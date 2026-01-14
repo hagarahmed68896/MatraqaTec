@@ -37,8 +37,8 @@ class Order extends Model
 
     public function getStatusLabelAttribute()
     {
-        $labels = [
-            'new' => 'طلب جديد',
+        $mainLabels = [
+            'new' => 'قيد المراجعة',
             'accepted' => 'مقبول',
             'scheduled' => 'مجدولة',
             'in_progress' => 'قيد التنفيذ',
@@ -47,13 +47,19 @@ class Order extends Model
             'cancelled' => 'ملغية',
         ];
 
-        // Specific logic for "On the way" or "Arrived" based on sub_status if needed
-        if ($this->status === 'in_progress') {
-            if ($this->sub_status === 'on_the_way') return 'في الطريق';
-            if ($this->sub_status === 'arrived') return 'وصل';
+        // Sub-status labels for "in_progress" state
+        if ($this->status === 'in_progress' && $this->sub_status) {
+            $subLabels = [
+                'on_way' => 'في الطريق',
+                'arrived' => 'وصل',
+                'work_started' => 'بدأ العمل',
+                'additional_visit' => 'زيارة إضافية',
+            ];
+            
+            return $subLabels[$this->sub_status] ?? $mainLabels['in_progress'];
         }
 
-        return $labels[$this->status] ?? $this->status;
+        return $mainLabels[$this->status] ?? $this->status;
     }
 
     public function getStatusColorAttribute()

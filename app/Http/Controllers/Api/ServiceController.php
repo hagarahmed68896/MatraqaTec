@@ -188,5 +188,39 @@ class ServiceController extends Controller
         }
     }
 
+    public function favorites(Request $request)
+    {
+        $userId = auth()->id();
+        
+        // Get IDs of favorited services
+        $favoriteIds = Favorite::where('user_id', $userId)->pluck('service_id');
+
+        $query = Service::whereIn('id', $favoriteIds);
+
+        // Filter by Location (City)
+        if ($request->filled('city_id')) {
+            $query->where('city_id', $request->city_id);
+        }
+
+        // Filter by Category (Parent IDs - Multi-choice)
+        if ($request->filled('category_ids') && is_array($request->category_ids)) {
+            $query->whereIn('parent_id', $request->category_ids);
+        }
+
+        $services = $query->with(['city', 'parent'])->get();
+
+        // Map to add is_favorite = true (since they are favorites)
+        $services->map(function ($service) {
+            $service->is_favorite = true;
+            return $service;
+        });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Favorite services retrieved successfully',
+            'data' => $services
+        ]);
+    }
+
 // Methods removed. Read-only controller.
 }
