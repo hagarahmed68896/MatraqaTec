@@ -33,7 +33,28 @@ class Order extends Model
         'spare_parts_metadata' => 'array',
     ];
 
-    protected $appends = ['status_label', 'status_color'];
+    protected $appends = ['status_label', 'status_color', 'formatted_scheduled_date', 'formatted_scheduled_time', 'client_name', 'client_phone'];
+
+    public function getClientNameAttribute()
+    {
+        return $this->user->name ?? 'عميل';
+    }
+
+    public function getClientPhoneAttribute()
+    {
+        return $this->user->phone ?? '';
+    }
+
+    public function getFormattedScheduledDateAttribute()
+    {
+        return $this->scheduled_at ? $this->scheduled_at->format('Y/m/d') : null;
+    }
+
+    public function getFormattedScheduledTimeAttribute()
+    {
+        if (!$this->scheduled_at) return null;
+        return $this->scheduled_at->translatedFormat('H:i a');
+    }
 
     public function getStatusLabelAttribute()
     {

@@ -40,6 +40,11 @@ class Technician extends Model
         return $this->belongsTo(MaintenanceCompany::class);
     }
 
+    public function category()
+    {
+        return $this->belongsTo(Service::class, 'category_id');
+    }
+
     public function service()
     {
         return $this->belongsTo(Service::class);

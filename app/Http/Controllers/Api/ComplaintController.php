@@ -10,42 +10,53 @@ use Illuminate\Validation\Rule;
 
 class ComplaintController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $complaints = Complaint::with(['order', 'actions'])
-            ->where('user_id', auth()->id())
-            ->orderBy('created_at', 'desc')
+        $query = Complaint::with(['order', 'actions'])
+            ->where('user_id', auth()->id());
+
+        // Search by ticket number or order ID
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('ticket_number', 'like', "%{$search}%")
+                  ->orWhere('order_id', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        $complaints = $query->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($complaint) {
                 // Map types to localized titles
                 $titles = [
                     'general_inquiry' => ['ar' => 'استفسار عام', 'en' => 'General Inquiry'],
                     'complaint_technician' => ['ar' => 'شكوى على فني', 'en' => 'Complaint against Technician'],
+                    'complaint_customer' => ['ar' => 'شكوى على عميل', 'en' => 'Complaint against Customer'],
                     'payment_issue' => ['ar' => 'مشكلة في الدفع', 'en' => 'Payment Issue'],
                     'suggestion_note' => ['ar' => 'اقتراح / ملاحظة', 'en' => 'Suggestion / Note'],
                 ];
 
-                $complaint->title = $titles[$complaint->type]['ar'] ?? $complaint->type; // Default to Arabic or Type
+                $complaint->title = $titles[$complaint->type]['ar'] ?? $complaint->type;
                 $complaint->title_en = $titles[$complaint->type]['en'] ?? $complaint->type;
-                $complaint->created_ago = $complaint->created_at->diffForHumans(); // e.g. "1 hour ago"
+                $complaint->created_ago = $complaint->created_at->diffForHumans();
                 
                 return $complaint;
             });
             
-        return response()->json(['status' => true, 'message' => 'My Inquiries retrieved', 'data' => $complaints]);
+        return response()->json(['status' => true, 'message' => 'Inquiries retrieved', 'data' => $complaints]);
     }
 
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'type' => 'required|in:general_inquiry,complaint_technician,payment_issue,suggestion_note',
+            'type' => 'required|in:general_inquiry,complaint_technician,complaint_customer,payment_issue,suggestion_note',
             'description' => 'required|string',
-            'phone' => 'required|string', // Added phone number
+            'phone' => 'required|string',
             'order_id' => [
                 'nullable',
                 'exists:orders,id',
-                // Conditional validation: required if type is complaint_technician
-                Rule::requiredIf(fn() => $request->type === 'complaint_technician'),
+                Rule::requiredIf(fn() => in_array($request->type, ['complaint_technician', 'complaint_customer'])),
             ],
             'attachment' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:2048',
         ]);
@@ -62,26 +73,21 @@ class ComplaintController extends Controller
 
         // Determine Account Type
         $user = auth()->user();
-        $accountType = 'client'; // Default
-        if ($user->user_type === 'technician') {
-            $accountType = 'technician';
-        } elseif ($user->user_type === 'company') {
-            $accountType = 'company';
-        }
+        $accountType = $user->type ?: 'client'; // Use 'type' column from users table
 
         $complaint = Complaint::create([
             'ticket_number' => 'TKT-' . strtoupper(uniqid()),
             'user_id' => auth()->id(),
             'order_id' => $request->order_id,
             'account_type' => $accountType,
-            'phone' => $request->phone, // Use provided phone
+            'phone' => $request->phone,
             'type' => $request->type,
             'description' => $request->description,
             'attachment' => $attachmentPath,
             'status' => 'pending',
         ]);
 
-        return response()->json(['status' => true, 'message' => 'Support requested received successfully', 'data' => $complaint]);
+        return response()->json(['status' => true, 'message' => 'Ticket created successfully', 'data' => $complaint]);
     }
 
     public function show($id)

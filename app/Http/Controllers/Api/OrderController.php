@@ -207,7 +207,7 @@ class OrderController extends Controller
                 $path = $file->store('order_attachments', 'public');
                 $order->attachments()->create([
                     'file_path' => $path,
-                    'type' => Str::contains($file->getMimeType(), 'video') ? 'video' : 'image'
+                    'type' => 'before'
                 ]);
             }
         }
@@ -260,7 +260,7 @@ class OrderController extends Controller
     public function show($id)
     {
         $user = auth()->user();
-        $query = Order::with(['user', 'technician', 'service', 'attachments', 'reviews', 'payments', 'appointments'])
+        $query = Order::with(['user', 'technician', 'service.parent', 'attachments', 'reviews', 'payments', 'appointments'])
                     ->where('id', $id);
 
         if ($user->type === 'technician') {
@@ -313,15 +313,28 @@ class OrderController extends Controller
         $order = Order::find($id);
         if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
 
-        // Validate photo requirements
-        $result = $this->validatePhotoCount($order, 'before');
-        if ($result !== true) {
-            return response()->json(['status' => false, 'message' => $result], 422);
+        // Security: Ensure assigned tech
+        $user = auth()->user();
+        if ($user->type === 'technician' && $order->technician_id !== $user->technician->id) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
         }
+
+        // Handle Attachments if provided in the request
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = $file->store('order_attachments', 'public');
+                $order->attachments()->create([
+                    'file_path' => $path,
+                    'type' => 'before'
+                ]);
+            }
+        }
+
+        // Note: Photo validation moved to workStarted (actual start of work) step.
 
         $order->update([
             'status' => 'in_progress',
-            'sub_status' => 'on_way' // Default: في الطريق (On the way)
+            'sub_status' => 'on_way'
         ]);
 
         $this->sendNotification($order->user_id, [
@@ -336,29 +349,302 @@ class OrderController extends Controller
         return response()->json(['status' => true, 'message' => 'Work started - Technician is on the way', 'data' => $order]);
     }
 
-    public function finishWork(Request $request, $id)
+    /**
+     * Technician arrived at location (وصل)
+     */
+    public function arrived(Request $request, $id)
+    {
+        $request->merge(['sub_status' => 'arrived']);
+        return $this->updateSubStatus($request, $id);
+    }
+
+    /**
+     * Technician started actual work (بدأ العمل)
+     */
+    public function workStarted(Request $request, $id)
+    {
+        $request->merge(['sub_status' => 'work_started']);
+        return $this->updateSubStatus($request, $id);
+    }
+
+    public function updateSubStatus(Request $request, $id)
     {
         $order = Order::find($id);
         if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
 
-        // Security: Ensure the assigned technician is performing this
+        $user = auth()->user();
+        if ($user->type === 'technician' && $order->technician_id !== $user->technician->id) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        if ($order->status !== 'in_progress') {
+            return response()->json(['status' => false, 'message' => 'Order must be in progress to update sub-status'], 422);
+        }
+
+        // Handle Attachments if provided
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = $file->store('order_attachments', 'public');
+                $order->attachments()->create([
+                    'file_path' => $path,
+                    'type' => 'before' // Typically "before" covers everything up to work_started
+                ]);
+            }
+        }
+
+        $request->validate([
+            'sub_status' => 'required|string|in:on_way,arrived,work_started,additional_visit'
+        ]);
+
+        $order->update(['sub_status' => $request->sub_status]);
+
+        // Validation: If work started, check for 'before' photos
+        if ($request->sub_status === 'work_started') {
+            $result = $this->validatePhotoCount($order, 'before');
+            if ($result !== true) {
+                // Rollback sub_status if photos missing (optional, but safer)
+                $order->update(['sub_status' => 'arrived']); 
+                return response()->json(['status' => false, 'message' => $result], 422);
+            }
+        }
+
+        // Trigger relevant notifications based on sub-status
+        $notificationData = [
+            'arrived' => [
+                'ar' => ['title' => 'وصل الفني', 'body' => 'لقد وصل الفني إلى موقعك الآن'],
+                'en' => ['title' => 'Technician Arrived', 'body' => 'The technician has arrived at your location']
+            ],
+            'work_started' => [
+                'ar' => ['title' => 'بدأ العمل', 'body' => 'بدأ الفني العمل على طلبك الآن'],
+                'en' => ['title' => 'Work Started', 'body' => 'The technician has started working on your request']
+            ],
+        ];
+
+        if (isset($notificationData[$request->sub_status])) {
+            $this->sendNotification($order->user_id, [
+                'type' => \App\Models\Notification::TYPE_STATUS_UPDATE,
+                'title_ar' => $notificationData[$request->sub_status]['ar']['title'],
+                'title_en' => $notificationData[$request->sub_status]['en']['title'],
+                'body_ar' => $notificationData[$request->sub_status]['ar']['body'],
+                'body_en' => $notificationData[$request->sub_status]['en']['body'],
+                'data' => ['order_id' => $order->id, 'sub_status' => $request->sub_status]
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Status updated successfully',
+            'data' => $order
+        ]);
+    }
+
+    /**
+     * Update spare parts list without finishing the order (Add/Increment/Decrement)
+     */
+    public function updateSpareParts(Request $request, $id)
+    {
+        $order = Order::find($id);
+        if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+
         $user = auth()->user();
         if ($user->type === 'technician' && $order->technician_id !== $user->technician->id) {
              return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        // Validate photo requirements
+        $request->validate([
+            'spare_parts' => 'required|array',
+            'spare_parts.*.name' => 'required|string',
+            'spare_parts.*.qty' => 'required|integer|min:0',
+            'spare_parts.*.price' => 'required|numeric|min:0',
+        ]);
+
+        $sparePartsMetadata = [];
+        foreach ($request->spare_parts as $part) {
+            if ($part['qty'] > 0) {
+                $sparePartsMetadata[] = [
+                    'name' => $part['name'],
+                    'qty' => $part['qty'],
+                    'price' => $part['price'],
+                    'total' => $part['qty'] * $part['price']
+                ];
+            }
+        }
+
+        $order->update(['spare_parts_metadata' => $sparePartsMetadata]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Spare parts updated successfully',
+            'data' => $order
+        ]);
+    }
+
+    /**
+     * Request an additional visit (طلب زيارة إضافية)
+     */
+    public function requestAdditionalVisit(Request $request, $id)
+    {
+        $order = Order::find($id);
+        if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+
+        $user = auth()->user();
+        if ($user->type === 'technician' && $order->technician_id !== $user->technician->id) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'note' => 'nullable|string'
+        ]);
+
+        $order->update([
+            'sub_status' => 'additional_visit',
+            'notes' => $request->note ? "Additional Visit Reason: " . $request->note : $order->notes
+        ]);
+
+        $bodyAr = 'الفني يحتاج لزيارة إضافية لاستكمال العمل على طلبك رقم ' . $order->order_number;
+        $bodyEn = 'The technician needs an additional visit to complete work on your order #' . $order->order_number;
+
+        if ($request->note) {
+            $bodyAr .= "\nالسبب: " . $request->note;
+            $bodyEn .= "\nReason: " . $request->note;
+        }
+
+        $this->sendNotification($order->user_id, [
+            'type' => \App\Models\Notification::TYPE_STATUS_UPDATE,
+            'title_ar' => 'طلب زيارة إضافية',
+            'title_en' => 'Additional Visit Requested',
+            'body_ar' => $bodyAr,
+            'body_en' => $bodyEn,
+            'data' => ['order_id' => $order->id, 'note' => $request->note]
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Additional visit request sent successfully',
+            'data' => $order
+        ]);
+    }
+
+    /**
+     * Send Invoice to Client (إرسال للعميل)
+     */
+    public function sendInvoiceToClient(Request $request, $id)
+    {
+        $order = Order::with('service')->find($id);
+        if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+
+        $user = auth()->user();
+        if ($user->type === 'technician' && $order->technician_id !== $user->technician->id) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        // Calculate current total
+        $basePrice = $order->service->price ?? 50;
+        $tax = $basePrice * 0.15;
+        $sparePartsTotal = 0;
+        
+        if ($order->spare_parts_metadata) {
+            foreach ($order->spare_parts_metadata as $part) {
+                $sparePartsTotal += ($part['qty'] * $part['price']);
+            }
+        }
+
+        $grandTotal = $basePrice + $tax + $sparePartsTotal;
+
+        // Optionally update total_price in DB now so client sees it
+        $order->update(['total_price' => $grandTotal]);
+
+        $this->sendNotification($order->user_id, [
+            'type' => \App\Models\Notification::TYPE_STATUS_UPDATE,
+            'title_ar' => 'متطلبات المهمة والتكاليف',
+            'title_en' => 'Mission Requirements & Billing',
+            'body_ar' => "تم إرسال تفاصيل الفاتورة لطلبك رقم {$order->order_number}. الإجمالي: {$grandTotal} ريال",
+            'body_en' => "Invoice details sent for your order #{$order->order_number}. Total: {$grandTotal} SAR",
+            'data' => [
+                'order_id' => $order->id, 
+                'total' => $grandTotal,
+                'spare_parts' => $order->spare_parts_metadata
+            ]
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Invoice sent to client successfully',
+            'data' => [
+                'total_price' => $grandTotal,
+                'spare_parts' => $order->spare_parts_metadata
+            ]
+        ]);
+    }
+
+    /**
+     * Save Completion Photos before signature (متابعة للتوقيع)
+     */
+    public function saveCompletionPhotos(Request $request, $id)
+    {
+        $order = Order::find($id);
+        if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+
+        $user = auth()->user();
+        if ($user->type === 'technician' && $order->technician_id !== $user->technician->id) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = $file->store('order_attachments', 'public');
+                $order->attachments()->create([
+                    'file_path' => $path,
+                    'type' => 'after'
+                ]);
+            }
+        }
+
         $result = $this->validatePhotoCount($order, 'after');
         if ($result !== true) {
             return response()->json(['status' => false, 'message' => $result], 422);
         }
 
-        // Validate Spare Parts Input
+        return response()->json([
+            'status' => true,
+            'message' => 'Photos uploaded successfully. Proceed to signature.',
+            'data' => $order->load('attachments')
+        ]);
+    }
+
+    public function finishWork(Request $request, $id)
+    {
+        $order = Order::find($id);
+        if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+
+        $user = auth()->user();
+        if ($user->type === 'technician' && $order->technician_id !== $user->technician->id) {
+             return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        // Handle Attachments (After Photos)
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = $file->store('order_attachments', 'public');
+                $order->attachments()->create([
+                    'file_path' => $path,
+                    'type' => 'after'
+                ]);
+            }
+        }
+
+        // Validate photo requirements (if mandatory 'after' photos)
+        $result = $this->validatePhotoCount($order, 'after');
+        if ($result !== true) {
+            return response()->json(['status' => false, 'message' => $result], 422);
+        }
+
         $request->validate([
             'spare_parts' => 'nullable|array',
             'spare_parts.*.name' => 'required_with:spare_parts|string',
             'spare_parts.*.qty' => 'required_with:spare_parts|integer|min:1',
             'spare_parts.*.price' => 'required_with:spare_parts|numeric|min:0',
+            'client_signature' => 'nullable|string', // Base64 signature
         ]);
 
         $sparePartsTotal = 0;
@@ -380,10 +666,13 @@ class OrderController extends Controller
 
         // Update Order
         $order->status = 'completed';
+        $order->sub_status = null;
         $order->spare_parts_metadata = $sparePartsMetadata;
-        // Assuming the current total_price was just the base service price. 
-        // If it was 0 or provisional, this logic ensures it sums up correctly.
         $order->total_price = $order->total_price + $sparePartsTotal; 
+        
+        if ($request->filled('client_signature')) {
+            $order->client_signature = $request->client_signature;
+        }
         
         $order->save();
 
@@ -398,53 +687,7 @@ class OrderController extends Controller
 
         return response()->json([
             'status' => true, 
-            'message' => 'Work finished', 
-            'data' => $order
-        ]);
-    }
-
-    public function reschedule(Request $request, $id)
-    {
-        $request->validate([
-            'scheduled_at' => 'required|date|after:now',
-        ]);
-
-        $order = Order::where('user_id', auth()->id())->find($id);
-        if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
-
-        if (!in_array($order->status, ['new', 'accepted', 'scheduled'])) {
-            return response()->json(['status' => false, 'message' => 'Cannot reschedule an order in this status'], 422);
-        }
-
-        $scheduledAt = \Carbon\Carbon::parse($request->scheduled_at);
-        if (!$this->checkAvailability($order->city_id, $scheduledAt)) {
-            return response()->json(['status' => false, 'message' => 'The selected time is currently fully booked'], 422);
-        }
-
-        $order->update(['scheduled_at' => $scheduledAt, 'status' => 'scheduled']);
-
-        return response()->json(['status' => true, 'message' => 'Order rescheduled successfully', 'data' => $order]);
-    }
-
-    public function updateSubStatus(Request $request, $id)
-    {
-        $order = Order::find($id);
-        if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
-
-        // Only allow if order is in_progress
-        if ($order->status !== 'in_progress') {
-            return response()->json(['status' => false, 'message' => 'Order must be in progress to update sub-status'], 422);
-        }
-
-        $request->validate([
-            'sub_status' => 'required|string|in:on_way,arrived,work_started,additional_visit'
-        ]);
-
-        $order->update(['sub_status' => $request->sub_status]);
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Sub-status updated successfully',
+            'message' => 'Work finished successfully', 
             'data' => $order
         ]);
     }
@@ -582,32 +825,53 @@ class OrderController extends Controller
     public function accept(Request $request, $id)
     {
         $user = auth()->user();
-        if ($user->type !== 'maintenance_company') {
-             return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+        $technician = null;
+        $company = null;
+
+        if ($user->type === 'maintenance_company') {
+            $company = \App\Models\MaintenanceCompany::where('user_id', $user->id)->first();
+            if (!$company) return response()->json(['status' => false, 'message' => 'Company profile not found'], 404);
+        } elseif ($user->type === 'technician') {
+            $technician = \App\Models\Technician::where('user_id', $user->id)->first();
+            if (!$technician) return response()->json(['status' => false, 'message' => 'Technician profile not found'], 404);
+            // If part of a company, the company admin should handle acceptance usually, 
+            // but we can allow it if the system design allows tech-level acceptance.
+        } else {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        $company = \App\Models\MaintenanceCompany::where('user_id', $user->id)->first();
-        if (!$company) return response()->json(['status' => false, 'message' => 'Company profile not found'], 404);
-
         // Allow accepting if:
-        // 1. It's already assigned to this company
-        // 2. OR it's a NEW order in the company's city and hasn't been assigned yet
-        $order = Order::where('id', $id)
-            ->where(function($q) use ($company) {
+        // 1. It's already assigned to this company/tech
+        // 2. OR it's a NEW order in the same city and hasn't been assigned yet
+        $orderQuery = Order::where('id', $id);
+        
+        if ($company) {
+            $orderQuery->where(function($q) use ($company) {
                 $q->where('maintenance_company_id', $company->id)
                   ->orWhere(function($q2) use ($company) {
                       $q2->whereNull('maintenance_company_id')
                          ->where('status', 'new')
                          ->where('city_id', $company->city_id);
                   });
-            })
-            ->first();
-
-        if (!$order) {
-            return response()->json(['status' => false, 'message' => 'Order not found or already assigned to another company'], 404);
+            });
+        } else {
+            $orderQuery->where(function($q) use ($technician) {
+                $q->where('technician_id', $technician->id)
+                  ->orWhere(function($q2) use ($technician) {
+                      $q2->whereNull('technician_id')
+                         ->where('status', 'new')
+                         ->where('city_id', $technician->user->city_id);
+                  });
+            });
         }
 
-        if ($order->status !== 'new' && $order->maintenance_company_id !== $company->id) {
+        $order = $orderQuery->first();
+
+        if (!$order) {
+            return response()->json(['status' => false, 'message' => 'Order not found or already assigned'], 404);
+        }
+
+        if ($order->status !== 'new' && $order->maintenance_company_id !== ($company->id ?? null) && $order->technician_id !== ($technician->id ?? null)) {
             return response()->json(['status' => false, 'message' => 'Order already processed'], 422);
         }
 
@@ -617,8 +881,14 @@ class OrderController extends Controller
         ]);
 
         $order->status = 'scheduled';
-        $order->maintenance_company_id = $company->id; // Ensure it's assigned to this company now
-        if ($request->technician_id) {
+        if ($company) {
+            $order->maintenance_company_id = $company->id;
+        }
+        if ($technician) {
+            $order->technician_id = $technician->id;
+        }
+
+        if ($request->technician_id && $company) {
             $order->technician_id = $request->technician_id;
         }
         if ($request->scheduled_at) {
@@ -642,12 +912,15 @@ class OrderController extends Controller
     public function refuse(Request $request, $id)
     {
         $user = auth()->user();
-        if ($user->type !== 'maintenance_company') {
-             return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
-        }
+        $order = null;
 
-        $company = \App\Models\MaintenanceCompany::where('user_id', $user->id)->first();
-        $order = Order::where('id', $id)->where('maintenance_company_id', $company->id)->first();
+        if ($user->type === 'maintenance_company') {
+            $company = \App\Models\MaintenanceCompany::where('user_id', $user->id)->first();
+            $order = Order::where('id', $id)->where('maintenance_company_id', $company->id ?? 0)->first();
+        } elseif ($user->type === 'technician') {
+            $technician = \App\Models\Technician::where('user_id', $user->id)->first();
+            $order = Order::where('id', $id)->where('technician_id', $technician->id ?? 0)->first();
+        }
 
         if (!$order) {
             return response()->json(['status' => false, 'message' => 'Order not found'], 404);

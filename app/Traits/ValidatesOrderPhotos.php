@@ -17,7 +17,7 @@ trait ValidatesOrderPhotos
     protected function validatePhotoCount($order, $phase)
     {
         $settingKey = $phase === 'before' ? 'required_photos_before_count' : 'required_photos_after_count';
-        $requiredCount = Setting::getByKey($settingKey, 1);
+        $requiredCount = Setting::getByKey($settingKey, 2);
 
         $currentCount = $order->attachments()->where('type', $phase)->count();
 

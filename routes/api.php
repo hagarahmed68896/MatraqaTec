@@ -69,6 +69,7 @@ use App\Http\Controllers\Api\Admin\PrivacyPolicyController as AdminPrivacyPolicy
 use App\Http\Controllers\Api\CompanySetupController;
 use App\Http\Controllers\Api\CompanyScheduleController;
 use App\Http\Controllers\Api\CompanyReportController;
+use App\Http\Controllers\Api\SupportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -111,6 +112,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\ClientProfileController::class, 'show']);
         Route::post('/update', [\App\Http\Controllers\Api\ClientProfileController::class, 'update']);
         Route::post('/change-password', [\App\Http\Controllers\Api\ClientProfileController::class, 'changePassword']);
+        Route::post('/update-location', [\App\Http\Controllers\Api\ClientProfileController::class, 'updateLocation']);
 
         // Legacy / Specific Controller Routes (Keep if needed for specific granular updates)
         Route::get('individual-customer', [IndividualCustomerController::class, 'show']);
@@ -124,9 +126,15 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // User Operations (Scoped to Auth User)
-    Route::post('orders/{id}/start-work', [OrderController::class, 'startWork']);
+    Route::post('orders/{id}/start-work', [OrderController::class, 'startWork']); // في الطريق
+    Route::post('orders/{id}/arrived', [OrderController::class, 'arrived']); // وصل
+    Route::post('orders/{id}/work-started', [OrderController::class, 'workStarted']); // بدأ العمل
     Route::post('orders/{id}/update-sub-status', [OrderController::class, 'updateSubStatus']);
-    Route::post('orders/{id}/finish-work', [OrderController::class, 'finishWork']);
+    Route::post('orders/{id}/update-spare-parts', [OrderController::class, 'updateSpareParts']);
+    Route::post('orders/{id}/additional-visit', [OrderController::class, 'requestAdditionalVisit']);
+    Route::post('orders/{id}/send-invoice', [OrderController::class, 'sendInvoiceToClient']);
+    Route::post('orders/{id}/save-completion-photos', [OrderController::class, 'saveCompletionPhotos']);
+    Route::post('orders/{id}/finish-work', [OrderController::class, 'finishWork']); // تم الإنجاز
     Route::post('orders/{id}/reschedule', [OrderController::class, 'reschedule']);
     Route::post('orders/{id}/cancel', [OrderController::class, 'cancel']);
     Route::post('orders/{id}/resend', [OrderController::class, 'resend']);
@@ -201,6 +209,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Inventory Management
         Route::apiResource('inventory', InventoryController::class);
+
+        // Support & Legal Info
+        Route::get('support', [SupportController::class, 'index']);
+        Route::get('faqs', [SupportController::class, 'faqs']);
+        Route::get('terms', [SupportController::class, 'terms']);
+        Route::get('privacy-policy', [SupportController::class, 'privacy']);
     });
 
     // Tracking

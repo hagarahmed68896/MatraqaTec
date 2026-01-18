@@ -177,6 +177,54 @@ class ClientProfileController extends Controller
     }
 
     /**
+     * Update Location from determination popup (السماح)
+     */
+    public function updateLocation(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'latitude'  => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $user = $request->user();
+        $user->latitude = $request->latitude;
+        $user->longitude = $request->longitude;
+
+        // Auto-detect address and city if possible
+        $locationData = $this->getLocationDataFromCoords($request->latitude, $request->longitude);
+        if ($locationData) {
+            if (!empty($locationData['display_name'])) {
+                $user->address = $locationData['display_name'];
+            }
+            if (!empty($locationData['city_name'])) {
+                $city = \App\Models\City::where('name_ar', 'LIKE', "%{$locationData['city_name']}%")
+                                        ->orWhere('name_en', 'LIKE', "%{$locationData['city_name']}%")
+                                        ->first();
+                if ($city) {
+                    $user->city_id = $city->id;
+                }
+            }
+        }
+
+        $user->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Location updated successfully',
+            'data' => [
+                'latitude' => $user->latitude,
+                'longitude' => $user->longitude,
+                'address' => $user->address,
+                'city_id' => $user->city_id
+            ]
+        ]);
+    }
+
+    /**
      * Helper: Reverse Geocode (Lat/Lng -> Address & City Name) using OpenStreetMap (Nominatim)
      */
     private function getLocationDataFromCoords($lat, $lng)

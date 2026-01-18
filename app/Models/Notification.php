@@ -20,6 +20,7 @@ class Notification extends Model
     const TYPE_ORDER_RESCHEDULED = 'order_rescheduled';
     const TYPE_WORK_STARTED = 'work_started';
     const TYPE_WORK_FINISHED = 'work_finished';
+    const TYPE_STATUS_UPDATE = 'status_update';
     const TYPE_SUB_STATUS_UPDATE = 'sub_status_update';
     const TYPE_TECHNICIAN_ASSIGNED = 'technician_assigned';
 
