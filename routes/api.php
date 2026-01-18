@@ -68,6 +68,7 @@ use App\Http\Controllers\Api\ComplaintController;
 use App\Http\Controllers\Api\Admin\PrivacyPolicyController as AdminPrivacyPolicyController;
 use App\Http\Controllers\Api\CompanySetupController;
 use App\Http\Controllers\Api\CompanyScheduleController;
+use App\Http\Controllers\Api\CompanyReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -169,9 +170,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [MaintenanceCompanyController::class, 'show']);
         Route::post('update', [MaintenanceCompanyController::class, 'update']);
         Route::post('password/update', [MaintenanceCompanyController::class, 'updatePassword']);
+        Route::get('my-services', [CompanySetupController::class, 'myServices']);
         Route::get('services', [CompanySetupController::class, 'listServices']);
         Route::post('services', [CompanySetupController::class, 'updateServices']);
-        Route::get('coverage', [CompanySetupController::class, 'listCoverageAreas']);
+        Route::delete('services/{id}', [CompanySetupController::class, 'removeService']);
         Route::get('coverage', [CompanySetupController::class, 'listCoverageAreas']);
         Route::post('coverage', [CompanySetupController::class, 'updateCoverageAreas']);
         
@@ -192,6 +194,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Company Schedule (Availability Slots)
         Route::apiResource('schedules', CompanyScheduleController::class);
+
+        // Company Reports & Transactions
+        Route::get('statistics', [CompanyReportController::class, 'statistics']);
+        Route::get('transactions', [CompanyReportController::class, 'transactions']);
+
+        // Inventory Management
+        Route::apiResource('inventory', InventoryController::class);
     });
 
     // Tracking

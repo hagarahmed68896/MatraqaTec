@@ -6,32 +6,66 @@ use App\Http\Controllers\Controller;
 use App\Models\District;
 use App\Models\Service;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CompanySetupController extends Controller
 {
     /**
-     * list services with selected status
+     * list services ALREADY selected by the company (with counts)
+     */
+    public function myServices(Request $request)
+    {
+        $user = auth()->user();
+        $company = $user->maintenanceCompany;
+        if (!$company) {
+            return response()->json(['status' => false, 'message' => 'User is not a company'], 403);
+        }
+
+        $services = $company->services()
+            ->select('services.id', 'services.name_ar', 'services.name_en', 'services.image', 'services.icon')
+            ->get()
+            ->map(function ($service) use ($company) {
+                // Count sub-services (children of this service)
+                $service->sub_service_count = Service::where('parent_id', $service->id)->count();
+                
+                // Count technicians belonging to this company that are assigned to this service (or child services)
+                $service->technician_count = DB::table('technicians')
+                    ->where('maintenance_company_id', $company->id)
+                    ->where(function($query) use ($service) {
+                        $query->where('category_id', $service->id)
+                              ->orWhere('service_id', $service->id);
+                    })
+                    ->count();
+
+                return $service;
+            });
+
+        return response()->json(['status' => true, 'message' => 'Your services retrieved', 'data' => $services]);
+    }
+
+    /**
+     * list ALL services with selected status (for selection grid)
      */
     public function listServices(Request $request)
     {
         $user = auth()->user();
-        if (!$user->maintenanceCompany) {
+        $company = $user->maintenanceCompany;
+        if (!$company) {
             return response()->json(['status' => false, 'message' => 'User is not a company'], 403);
         }
 
-        $company = $user->maintenanceCompany;
         $selectedServiceIds = $company->services()->pluck('services.id')->toArray();
 
-        // Get all leaf services (services that don't have children) or just all services?
-        // Usually providers select specific services. Assuming all services for now.
-        $services = Service::select('id', 'name_ar', 'name_en', 'icon')
+        // Get parent services for selection grid as seen in screenshot
+        $services = Service::whereNull('parent_id')
+            ->select('id', 'name_ar', 'name_en', 'icon')
             ->get()
             ->map(function ($service) use ($selectedServiceIds) {
                 $service->is_selected = in_array($service->id, $selectedServiceIds);
                 return $service;
             });
 
-        return response()->json(['status' => true, 'message' => 'Services retrieved', 'data' => $services]);
+        return response()->json(['status' => true, 'message' => 'All services retrieved', 'data' => $services]);
     }
 
     /**
@@ -45,35 +79,51 @@ class CompanySetupController extends Controller
         ]);
 
         $user = auth()->user();
-        if (!$user->maintenanceCompany) {
+        $company = $user->maintenanceCompany;
+        if (!$company) {
             return response()->json(['status' => false, 'message' => 'User is not a company'], 403);
         }
 
-        $user->maintenanceCompany->services()->sync($request->service_ids);
+        $company->services()->sync($request->service_ids);
 
         return response()->json(['status' => true, 'message' => 'Services updated successfully']);
     }
 
     /**
+     * remove a specific service from company
+     */
+    public function removeService($id)
+    {
+        $user = auth()->user();
+        $company = $user->maintenanceCompany;
+        if (!$company) {
+            return response()->json(['status' => false, 'message' => 'User is not a company'], 403);
+        }
+
+        $company->services()->detach($id);
+
+        return response()->json(['status' => true, 'message' => 'Service removed successfully']);
+    }
+
+    /**
      * list coverage areas (districts) grouped by city?? 
-     * Or simply list districts of a selected city. 
-     * For now, listing all districts in the company's city if company has city_id, or all.
      */
     public function listCoverageAreas(Request $request)
     {
         $user = auth()->user();
-        if (!$user->maintenanceCompany) {
+        $company = $user->maintenanceCompany;
+        if (!$company) {
             return response()->json(['status' => false, 'message' => 'User is not a company'], 403);
         }
 
-        $company = $user->maintenanceCompany;
         $selectedDistrictIds = $company->districts()->pluck('districts.id')->toArray();
 
-        // If company has a city_id, show districts for that city? Or allow multi-city?
-        // "Select Coverage Area" usually implies districts within a city.
+        // Filter by specific city if requested, otherwise use company's main city
+        $cityId = $request->input('city_id', $company->city_id);
+
         $query = District::query();
-        if ($request->has('city_id')) {
-            $query->where('city_id', $request->city_id);
+        if ($cityId) {
+            $query->where('city_id', $cityId);
         }
 
         $districts = $query->select('id', 'name_ar', 'name_en', 'city_id')
@@ -98,11 +148,12 @@ class CompanySetupController extends Controller
         ]);
 
         $user = auth()->user();
-        if (!$user->maintenanceCompany) {
+        $company = $user->maintenanceCompany;
+        if (!$company) {
             return response()->json(['status' => false, 'message' => 'User is not a company'], 403);
         }
 
-        $user->maintenanceCompany->districts()->sync($request->district_ids);
+        $company->districts()->sync($request->district_ids);
 
         return response()->json(['status' => true, 'message' => 'Coverage areas updated successfully']);
     }
