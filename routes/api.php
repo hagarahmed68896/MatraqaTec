@@ -67,6 +67,7 @@ use App\Http\Controllers\Api\Admin\ComplaintController as AdminComplaintControll
 use App\Http\Controllers\Api\ComplaintController;
 use App\Http\Controllers\Api\Admin\PrivacyPolicyController as AdminPrivacyPolicyController;
 use App\Http\Controllers\Api\CompanySetupController;
+use App\Http\Controllers\Api\CompanyScheduleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -188,6 +189,9 @@ Route::middleware('auth:sanctum')->group(function () {
         
         // Get Available Technicians for Order Assignment
         Route::get('available-technicians', [MaintenanceCompanyController::class, 'getAvailableTechnicians']);
+
+        // Company Schedule (Availability Slots)
+        Route::apiResource('schedules', CompanyScheduleController::class);
     });
 
     // Tracking

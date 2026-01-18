@@ -20,6 +20,12 @@ class AppointmentController extends Controller
             $technician = \App\Models\Technician::where('user_id', $user->id)->first();
             if (!$technician) return response()->json(['status' => true, 'message' => 'No appointments', 'data' => []]);
             $query->where('technician_id', $technician->id);
+        } elseif ($user->type === 'maintenance_company') {
+            $company = $user->maintenanceCompany;
+            if (!$company) return response()->json(['status' => true, 'message' => 'No appointments', 'data' => []]);
+            $query->whereHas('technician', function($q) use ($company) {
+                $q->where('maintenance_company_id', $company->id);
+            });
         } else {
             // Customer - Find appointments for their orders
             $query->whereHas('order', function($q) use ($user) {
