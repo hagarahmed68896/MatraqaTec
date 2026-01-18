@@ -1,0 +1,25 @@
+Logged in as: Tech Solutions Company (ID: 7)
+Company ID: 4
+Search Response:
+{
+    "status": true,
+    "message": "Search results retrieved successfully",
+    "data": {
+        "orders": [],
+        "technicians": []
+    }
+}
+History Response:
+{
+    "status": true,
+    "message": "Search history retrieved",
+    "data": [
+        {
+            "id": 5,
+            "user_id": 7,
+            "query": "????????",
+            "created_at": "2026-01-17T14:14:51.000000Z",
+            "updated_at": "2026-01-17T14:14:51.000000Z"
+        }
+    ]
+}

@@ -12,6 +12,7 @@ class Technician extends Model
     protected $fillable = [
         'user_id',
         'maintenance_company_id',
+        'category_id',
         'service_id',
         'years_experience',
         'availability_status',
@@ -22,6 +23,11 @@ class Technician extends Model
         'bio_ar',
         'image',
         'national_id',
+        'districts',
+    ];
+
+    protected $casts = [
+        'districts' => 'array',
     ];
 
     public function user()

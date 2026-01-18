@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             AdminSeeder::class,
             SupervisorSeeder::class,
             SocialLinkSeeder::class,
+            PrivacyPolicySeeder::class,
         ]);
     }
 }

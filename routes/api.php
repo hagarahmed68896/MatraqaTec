@@ -14,7 +14,6 @@ use App\Http\Controllers\Api\TermController;
 use App\Http\Controllers\Api\SocialLinkController;
 use App\Http\Controllers\Api\FaqController;
 use App\Http\Controllers\Api\IndividualCustomerController;
-use App\Http\Controllers\Api\CorporateCustomerController;
 use App\Http\Controllers\Api\TechnicianController;
 use App\Http\Controllers\Api\MaintenanceCompanyController;
 use App\Http\Controllers\Api\TechnicianRequestController;
@@ -30,14 +29,15 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\WalletController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\TrackingController;
+use App\Http\Controllers\Api\PrivacyPolicyController;
 
 // Admin Controllers
 use App\Http\Controllers\Api\Admin\IndividualCustomerController as AdminIndividualCustomerController;
-use App\Http\Controllers\Api\Admin\CorporateCustomerController as AdminCorporateCustomerController;
 use App\Http\Controllers\Api\Admin\TechnicianController as AdminTechnicianController;
 use App\Http\Controllers\Api\Admin\MaintenanceCompanyController as AdminMaintenanceCompanyController;
 use App\Http\Controllers\Api\Admin\CityController as AdminCityController;
 use App\Http\Controllers\Api\Admin\DistrictController as AdminDistrictController;
+use App\Http\Controllers\Api\Admin\SettingController;
 use App\Http\Controllers\Api\Admin\ServiceController as AdminServiceController;
 use App\Http\Controllers\Api\Admin\InventoryController as AdminInventoryController;
 use App\Http\Controllers\Api\Admin\ContentController as AdminContentController;
@@ -63,7 +63,10 @@ use App\Http\Controllers\Api\Admin\RefundController as AdminRefundController;
 use App\Http\Controllers\Api\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Api\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Api\Admin\ComplaintController as AdminComplaintController;
-use App\Http\Controllers\Api\Admin\SettingController;
+// Use alias for Admin Complaint Controller to avoid conflict with Public Complaint Controller if imported
+use App\Http\Controllers\Api\ComplaintController;
+use App\Http\Controllers\Api\Admin\PrivacyPolicyController as AdminPrivacyPolicyController;
+use App\Http\Controllers\Api\CompanySetupController;
 
 /*
 |--------------------------------------------------------------------------
@@ -86,6 +89,7 @@ Route::apiResource('districts', DistrictController::class)->only(['index', 'show
 Route::apiResource('services', ServiceController::class)->only(['index', 'show']);
 Route::apiResource('contents', ContentController::class)->only(['index', 'show']);
 Route::apiResource('terms', TermController::class)->only(['index', 'show']);
+Route::apiResource('privacy-policies', PrivacyPolicyController::class)->only(['index', 'show']);
 Route::apiResource('social-links', SocialLinkController::class)->only(['index', 'show']);
 Route::apiResource('faqs', FaqController::class)->only(['index', 'show']);
 Route::apiResource('reviews', ReviewController::class)->only(['index', 'show']); // Often public
@@ -110,9 +114,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('individual-customer', [IndividualCustomerController::class, 'show']);
         Route::put('individual-customer', [IndividualCustomerController::class, 'update']);
         
-        Route::get('corporate-customer', [CorporateCustomerController::class, 'show']);
-        Route::put('corporate-customer', [CorporateCustomerController::class, 'update']);
-        
         Route::get('technician', [TechnicianController::class, 'show']);
         Route::put('technician', [TechnicianController::class, 'update']);
         
@@ -129,6 +130,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('orders/{id}/resend', [OrderController::class, 'resend']);
     Route::get('orders/{id}/invoice', [OrderController::class, 'getInvoice']);
     Route::get('orders/{id}/technician-location', [OrderController::class, 'getTechnicianLocation']);
+    Route::post('orders/{id}/accept', [OrderController::class, 'accept']);
+    Route::post('orders/{id}/refuse', [OrderController::class, 'refuse']);
     Route::apiResource('orders', OrderController::class);
     Route::apiResource('appointments', AppointmentController::class);
     // Reviews: Store (Create). Index/Show are public but can be accessed here too. Update/Destroy managed by logic in controller.
@@ -143,6 +146,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead']);
     Route::delete('notifications/all', [NotificationController::class, 'destroyAll']);
     Route::delete('notifications/{id}', [NotificationController::class, 'destroy']);
+    
+    // Support & Complaints
+    Route::apiResource('support/tickets', ComplaintController::class)->only(['index', 'store', 'show']);
+
     Route::apiResource('contracts', ContractController::class)->only(['index', 'show']);
     Route::apiResource('settlements', FinancialSettlementController::class)->only(['index', 'store', 'show']);
     Route::apiResource('technician-requests', TechnicianRequestController::class)->only(['index', 'show']); // View own requests
@@ -155,6 +162,33 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('chat/conversations', [ChatController::class, 'conversations']);
     Route::get('chat/{receiver_id}', [ChatController::class, 'index']);
     Route::post('chat', [ChatController::class, 'store']);
+
+    // Company Setup (Services & Coverage)
+    Route::prefix('company')->group(function () {
+        Route::get('/', [MaintenanceCompanyController::class, 'show']);
+        Route::post('update', [MaintenanceCompanyController::class, 'update']);
+        Route::post('password/update', [MaintenanceCompanyController::class, 'updatePassword']);
+        Route::get('services', [CompanySetupController::class, 'listServices']);
+        Route::post('services', [CompanySetupController::class, 'updateServices']);
+        Route::get('coverage', [CompanySetupController::class, 'listCoverageAreas']);
+        Route::get('coverage', [CompanySetupController::class, 'listCoverageAreas']);
+        Route::post('coverage', [CompanySetupController::class, 'updateCoverageAreas']);
+        
+        // List Technicians (Performance/Show More)
+        Route::get('technicians', [MaintenanceCompanyController::class, 'listTechnicians']);
+        Route::get('technicians/featured', [MaintenanceCompanyController::class, 'getFeaturedTechnicians']);
+        Route::get('technicians/{id}', [MaintenanceCompanyController::class, 'showTechnician']);
+        Route::post('technicians/add', [MaintenanceCompanyController::class, 'addTechnician']);
+        Route::put('technicians/{id}', [MaintenanceCompanyController::class, 'updateTechnician']);
+        Route::delete('technicians/{id}', [MaintenanceCompanyController::class, 'deleteTechnician']);
+
+        // Search Features
+        Route::get('search', [MaintenanceCompanyController::class, 'search']);
+        Route::get('search-history', [MaintenanceCompanyController::class, 'getSearchHistory']);
+        
+        // Get Available Technicians for Order Assignment
+        Route::get('available-technicians', [MaintenanceCompanyController::class, 'getAvailableTechnicians']);
+    });
 
     // Tracking
     Route::post('tracking/update', [TrackingController::class, 'updateLocation']);
@@ -186,12 +220,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('individual-customers/blocked-download', [AdminIndividualCustomerController::class, 'downloadBlocked']);
         Route::apiResource('individual-customers', AdminIndividualCustomerController::class);
         Route::post('individual-customers/bulk-delete', [AdminIndividualCustomerController::class, 'bulkDestroy']);
-        
-        Route::get('corporate-customers/download', [AdminCorporateCustomerController::class, 'download']);
-        Route::get('corporate-customers/blocked', [AdminCorporateCustomerController::class, 'blockedIndex']);
-        Route::get('corporate-customers/blocked-download', [AdminCorporateCustomerController::class, 'downloadBlocked']);
-        Route::apiResource('corporate-customers', AdminCorporateCustomerController::class);
-        Route::post('corporate-customers/bulk-delete', [AdminCorporateCustomerController::class, 'bulkDestroy']);
         
         Route::get('technicians/download', [AdminTechnicianController::class, 'download']);
         Route::get('technicians/blocked', [AdminTechnicianController::class, 'blockedIndex']);
@@ -229,6 +257,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('contents', AdminContentController::class);
         Route::post('terms/bulk-delete', [AdminTermController::class, 'bulkDestroy']);
         Route::apiResource('terms', AdminTermController::class);
+        Route::get('privacy-policies/download', [AdminPrivacyPolicyController::class, 'download']);
+        Route::post('privacy-policies/bulk-delete', [AdminPrivacyPolicyController::class, 'bulkDestroy']);
+        Route::apiResource('privacy-policies', AdminPrivacyPolicyController::class);
         Route::get('social-links', [AdminSocialLinkController::class, 'index']);
         Route::post('social-links', [AdminSocialLinkController::class, 'update']);
         Route::get('faqs/download', [AdminFaqController::class, 'download']);
@@ -269,6 +300,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // Notifications
         Route::post('notifications/bulk-delete', [AdminNotificationController::class, 'bulkDestroy']);
         Route::apiResource('notifications', AdminNotificationController::class);
+        Route::post('technician-requests/{id}/accept', [AdminTechnicianRequestController::class, 'accept']);
+        Route::post('technician-requests/{id}/refuse', [AdminTechnicianRequestController::class, 'refuse']);
         Route::apiResource('technician-requests', AdminTechnicianRequestController::class);
 
         // Reports

@@ -11,7 +11,7 @@ class MaintenanceCompany extends Model
 
     protected $fillable = [
         'user_id',
-        'city_id',
+        'city_id', // Defines Main City
         'company_name_ar',
         'company_name_en',
         'commercial_record_number',
@@ -21,6 +21,12 @@ class MaintenanceCompany extends Model
         'technician_count',
         'service_count',
         'order_count',
+        'bank_name',
+        'account_name',
+        'account_number',
+        'bank_address',
+        'iban',
+        'swift_code',
     ];
 
     public function user()
@@ -46,5 +52,15 @@ class MaintenanceCompany extends Model
     public function city()
     {
         return $this->belongsTo(City::class);
+    }
+
+    public function services()
+    {
+        return $this->belongsToMany(Service::class, 'maintenance_company_service');
+    }
+
+    public function districts()
+    {
+        return $this->belongsToMany(District::class, 'maintenance_company_district');
     }
 }

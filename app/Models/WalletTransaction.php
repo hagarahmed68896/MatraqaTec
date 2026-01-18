@@ -22,4 +22,9 @@ class WalletTransaction extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function order()
+    {
+        return $this->belongsTo(\App\Models\Order::class, 'reference_id');
+    }
 }

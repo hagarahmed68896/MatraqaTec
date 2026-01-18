@@ -24,30 +24,74 @@ class OrderController extends Controller
             $technician = \App\Models\Technician::where('user_id', $user->id)->first();
             if (!$technician) return response()->json(['status' => true, 'message' => 'No assigned orders', 'data' => []]);
             $query->where('technician_id', $technician->id);
+        } elseif ($user->type === 'maintenance_company') {
+            $company = \App\Models\MaintenanceCompany::where('user_id', $user->id)->first();
+            if (!$company) return response()->json(['status' => false, 'message' => 'Company profile not found'], 404);
+            $query->where('maintenance_company_id', $company->id);
         } else {
             $query->where('user_id', $user->id);
         }
 
 
-        // 2. Tab Filter (Under Review / Current / Previous)
-        if ($request->tab === 'under_review') {
-            // قيد المراجعة - Pending admin approval
-            $query->where('status', 'new');
-        } elseif ($request->tab === 'previous') {
-            // السابقة - Completed/Cancelled/Rejected
-            $query->whereIn('status', ['completed', 'cancelled', 'rejected']);
+        // 2. Tab Filter
+        if ($user->type === 'maintenance_company') {
+            // Company-specific tabs
+            if ($request->tab === 'all') {
+                // All orders: assigned to company OR available new orders in their city/service
+                $query->where(function($q) use ($company) {
+                    $q->where('maintenance_company_id', $company->id)
+                      ->orWhere(function($q2) use ($company) {
+                          $q2->where('status', 'new')
+                             ->where('city_id', $company->city_id)
+                             ->whereHas('service', function($q3) use ($company) {
+                                 $q3->whereIn('id', $company->services->pluck('id'));
+                             });
+                      });
+                });
+            } elseif ($request->tab === 'new') {
+                // New orders only: status = 'new' in company's city and matching services
+                $query->where('status', 'new')
+                      ->where('city_id', $company->city_id)
+                      ->whereHas('service', function($q) use ($company) {
+                          $q->whereIn('id', $company->services->pluck('id'));
+                      });
+            } elseif ($request->tab === 'in_progress') {
+                // In Progress: accepted, scheduled, in_progress (assigned to this company)
+                $query->where('maintenance_company_id', $company->id)
+                      ->whereIn('status', ['accepted', 'scheduled', 'in_progress']);
+            } else {
+                // Default: show all assigned orders
+                $query->where('maintenance_company_id', $company->id);
+            }
         } else {
-            // Default to 'current' - الحالية
-            // في الطريق, وصل, مجدولة, بدأ العمل
-            // Maps to: accepted, scheduled, in_progress (and sub_status variations)
-            $query->whereIn('status', ['accepted', 'scheduled', 'in_progress']);
+            // Client/Technician tabs (existing logic)
+            if ($request->tab === 'under_review') {
+                // قيد المراجعة - Pending admin approval
+                $query->where('status', 'new');
+            } elseif ($request->tab === 'previous') {
+                // السابقة - Completed/Cancelled/Rejected
+                $query->whereIn('status', ['completed', 'cancelled', 'rejected']);
+            } else {
+                // Default to 'current' - الحالية
+                // في الطريق, وصل, مجدولة, بدأ العمل
+                // Maps to: accepted, scheduled, in_progress (and sub_status variations)
+                $query->whereIn('status', ['accepted', 'scheduled', 'in_progress']);
+            }
         }
 
 
         // 3. Advanced Filtering
-        // Date Filter
+        // Single Date Filter
         if ($request->filled('date')) {
             $query->whereDate('scheduled_at', $request->date);
+        }
+
+        // Date Range Filter
+        if ($request->filled('date_from')) {
+            $query->whereDate('scheduled_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('scheduled_at', '<=', $request->date_to);
         }
 
         // Precise Hour Filter
@@ -154,6 +198,9 @@ class OrderController extends Controller
             'status' => 'scheduled',
         ]);
 
+        // Trigger Notification for Admin/Company (Demo: Direct to company if identified, else generic)
+        $this->notifyNewOrder($order);
+
         // 3. Handle Attachments
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
@@ -219,6 +266,9 @@ class OrderController extends Controller
         if ($user->type === 'technician') {
             $technician = \App\Models\Technician::where('user_id', $user->id)->first();
             $query->where('technician_id', $technician->id ?? 0);
+        } elseif ($user->type === 'maintenance_company') {
+            $company = \App\Models\MaintenanceCompany::where('user_id', $user->id)->first();
+            $query->where('maintenance_company_id', $company->id ?? 0);
         } else {
             $query->where('user_id', $user->id);
         }
@@ -240,6 +290,9 @@ class OrderController extends Controller
         if ($user->type === 'technician') {
             $technician = \App\Models\Technician::where('user_id', $user->id)->first();
             $query->where('technician_id', $technician->id ?? 0);
+        } elseif ($user->type === 'maintenance_company') {
+            $company = \App\Models\MaintenanceCompany::where('user_id', $user->id)->first();
+            $query->where('maintenance_company_id', $company->id ?? 0);
         } else {
             $query->where('user_id', $user->id);
         }
@@ -269,6 +322,15 @@ class OrderController extends Controller
         $order->update([
             'status' => 'in_progress',
             'sub_status' => 'on_way' // Default: في الطريق (On the way)
+        ]);
+
+        $this->sendNotification($order->user_id, [
+            'type' => \App\Models\Notification::TYPE_WORK_STARTED,
+            'title_ar' => 'الفني في الطريق',
+            'title_en' => 'Technician on the way',
+            'body_ar' => 'الفني بدأ العمل وهو حالياً في الطريق إليك',
+            'body_en' => 'The technician has started work and is on the way to you',
+            'data' => ['order_id' => $order->id]
         ]);
 
         return response()->json(['status' => true, 'message' => 'Work started - Technician is on the way', 'data' => $order]);
@@ -324,6 +386,15 @@ class OrderController extends Controller
         $order->total_price = $order->total_price + $sparePartsTotal; 
         
         $order->save();
+
+        $this->sendNotification($order->user_id, [
+            'type' => \App\Models\Notification::TYPE_WORK_FINISHED,
+            'title_ar' => 'تم الانتهاء من العمل',
+            'title_en' => 'Work Completed',
+            'body_ar' => 'لقد قام الفني بإنهاء العمل بنجاح. يمكنك الآن مراجعة الفاتورة',
+            'body_en' => 'The technician has successfully finished the work. You can now review the invoice',
+            'data' => ['order_id' => $order->id]
+        ]);
 
         return response()->json([
             'status' => true, 
@@ -427,7 +498,14 @@ class OrderController extends Controller
     {
         // Users usually shouldn't hard delete orders, but providing 'cancel' logic in update or destroy.
         // Allowing destroy if ownership matches.
-        $order = Order::where('user_id', auth()->id())->where('id', $id)->first();
+        $query = Order::where('id', $id);
+        if ($user->type === 'maintenance_company') {
+            $company = \App\Models\MaintenanceCompany::where('user_id', $user->id)->first();
+            $query->where('maintenance_company_id', $company->id ?? 0);
+        } else {
+            $query->where('user_id', $user->id);
+        }
+        $order = $query->first();
         if (!$order) return response()->json(['status' => false, 'message' => 'Not found'], 404);
         $order->delete();
         return response()->json(['status' => true, 'message' => 'Order deleted']);
@@ -500,5 +578,135 @@ class OrderController extends Controller
                 'updated' => $loc->updated_at->diffForHumans(),
             ]
         ]);
+    }
+    public function accept(Request $request, $id)
+    {
+        $user = auth()->user();
+        if ($user->type !== 'maintenance_company') {
+             return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $company = \App\Models\MaintenanceCompany::where('user_id', $user->id)->first();
+        if (!$company) return response()->json(['status' => false, 'message' => 'Company profile not found'], 404);
+
+        // Allow accepting if:
+        // 1. It's already assigned to this company
+        // 2. OR it's a NEW order in the company's city and hasn't been assigned yet
+        $order = Order::where('id', $id)
+            ->where(function($q) use ($company) {
+                $q->where('maintenance_company_id', $company->id)
+                  ->orWhere(function($q2) use ($company) {
+                      $q2->whereNull('maintenance_company_id')
+                         ->where('status', 'new')
+                         ->where('city_id', $company->city_id);
+                  });
+            })
+            ->first();
+
+        if (!$order) {
+            return response()->json(['status' => false, 'message' => 'Order not found or already assigned to another company'], 404);
+        }
+
+        if ($order->status !== 'new' && $order->maintenance_company_id !== $company->id) {
+            return response()->json(['status' => false, 'message' => 'Order already processed'], 422);
+        }
+
+        $request->validate([
+            'technician_id' => 'nullable|exists:technicians,id',
+            'scheduled_at' => 'nullable|date',
+        ]);
+
+        $order->status = 'scheduled';
+        $order->maintenance_company_id = $company->id; // Ensure it's assigned to this company now
+        if ($request->technician_id) {
+            $order->technician_id = $request->technician_id;
+        }
+        if ($request->scheduled_at) {
+            $order->scheduled_at = $request->scheduled_at;
+        }
+        
+        $order->save();
+
+        $this->sendNotification($order->user_id, [
+            'type' => \App\Models\Notification::TYPE_ORDER_ACCEPTED,
+            'title_ar' => 'تم قبول طلبك',
+            'title_en' => 'Your order was accepted',
+            'body_ar' => 'قامت شركة الصيانة بقبول طلبك وتحديد موعد للزيارة',
+            'body_en' => 'The maintenance company has accepted your order and scheduled a visit',
+            'data' => ['order_id' => $order->id]
+        ]);
+
+        return response()->json(['status' => true, 'message' => 'Order accepted', 'data' => $order]);
+    }
+
+    public function refuse(Request $request, $id)
+    {
+        $user = auth()->user();
+        if ($user->type !== 'maintenance_company') {
+             return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $company = \App\Models\MaintenanceCompany::where('user_id', $user->id)->first();
+        $order = Order::where('id', $id)->where('maintenance_company_id', $company->id)->first();
+
+        if (!$order) {
+            return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+        }
+
+        $request->validate([
+            'rejection_reason' => 'required|string|max:500',
+        ]);
+
+        $order->status = 'rejected';
+        $order->rejection_reason = $request->rejection_reason;
+        $order->save();
+
+        // Notify client
+        $this->sendNotification($order->user_id, [
+            'type' => \App\Models\Notification::TYPE_ORDER_REJECTED,
+            'title_ar' => 'تم رفض طلبك',
+            'title_en' => 'Your order was rejected',
+            'body_ar' => 'نعتذر، تم رفض طلبك للسبب التالي: ' . $order->rejection_reason,
+            'body_en' => 'Sorry, your order was rejected for: ' . $order->rejection_reason,
+            'data' => ['order_id' => $order->id]
+        ]);
+
+        return response()->json(['status' => true, 'message' => 'Order refused', 'data' => $order]);
+    }
+
+    private function notifyNewOrder($order)
+    {
+        // For companies that might provide this service
+        $companies = \App\Models\MaintenanceCompany::whereHas('services', function($q) use ($order) {
+            $q->where('services.id', $order->service_id);
+        })->where('city_id', $order->city_id)->get();
+
+        foreach ($companies as $company) {
+            $this->sendNotification($company->user_id, [
+                'type' => \App\Models\Notification::TYPE_NEW_ORDER,
+                'title_ar' => 'طلب صيانة جديد',
+                'title_en' => 'New Maintenance Request',
+                'body_ar' => 'يوجد طلب جديد لخدمة ' . ($order->service->name_ar ?? ''),
+                'body_en' => 'New request for ' . ($order->service->name_en ?? '') . ' service',
+                'data' => ['order_id' => $order->id]
+            ]);
+        }
+    }
+
+    private function sendNotification($userId, $details)
+    {
+        \App\Models\Notification::create([
+            'user_id' => $userId,
+            'type' => $details['type'],
+            'title_ar' => $details['title_ar'],
+            'title_en' => $details['title_en'],
+            'body_ar' => $details['body_ar'],
+            'body_en' => $details['body_en'],
+            'data' => $details['data'] ?? [],
+            'status' => 'sent',
+            'is_read' => false
+        ]);
+        
+        // This is where real FCM push would go
     }
 }

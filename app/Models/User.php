@@ -23,7 +23,7 @@ class User extends Authenticatable
         'email',
         'password',
         'city_id',
-        'type', // admin, individual, corporate_company, technician, maintenance_company
+        'type', // admin, individual, technician, maintenance_company (Unified Company)
         'phone',
         'avatar',
         'status',
@@ -70,10 +70,6 @@ class User extends Authenticatable
         return $this->hasOne(IndividualCustomer::class);
     }
 
-    public function corporateCustomer()
-    {
-        return $this->hasOne(CorporateCustomer::class);
-    }
 
     public function technician()
     {

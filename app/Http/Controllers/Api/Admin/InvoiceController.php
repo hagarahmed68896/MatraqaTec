@@ -171,7 +171,7 @@ class InvoiceController extends Controller
         // Client Type
         if ($request->has('client_type') && $request->client_type != 'all') {
             $type = $request->client_type;
-            if ($type == 'company') $type = 'corporate_company';
+            if ($type == 'company') $type = 'maintenance_company';
             
             $query->whereHas('order.user', function ($q) use ($type) {
                 $q->where('type', $type);

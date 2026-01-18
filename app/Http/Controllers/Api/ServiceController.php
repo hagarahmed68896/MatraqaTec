@@ -43,6 +43,20 @@ class ServiceController extends Controller
             $query->whereNull('parent_id');
         }
 
+        // Category Filter (Single choice)
+        if ($request->filled('category_id')) {
+            $query->where('parent_id', $request->category_id);
+        } elseif ($request->filled('category_ids')) {
+            $catIds = is_array($request->category_ids) ? $request->category_ids : explode(',', $request->category_ids);
+            $query->whereIn('parent_id', $catIds);
+        }
+
+        // Service Filter (Multi choice)
+        if ($request->filled('service_ids')) {
+            $svcIds = is_array($request->service_ids) ? $request->service_ids : explode(',', $request->service_ids);
+            $query->whereIn('id', $svcIds);
+        }
+
         // Filter by featured (prominent services)
         if ($request->boolean('is_featured')) {
             $query->where('is_featured', true);
@@ -59,6 +73,37 @@ class ServiceController extends Controller
         // Filter by city
         if ($request->has('city_id')) {
             $query->where('city_id', $request->city_id);
+        }
+
+        // NEW: District Filter (OR Logic for multi-select)
+        if ($request->filled('district_ids')) {
+            $districtIds = is_array($request->district_ids) ? $request->district_ids : explode(',', $request->district_ids);
+            $query->whereHas('technicians', function($q) use ($districtIds) {
+                $q->where(function($q2) use ($districtIds) {
+                    foreach($districtIds as $dId) {
+                        $q2->orWhereJsonContains('districts', (string)$dId);
+                    }
+                });
+            });
+        }
+
+        // NEW: Rating Filter (Average of technician reviews)
+        if ($request->filled('min_rating')) {
+            $minRating = $request->min_rating;
+            $query->whereHas('technicians', function($q) use ($minRating) {
+                $q->whereHas('reviews', function($q2) use ($minRating) {
+                    // This is still a bit simplified, but checks if tech has ANY review matching? 
+                    // No, we need technicians WHOSE AVERAGE is >= min_rating.
+                })->whereRaw('(SELECT AVG(rating) FROM reviews WHERE reviews.technician_id = technicians.id) >= ?', [$minRating]);
+            });
+        }
+
+        // NEW: Availability Filter
+        if ($request->has('availability')) {
+            $isAvailable = $request->availability === 'available';
+            $query->whereHas('technicians.user', function($q) use ($isAvailable) {
+                $q->where('is_online', $isAvailable);
+            });
         }
 
         $services = $query->with(['children', 'city'])->get();
@@ -92,7 +137,7 @@ class ServiceController extends Controller
                     ->get();
             }
             
-            // Suggested services (e.g., top level or marked as popular)
+            // Suggested services (top levels)
             $data['suggested_services'] = Service::whereNull('parent_id')->take(4)->get();
         }
 

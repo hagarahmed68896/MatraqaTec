@@ -50,8 +50,8 @@ class RefundController extends Controller
                  // User model comment says: // admin, individual, corporate_company, technician, maintenance_company
                  if ($clientType == 'individual') {
                      $q->where('type', 'individual');
-                 } elseif ($clientType == 'corporate_company' || $clientType == 'company') {
-                     $q->where('type', 'corporate_company'); // Assuming company means corporate customer
+                 } elseif ($clientType == 'company') {
+                     $q->where('type', 'maintenance_company'); 
                  }
             });
         }
@@ -164,8 +164,8 @@ class RefundController extends Controller
              $query->whereHas('order.user', function ($q) use ($clientType) {
                  if ($clientType == 'individual') {
                      $q->where('type', 'individual');
-                 } elseif ($clientType == 'corporate_company' || $clientType == 'company') {
-                     $q->where('type', 'corporate_company');
+                 } elseif ($clientType == 'company') {
+                     $q->where('type', 'maintenance_company');
                  }
             });
         }

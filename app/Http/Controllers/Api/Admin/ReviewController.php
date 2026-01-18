@@ -39,7 +39,7 @@ class ReviewController extends Controller
                 });
             } elseif ($clientType === 'company') {
                 $query->whereHas('user', function ($q) {
-                    $q->where('type', 'like', 'corporate%'); // Assuming corporate_company
+                    $q->where('type', 'maintenance_company');
                 });
             }
         }
@@ -146,7 +146,7 @@ class ReviewController extends Controller
                 });
             } elseif ($clientType === 'company') {
                 $query->whereHas('user', function ($q) {
-                    $q->where('type', 'like', 'corporate%');
+                    $q->where('type', 'maintenance_company');
                 });
             }
         }

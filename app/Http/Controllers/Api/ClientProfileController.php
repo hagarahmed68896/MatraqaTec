@@ -18,12 +18,11 @@ class ClientProfileController extends Controller
         $user = $request->user();
         
         // Ensure user is an individual customer
-        if ($user->type !== 'individual' && $user->type !== 'corporate_company') {
-            // Adjust logic if you want to support other types or restrict strictly
-             // based on "Client User" request, usually implies Individual/Corporate
+        if ($user->type !== 'individual') {
+             return response()->json(['status' => false, 'message' => 'Unauthorized access'], 403);
         }
 
-        $user->load(['individualCustomer', 'corporateCustomer', 'favorites', 'searchHistories']); 
+        $user->load(['individualCustomer', 'favorites', 'searchHistories']); 
 
         // Calculate some stats if needed for the dashboard (like order count)
         $ordersCount = \App\Models\Order::where('user_id', $user->id)->count();

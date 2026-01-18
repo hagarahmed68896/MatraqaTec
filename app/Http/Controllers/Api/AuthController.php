@@ -30,8 +30,15 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'type' => 'required|string|in:individual,corporate_company,technician,maintenance_company',
+            'type' => 'required|string|in:individual,technician,maintenance_company', // Refined types - Unified Company
             'phone' => 'required|string|regex:/^5[0-9]{8}$/|unique:users',
+            
+            // Company Specific Validations
+            'company_name' => 'required_if:type,maintenance_company|nullable|string|max:255',
+            'commercial_record_number' => 'required_if:type,maintenance_company|nullable|string|max:255',
+            'commercial_record_file' => 'required_if:type,maintenance_company|nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'tax_number' => 'required_if:type,maintenance_company|nullable|string|max:255',
+            'address' => 'required_if:type,maintenance_company|nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -53,17 +60,23 @@ class AuthController extends Controller
                 'first_name_en' => $request->name,
                 'first_name_ar' => $request->name_ar ?? $request->name,
             ]);
-        } elseif ($request->type === 'corporate_company') {
-            CorporateCustomer::create([
-                'user_id' => $user->id,
-                'company_name_en' => $request->company_name ?? $request->name,
-                'company_name_ar' => $request->company_name_ar ?? $request->company_name ?? $request->name,
-            ]);
         } elseif ($request->type === 'maintenance_company') {
+            // Handle CR File Upload
+            $crFilePath = null;
+            if ($request->hasFile('commercial_record_file')) {
+                $crFilePath = $request->file('commercial_record_file')->store('commercial_records', 'public');
+            }
+
+            // Create MaintenanceCompany (as Provider/Company Account)
             MaintenanceCompany::create([
                 'user_id' => $user->id,
-                'company_name_en' => $request->company_name ?? $request->name,
-                'company_name_ar' => $request->company_name_ar ?? $request->company_name ?? $request->name,
+                'company_name_en' => $request->company_name, 
+                'company_name_ar' => $request->company_name_ar ?? $request->company_name,
+                'commercial_record_number' => $request->commercial_record_number,
+                'commercial_record_file' => $crFilePath,
+                'tax_number' => $request->tax_number,
+                'address' => $request->address,
+                'city_id' => $request->city_id ?? 1, // Default city if not provided
             ]);
         } elseif ($request->type === 'technician') {
             Technician::create([
@@ -77,7 +90,7 @@ class AuthController extends Controller
             'status' => true,
             'message' => 'User registered successfully. Please verify your phone with OTP.',
             'data' => [
-                'user' => $user,
+                'user' => $user->load('maintenanceCompany'), // Load relation if exists
             ],
         ], 201);
     }
@@ -310,8 +323,6 @@ class AuthController extends Controller
         
         if ($user->type === 'individual') {
             $user->load('individualCustomer');
-        } elseif ($user->type === 'corporate_company') {
-            $user->load('corporateCustomer');
         } elseif ($user->type === 'maintenance_company') {
             $user->load('maintenanceCompany');
         } elseif ($user->type === 'technician') {

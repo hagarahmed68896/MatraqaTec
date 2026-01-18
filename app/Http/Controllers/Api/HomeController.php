@@ -11,9 +11,9 @@ use Illuminate\Http\Request;
 
 class HomeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $user = auth()->user();
+        $user = $request->user();
         $userType = $user->type;
         
         $data = [
@@ -27,7 +27,7 @@ class HomeController extends Controller
             'unread_notifications_count' => Notification::where('user_id', $user->id)->unread()->count(),
         ];
 
-        if (in_array($userType, ['individual', 'corporate_company'])) {
+        if (in_array($userType, ['individual'])) {
             // Customer Home
             $data['banners'] = Content::with('items')->where('is_visible', true)->get();
             $data['categories'] = Service::whereNull('parent_id')->get();
@@ -44,26 +44,75 @@ class HomeController extends Controller
                 ->first();
 
             $data['search_history'] = \App\Models\SearchHistory::where('user_id', $user->id)->latest()->take(5)->get();
-            $data['cities'] = \App\Models\City::all();
-        } elseif (in_array($userType, ['technician', 'maintenance_company'])) {
-            // Technician / Company Home
-            $data['user']['is_online'] = $user->is_online;
+            $data['cities'] = \App\Models\City::with('districts')->get();
+            $data['categories'] = Service::whereNull('parent_id')->get();
+            $data['service_types'] = Service::whereNotNull('parent_id')->get();
+        } elseif ($userType === 'maintenance_company') {
+            // Company Home
+            $company = $user->maintenanceCompany;
+            $filter = request('filter', 'all'); // weekly, monthly, yearly
             
-            $query = Order::query();
-            if ($userType === 'technician') {
-                $query->where('technician_id', $user->technician->id ?? null);
-            } else {
-                $query->where('maintenance_company_id', $user->maintenanceCompany->id ?? null);
+            $query = Order::where('maintenance_company_id', $company->id ?? null);
+            
+            // Apply Date Filters for Statistics
+            if ($filter === 'weekly') {
+                $query->where('created_at', '>=', now()->subWeek());
+            } elseif ($filter === 'monthly') {
+                $query->where('created_at', '>=', now()->subMonth());
+            } elseif ($filter === 'yearly') {
+                $query->where('created_at', '>=', now()->subYear());
             }
+
+            $ordersCount = (clone $query)->count();
+            
+            // Top Technicians (Top 3 based on completed orders)
+            $topTechnicians = \App\Models\Technician::with(['user:id,name,avatar'])
+                ->where('maintenance_company_id', $company->id ?? 0)
+                ->withCount(['orders as completed_orders_count' => function($q) {
+                    $q->where('status', 'completed');
+                }])
+                ->orderByDesc('completed_orders_count')
+                ->take(3)
+                ->get();
+
+            $data['statistics'] = [
+                'orders_count' => $ordersCount,
+                'filter_type' => $filter
+            ];
+            
+            $data['top_technicians'] = $topTechnicians;
+            
+            // Recent Orders for company dashboard
+            $data['recent_orders'] = Order::with(['technician.user', 'service', 'user'])
+                ->where('maintenance_company_id', $company->id ?? null)
+                ->latest()
+                ->take(5)
+                ->get();
+
+            // Current Active Order (one that might need action or is in progress)
+            $data['current_order'] = Order::with(['user', 'service', 'technician.user'])
+                ->where('maintenance_company_id', $company->id ?? null)
+                ->whereIn('status', ['new', 'accepted', 'scheduled', 'in_progress'])
+                ->latest()
+                ->first();
+
+            // For summary (Wallet, etc.)
+            $data['summary'] = [
+                'active_orders_count' => Order::where('maintenance_company_id', $company->id ?? null)->whereIn('status', ['new', 'accepted', 'in_progress', 'scheduled'])->count(),
+                'total_completed_count' => Order::where('maintenance_company_id', $company->id ?? null)->where('status', 'completed')->count(),
+                'wallet_balance' => $user->wallet_balance,
+            ];
+        } elseif ($userType === 'technician') {
+             // Technician Home
+            $data['user']['is_online'] = $user->is_online;
+            $query = Order::where('technician_id', $user->technician->id ?? null);
 
             $data['summary'] = [
                 'active_orders_count' => (clone $query)->whereIn('status', ['new', 'accepted', 'in_progress', 'scheduled'])->count(),
                 'total_completed_count' => (clone $query)->where('status', 'completed')->count(),
                 'wallet_balance' => $user->wallet_balance,
             ];
-            
-            // Maybe also add recent orders for technicians
-            $data['recent_orders'] = $query->latest()->take(5)->get();
+             $data['recent_orders'] = $query->latest()->take(5)->get();
         }
 
         return response()->json([
