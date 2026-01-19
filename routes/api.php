@@ -142,6 +142,24 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('orders/{id}/technician-location', [OrderController::class, 'getTechnicianLocation']);
     Route::post('orders/{id}/accept', [OrderController::class, 'accept']);
     Route::post('orders/{id}/refuse', [OrderController::class, 'refuse']);
+
+    // --- Technician Specific Routes ---
+    Route::prefix('technician')->group(function () {
+        Route::get('profile', [\App\Http\Controllers\Api\TechnicianProfileController::class, 'getProfile']);
+        Route::post('profile/update', [\App\Http\Controllers\Api\TechnicianProfileController::class, 'updateProfile']);
+        Route::post('profile/change-password', [\App\Http\Controllers\Api\TechnicianProfileController::class, 'updatePassword']);
+        Route::get('statistics', [\App\Http\Controllers\Api\TechnicianProfileController::class, 'statistics']);
+        Route::get('transactions', [\App\Http\Controllers\Api\TechnicianProfileController::class, 'transactions']);
+        
+        // Technician Support
+        Route::get('support', [\App\Http\Controllers\Api\SupportController::class, 'index']);
+        Route::get('faqs', [\App\Http\Controllers\Api\SupportController::class, 'faqs']);
+        Route::get('terms', [\App\Http\Controllers\Api\SupportController::class, 'terms']);
+        Route::get('privacy', [\App\Http\Controllers\Api\SupportController::class, 'privacy']);
+        
+        // Technician Tickets (Complaints/Inquiries)
+        Route::apiResource('tickets', \App\Http\Controllers\Api\ComplaintController::class)->only(['index', 'store', 'show']);
+    });
     Route::apiResource('orders', OrderController::class);
     Route::apiResource('appointments', AppointmentController::class);
     // Reviews: Store (Create). Index/Show are public but can be accessed here too. Update/Destroy managed by logic in controller.

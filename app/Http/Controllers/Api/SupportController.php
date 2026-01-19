@@ -38,11 +38,15 @@ class SupportController extends Controller
     /**
      * Get FAQs filtered for companies
      */
-    public function faqs()
+    public function faqs(Request $request)
     {
+        $user = $request->user();
+        $targetGroup = $user ? $user->type : 'client'; // Default to client if not auth
+        if ($targetGroup === 'individual') $targetGroup = 'client';
+
         $faqs = Faq::where('status', 'active')
-            ->where(function($q) {
-                $q->whereIn('target_group', ['company', 'all', 'both']);
+            ->where(function($q) use ($targetGroup) {
+                $q->whereIn('target_group', [$targetGroup, 'all', 'both']);
             })
             ->get();
 
@@ -56,11 +60,15 @@ class SupportController extends Controller
     /**
      * Get Terms and Conditions filtered for companies
      */
-    public function terms()
+    public function terms(Request $request)
     {
+        $user = $request->user();
+        $targetGroup = $user ? $user->type : 'client';
+        if ($targetGroup === 'individual') $targetGroup = 'client';
+
         $terms = Term::where('status', 'active')
-            ->where(function($q) {
-                $q->whereIn('target_group', ['company', 'all', 'both']);
+            ->where(function($q) use ($targetGroup) {
+                $q->whereIn('target_group', [$targetGroup, 'all', 'both']);
             })
             ->get();
 
@@ -74,11 +82,15 @@ class SupportController extends Controller
     /**
      * Get Privacy Policy filtered for companies
      */
-    public function privacy()
+    public function privacy(Request $request)
     {
+        $user = $request->user();
+        $targetGroup = $user ? $user->type : 'client';
+        if ($targetGroup === 'individual') $targetGroup = 'client';
+
         $policies = PrivacyPolicy::where('status', 'active')
-            ->where(function($q) {
-                $q->whereIn('target_group', ['company', 'all', 'both']);
+            ->where(function($q) use ($targetGroup) {
+                $q->whereIn('target_group', [$targetGroup, 'all', 'both']);
             })
             ->get();
 

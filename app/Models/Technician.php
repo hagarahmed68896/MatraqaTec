@@ -24,6 +24,12 @@ class Technician extends Model
         'image',
         'national_id',
         'districts',
+        'bank_name',
+        'account_name',
+        'account_number',
+        'bank_address',
+        'iban',
+        'swift_code',
     ];
 
     protected $casts = [
