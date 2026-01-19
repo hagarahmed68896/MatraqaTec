@@ -77,11 +77,12 @@ class IndividualCustomerController extends Controller
 
     public function store(Request $request)
     {
+        $locale = app()->getLocale();
         $validator = Validator::make($request->all(), [
-            'first_name_en' => 'required|string|max:255',
-            'last_name_en' => 'required|string|max:255',
-            'first_name_ar' => 'required|string|max:255',
-            'last_name_ar' => 'required|string|max:255',
+            'first_name_en' => $locale == 'en' ? 'required|string|max:255' : 'nullable|string|max:255',
+            'last_name_en' => $locale == 'en' ? 'required|string|max:255' : 'nullable|string|max:255',
+            'first_name_ar' => $locale == 'ar' ? 'required|string|max:255' : 'nullable|string|max:255',
+            'last_name_ar' => $locale == 'ar' ? 'required|string|max:255' : 'nullable|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'nullable|string|min:8',
             'phone' => 'nullable|string|unique:users',
@@ -93,7 +94,10 @@ class IndividualCustomerController extends Controller
         }
 
         $password = $request->password ?? Str::random(10);
-        $name = $request->first_name_en . ' ' . $request->last_name_en;
+        
+        $firstName = $request->first_name_en ?? $request->first_name_ar;
+        $lastName = $request->last_name_en ?? $request->last_name_ar;
+        $name = $firstName . ' ' . $lastName;
 
         $user = User::create([
             'name' => $name,
@@ -132,15 +136,22 @@ class IndividualCustomerController extends Controller
         
         $user = $profile->user;
         if ($user) {
-            if ($request->has('name')) $user->name = $request->name;
             if ($request->has('email')) $user->email = $request->email;
             if ($request->has('password') && $request->password) $user->password = Hash::make($request->password);
             if ($request->has('phone')) $user->phone = $request->phone;
             if ($request->has('status')) $user->status = $request->status;
+            
+            // Sync user name if names are updated
+            $firstName = $request->first_name_en ?? $request->first_name_ar ?? $profile->first_name_en ?? $profile->first_name_ar;
+            $lastName = $request->last_name_en ?? $request->last_name_ar ?? $profile->last_name_en ?? $profile->last_name_ar;
+            if ($request->has('first_name_en') || $request->has('first_name_ar') || $request->has('last_name_en') || $request->has('last_name_ar')) {
+                $user->name = $firstName . ' ' . $lastName;
+            }
+            
             $user->save();
         }
 
-        $profile->update($request->except(['name', 'email', 'password', 'phone', 'status', 'type']));
+        $profile->update($request->except(['email', 'password', 'phone', 'status', 'type']));
         
         return response()->json(['status' => true, 'message' => 'Profile updated', 'data' => $profile->load('user')]);
     }

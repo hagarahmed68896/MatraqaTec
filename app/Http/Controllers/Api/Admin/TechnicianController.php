@@ -76,9 +76,10 @@ class TechnicianController extends Controller
 
     public function store(Request $request)
     {
+        $locale = app()->getLocale();
         $validator = Validator::make($request->all(), [
-            'name_en' => 'required|string|max:255',
-            'name_ar' => 'required|string|max:255',
+            'name_en' => $locale == 'en' ? 'required|string|max:255' : 'nullable|string|max:255',
+            'name_ar' => $locale == 'ar' ? 'required|string|max:255' : 'nullable|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'nullable|string|min:8',
             'phone' => 'nullable|string|unique:users',
@@ -95,7 +96,7 @@ class TechnicianController extends Controller
         }
 
         $password = $request->password ?? Str::random(10);
-        $name = $request->name_en; // Use English name for User model
+        $name = $request->name_en ?? $request->name_ar; // Use provided name for User model
 
         $user = User::create([
             'name' => $name,
@@ -153,11 +154,16 @@ class TechnicianController extends Controller
         
         $user = $technician->user;
         if ($user) {
-            if ($request->has('name_en')) $user->name = $request->name_en; // Sync EN name to User
             if ($request->has('email')) $user->email = $request->email;
             if ($request->has('password') && $request->password) $user->password = Hash::make($request->password);
             if ($request->has('phone')) $user->phone = $request->phone;
             if ($request->has('status')) $user->status = $request->status;
+            
+            // Sync user name if names are updated
+            if ($request->has('name_en') || $request->has('name_ar')) {
+                $user->name = $request->name_en ?? $request->name_ar ?? $technician->name_en ?? $technician->name_ar;
+            }
+            
             $user->save();
         }
 

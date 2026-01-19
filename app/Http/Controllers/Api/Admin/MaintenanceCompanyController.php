@@ -87,9 +87,10 @@ public function index(Request $request)
 
     public function store(Request $request)
     {
+        $locale = app()->getLocale();
         $validator = Validator::make($request->all(), [
-            'company_name_en' => 'required|string|max:255',
-            'company_name_ar' => 'required|string|max:255',
+            'company_name_en' => $locale == 'en' ? 'required|string|max:255' : 'nullable|string|max:255',
+            'company_name_ar' => $locale == 'ar' ? 'required|string|max:255' : 'nullable|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'nullable|string|min:8',
             'phone' => 'nullable|string|unique:users',
@@ -100,7 +101,7 @@ public function index(Request $request)
         }
 
         $password = $request->password ?? Str::random(10);
-        $name = $request->company_name_en;
+        $name = $request->company_name_en ?? $request->company_name_ar;
 
         $user = User::create([
             'name' => $name,
@@ -142,15 +143,20 @@ public function index(Request $request)
         
         $user = $company->user;
         if ($user) {
-            if ($request->has('name')) $user->name = $request->name;
             if ($request->has('email')) $user->email = $request->email;
             if ($request->has('password') && $request->password) $user->password = Hash::make($request->password);
             if ($request->has('phone')) $user->phone = $request->phone;
             if ($request->has('status')) $user->status = $request->status;
+
+            // Sync user name if names are updated
+            if ($request->has('company_name_en') || $request->has('company_name_ar')) {
+                $user->name = $request->company_name_en ?? $request->company_name_ar ?? $company->company_name_en ?? $company->company_name_ar;
+            }
+
             $user->save();
         }
 
-        $company->update($request->except(['name', 'email', 'password', 'phone', 'status', 'type']));
+        $company->update($request->except(['email', 'password', 'phone', 'status', 'type']));
         
         return response()->json(['status' => true, 'message' => 'Company updated', 'data' => $company->load('user')]);
     }
