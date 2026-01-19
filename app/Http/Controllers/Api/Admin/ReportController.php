@@ -11,23 +11,137 @@ use App\Models\PlatformProfit;
 use App\Models\FinancialSettlement;
 use App\Models\Service;
 use App\Models\Technician;
+use App\Models\Review;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class ReportController extends Controller
 {
     // General Dashboard Summary
-    public function index()
+    public function index(Request $request)
     {
-        $data = [
-            'total_users' => User::count(),
-            'total_orders' => Order::count(),
-            'total_revenue' => Payment::where('status', 'paid')->sum('amount'), // Adjust 'paid' status as needed
-            'platform_profit' => PlatformProfit::sum('amount'),
-            'orders_today' => Order::whereDate('created_at', Carbon::today())->count(),
-        ];
+        $now = Carbon::now();
+        $startOfCurrentWeek = $now->copy()->subDays(7);
+        $startOfPreviousWeek = $now->copy()->subDays(14);
 
-        return response()->json(['status' => true, 'data' => $data]);
+        // 1. Header Stats
+        // New Orders
+        $currentOrders = Order::where('created_at', '>=', $startOfCurrentWeek)->count();
+        $previousOrders = Order::where('created_at', '>=', $startOfPreviousWeek)
+            ->where('created_at', '<', $startOfCurrentWeek)
+            ->count();
+        $ordersChange = $this->calculatePercentageChange($currentOrders, $previousOrders);
+
+        // Available Technicians
+        $availableTechs = Technician::where('availability_status', 'available')->count();
+        $totalTechs = Technician::count();
+        $availableChange = $totalTechs > 0 ? round(($availableTechs / $totalTechs) * 100, 2) : 0; // Or comparison to last week available
+
+        // Total Revenue
+        $currentRevenue = Payment::where('status', 'paid')
+            ->where('created_at', '>=', $startOfCurrentWeek)
+            ->sum('amount');
+        $previousRevenue = Payment::where('status', 'paid')
+            ->where('created_at', '>=', $startOfPreviousWeek)
+            ->where('created_at', '<', $startOfCurrentWeek)
+            ->sum('amount');
+        $revenueChange = $this->calculatePercentageChange($currentRevenue, $previousRevenue);
+
+        // Average Rating
+        $currentRating = Review::where('created_at', '>=', $startOfCurrentWeek)->avg('rating') ?? 0;
+        $previousRating = Review::where('created_at', '>=', $startOfPreviousWeek)
+            ->where('created_at', '<', $startOfCurrentWeek)
+            ->avg('rating') ?? 0;
+        $ratingChange = $this->calculatePercentageChange($currentRating, $previousRating);
+
+        // 2. Charts Data (Daily Trends for last 7 days)
+        $revenueTrend = [];
+        $usersTrend = [];
+        $days = [];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $date = $now->copy()->subDays($i)->format('Y-m-d');
+            $days[] = $now->copy()->subDays($i)->translatedFormat('l'); // Day name
+
+            $revenueTrend[] = Payment::where('status', 'paid')
+                ->whereDate('created_at', $date)
+                ->sum('amount');
+
+            $usersTrend[] = User::whereDate('created_at', $date)->count();
+        }
+
+        // 3. Prominent Technicians (أبرز الفنيين)
+        $prominentQuery = Technician::withAvg('reviews', 'rating')
+            ->with(['user', 'service']);
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $prominentQuery->where(function ($q) use ($search) {
+                $q->where('name_en', 'like', "%{$search}%")
+                  ->orWhere('name_ar', 'like', "%{$search}%")
+                  ->orWhereHas('user', function ($q2) use ($search) {
+                      $q2->where('email', 'like', "%{$search}%")
+                         ->orWhere('phone', 'like', "%{$search}%")
+                         ->orWhere('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $prominentTechnicians = $prominentQuery->orderByDesc('reviews_avg_rating')
+            ->orderByDesc('order_count')
+            ->limit(5)
+            ->get();
+
+        // 4. Service Distribution (فئات الخدمات)
+        $serviceDistribution = Order::select('service_id', DB::raw('count(*) as count'))
+            ->whereNotNull('service_id')
+            ->with('service')
+            ->groupBy('service_id')
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'header_stats' => [
+                    'new_orders' => [
+                        'count' => $currentOrders,
+                        'change' => $ordersChange,
+                        'trend' => array_slice($revenueTrend, -7) // Placeholder for trend line
+                    ],
+                    'available_technicians' => [
+                        'count' => $availableTechs,
+                        'total' => $totalTechs,
+                        'percentage' => $availableChange
+                    ],
+                    'total_revenue' => [
+                        'amount' => $currentRevenue,
+                        'change' => $revenueChange
+                    ],
+                    'average_rating' => [
+                        'rating' => round($currentRating, 1),
+                        'change' => $ratingChange
+                    ]
+                ],
+                'charts' => [
+                    'days' => $days,
+                    'revenue' => $revenueTrend,
+                    'users' => $usersTrend
+                ],
+                'prominent_technicians' => $prominentTechnicians,
+                'service_distribution' => $serviceDistribution,
+                'total_users' => User::count(),
+                'total_orders' => Order::count(),
+                'platform_profit' => PlatformProfit::sum('amount'),
+            ]
+        ]);
+    }
+
+    private function calculatePercentageChange($current, $previous)
+    {
+        if ($previous == 0) {
+            return $current > 0 ? 100 : 0;
+        }
+        return round((($current - $previous) / $previous) * 100, 2);
     }
 
     // Users Report
@@ -144,17 +258,41 @@ class ReportController extends Controller
     // Technicians Report
     public function technicians(Request $request)
     {
+        $search = $request->input('search');
+
         // 1. Top Rated Technicians
-        // Relationship 'reviews' is defined in Technician model.
-        $topRated = Technician::withAvg('reviews', 'rating')
-            ->orderByDesc('reviews_avg_rating')
-            ->with('user') // to get name
+        $topRatedQuery = Technician::withAvg('reviews', 'rating');
+        if ($search) {
+            $topRatedQuery->where(function ($q) use ($search) {
+                $q->where('name_en', 'like', "%{$search}%")
+                  ->orWhere('name_ar', 'like', "%{$search}%")
+                  ->orWhereHas('user', function ($q2) use ($search) {
+                      $q2->where('email', 'like', "%{$search}%")
+                         ->orWhere('phone', 'like', "%{$search}%")
+                         ->orWhere('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+        $topRated = $topRatedQuery->orderByDesc('reviews_avg_rating')
+            ->with('user', 'service')
             ->limit(10)
             ->get();
 
         // 2. Most Active Technicians (by Order Count)
-        $mostActive = Technician::orderByDesc('order_count')
-            ->with('user')
+        $mostActiveQuery = Technician::query();
+        if ($search) {
+            $mostActiveQuery->where(function ($q) use ($search) {
+                $q->where('name_en', 'like', "%{$search}%")
+                  ->orWhere('name_ar', 'like', "%{$search}%")
+                  ->orWhereHas('user', function ($q2) use ($search) {
+                      $q2->where('email', 'like', "%{$search}%")
+                         ->orWhere('phone', 'like', "%{$search}%")
+                         ->orWhere('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+        $mostActive = $mostActiveQuery->orderByDesc('order_count')
+            ->with('user', 'service')
             ->limit(10)
             ->get();
 
