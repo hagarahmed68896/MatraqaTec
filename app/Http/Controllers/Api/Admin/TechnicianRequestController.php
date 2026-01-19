@@ -54,12 +54,16 @@ class TechnicianRequestController extends Controller
             return response()->json(['status' => false, 'message' => 'Request already processed'], 422);
         }
 
+        $request->validate([
+            'password' => 'required|string|min:8',
+        ]);
+
         // 1. Create User
         $user = \App\Models\User::create([
             'name' => $techRequest->name_ar ?? $techRequest->name,
             'email' => $techRequest->email,
             'phone' => $techRequest->phone,
-            'password' => \Illuminate\Support\Facades\Hash::make('tech@123'), // Default password
+            'password' => \Illuminate\Support\Facades\Hash::make($request->password),
             'type' => 'technician',
             'avatar' => $techRequest->photo,
         ]);
