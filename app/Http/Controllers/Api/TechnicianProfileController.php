@@ -200,4 +200,28 @@ class TechnicianProfileController extends Controller
             'data' => $transactions
         ]);
     }
+
+    /**
+     * Toggle Availability Status (Online/Offline)
+     */
+    public function toggleAvailability(Request $request)
+    {
+        $user = $request->user();
+        if ($user->type !== 'technician') {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'is_online' => 'required|boolean'
+        ]);
+
+        $user->is_online = $request->is_online;
+        $user->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Availability updated successfully',
+            'data' => ['is_online' => $user->is_online]
+        ]);
+    }
 }

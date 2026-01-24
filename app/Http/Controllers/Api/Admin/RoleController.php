@@ -35,7 +35,6 @@ class RoleController extends Controller
             return response()->json(['status' => false, 'message' => $validator->errors()->first(), 'errors' => $validator->errors()], 422);
         }
 
-        // Generate a programmatic name (slug) if not provided, or just use name_en
         $name = $request->name ?? Str::slug($request->name_en);
 
         $role = Role::create([

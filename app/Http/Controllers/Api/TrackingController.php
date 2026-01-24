@@ -34,6 +34,10 @@ class TrackingController extends Controller
             return response()->json(['status' => false, 'message' => 'Technician profile not found'], 404);
         }
 
+        if (!$technician->user->is_online) {
+             return response()->json(['status' => false, 'message' => 'You must be online to update location'], 403);
+        }
+
         $location = TechnicianLocation::updateOrCreate(
             ['technician_id' => $technician->id],
             [

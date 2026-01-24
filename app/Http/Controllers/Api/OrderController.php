@@ -59,6 +59,12 @@ class OrderController extends Controller
                 // In Progress: accepted, scheduled, in_progress (assigned to this company)
                 $query->where('maintenance_company_id', $company->id)
                       ->whereIn('status', ['accepted', 'scheduled', 'in_progress']);
+            } elseif ($request->tab === 'assigned') {
+                 // Orders assigned to technicians but not yet accepted by them (if we want to track this separately)
+                 // or maybe 'pending_technician_acceptance'
+                 $query->where('maintenance_company_id', $company->id)
+                       ->whereNotNull('technician_id')
+                       ->where('status', 'scheduled'); // Assuming 'scheduled' is the status when assigned
             } else {
                 // Default: show all assigned orders
                 $query->where('maintenance_company_id', $company->id);
@@ -890,6 +896,20 @@ class OrderController extends Controller
 
         if ($request->technician_id && $company) {
             $order->technician_id = $request->technician_id;
+            $order->assigned_at = now(); // Start the timer for the technician
+
+            // Notify Technician
+            $tech = \App\Models\Technician::find($request->technician_id);
+            if ($tech && $tech->user_id) {
+                 $this->sendNotification($tech->user_id, [
+                    'type' => \App\Models\Notification::TYPE_NEW_ORDER ?? 'new_order',
+                    'title_ar' => 'مهمة جديدة',
+                    'title_en' => 'New Task Assigned',
+                    'body_ar' => 'تم تعيين مهمة جديدة لك، يرجى القبول أو الرفض خلال 15 دقيقة',
+                    'body_en' => 'You have been assigned a new task. Please accept or reject within 15 minutes',
+                    'data' => ['order_id' => $order->id]
+                ]);
+            }
         }
         if ($request->scheduled_at) {
             $order->scheduled_at = $request->scheduled_at;
@@ -907,6 +927,121 @@ class OrderController extends Controller
         ]);
 
         return response()->json(['status' => true, 'message' => 'Order accepted', 'data' => $order]);
+    }
+
+    public function technicianAccept(Request $request, $id)
+    {
+        $user = $request->user();
+        if ($user->type !== 'technician') {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $technician = \App\Models\Technician::where('user_id', $user->id)->first();
+        if (!$technician) return response()->json(['status' => false, 'message' => 'Technician profile not found'], 404);
+
+        $order = Order::find($id);
+        if (!$order) {
+            return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+        }
+
+        if ($order->technician_id !== $technician->id) {
+            return response()->json(['status' => false, 'message' => 'Order is not assigned to you'], 403);
+        }
+
+        // 15-minute expiration check
+        if ($order->assigned_at && $order->assigned_at->diffInMinutes(now()) > 15) {
+            return response()->json(['status' => false, 'message' => 'Order request expired (15 minutes limit)'], 422);
+        }
+
+        if ($order->status !== 'scheduled') { // Assuming 'scheduled' is the state when assigned by company/admin
+             // Also handling 'new' if self-picking logic exists, but primary flow is Company -> Tech
+             if ($order->status === 'accepted' || $order->status === 'in_progress') {
+                 return response()->json(['status' => false, 'message' => 'Order already accepted'], 422);
+             }
+        }
+
+        $order->status = 'accepted'; // Or keep it 'scheduled' but mark as 'tech_accepted'? 
+        // For now, let's look at the Order status flow. 
+        // If Company assigns -> Status is 'scheduled'?
+        // The previous accept() method sets status to 'scheduled'.
+        // So here we might want to move it to 'accepted' or just confirm it. 
+        // Let's set it to 'accepted' which maps to 'مقبول' (Accepted) in getStatusLabelAttribute
+        $order->status = 'accepted'; 
+        $order->save();
+
+        // Notify client or company?
+        // Notify Company that tech accepted?
+        if ($order->maintenance_company_id) {
+            $companyUser = \App\Models\MaintenanceCompany::find($order->maintenance_company_id)->user_id ?? null;
+            if ($companyUser) {
+                 $this->sendNotification($companyUser, [
+                    'type' => \App\Models\Notification::TYPE_STATUS_UPDATE,
+                    'title_ar' => 'الفني قبل المهمة',
+                    'title_en' => 'Technician Accepted Task',
+                    'body_ar' => "قام الفني {$technician->name_ar} بقبول المهمة رقم {$order->order_number}",
+                    'body_en' => "Technician {$technician->name_en} accepted task #{$order->order_number}",
+                    'data' => ['order_id' => $order->id]
+                ]);
+            }
+        }
+
+        return response()->json(['status' => true, 'message' => 'Order accepted successfully', 'data' => $order]);
+    }
+
+    public function technicianRefuse(Request $request, $id)
+    {
+        $user = $request->user();
+        if ($user->type !== 'technician') {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $technician = \App\Models\Technician::where('user_id', $user->id)->first();
+        if (!$technician) return response()->json(['status' => false, 'message' => 'Technician profile not found'], 404);
+
+        $order = Order::where('id', $id)->where('technician_id', $technician->id)->first();
+
+        if (!$order) {
+            return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+        }
+
+        // 15-minute expiration check (Still relevant? If expired, can they refuse? Yes, to clear it.)
+        // But maybe we don't block refusal if expired.
+
+        $request->validate([
+            'rejection_reason' => 'required|string|max:500',
+        ]);
+
+        $order->technician_id = null; // Unassign
+        $order->assigned_at = null;   // Clear assignment time
+        $order->status = 'new';       // Back to new? Or keep 'scheduled' but unassigned?
+        // If it was assigned by company, it should go back to company pool or remain assigned to company but no tech.
+        // Assuming status 'scheduled' meant confirmed visit. 
+        // If tech rejects, maybe we should notify company to re-assign.
+        $order->status = 'new'; // Let's reset to new or specific 'pending' status.
+        // If it belongs to a company, it stays with company.
+        
+        // If the order was originally just 'new' and picked up, this is fine.
+        // If it was 'scheduled' by admin, we might need a distinct status.
+        // For simplicity, reset to 'new' but keep company ownership if exists.
+        
+        $order->save();
+
+        // Notify Company
+        if ($order->maintenance_company_id) {
+            $companyUser = \App\Models\MaintenanceCompany::find($order->maintenance_company_id)->user_id ?? null;
+            if ($companyUser) {
+                 $this->sendNotification($companyUser, [
+                    'type' => \App\Models\Notification::TYPE_ORDER_REJECTED,
+                    'title_ar' => 'الفني رفض المهمة',
+                    'title_en' => 'Technician Rejected Task',
+                    'body_ar' => "قام الفني {$technician->name_ar} برفض المهمة رقم {$order->order_number}. السبب: {$request->rejection_reason}",
+                    'body_en' => "Technician {$technician->name_en} rejected task #{$order->order_number}. Reason: {$request->rejection_reason}",
+                    'data' => ['order_id' => $order->id]
+                ]);
+            }
+        }
+
+        return response()->json(['status' => true, 'message' => 'Order refused', 'data' => $order]);
     }
 
     public function refuse(Request $request, $id)

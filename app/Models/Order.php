@@ -26,10 +26,12 @@ class Order extends Model
         'rejection_reason',
         'spare_parts_metadata',
         'client_signature',
+        'assigned_at',
     ];
 
     protected $casts = [
         'scheduled_at' => 'datetime',
+        'assigned_at' => 'datetime',
         'spare_parts_metadata' => 'array',
     ];
 

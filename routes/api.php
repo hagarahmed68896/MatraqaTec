@@ -159,6 +159,13 @@ Route::middleware('auth:sanctum')->group(function () {
         
         // Technician Tickets (Complaints/Inquiries)
         Route::apiResource('tickets', \App\Http\Controllers\Api\ComplaintController::class)->only(['index', 'store', 'show']);
+        
+        // Technican Order Management (Accept/Refuse)
+        Route::post('orders/{id}/accept', [\App\Http\Controllers\Api\OrderController::class, 'technicianAccept']);
+        Route::post('orders/{id}/refuse', [\App\Http\Controllers\Api\OrderController::class, 'technicianRefuse']);
+
+        // Availability
+        Route::post('toggle-availability', [\App\Http\Controllers\Api\TechnicianProfileController::class, 'toggleAvailability']);
     });
     Route::apiResource('orders', OrderController::class);
     Route::apiResource('appointments', AppointmentController::class);

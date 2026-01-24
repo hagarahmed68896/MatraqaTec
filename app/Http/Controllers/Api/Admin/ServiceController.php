@@ -128,11 +128,7 @@ class ServiceController extends Controller
             $data['icon'] = $request->file('icon')->store('services/icons', 'public');
         }
 
-        $service->update($data);
-        
-        // Note: Updating children in a bulk update is complex and usually handled via separate endpoints 
-        // or by deleting old children and re-creating (if PUT replaces everything).
-        // For now, we'll assume children management via update is optional or handled separately.
+        $service->update($data);    
 
         return response()->json(['status' => true, 'message' => 'Service updated successfully', 'data' => $service]);
     }

@@ -14,5 +14,4 @@ class SocialLinkController extends Controller
         return response()->json(['status' => true, 'message' => 'Social Links retrieved successfully', 'data' => $links]);
     }
 
-// Methods removed. Read-only controller.
 }
