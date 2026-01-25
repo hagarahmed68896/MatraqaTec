@@ -33,6 +33,7 @@ use App\Http\Controllers\Api\PrivacyPolicyController;
 
 // Admin Controllers
 use App\Http\Controllers\Api\Admin\IndividualCustomerController as AdminIndividualCustomerController;
+use App\Http\Controllers\Api\Admin\CorporateCustomerController as AdminCorporateCustomerController;
 use App\Http\Controllers\Api\Admin\TechnicianController as AdminTechnicianController;
 use App\Http\Controllers\Api\Admin\MaintenanceCompanyController as AdminMaintenanceCompanyController;
 use App\Http\Controllers\Api\Admin\CityController as AdminCityController;
@@ -273,6 +274,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('individual-customers/blocked-download', [AdminIndividualCustomerController::class, 'downloadBlocked']);
         Route::get('individual-customers/{id}/statistics', [AdminIndividualCustomerController::class, 'statistics']);
         Route::apiResource('individual-customers', AdminIndividualCustomerController::class);
+        
+        Route::get('corporate-customers/download', [AdminCorporateCustomerController::class, 'download']);
+        Route::get('corporate-customers/blocked', [AdminCorporateCustomerController::class, 'blockedIndex']);
+        Route::apiResource('corporate-customers', AdminCorporateCustomerController::class);
         Route::post('individual-customers/bulk-delete', [AdminIndividualCustomerController::class, 'bulkDestroy']);
         
         Route::get('technicians/download', [AdminTechnicianController::class, 'download']);

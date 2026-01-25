@@ -17,12 +17,12 @@ class ClientProfileController extends Controller
     {
         $user = $request->user();
         
-        // Ensure user is an individual customer
-        if ($user->type !== 'individual') {
+        // Ensure user is an individual or corporate customer
+        if (!in_array($user->type, ['individual', 'corporate_customer'])) {
              return response()->json(['status' => false, 'message' => 'Unauthorized access'], 403);
         }
 
-        $user->load(['individualCustomer', 'favorites', 'searchHistories']); 
+        $user->load(['individualCustomer', 'corporateCustomer', 'favorites', 'searchHistories']); 
 
         // Calculate some stats if needed for the dashboard (like order count)
         $ordersCount = \App\Models\Order::where('user_id', $user->id)->count();
@@ -59,6 +59,11 @@ class ClientProfileController extends Controller
             'address'       => 'nullable|string|max:255',
             'latitude'      => 'nullable|numeric|between:-90,90',
             'longitude'     => 'nullable|numeric|between:-180,180',
+            // Corporate specific
+            'company_name_ar' => 'nullable|string|max:255',
+            'company_name_en' => 'nullable|string|max:255',
+            'commercial_record_number' => 'nullable|string|max:255',
+            'tax_number' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -132,8 +137,17 @@ class ClientProfileController extends Controller
             // Name update logic for User table (Main display name)
             // Strategy: Use First Name + Last Name (English/Arabic based on logic or just update name column)
             // Usually 'name' in users table is a fallback. Let's update it to First Name En + Last Name En
-            $newName = ($request->first_name_en ?? $user->individualCustomer->first_name_en) . ' ' . 
-                       ($request->last_name_en ?? $user->individualCustomer->last_name_en);
+            $user->save();
+        } elseif ($user->type === 'corporate_customer') {
+            $user->corporateCustomer()->update([
+                'company_name_ar' => $request->company_name_ar ?? $user->corporateCustomer->company_name_ar,
+                'company_name_en' => $request->company_name_en ?? $user->corporateCustomer->company_name_en,
+                'commercial_record_number' => $request->commercial_record_number ?? $user->corporateCustomer->commercial_record_number,
+                'tax_number' => $request->tax_number ?? $user->corporateCustomer->tax_number,
+                'address' => $request->address ?? $user->corporateCustomer->address,
+            ]);
+
+            $newName = $request->company_name_en ?? $user->corporateCustomer->company_name_en;
             $user->name = trim($newName) ?: $user->name;
             $user->save();
         }
@@ -143,7 +157,7 @@ class ClientProfileController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Profile updated successfully',
-            'data' => $user->load('individualCustomer')
+            'data' => $user->load(['individualCustomer', 'corporateCustomer'])
         ]);
     }
 
