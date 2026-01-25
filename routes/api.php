@@ -63,6 +63,7 @@ use App\Http\Controllers\Api\Admin\RefundController as AdminRefundController;
 use App\Http\Controllers\Api\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Api\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Api\Admin\ComplaintController as AdminComplaintController;
+use App\Http\Controllers\Api\Admin\ContractPaymentReceiptController;
 // Use alias for Admin Complaint Controller to avoid conflict with Public Complaint Controller if imported
 use App\Http\Controllers\Api\ComplaintController;
 use App\Http\Controllers\Api\Admin\PrivacyPolicyController as AdminPrivacyPolicyController;
@@ -335,7 +336,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('reviews/download', [AdminReviewController::class, 'download']);
         Route::apiResource('reviews', AdminReviewController::class);
         Route::get('contracts/download', [AdminContractController::class, 'download']);
+        
+        // Contract Payment Receipts (MUST be before contracts resource routes)
+        Route::prefix('contracts/{contract}')->group(function () {
+            Route::get('receipts', [ContractPaymentReceiptController::class, 'index']);
+            Route::post('receipts', [ContractPaymentReceiptController::class, 'store']);
+            Route::get('receipts/{receipt}', [ContractPaymentReceiptController::class, 'show']);
+            Route::delete('receipts/{receipt}', [ContractPaymentReceiptController::class, 'destroy']);
+        });
+        
         Route::apiResource('contracts', AdminContractController::class);
+        
         Route::get('financial-settlements/download', [AdminFinancialSettlementController::class, 'download']);
         Route::post('financial-settlements/{id}/change-status', [AdminFinancialSettlementController::class, 'changeStatus']);
         Route::apiResource('financial-settlements', AdminFinancialSettlementController::class);

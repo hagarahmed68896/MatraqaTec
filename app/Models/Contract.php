@@ -31,4 +31,9 @@ class Contract extends Model
     {
         return $this->belongsTo(MaintenanceCompany::class);
     }
+
+    public function paymentReceipts()
+    {
+        return $this->hasMany(ContractPaymentReceipt::class);
+    }
 }
