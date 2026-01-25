@@ -9,6 +9,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
+use App\Models\Order;
+use App\Models\Payment;
 
 class IndividualCustomerController extends Controller
 {
@@ -124,9 +127,49 @@ class IndividualCustomerController extends Controller
 
     public function show($id)
     {
-        $profile = IndividualCustomer::with('user')->where('user_id', $id)->orWhere('id', $id)->first();
+        $profile = IndividualCustomer::with(['user.city'])->where('user_id', $id)->orWhere('id', $id)->first();
         if (!$profile) return response()->json(['status' => false, 'message' => 'Profile not found'], 404);
-        return response()->json(['status' => true, 'message' => 'Profile retrieved', 'data' => $profile]);
+
+        $userId = $profile->user_id;
+
+        // 1. Statistics Summary
+        $totalPayments = Payment::where('user_id', $userId)
+            ->where('status', 'paid')
+            ->sum('amount');
+
+        $orderCount = Order::where('user_id', $userId)->count();
+
+        // 2. Performance Trend (Last 30 days)
+        $now = Carbon::now();
+        $chartData = [];
+        for ($i = 29; $i >= 0; $i--) {
+            $date = $now->copy()->subDays($i);
+            $chartData[] = [
+                'date' => $date->format('Y-m-d'),
+                'label' => $date->format('d/m'),
+                'value' => Order::where('user_id', $userId)
+                    ->whereDate('created_at', $date->format('Y-m-d'))
+                    ->count()
+            ];
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Profile retrieved',
+            'data' => [
+                'profile' => $profile,
+                'statistics' => [
+                    'total_payments' => $totalPayments,
+                    'order_count' => $orderCount,
+                    'performance_chart' => $chartData
+                ]
+            ]
+        ]);
+    }
+
+    public function statistics($id)
+    {
+        return $this->show($id);
     }
 
     public function update(Request $request, $id)

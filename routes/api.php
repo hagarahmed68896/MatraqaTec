@@ -271,6 +271,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('individual-customers/download', [AdminIndividualCustomerController::class, 'download']);
         Route::get('individual-customers/blocked', [AdminIndividualCustomerController::class, 'blockedIndex']);
         Route::get('individual-customers/blocked-download', [AdminIndividualCustomerController::class, 'downloadBlocked']);
+        Route::get('individual-customers/{id}/statistics', [AdminIndividualCustomerController::class, 'statistics']);
         Route::apiResource('individual-customers', AdminIndividualCustomerController::class);
         Route::post('individual-customers/bulk-delete', [AdminIndividualCustomerController::class, 'bulkDestroy']);
         
