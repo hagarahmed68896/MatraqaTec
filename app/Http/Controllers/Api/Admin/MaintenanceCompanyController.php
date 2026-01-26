@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use App\Models\Order;
 
 class MaintenanceCompanyController extends Controller
 {
@@ -132,8 +133,49 @@ public function index(Request $request)
         if (!$company) return response()->json(['status' => false, 'message' => 'Company not found'], 404);
         
         $company->services = $company->technicians->pluck('service')->unique('id')->values();
+
+        // 1. Statistics Summary
+        $userId = $company->user_id;
+        $totalTechnicians = $company->technicians()->count();
+        $totalServices = $company->technicians->pluck('service_id')->unique()->count();
+        $totalOrders = Order::where('maintenance_company_id', $company->id)->count();
+        $totalRevenue = Order::where('maintenance_company_id', $company->id)
+            ->where('status', 'completed')
+            ->sum('total_price');
+
+        // 2. Performance Trend (Last 30 days)
+        $now = \Carbon\Carbon::now();
+        $chartData = [];
+        for ($i = 29; $i >= 0; $i--) {
+            $date = $now->copy()->subDays($i);
+            $chartData[] = [
+                'date' => $date->format('Y-m-d'),
+                'label' => $date->format('d/m'),
+                'value' => Order::where('maintenance_company_id', $company->id)
+                    ->whereDate('created_at', $date->format('Y-m-d'))
+                    ->count()
+            ];
+        }
         
-        return response()->json(['status' => true, 'message' => 'Company retrieved', 'data' => $company]);
+        return response()->json([
+            'status' => true, 
+            'message' => 'Company retrieved', 
+            'data' => [
+                'profile' => $company,
+                'statistics' => [
+                    'total_technicians' => $totalTechnicians,
+                    'total_services' => $totalServices,
+                    'total_orders' => $totalOrders,
+                    'total_revenue' => $totalRevenue,
+                    'performance_chart' => $chartData
+                ]
+            ]
+        ]);
+    }
+
+    public function statistics($id)
+    {
+        return $this->show($id);
     }
 
     public function update(Request $request, $id)

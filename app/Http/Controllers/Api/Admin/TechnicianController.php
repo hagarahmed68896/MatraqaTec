@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use App\Models\Order;
+use App\Models\Review;
  
 class TechnicianController extends Controller
 {
@@ -134,7 +136,48 @@ class TechnicianController extends Controller
     {
         $technician = Technician::with('user', 'service', 'maintenanceCompany')->where('user_id', $id)->orWhere('id', $id)->first();
         if (!$technician) return response()->json(['status' => false, 'message' => 'Technician not found'], 404);
-        return response()->json(['status' => true, 'message' => 'Technician retrieved', 'data' => $technician]);
+
+        // 1. Statistics Summary
+        $totalCompletedOrders = Order::where('technician_id', $technician->id)
+            ->where('status', 'completed')
+            ->count();
+        $totalRevenue = Order::where('technician_id', $technician->id)
+            ->where('status', 'completed')
+            ->sum('total_price');
+        $averageRating = Review::where('technician_id', $technician->id)->avg('rating') ?? 0;
+
+        // 2. Performance Trend (Last 30 days)
+        $now = \Carbon\Carbon::now();
+        $chartData = [];
+        for ($i = 29; $i >= 0; $i--) {
+            $date = $now->copy()->subDays($i);
+            $chartData[] = [
+                'date' => $date->format('Y-m-d'),
+                'label' => $date->format('d/m'),
+                'value' => Order::where('technician_id', $technician->id)
+                    ->whereDate('created_at', $date->format('Y-m-d'))
+                    ->count()
+            ];
+        }
+
+        return response()->json([
+            'status' => true, 
+            'message' => 'Technician retrieved', 
+            'data' => [
+                'profile' => $technician,
+                'statistics' => [
+                    'total_completed_orders' => $totalCompletedOrders,
+                    'total_revenue' => $totalRevenue,
+                    'average_rating' => round($averageRating, 1),
+                    'performance_chart' => $chartData
+                ]
+            ]
+        ]);
+    }
+
+    public function statistics($id)
+    {
+        return $this->show($id);
     }
 
     public function update(Request $request, $id)

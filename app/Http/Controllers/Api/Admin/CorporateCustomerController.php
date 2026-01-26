@@ -161,6 +161,11 @@ class CorporateCustomerController extends Controller
         ]);
     }
 
+    public function statistics($id)
+    {
+        return $this->show($id);
+    }
+
     public function update(Request $request, $id)
     {
         $profile = CorporateCustomer::where('user_id', $id)->orWhere('id', $id)->first();
