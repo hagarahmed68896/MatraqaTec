@@ -12,7 +12,7 @@ $user = User::find(31);
 $company = MaintenanceCompany::where('user_id', $user->id)->first();
 echo "Logged in as User: {$user->id} | Company: " . ($company->id ?? 'N/A') . "\n";
 
-$queryStr = "محمد الفني";
+$queryStr = "محمد السباك";
 echo "Searching for: [$queryStr]\n";
 
 $technicians = Technician::with(['user'])
@@ -25,9 +25,11 @@ $technicians = Technician::with(['user'])
                 ->orWhere('phone', 'like', "%{$queryStr}%");
           });
     })
+    
     ->get();
 
 echo "Found " . $technicians->count() . " technicians.\n";
 foreach ($technicians as $t) {
     echo "ID: {$t->id} | Name Ar: [{$t->name_ar}] | User Name: [{$t->user->name}]\n";
 }
+

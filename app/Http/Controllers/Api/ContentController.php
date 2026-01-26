@@ -14,5 +14,4 @@ class ContentController extends Controller
         return response()->json(['status' => true, 'message' => 'Content retrieved successfully', 'data' => $content]);
     }
 
-// Methods removed. Read-only controller.
 }
