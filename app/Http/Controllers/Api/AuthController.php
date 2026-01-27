@@ -319,7 +319,7 @@ class AuthController extends Controller
         $user->otp_expires_at = Carbon::now()->addMinutes(10);
         $user->save();
 
-        // In a real application, you would integrate an SMS gateway here.
+        //  may would integrate an SMS gateway here.
         // For now, we will just log it.
         \Log::info("OTP for user {$user->phone}: {$otp}");
     }

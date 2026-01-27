@@ -15,7 +15,6 @@ class ContractController extends Controller
         if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
         
         // Assuming contracts linked via user_id or technician_id. 
-        // Best effort scoping.
         $contracts = Contract::with('maintenanceCompany')
             ->where('user_id', $user->id) // or technician_id depending on schema. Assuming user_id works for general cases.
             ->get();
@@ -34,5 +33,4 @@ class ContractController extends Controller
         return response()->json(['status' => true, 'message' => 'Contract retrieved', 'data' => $contract]);
     }
     
-    // Store, Update, Destroy removed (Admin managed)
 }

@@ -14,5 +14,4 @@ class FaqController extends Controller
         return response()->json(['status' => true, 'message' => 'FAQs retrieved successfully', 'data' => $faqs]);
     }
 
-// Methods removed. Read-only controller.
 }

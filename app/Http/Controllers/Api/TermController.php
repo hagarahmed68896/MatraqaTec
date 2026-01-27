@@ -14,5 +14,4 @@ class TermController extends Controller
         return response()->json(['status' => true, 'message' => 'Terms retrieved successfully', 'data' => $terms]);
     }
 
-// Methods removed. Read-only controller.
 }

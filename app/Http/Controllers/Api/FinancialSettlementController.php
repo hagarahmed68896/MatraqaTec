@@ -30,5 +30,4 @@ class FinancialSettlementController extends Controller
         return response()->json(['status' => true, 'message' => 'Settlement retrieved', 'data' => $settlement]);
     }
     
-    // Update removed (Admin processes it)
 }

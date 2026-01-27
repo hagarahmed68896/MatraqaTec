@@ -8,6 +8,5 @@ use Illuminate\Http\Request;
 
 class PlatformProfitController extends Controller
 {
-    // Users do not access Platform Profits.
-    // Methods removed.
+   
 }

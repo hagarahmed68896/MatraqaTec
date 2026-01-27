@@ -144,7 +144,6 @@ class WalletController extends Controller
 
         $user = $request->user();
         
-        // In a real app, you'd process the payment here.
         // For now, we assume success.
 
         $amount = $request->amount;

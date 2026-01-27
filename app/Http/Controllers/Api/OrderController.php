@@ -1103,18 +1103,20 @@ class OrderController extends Controller
 
     private function sendNotification($userId, $details)
     {
-        \App\Models\Notification::create([
-            'user_id' => $userId,
-            'type' => $details['type'],
-            'title_ar' => $details['title_ar'],
-            'title_en' => $details['title_en'],
-            'body_ar' => $details['body_ar'],
-            'body_en' => $details['body_en'],
-            'data' => $details['data'] ?? [],
-            'status' => 'sent',
-            'is_read' => false
-        ]);
+        $user = \App\Models\User::find($userId);
         
-        // This is where real FCM push would go
+        if ($user && $user->notification_enabled) {
+            \App\Models\Notification::create([
+                'user_id' => $userId,
+                'type' => $details['type'],
+                'title_ar' => $details['title_ar'],
+                'title_en' => $details['title_en'],
+                'body_ar' => $details['body_ar'],
+                'body_en' => $details['body_en'],
+                'data' => $details['data'] ?? [],
+                'status' => 'sent',
+                'is_read' => false
+            ]);
+        }
     }
 }

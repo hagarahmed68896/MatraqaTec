@@ -30,6 +30,7 @@ use App\Http\Controllers\Api\WalletController;
 use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\TrackingController;
 use App\Http\Controllers\Api\PrivacyPolicyController;
+use App\Http\Controllers\Api\UserSettingController;
 
 // Admin Controllers
 use App\Http\Controllers\Api\Admin\IndividualCustomerController as AdminIndividualCustomerController;
@@ -115,6 +116,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/update', [\App\Http\Controllers\Api\ClientProfileController::class, 'update']);
         Route::post('/change-password', [\App\Http\Controllers\Api\ClientProfileController::class, 'changePassword']);
         Route::post('/update-location', [\App\Http\Controllers\Api\ClientProfileController::class, 'updateLocation']);
+        Route::get('/settings', [UserSettingController::class, 'index']);
+        Route::post('/settings', [UserSettingController::class, 'update']);
 
         // Legacy / Specific Controller Routes (Keep if needed for specific granular updates)
         Route::get('individual-customer', [IndividualCustomerController::class, 'show']);

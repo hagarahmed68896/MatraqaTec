@@ -30,5 +30,4 @@ class InquiryController extends Controller
         return response()->json(['status' => true, 'message' => 'Inquiry retrieved', 'data' => $inquiry]);
     }
     
-    // Update removed (Admin answers)
 }

@@ -36,6 +36,9 @@ class User extends Authenticatable
         'address',
         'latitude',
         'longitude',
+        'notification_enabled',
+        'night_mode',
+        'language',
     ];
 
     /**
@@ -62,6 +65,8 @@ class User extends Authenticatable
             'otp_expires_at' => 'datetime',
             'wallet_balance' => 'decimal:2',
             'is_online' => 'boolean',
+            'notification_enabled' => 'boolean',
+            'night_mode' => 'boolean',
         ];
     }
 

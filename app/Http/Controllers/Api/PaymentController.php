@@ -75,7 +75,7 @@ class PaymentController extends Controller
             ]);
 
             // 3. Update Order Status (optional, depending on flow)
-            // $order->status = 'paid'; // If you have a 'paid' status
+            // $order->status = 'paid'; 
             // $order->save();
 
             return response()->json([
@@ -97,5 +97,4 @@ class PaymentController extends Controller
         return response()->json(['status' => true, 'message' => 'Payment retrieved', 'data' => $payment]);
     }
     
-    // Update/Destroy removed (Admin/System managed)
 }

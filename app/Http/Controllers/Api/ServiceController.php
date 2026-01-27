@@ -267,5 +267,4 @@ class ServiceController extends Controller
         ]);
     }
 
-// Methods removed. Read-only controller.
 }

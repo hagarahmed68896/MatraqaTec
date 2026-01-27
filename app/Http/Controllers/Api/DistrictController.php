@@ -14,5 +14,4 @@ class DistrictController extends Controller
         return response()->json(['status' => true, 'message' => 'Districts retrieved successfully', 'data' => $districts]);
     }
 
-// Methods removed. Read-only controller.
 }
