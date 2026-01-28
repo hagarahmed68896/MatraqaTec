@@ -15,5 +15,4 @@ class CityController extends Controller
         return response()->json(['status' => true, 'message' => 'Cities retrieved successfully', 'data' => $cities]);
     }
 
-// Methods removed. Read-only controller.
 }

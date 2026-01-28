@@ -27,7 +27,7 @@ class HomeController extends Controller
             'unread_notifications_count' => Notification::where('user_id', $user->id)->unread()->count(),
         ];
 
-        if (in_array($userType, ['individual'])) {
+        if (in_array($userType, ['individual', 'corporate_customer'])) {
             // Customer Home
             $data['banners'] = Content::with('items')->where('is_visible', true)->get();
             $data['categories'] = Service::whereNull('parent_id')->get();

@@ -196,7 +196,6 @@ class InvoiceController extends Controller
         if ($request->has('status') && $request->status != 'all') {
             $status = $request->status; 
             // Map UI status 'sent'/'unsent' to DB enum 'sent'/'not_sent' if mismatch, but here matching 'sent'/'not_sent' (or using arabic mapping if provided).
-            // Screenshot says "مرسلة" (Sent) / "غير مرسلة" (Not Sent)
             if ($status == 'unsent') $status = 'not_sent';
             
             $query->where('status', $status);

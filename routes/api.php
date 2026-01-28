@@ -149,7 +149,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('orders/{id}/refuse', [OrderController::class, 'refuse']);
 
     // --- Technician Specific Routes ---
-    Route::prefix('technician')->group(function () {
+    Route::middleware('role:technician')->prefix('technician')->group(function () {
         Route::get('profile', [\App\Http\Controllers\Api\TechnicianProfileController::class, 'getProfile']);
         Route::post('profile/update', [\App\Http\Controllers\Api\TechnicianProfileController::class, 'updateProfile']);
         Route::post('profile/change-password', [\App\Http\Controllers\Api\TechnicianProfileController::class, 'updatePassword']);
@@ -204,7 +204,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('chat', [ChatController::class, 'store']);
 
     // Company Setup (Services & Coverage)
-    Route::prefix('company')->group(function () {
+    Route::middleware('role:maintenance_company')->prefix('company')->group(function () {
         Route::get('/', [MaintenanceCompanyController::class, 'show']);
         Route::post('update', [MaintenanceCompanyController::class, 'update']);
         Route::post('password/update', [MaintenanceCompanyController::class, 'updatePassword']);
