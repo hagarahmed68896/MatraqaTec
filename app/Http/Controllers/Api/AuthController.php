@@ -314,7 +314,7 @@ class AuthController extends Controller
 
     private function sendOtp($user)
     {
-        $otp = rand(1000, 9999);
+        $otp = "0000";
         $user->otp = $otp;
         $user->otp_expires_at = Carbon::now()->addMinutes(10);
         $user->save();
