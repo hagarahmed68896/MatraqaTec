@@ -33,6 +33,23 @@ class TechnicianRequest extends Model
         'districts' => 'array',
     ];
 
+    /**
+     * Set the phone attribute.
+     * Normalizes the phone number by removing non-digits and leading country code/zero.
+     *
+     * @param string $value
+     * @return void
+     */
+    public function setPhoneAttribute($value)
+    {
+        if ($value) {
+            $phone = preg_replace('/[^0-9]/', '', $value);
+            if (str_starts_with($phone, '966')) $phone = substr($phone, 3);
+            if (str_starts_with($phone, '0')) $phone = substr($phone, 1);
+            $this->attributes['phone'] = $phone;
+        }
+    }
+
     public function service()
     {
         return $this->belongsTo(Service::class);

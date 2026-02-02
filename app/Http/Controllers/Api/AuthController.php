@@ -296,8 +296,11 @@ class AuthController extends Controller
 
         $user = User::where('phone', $request->phone)->first();
 
-        if ($user->otp !== $request->otp || Carbon::now()->gt($user->otp_expires_at)) {
-            return response()->json([
+    // TEMPORARY: Allow "0000" as a bypass for OTP verification during testing/development
+    $isTemporaryOtp = ($request->otp === "0000");
+
+    if (!$isTemporaryOtp && ($user->otp !== $request->otp || Carbon::now()->gt($user->otp_expires_at))) {
+        return response()->json([
                 'status' => false,
                 'message' => 'Invalid or expired OTP'
             ], 400);

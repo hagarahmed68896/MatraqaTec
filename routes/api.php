@@ -109,7 +109,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/home', [\App\Http\Controllers\Api\HomeController::class, 'index']);
 
     // User Profile Management (Self)
-    // User Profile Management (Self)
     Route::prefix('profile')->group(function () {
         // Consolidated Client Profile (For Mobile App)
         Route::get('/', [\App\Http\Controllers\Api\ClientProfileController::class, 'show']);
