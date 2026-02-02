@@ -16,6 +16,8 @@ use Carbon\Carbon;
 
 class AuthController extends Controller
 {
+    //todo:otp from client
+
     public function register(Request $request)
     {
         if ($request->has('phone')) {

@@ -224,4 +224,81 @@ class TechnicianProfileController extends Controller
             'data' => ['is_online' => $user->is_online]
         ]);
     }
+    /**
+     * Technician Home Dashboard
+     */
+    public function home(Request $request)
+    {
+        $user = $request->user();
+        $technician = $user->technician;
+        
+        $data = [
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'type' => $user->type,
+                'avatar' => $user->avatar ? asset('storage/' . $user->avatar) : null,
+                'city' => $user->city ? $user->city->name_ar : null,
+                'is_online' => $user->is_online,
+                'specialty' => $technician && $technician->service ? $technician->service->name_ar : ($technician && $technician->category ? $technician->category->name_ar : 'فني'),
+            ],
+            'unread_notifications_count' => \App\Models\Notification::where('user_id', $user->id)->unread()->count(),
+        ];
+
+        // Order Tabs filtering
+        $statusTab = $request->input('tab', 'all'); 
+        
+        $assignedQuery = Order::where('technician_id', $technician->id ?? null);
+        
+        // For independent technicians, "New" orders are those in their city/specialty not yet assigned
+        if ($technician && !$technician->maintenance_company_id) {
+            $newOrdersQuery = Order::where('status', 'new')
+                ->where('city_id', $user->city_id)
+                ->where(function($q) use ($technician) {
+                    $q->where('service_id', $technician->service_id)
+                      ->orWhereHas('service', function($q2) use ($technician) {
+                          $q2->where('parent_id', $technician->category_id);
+                      });
+                });
+        } else {
+            $newOrdersQuery = (clone $assignedQuery)->where('status', 'new');
+        }
+
+        // Counts for tabs
+        $data['counts'] = [
+            'new' => (clone $newOrdersQuery)->count(),
+            'in_progress' => (clone $assignedQuery)->whereIn('status', ['accepted', 'scheduled', 'in_progress'])->count(),
+            'archived' => (clone $assignedQuery)->whereIn('status', ['completed', 'rejected', 'cancelled'])->count(),
+        ];
+        $data['counts']['all'] = $data['counts']['new'] + $data['counts']['in_progress'] + $data['counts']['archived'];
+
+        if ($statusTab === 'new') {
+            $query = $newOrdersQuery;
+        } else {
+            $query = clone $assignedQuery;
+            if ($statusTab === 'in_progress') {
+                $query->whereIn('status', ['accepted', 'scheduled', 'in_progress']);
+            } elseif ($statusTab === 'archived') {
+                $query->whereIn('status', ['completed', 'rejected', 'cancelled']);
+            }
+        }
+
+        $orders = $query->with(['user', 'service.parent', 'city'])
+            ->latest()
+            ->paginate($request->per_page ?? 10);
+
+        $data['orders'] = $orders;
+        
+        $data['summary'] = [
+            'active_orders_count' => $data['counts']['in_progress'],
+            'total_completed_count' => (clone $assignedQuery)->where('status', 'completed')->count(),
+            'wallet_balance' => $user->wallet_balance,
+        ];
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Technician home data retrieved successfully',
+            'data' => $data
+        ]);
+    }
 }

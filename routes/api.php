@@ -150,6 +150,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // --- Technician Specific Routes ---
     Route::middleware('role:technician')->prefix('technician')->group(function () {
+        Route::get('home', [\App\Http\Controllers\Api\TechnicianProfileController::class, 'home']);
         Route::get('profile', [\App\Http\Controllers\Api\TechnicianProfileController::class, 'getProfile']);
         Route::post('profile/update', [\App\Http\Controllers\Api\TechnicianProfileController::class, 'updateProfile']);
         Route::post('profile/change-password', [\App\Http\Controllers\Api\TechnicianProfileController::class, 'updatePassword']);
