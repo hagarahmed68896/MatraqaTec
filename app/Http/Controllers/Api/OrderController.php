@@ -150,8 +150,8 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
-        $request->validate([
-            'service_id' => 'required|exists:services,id', // This is the Sub-category ID
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'service_id' => 'required|exists:services,id',
             'description' => 'nullable|string',
             'city_id' => 'required|exists:cities,id',
             'address' => 'required|string',
@@ -160,7 +160,17 @@ class OrderController extends Controller
             'attachments' => 'nullable|array',
             'attachments.*' => 'file|mimes:jpg,jpeg,png,mp4,mov|max:10240',
             'force' => 'nullable|boolean',
+        ], [
+            'scheduled_at.after' => 'The scheduled date must be a future date.',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
         // 1. Availability Check Logic
         $scheduledAt = \Carbon\Carbon::parse($request->scheduled_at);
@@ -238,7 +248,7 @@ class OrderController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Order created successfully and sent for admin approval.',
+            'message' => $availableTech ? 'Order created successfully and scheduled.' : 'Order created successfully and sent for admin approval.',
             'data' => [
                 'order' => $order->load(['service', 'attachments']),
                 'invoice' => [
@@ -774,6 +784,57 @@ class OrderController extends Controller
         ]);
 
         return response()->json(['status' => true, 'message' => 'Order resent', 'data' => $newOrder]);
+    }
+
+    public function reschedule(Request $request, $id)
+    {
+        $user = auth()->user();
+        $order = Order::where('id', $id)->where('user_id', $user->id)->first();
+
+        if (!$order) {
+            return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+        }
+
+        if (in_array($order->status, ['completed', 'cancelled', 'rejected'])) {
+            return response()->json(['status' => false, 'message' => 'Closed orders cannot be rescheduled'], 422);
+        }
+
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'scheduled_at' => 'required|date|after:now',
+        ], [
+            'scheduled_at.after' => 'The scheduled date must be a future date.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $order->update([
+            'scheduled_at' => $request->scheduled_at,
+        ]);
+
+        // Update related Appointment records
+        \App\Models\Appointment::where('order_id', $order->id)->update([
+            'appointment_date' => $request->scheduled_at,
+        ]);
+
+        // Notify technician if assigned
+        if ($order->technician_id) {
+            $this->sendNotification($order->technician->user_id, [
+                'type' => \App\Models\Notification::TYPE_ORDER_RESCHEDULED ?? 'order_rescheduled',
+                'title_ar' => 'تم تعديل موعد الطلب',
+                'title_en' => 'Order Rescheduled',
+                'body_ar' => "قام العميل بتعديل موعد الطلب رقم {$order->order_number} إلى {$order->scheduled_at}",
+                'body_en' => "The client has rescheduled order #{$order->order_number} to {$order->scheduled_at}",
+                'data' => ['order_id' => $order->id]
+            ]);
+        }
+
+        return response()->json(['status' => true, 'message' => 'Order rescheduled successfully', 'data' => $order]);
     }
 
     public function getInvoice($id)

@@ -107,11 +107,21 @@ class AppointmentController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'order_id' => 'required|exists:orders,id',
             'appointment_date' => 'required|date|after:now',
             'technician_id' => 'nullable|exists:technicians,id',
+        ], [
+            'appointment_date.after' => 'The appointment date must be a future date.',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
         $order = \App\Models\Order::find($request->order_id);
         
@@ -167,7 +177,7 @@ class AppointmentController extends Controller
             }
         }
 
-        return response()->json(['status' => true, 'message' => 'Appointment scheduled', 'data' => $appointment]);
+        return response()->json(['status' => true, 'message' => $technicianId ? 'Appointment scheduled and technician assigned' : 'Appointment scheduled', 'data' => $appointment]);
     }
 
     public function show($id)
