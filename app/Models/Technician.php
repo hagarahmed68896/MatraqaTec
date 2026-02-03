@@ -65,4 +65,9 @@ class Technician extends Model
     {
         return $this->hasMany(Review::class);
     }
+
+    public function appointments()
+    {
+        return $this->hasMany(Appointment::class);
+    }
 }

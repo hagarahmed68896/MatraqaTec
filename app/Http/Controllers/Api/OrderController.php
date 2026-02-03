@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
-    use \App\Traits\ValidatesOrderPhotos;
+    use \App\Traits\ValidatesOrderPhotos, \App\Traits\HasAutoAssignment;
 
     public function index(Request $request)
     {
@@ -164,10 +164,10 @@ class OrderController extends Controller
 
         // 1. Availability Check Logic
         $scheduledAt = \Carbon\Carbon::parse($request->scheduled_at);
-        $isAvailable = $this->checkAvailability($request->city_id, $scheduledAt);
+        $availableTech = $this->findAvailableTechnician($request->service_id, $request->city_id, $scheduledAt);
 
-        if (!$isAvailable && !$request->boolean('force')) {
-            $suggestedTime = $this->getSuggestedTime($request->city_id, $scheduledAt);
+        if (!$availableTech && !$request->boolean('force')) {
+            $suggestedTime = $this->getSuggestedTime($request->service_id, $request->city_id, $scheduledAt);
             return response()->json([
                 'status' => false,
                 'message' => 'The selected time is currently fully booked.',
@@ -195,17 +195,35 @@ class OrderController extends Controller
             }
         }
 
+        if ($availableTech) {
+            $data['technician_id'] = $availableTech->id;
+            $data['status'] = 'scheduled';
+            $data['assigned_at'] = now();
+        }
+
         $order = Order::create($data);
 
         // Auto-create Appointment record for the "Appointments" (حجوزاتي) screen
         \App\Models\Appointment::create([
             'order_id' => $order->id,
+            'technician_id' => $order->technician_id,
             'appointment_date' => $order->scheduled_at,
             'status' => 'scheduled',
         ]);
 
-        // Trigger Notification for Admin/Company (Demo: Direct to company if identified, else generic)
-        $this->notifyNewOrder($order);
+        // Trigger Notification for Tech if assigned, else Admin/Company
+        if ($availableTech) {
+            $this->sendNotification($availableTech->user_id, [
+                'type' => \App\Models\Notification::TYPE_NEW_ORDER ?? 'new_order',
+                'title_ar' => 'مهمة جديدة',
+                'title_en' => 'New  Task',
+                'body_ar' => 'تم تعيين مهمة جديدة لك، يرجى القبول أو الرفض خلال 15 دقيقة',
+                'body_en' => 'A new task has been automatically assigned to you. Please accept or reject within 15 minutes',
+                'data' => ['order_id' => $order->id]
+            ]);
+        } else {
+            $this->notifyNewOrder($order);
+        }
 
         // 3. Handle Attachments
         if ($request->hasFile('attachments')) {
@@ -234,34 +252,7 @@ class OrderController extends Controller
         ]);
     }
 
-    protected function checkAvailability($cityId, $time)
-    {
-        // Simple logic: Max 5 orders per city per hour slot
-        $start = (clone $time)->startOfHour();
-        $end = (clone $time)->endOfHour();
-        
-        $orderCount = Order::where('city_id', $cityId)
-            ->whereBetween('scheduled_at', [$start, $end])
-            ->whereIn('status', ['new', 'accepted', 'scheduled', 'in_progress'])
-            ->count();
-
-        // Check if city has enough technicians (placeholder logic)
-        $techCount = \App\Models\Technician::whereHas('user', function($q) use ($cityId) {
-            $q->where('city_id', $cityId);
-        })->count() ?: 1;
-
-        return $orderCount < ($techCount * 2); // Assume each tech can handle 2 slot requests
-    }
-
-    protected function getSuggestedTime($cityId, $requestedTime)
-    {
-        // Simply try adding 2 hours until a slot is free
-        $suggestion = (clone $requestedTime)->addHours(2);
-        while (!$this->checkAvailability($cityId, $suggestion)) {
-            $suggestion->addHours(1);
-        }
-        return $suggestion;
-    }
+    // Availability, findAvailableTechnician, and getSuggestedTime are now handled by HasAutoAssignment trait
 
     public function show($id)
     {

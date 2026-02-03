@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\Order;
 use Illuminate\Http\Request;
 
 class AppointmentController extends Controller
 {
+    use \App\Traits\HasAutoAssignment;
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -117,12 +120,52 @@ class AppointmentController extends Controller
             return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
         }
 
+        $appointmentDate = \Carbon\Carbon::parse($request->appointment_date);
+        $technicianId = $request->technician_id;
+
+        // Auto-assign if no technician provided
+        if (!$technicianId) {
+            $availableTech = $this->findAvailableTechnician($order->service_id, $order->city_id, $appointmentDate);
+            if ($availableTech) {
+                $technicianId = $availableTech->id;
+            } else {
+                $suggestedTime = $this->getSuggestedTime($order->service_id, $order->city_id, $appointmentDate);
+                return response()->json([
+                    'status' => false,
+                    'message' => 'The selected time is currently fully booked.',
+                    'suggested_time' => $suggestedTime->toDateTimeString(),
+                    'suggestion_message' => 'لا يتوفر فني في الموعد الذي اخترته، ولكن نقترح عليك أقرب موعد متاح.'
+                ], 422);
+            }
+        }
+
         $appointment = Appointment::create([
             'order_id' => $order->id,
-            'technician_id' => $request->technician_id ?? $order->technician_id,
+            'technician_id' => $technicianId,
             'appointment_date' => $request->appointment_date,
             'status' => 'scheduled',
         ]);
+
+        // If a technician was assigned, update the order as well and notify
+        if ($technicianId) {
+            $order->update([
+                'technician_id' => $technicianId,
+                'status' => 'scheduled',
+                'assigned_at' => now(),
+            ]);
+
+            $tech = \App\Models\Technician::find($technicianId);
+            if ($tech && $tech->user_id) {
+                $this->sendNotification($tech->user_id, [
+                    'type' => \App\Models\Notification::TYPE_NEW_ORDER ?? 'new_order',
+                    'title_ar' => 'موعد جديد',
+                    'title_en' => 'New Appointment Assigned',
+                    'body_ar' => 'تم تعيين موعد جديد لك، يرجى القبول أو الرفض خلال 15 دقيقة',
+                    'body_en' => 'You have been assigned a new appointment. Please accept or reject within 15 minutes',
+                    'data' => ['order_id' => $order->id, 'appointment_id' => $appointment->id]
+                ]);
+            }
+        }
 
         return response()->json(['status' => true, 'message' => 'Appointment scheduled', 'data' => $appointment]);
     }
@@ -175,5 +218,24 @@ class AppointmentController extends Controller
 
         $appointment->delete();
         return response()->json(['status' => true, 'message' => 'Appointment deleted']);
+    }
+
+    private function sendNotification($userId, $details)
+    {
+        // Simple wrapper for notification logic
+        $user = \App\Models\User::find($userId);
+        if ($user && $user->fcm_token) {
+            // Logic to send FCM would go here
+        }
+        
+        \App\Models\Notification::create([
+            'user_id' => $userId,
+            'type' => $details['type'],
+            'title_ar' => $details['title_ar'],
+            'title_en' => $details['title_en'],
+            'body_ar' => $details['body_ar'],
+            'body_en' => $details['body_en'],
+            'data' => $details['data'],
+        ]);
     }
 }
