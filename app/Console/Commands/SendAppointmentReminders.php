@@ -43,7 +43,23 @@ class SendAppointmentReminders extends Command
             if (!\Illuminate\Support\Facades\Cache::has($cacheKey)) {
                 $this->info("Sending reminder for appointment #{$appointment->id} via global setting: {$reminderType}");
                 
-                // Logic to send notification...
+                $order = $appointment->order;
+                if ($order && $order->user_id) {
+                    $titleAr = $reminderType === 'day' ? 'موعدك غداً' : 'تذكير بموعد الزيارة';
+                    $titleEn = $reminderType === 'day' ? 'Your appointment is tomorrow' : 'Appointment Reminder';
+
+                    \App\Models\Notification::create([
+                        'user_id' => $order->user_id,
+                        'type' => 'reminder',
+                        'title_ar' => $titleAr,
+                        'title_en' => $titleEn,
+                        'body_ar' => 'تذكير بزيارة الفني حسب الموعد المحدد',
+                        'body_en' => 'Reminder of the technician\'s visit as scheduled.',
+                        'data' => ['appointment_id' => $appointment->id, 'order_id' => $order->id],
+                        'status' => 'sent',
+                        'is_read' => false
+                    ]);
+                }
 
                 // Mark as sent in cache for 24 hours
                 \Illuminate\Support\Facades\Cache::put($cacheKey, true, now()->addDay());

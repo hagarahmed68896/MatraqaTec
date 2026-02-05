@@ -16,7 +16,7 @@ class HandleExpiredOrders extends Command
 
     public function handle()
     {
-        $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 30);
+        $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
 
         $expiredOrders = \App\Models\Order::where('status', 'scheduled')
             ->where('updated_at', '<', now()->subMinutes($duration))
