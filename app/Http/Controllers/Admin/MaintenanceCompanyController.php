@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class MaintenanceCompanyController extends Controller
 {
@@ -23,6 +24,7 @@ class MaintenanceCompanyController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('company_name_en', 'like', "%{$search}%")
                   ->orWhere('company_name_ar', 'like', "%{$search}%")
+                  ->orWhere('commercial_record_number', 'like', "%{$search}%")
                   ->orWhereHas('user', function ($q2) use ($search) {
                       $q2->where('email', 'like', "%{$search}%")
                          ->orWhere('phone', 'like', "%{$search}%")
@@ -43,7 +45,7 @@ class MaintenanceCompanyController extends Controller
         if ($request->has('sort_by')) {
             switch ($request->sort_by) {
                 case 'name':
-                    $query->orderBy('company_name_en', 'asc');
+                    $query->orderBy('company_name_ar', 'asc');
                     break;
                 case 'status':
                     $query->join('users', 'maintenance_companies.user_id', '=', 'users.id')
@@ -69,7 +71,21 @@ class MaintenanceCompanyController extends Controller
             return $company;
         });
 
-        return view('admin.maintenance_companies.index', compact('items'));
+        // Statistics for Index Page
+        $stats = [
+            'total_companies' => MaintenanceCompany::count(),
+            'total_technicians' => \App\Models\Technician::count(), // Assuming global technicians count, or relation based
+            // To be more precise based on companies relation:
+            // 'total_technicians' => MaintenanceCompany::withCount('technicians')->get()->sum('technicians_count'), 
+            // Better query:
+            'total_technicians_companies' => \App\Models\Technician::whereNotNull('maintenance_company_id')->count(), 
+            'total_services' => \App\Models\Service::count(), // Total services in system
+             // Or unique services offered by companies:
+            'total_services_offered' => \App\Models\Technician::whereNotNull('maintenance_company_id')->distinct('service_id')->count('service_id'),
+            'total_orders' => Order::whereNotNull('maintenance_company_id')->count(),
+        ];
+
+        return view('admin.maintenance_companies.index', compact('items', 'stats'));
     }
 
     public function create()
@@ -85,7 +101,10 @@ class MaintenanceCompanyController extends Controller
             'company_name_ar' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'nullable|string|min:8',
-            'phone' => 'nullable|string|unique:users',
+            'phone' => ['required', 'string', 'unique:users', 'regex:/^[0-9]{9}$/'],
+            'tax_number' => 'nullable|string|max:255',
+            'commercial_record_number' => 'nullable|string|max:255',
+            'commercial_record_file' => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -93,7 +112,8 @@ class MaintenanceCompanyController extends Controller
         }
 
         $password = $request->password ?? Str::random(10);
-        $name = $request->company_name_en ?? $request->company_name_ar;
+        // Use Arabic name as main name if not specified otherwise
+        $name = $request->company_name_ar;
 
         $user = User::create([
             'name' => $name,
@@ -101,14 +121,20 @@ class MaintenanceCompanyController extends Controller
             'password' => Hash::make($password),
             'type' => 'maintenance_company',
             'phone' => $request->phone,
-            'status' => 'active',
+            'status' => $request->status ?? 'active',
         ]);
+
+        $filePath = null;
+        if ($request->hasFile('commercial_record_file')) {
+            $filePath = $request->file('commercial_record_file')->store('maintenance/cr', 'public');
+        }
 
         MaintenanceCompany::create([
             'user_id' => $user->id,
             'company_name_en' => $request->company_name_en,
             'company_name_ar' => $request->company_name_ar,
             'commercial_record_number' => $request->commercial_record_number,
+            'commercial_record_file' => $filePath,
             'tax_number' => $request->tax_number,
             'address' => $request->address,
         ]);
@@ -191,16 +217,37 @@ class MaintenanceCompanyController extends Controller
     {
         $company = MaintenanceCompany::findOrFail($id);
         
+        $validator = Validator::make($request->all(), [
+            'company_name_en' => 'required|string|max:255',
+            'company_name_ar' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,'.$company->user_id,
+            'phone' => ['required', 'string', 'unique:users,phone,'.$company->user_id, 'regex:/^[0-9]{9}$/'],
+            'tax_number' => 'nullable|string|max:255',
+            'commercial_record_number' => 'nullable|string|max:255',
+            'commercial_record_file' => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
         $user = $company->user;
         if ($user) {
             $user->email = $request->email;
             if ($request->filled('password')) $user->password = Hash::make($request->password);
             if ($request->has('phone')) $user->phone = $request->phone;
-            if ($request->has('company_name_en')) $user->name = $request->company_name_en;
+            if ($request->has('company_name_ar')) $user->name = $request->company_name_ar;
+            if ($request->has('status')) $user->status = $request->status;
             $user->save();
         }
 
-        $company->update($request->except(['email', 'password', 'phone', 'status', 'type']));
+        $data = $request->except(['email', 'password', 'phone', 'status', 'type', 'commercial_record_file']);
+
+        if ($request->hasFile('commercial_record_file')) {
+            $data['commercial_record_file'] = $request->file('commercial_record_file')->store('maintenance/cr', 'public');
+        }
+
+        $company->update($data);
 
         return redirect()->route('admin.maintenance-companies.index')->with('success', __('Company updated successfully.'));
     }
@@ -236,5 +283,85 @@ class MaintenanceCompanyController extends Controller
         }
 
         return back()->with('error', __('User record not found'));
+    }
+
+    public function download(Request $request)
+    {
+        $query = MaintenanceCompany::with(['user', 'technicians', 'orders']);
+
+        // Apply same filters as index
+        if ($request->has('search') && $request->search) {
+             $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('company_name_en', 'like', "%{$search}%")
+                  ->orWhere('company_name_ar', 'like', "%{$search}%")
+                  ->orWhere('commercial_record_number', 'like', "%{$search}%")
+                  ->orWhereHas('user', function ($q2) use ($search) {
+                      $q2->where('email', 'like', "%{$search}%")
+                         ->orWhere('phone', 'like', "%{$search}%")
+                         ->orWhere('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        if ($request->has('status') && $request->status) {
+             $status = $request->status; 
+            $query->whereHas('user', function ($q) use ($status) {
+                $q->where('status', $status);
+            });
+        }
+
+        $items = $query->latest()->get();
+
+        $csvFileName = 'maintenance_companies_' . date('Y-m-d_H-i') . '.csv';
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$csvFileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        return response()->stream(function () use ($items) {
+            $handle = fopen('php://output', 'w');
+            
+            // Add BOM for Excel UTF-8 compatibility
+            fputs($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            // Header Row
+            fputcsv($handle, [
+                __('ID'),
+                __('Company Name (AR)'),
+                __('Company Name (EN)'),
+                __('Email'),
+                __('Phone'),
+                __('Address'),
+                __('Commercial Record'),
+                __('Tax Number'),
+                __('Technicians Count'),
+                __('Orders Count'),
+                __('Status'),
+                __('Created At'),
+            ]);
+
+            foreach ($items as $item) {
+                fputcsv($handle, [
+                    $item->id,
+                    $item->company_name_ar,
+                    $item->company_name_en,
+                    $item->user->email ?? '',
+                    $item->user->phone ?? '',
+                    $item->address,
+                    $item->commercial_record_number,
+                    $item->tax_number,
+                    $item->technicians->count(),
+                    $item->orders->count(),
+                    __($item->user->status ?? 'active'),
+                    $item->created_at->format('Y-m-d H:i'),
+                ]);
+            }
+
+            fclose($handle);
+        }, 200, $headers);
     }
 }

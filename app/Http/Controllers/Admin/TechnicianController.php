@@ -64,8 +64,16 @@ class TechnicianController extends Controller
         }
 
         $items = $query->paginate(20);
+
+        // Statistics for Index Page
+        $stats = [
+            'total_technicians' => Technician::count(),
+            'active_technicians' => Technician::whereHas('user', function($q) { $q->where('status', 'active'); })->count(),
+            'total_completed_orders' => Order::where('status', 'completed')->whereNotNull('technician_id')->count(),
+            'average_rating' => Review::avg('rating') ?? 0,
+        ];
         
-        return view('admin.technicians.index', compact('items'));
+        return view('admin.technicians.index', compact('items', 'stats'));
     }
 
     public function top(Request $request)
@@ -309,5 +317,85 @@ class TechnicianController extends Controller
         }
 
         return back()->with('error', __('User record not found'));
+    }
+
+    public function download(Request $request)
+    {
+        $query = Technician::with(['user', 'service', 'category']);
+
+        // 1. Search Logic
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name_en', 'like', "%{$search}%")
+                  ->orWhere('name_ar', 'like', "%{$search}%")
+                  ->orWhereHas('user', function ($q2) use ($search) {
+                      $q2->where('email', 'like', "%{$search}%")
+                         ->orWhere('phone', 'like', "%{$search}%")
+                         ->orWhere('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // 2. Filter by Status
+        if ($request->has('status') && $request->status) {
+            $status = $request->status; 
+            $query->whereHas('user', function ($q) use ($status) {
+                $q->where('status', $status);
+            });
+        }
+
+        $items = $query->latest()->get();
+
+        $csvFileName = 'technicians_' . date('Y-m-d_H-i') . '.csv';
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$csvFileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        return response()->stream(function () use ($items) {
+            $handle = fopen('php://output', 'w');
+            
+            // Add BOM for Excel UTF-8 compatibility
+            fputs($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            // Header Row
+            fputcsv($handle, [
+                __('ID'),
+                __('Name (AR)'),
+                __('Name (EN)'),
+                __('Email'),
+                __('Phone'),
+                __('Service'),
+                __('Category'),
+                __('Type'),
+                __('Years Experience'),
+                __('Rating'),
+                __('Status'),
+                __('Created At'),
+            ]);
+
+            foreach ($items as $item) {
+                fputcsv($handle, [
+                    $item->id,
+                    $item->name_ar,
+                    $item->name_en,
+                    $item->user->email ?? '',
+                    $item->user->phone ?? '',
+                    $item->service->name_ar ?? '',
+                    $item->category->name_ar ?? '',
+                    $item->maintenanceCompany ? __('Corporate') : __('Independent'),
+                    $item->years_experience,
+                    number_format($item->reviews()->avg('rating') ?? 0, 1),
+                    __($item->user->status ?? 'active'),
+                    $item->created_at->format('Y-m-d H:i'),
+                ]);
+            }
+
+            fclose($handle);
+        }, 200, $headers);
     }
 }
