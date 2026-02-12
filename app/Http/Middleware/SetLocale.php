@@ -15,8 +15,12 @@ class SetLocale
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $locale = \App\Models\Setting::getByKey('default_language', config('app.locale'));
-        app()->setLocale($locale);
+        if (session()->has('locale')) {
+            app()->setLocale(session()->get('locale'));
+        } else {
+            $locale = \App\Models\Setting::getByKey('default_language', config('app.locale'));
+            app()->setLocale($locale);
+        }
         
         return $next($request);
     }

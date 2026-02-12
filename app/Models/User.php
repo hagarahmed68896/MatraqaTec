@@ -163,4 +163,22 @@ class User extends Authenticatable
     {
         return $this->hasMany(SearchHistory::class);
     }
+
+    /**
+     * Override Notifiable trait relations for custom table
+     */
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class)->latest();
+    }
+
+    public function unreadNotifications()
+    {
+        return $this->notifications()->where('is_read', false);
+    }
+
+    public function readNotifications()
+    {
+        return $this->notifications()->where('is_read', true);
+    }
 }

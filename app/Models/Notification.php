@@ -53,4 +53,9 @@ class Notification extends Model
     {
         return $query->where('is_read', false);
     }
+
+    public function markAsRead()
+    {
+        $this->update(['is_read' => true]);
+    }
 }

@@ -246,6 +246,26 @@ class MaintenanceCompanyController extends Controller
             'status' => 'pending',
         ]);
 
+        // Notify Admins
+        $admins = \App\Models\User::where('type', 'admin')->get();
+        foreach ($admins as $admin) {
+            \App\Models\Notification::create([
+                'user_id' => $admin->id,
+                'type' => 'alert',
+                'title_ar' => 'طلب إضافة فني جديد',
+                'title_en' => 'New Technician Request',
+                'body_ar' => "قامت شركة {$company->company_name_ar} بإرسال طلب إضافة فني جديد: {$request->name_ar}",
+                'body_en' => "Company {$company->company_name_en} sent a request to add a new technician: {$request->name_en}",
+                'target_audience' => 'all',
+                'data' => [
+                    'type' => 'technician_request',
+                    'request_id' => $techRequest->id,
+                    'company_id' => $company->id
+                ],
+                'status' => 'sent'
+            ]);
+        }
+
         return response()->json([
             'status' => true,
             'message' => 'تم إرسال طلب إضافة الفني. سيتم تفعيل حسابه بعد مراجعة وموافقة إدارة مطرقة تك',

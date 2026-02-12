@@ -29,7 +29,7 @@ class AuthController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
+            'name' => 'required_if:type,individual,technician|nullable|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'type' => 'required|string|in:individual,technician,maintenance_company,corporate_customer', 
@@ -47,8 +47,13 @@ class AuthController extends Controller
             return response()->json(['status' => false, 'message' => $validator->errors()->first(), 'errors' => $validator->errors()], 422);
         }
 
+        // Logic: For companies, use company_name as User.name. For others, use name.
+        $accountName = in_array($request->type, ['maintenance_company', 'corporate_customer']) 
+            ? $request->company_name 
+            : $request->name;
+
         $user = User::create([
-            'name' => $request->name,
+            'name' => $accountName,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'type' => $request->type,
@@ -111,7 +116,7 @@ class AuthController extends Controller
             'data' => [
                 'user' => $user->load(['maintenanceCompany', 'corporateCustomer']), 
             ],
-        ], 201);
+        ], 200);
     }
 
     public function login(Request $request)
