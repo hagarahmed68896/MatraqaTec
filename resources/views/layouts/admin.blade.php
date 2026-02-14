@@ -51,8 +51,8 @@
                 </a>
 
                 <!-- Account Management Dropdown -->
-                <div x-data="{ open: {{ request()->is('admin/supervisors*') || request()->is('admin/customers*') || request()->is('admin/individual-customers*') || request()->is('admin/corporate-customers*') || request()->is('admin/maintenance-companies*') || request()->is('admin/technicians*') || request()->is('admin/roles*') || request()->is('admin/permissions*') ? 'true' : 'false' }} }" class="space-y-1">
-                    <button @click="open = !open" class="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all hover:bg-slate-50 dark:hover:bg-white/5 {{ request()->is('admin/supervisors*') || request()->is('admin/customers*') || request()->is('admin/individual-customers*') || request()->is('admin/corporate-customers*') || request()->is('admin/maintenance-companies*') || request()->is('admin/technicians*') || request()->is('admin/roles*') || request()->is('admin/permissions*') ? 'text-primary dark:text-white font-black' : '' }}">
+                <div x-data="{ open: {{ request()->is('admin/supervisors*') || request()->is('admin/customers*') || request()->is('admin/individual-customers*') || request()->is('admin/corporate-customers*') || request()->is('admin/maintenance-companies*') || request()->is('admin/technicians*') || request()->is('admin/technician-requests*') || request()->is('admin/roles*') || request()->is('admin/permissions*') ? 'true' : 'false' }} }" class="space-y-1">
+                    <button @click="open = !open" class="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all hover:bg-slate-50 dark:hover:bg-white/5 {{ request()->is('admin/supervisors*') || request()->is('admin/customers*') || request()->is('admin/individual-customers*') || request()->is('admin/corporate-customers*') || request()->is('admin/maintenance-companies*') || request()->is('admin/technicians*') || request()->is('admin/technician-requests*') || request()->is('admin/roles*') || request()->is('admin/permissions*') ? 'text-primary dark:text-white font-black' : '' }}">
                         <div class="flex items-center">
                             <svg class="w-5 h-5 {{ app()->getLocale() == 'ar' ? 'ml-3' : 'mr-3' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                             <span class="font-bold">{{ __('Account Management') }}</span>
@@ -63,8 +63,26 @@
                         <a href="{{ route('admin.supervisors.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.supervisors.*') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Supervisors') }}</a>
                         <a href="{{ route('admin.individual-customers.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.individual-customers.*') || request()->routeIs('admin.corporate-customers.*') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Customers') }}</a>
                         <a href="{{ route('admin.maintenance-companies.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.maintenance-companies.*') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Maintenance Companies') }}</a>
+                        <a href="{{ route('admin.technician-requests.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.technician-requests.*') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Technician Requests') }}</a>
                         <a href="{{ route('admin.technicians.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.technicians.*') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Technicians') }}</a>
                         <a href="{{ route('admin.roles.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.roles.*') || request()->routeIs('admin.permissions.*') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Permissions') }}</a>
+                    </div>
+                </div>
+
+                <!-- Blocked Users Dropdown -->
+                <div x-data="{ open: {{ request()->is('admin/blocked*') ? 'true' : 'false' }} }" class="space-y-1">
+                    <button @click="open = !open" class="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all hover:bg-slate-50 dark:hover:bg-white/5 {{ request()->is('admin/blocked*') ? 'text-primary dark:text-white font-black' : '' }}">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 {{ app()->getLocale() == 'ar' ? 'ml-3' : 'mr-3' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                            <span class="font-bold">{{ __('Blocked Users') }}</span>
+                        </div>
+                        <svg class="w-4 h-4 transition-transform duration-300" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div x-show="open" x-collapse class="space-y-1 {{ app()->getLocale() == 'ar' ? 'pr-12' : 'pl-12' }}">
+                        <a href="{{ route('admin.blocked.customers') }}" class="block py-2 text-sm {{ request()->routeIs('admin.blocked.customers') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Customers') }}</a>
+                        <a href="{{ route('admin.blocked.companies') }}" class="block py-2 text-sm {{ request()->routeIs('admin.blocked.companies') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Maintenance Companies') }}</a>
+                        <a href="{{ route('admin.blocked.technicians') }}" class="block py-2 text-sm {{ request()->routeIs('admin.blocked.technicians') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Technicians') }}</a>
+                        <a href="{{ route('admin.blocked.supervisors') }}" class="block py-2 text-sm {{ request()->routeIs('admin.blocked.supervisors') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Supervisors') }}</a>
                     </div>
                 </div>
 

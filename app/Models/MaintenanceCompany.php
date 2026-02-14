@@ -12,6 +12,7 @@ class MaintenanceCompany extends Model
     protected $fillable = [
         'user_id',
         'city_id', // Defines Main City
+        'name',
         'company_name_ar',
         'company_name_en',
         'commercial_record_number',
@@ -62,5 +63,10 @@ class MaintenanceCompany extends Model
     public function districts()
     {
         return $this->belongsToMany(District::class, 'maintenance_company_district');
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(CompanySchedule::class);
     }
 }

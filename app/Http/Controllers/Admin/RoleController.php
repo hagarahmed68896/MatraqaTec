@@ -148,4 +148,17 @@ class RoleController extends Controller
             ]
         );
     }
+
+    public function bulkDelete(Request $request)
+    {
+        $ids = $request->ids;
+        if (!$ids || !is_array($ids)) {
+            return back()->with('error', __('Please select items to delete.'));
+        }
+
+        // Prevent deleting Super Admin role if it exists
+        \App\Models\Role::whereIn('id', $ids)->where('name', '!=', 'Super Admin')->delete();
+
+        return redirect()->route('admin.roles.index')->with('success', __('Selected roles deleted successfully.'));
+    }
 }

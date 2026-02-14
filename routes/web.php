@@ -97,7 +97,7 @@ Route::prefix('admin')->group(function () {
         Route::get('/technicians/top', [App\Http\Controllers\Admin\TechnicianController::class, 'top'])->name('admin.technicians.top');
 
         foreach ($resources as $prefix => $controller) {
-            Route::prefix($prefix)->name("admin.{$prefix}.")->group(function () use ($controller) {
+            Route::prefix($prefix)->name("admin.{$prefix}.")->group(function () use ($controller, $prefix) {
                 // Extra actions for specific controllers (Register before parameter routes)
                 if (method_exists($controller, 'download')) {
                     Route::get('/download', [$controller, 'download'])->name('download');
@@ -111,6 +111,11 @@ Route::prefix('admin')->group(function () {
                 Route::put('/{id}', [$controller, 'update'])->name('update');
                 Route::delete('/{id}', [$controller, 'destroy'])->name('destroy');
 
+                if ($prefix === 'supervisors') {
+                    Route::post('/bulk-block', [$controller, 'bulkBlock'])->name('bulk-block');
+                    Route::post('/bulk-unblock', [$controller, 'bulkUnblock'])->name('bulk-unblock');
+                }
+
                 if (method_exists($controller, 'toggleBlock')) {
                     Route::post('/{id}/toggle-block', [$controller, 'toggleBlock'])->name('toggle-block');
                 }
@@ -120,7 +125,23 @@ Route::prefix('admin')->group(function () {
                 if (method_exists($controller, 'refuse')) {
                     Route::post('/{id}/refuse', [$controller, 'refuse'])->name('refuse');
                 }
+                if ($prefix === 'technicians') {
+                    Route::post('/bulk-destroy', [$controller, 'bulkDestroy'])->name('bulk-destroy');
+                }
+                if ($prefix === 'roles') {
+                    Route::post('/bulk-delete', [$controller, 'bulkDelete'])->name('bulk-delete');
+                }
             });
         }
+
+        // Blocked Users Management
+        Route::prefix('blocked')->name('admin.blocked.')->group(function () {
+            Route::get('/customers', [App\Http\Controllers\Admin\BlockedUserController::class, 'customers'])->name('customers');
+            Route::get('/companies', [App\Http\Controllers\Admin\BlockedUserController::class, 'companies'])->name('companies');
+            Route::get('/technicians', [App\Http\Controllers\Admin\BlockedUserController::class, 'technicians'])->name('technicians');
+            Route::get('/supervisors', [App\Http\Controllers\Admin\BlockedUserController::class, 'supervisors'])->name('supervisors');
+            Route::get('/download', [App\Http\Controllers\Admin\BlockedUserController::class, 'download'])->name('download');
+            Route::post('/bulk-unblock', [App\Http\Controllers\Admin\BlockedUserController::class, 'bulkUnblock'])->name('bulk-unblock');
+        });
     });
 });

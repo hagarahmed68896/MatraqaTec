@@ -21,9 +21,7 @@
 }">
     <div class="flex items-center justify-between">
         <div>
-            <h2 class="text-2xl font-black text-slate-900 dark:text-white">{{ __('Maintenance Companies') }}</h2>
         </div>
-        </a>
     </div>
 
     <!-- Stats Cards -->
@@ -277,7 +275,7 @@
                             </span>
                         </td>
                         <td class="py-4 px-6">
-                            <span class="text-slate-900 dark:text-white font-black text-sm">{{ $item->name_ar }}</span>
+                            <span class="text-slate-900 dark:text-white font-black text-sm">{{ $item->user->name }}</span>
                         </td>
                         <td class="py-4 px-6 font-mono" dir="ltr">{{ $item->user->phone ?? '-' }}</td>
                         <td class="py-4 px-6 font-mono">{{ $item->user->email ?? '-' }}</td>
@@ -305,32 +303,31 @@
                                 {{ __($item->user->status ?? 'active') }}
                             </span>
                         </td>
-                        <!-- <td class="py-4 px-6 text-center" >
-                            <div class="flex items-center justify-center gap-1">
-                                <button type="button" @click.stop="confirmBlock({{ $item->id }}, '{{ $item->user->status ?? 'active' }}')" 
-                                        class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-all">
-                                    
-                                    @if(($item->user->status ?? 'active') == 'active')
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-5 h-5" viewBox="0 0 16 16">
-                                            <path d="M13.879 10.414a2.501 2.501 0 0 0-3.465 3.465zm.707.707-3.465 3.465a2.501 2.501 0 0 0 3.465-3.465m-4.56-1.096a3.5 3.5 0 1 1 4.949 4.95 3.5 3.5 0 0 1-4.95-4.95ZM11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0M8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4m.256 7a4.5 4.5 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10q.39 0 .74.025c.226-.341.496-.65.804-.918Q8.844 9.002 8 9c-5 0-6 3-6 4s1 1 1 1z"/>
-                                        </svg>
-                                    @else
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-5 h-5" viewBox="0 0 16 16">
-                                            <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m1.679-4.493-1.335 2.226a.75.75 0 0 1-1.174.144l-.774-.773a.5.5 0 0 1 .708-.708l.547.548 1.17-1.951a.5.5 0 1 1 .858.514M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
-                                            <path d="M2 13c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4"/>
-                                        </svg>
-                                    @endif
-                                </button>
+                                     <td class="px-6 py-4 text-end" @click.stop>
+    <div class="flex items-center justify-end gap-1">
+        <button type="button" @click.stop="confirmBlock({{ $item->id }}, '{{ $item->user->status ?? 'active' }}')" 
+                class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-all">
+            
+            @if(($item->user->status ?? 'active') == 'active')
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-5 h-5" viewBox="0 0 16 16">
+                    <path d="M13.879 10.414a2.501 2.501 0 0 0-3.465 3.465zm.707.707-3.465 3.465a2.501 2.501 0 0 0 3.465-3.465m-4.56-1.096a3.5 3.5 0 1 1 4.949 4.95 3.5 3.5 0 0 1-4.95-4.95ZM11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0M8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4m.256 7a4.5 4.5 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10q.39 0 .74.025c.226-.341.496-.65.804-.918Q8.844 9.002 8 9c-5 0-6 3-6 4s1 1 1 1z"/>
+                </svg>
+            @else
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-5 h-5" viewBox="0 0 16 16">
+                    <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m1.679-4.493-1.335 2.226a.75.75 0 0 1-1.174.144l-.774-.773a.5.5 0 0 1 .708-.708l.547.548 1.17-1.951a.5.5 0 1 1 .858.514M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+                    <path d="M2 13c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4"/>
+                </svg>
+            @endif
+        </button>
 
-                                <a href="{{ route('admin.maintenance-companies.edit', $item->id) }}" 
-                                   class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-all">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-                                    </svg>
-                                </a>
-                            </div>
-                        </td> -->
-                        
+        <a href="{{ route('admin.maintenance-companies.edit', $item->id) }}" 
+           class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-all">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+            </svg>
+        </a>
+    </div>
+</td>
                     </tr>
                     @empty
                     <tr>
@@ -351,51 +348,51 @@
         </div>
         @endif
     </div>
-</div>
 
     <!-- Block Confirmation Modal -->
-    <template x-teleport="body">
-        <div x-show="showBlockModal" 
-             class="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+    <div x-show="showBlockModal" 
+         x-cloak
+         class="fixed inset-0 z-[999] flex items-center justify-center p-4"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showBlockModal = false"></div>
+        
+        <div @click.away="showBlockModal = false"
+             class="bg-white dark:bg-[#1A1A31] w-full max-w-md rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-100 dark:border-white/10 relative z-10"
              x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="transition ease-in duration-200"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0">
+             x-transition:enter-start="opacity-0 translate-y-8 scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 scale-100">
             
-            <div @click.away="showBlockModal = false"
-                 class="bg-white dark:bg-[#1A1A31] w-full max-w-md rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-100 dark:border-white/10"
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0 translate-y-8 scale-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 scale-100">
+            <div class="p-8 text-center">
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-500/10 text-red-500 mb-6">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
                 
-                <div class="p-8 text-center">
-                    <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-500/10 text-red-500 mb-6">
-                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                    </div>
-                    
-                    <h3 class="text-2xl font-black text-slate-800 dark:text-white mb-2" x-text="blockAction + ' {{ __('Company') }}'"></h3>
-                    <p class="text-slate-500 dark:text-slate-400 font-bold mb-8">
-                        {{ __('Are you sure you want to change the status of this company?') }}
-                    </p>
-                    
-                    <div class="flex flex-col gap-3">
-                        <form :action="'{{ url('admin/maintenance-companies') }}/' + blockTargetId + '/toggle-block'" method="POST">
-                            @csrf
-                            <button type="submit" 
-                                    class="w-full py-4 bg-red-500 text-white rounded-2xl font-black hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 uppercase tracking-widest text-sm">
-                                <span x-text="'{{ __('Confirm') }} ' + blockAction"></span>
-                            </button>
-                        </form>
-                        <button type="button" @click="showBlockModal = false" 
-                                class="w-full py-4 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-2xl font-black hover:bg-slate-200 dark:hover:bg-white/10 transition-all uppercase tracking-widest text-sm">
-                            {{ __('Cancel') }}
+                <h3 class="text-2xl font-black text-slate-800 dark:text-white mb-2" x-text="blockAction + ' {{ __('Company') }}'"></h3>
+                <p class="text-slate-500 dark:text-slate-400 font-bold mb-8">
+                    {{ __('Are you sure you want to change the status of this company?') }}
+                </p>
+                
+                <div class="flex flex-col gap-3">
+                    <form :action="'{{ url('admin/maintenance-companies') }}/' + blockTargetId + '/toggle-block'" method="POST">
+                        @csrf
+                        <button type="submit" 
+                                class="w-full py-4 bg-red-500 text-white rounded-2xl font-black hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 uppercase tracking-widest text-sm">
+                            <span x-text="'{{ __('Confirm') }} ' + blockAction"></span>
                         </button>
-                    </div>
+                    </form>
+                    <button type="button" @click="showBlockModal = false" 
+                            class="w-full py-4 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-2xl font-black hover:bg-slate-200 dark:hover:bg-white/10 transition-all uppercase tracking-widest text-sm">
+                        {{ __('Cancel') }}
+                    </button>
                 </div>
             </div>
         </div>
-    </template>
+    </div>
 </div>
 @endsection

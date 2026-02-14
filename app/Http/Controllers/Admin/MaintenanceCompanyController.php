@@ -22,7 +22,8 @@ class MaintenanceCompanyController extends Controller
         if ($request->has('search') && $request->search) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('company_name_en', 'like', "%{$search}%")
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('company_name_en', 'like', "%{$search}%")
                   ->orWhere('company_name_ar', 'like', "%{$search}%")
                   ->orWhere('commercial_record_number', 'like', "%{$search}%")
                   ->orWhereHas('user', function ($q2) use ($search) {
@@ -45,7 +46,7 @@ class MaintenanceCompanyController extends Controller
         if ($request->has('sort_by')) {
             switch ($request->sort_by) {
                 case 'name':
-                    $query->orderBy('company_name_ar', 'asc');
+                    $query->orderBy('name', 'asc');
                     break;
                 case 'status':
                     $query->join('users', 'maintenance_companies.user_id', '=', 'users.id')
@@ -97,14 +98,19 @@ class MaintenanceCompanyController extends Controller
     {
         $locale = app()->getLocale();
         $validator = Validator::make($request->all(), [
-            'company_name_en' => 'required|string|max:255',
-            'company_name_ar' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'nullable|string|min:8',
             'phone' => ['required', 'string', 'unique:users', 'regex:/^[0-9]{9}$/'],
             'tax_number' => 'nullable|string|max:255',
             'commercial_record_number' => 'nullable|string|max:255',
             'commercial_record_file' => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:2048',
+            'bank_name' => 'nullable|string|max:255',
+            'account_name' => 'nullable|string|max:255',
+            'account_number' => 'nullable|string|max:255',
+            'iban' => 'nullable|string|max:255',
+            'swift_code' => 'nullable|string|max:255',
+            'bank_address' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -131,12 +137,19 @@ class MaintenanceCompanyController extends Controller
 
         MaintenanceCompany::create([
             'user_id' => $user->id,
-            'company_name_en' => $request->company_name_en,
-            'company_name_ar' => $request->company_name_ar,
+            'name' => $request->name,
+            'company_name_en' => $request->name,
+            'company_name_ar' => $request->name,
             'commercial_record_number' => $request->commercial_record_number,
             'commercial_record_file' => $filePath,
             'tax_number' => $request->tax_number,
             'address' => $request->address,
+            'bank_name' => $request->bank_name,
+            'account_name' => $request->account_name,
+            'account_number' => $request->account_number,
+            'iban' => $request->iban,
+            'swift_code' => $request->swift_code,
+            'bank_address' => $request->bank_address,
         ]);
 
         return redirect()->route('admin.maintenance-companies.index')->with('success', __('Company created successfully.'));
@@ -144,14 +157,29 @@ class MaintenanceCompanyController extends Controller
 
     public function show(Request $request, $id)
     {
-        $company = MaintenanceCompany::with(['user', 'technicians.service', 'orders.service', 'financialSettlements', 'user.city'])
+        $company = MaintenanceCompany::with(['user', 'technicians.service', 'orders.service', 'financialSettlements', 'user.city', 'schedules'])
             ->where('user_id', $id)
             ->orWhere('id', $id)
             ->firstOrFail();
         
         $technicians = $company->technicians;
-        $orders = Order::where('maintenance_company_id', $company->id)->with(['service', 'user', 'technician'])->latest()->get();
+        $orders = Order::where('maintenance_company_id', $company->id)->with(['service', 'user', 'technician.user'])->latest()->get();
         $settlements = $company->financialSettlements()->latest()->get();
+        
+        // Get invoices from orders
+        $invoices = \App\Models\Invoice::whereHas('order', function($q) use ($company) {
+            $q->where('maintenance_company_id', $company->id);
+        })->with(['order.service', 'order.technician.user', 'order.user'])->latest()->get();
+        
+        // Get payments from orders
+        $payments = \App\Models\Payment::whereHas('order', function($q) use ($company) {
+            $q->where('maintenance_company_id', $company->id);
+        })->with(['order.service', 'order.technician.user', 'order.user'])->latest()->get();
+        
+        // Get reviews for company technicians
+        $reviews = \App\Models\Review::whereHas('technician', function($q) use ($company) {
+            $q->where('maintenance_company_id', $company->id);
+        })->with(['technician.user', 'order', 'service'])->latest()->get();
         
         $company->services = $technicians->pluck('service')->unique('id')->values();
 
@@ -204,7 +232,7 @@ class MaintenanceCompanyController extends Controller
             return response()->json(['performanceData' => $performanceData]);
         }
         
-        return view('admin.maintenance_companies.show', compact('company', 'stats', 'technicians', 'orders', 'settlements', 'performanceData', 'chartType'));
+        return view('admin.maintenance_companies.show', compact('company', 'stats', 'technicians', 'orders', 'settlements', 'invoices', 'payments', 'reviews', 'performanceData', 'chartType'));
     }
 
     public function edit($id)
@@ -218,13 +246,18 @@ class MaintenanceCompanyController extends Controller
         $company = MaintenanceCompany::findOrFail($id);
         
         $validator = Validator::make($request->all(), [
-            'company_name_en' => 'required|string|max:255',
-            'company_name_ar' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.$company->user_id,
             'phone' => ['required', 'string', 'unique:users,phone,'.$company->user_id, 'regex:/^[0-9]{9}$/'],
             'tax_number' => 'nullable|string|max:255',
             'commercial_record_number' => 'nullable|string|max:255',
             'commercial_record_file' => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:2048',
+            'bank_name' => 'nullable|string|max:255',
+            'account_name' => 'nullable|string|max:255',
+            'account_number' => 'nullable|string|max:255',
+            'iban' => 'nullable|string|max:255',
+            'swift_code' => 'nullable|string|max:255',
+            'bank_address' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -236,7 +269,7 @@ class MaintenanceCompanyController extends Controller
             $user->email = $request->email;
             if ($request->filled('password')) $user->password = Hash::make($request->password);
             if ($request->has('phone')) $user->phone = $request->phone;
-            if ($request->has('company_name_ar')) $user->name = $request->company_name_ar;
+            if ($request->has('name')) $user->name = $request->name;
             if ($request->has('status')) $user->status = $request->status;
             $user->save();
         }

@@ -108,13 +108,18 @@ class ServiceController extends Controller
         $service = Service::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'name_ar' => 'sometimes|string',
-            'name_en' => 'sometimes|string',
+            'name_ar' => 'required|string',
+            'name_en' => 'required|string',
             'description_ar' => 'nullable|string',
             'description_en' => 'nullable|string',
             'price' => 'nullable|numeric',
             'image' => 'nullable|image',
             'icon' => 'nullable|image',
+            'children' => 'nullable|array',
+            'children.*.id' => 'nullable|exists:services,id',
+            'children.*.name_ar' => 'required_with:children|string',
+            'children.*.name_en' => 'required_with:children|string',
+            'children.*.image' => 'nullable|image',
         ]);
 
         if ($validator->fails()) {
@@ -124,16 +129,64 @@ class ServiceController extends Controller
         $data = $request->except(['image', 'icon', 'children']);
         
         if ($request->hasFile('image')) {
-            // Storage::disk('public')->delete($service->image); // Optional delete old
+            if ($service->image) {
+                Storage::disk('public')->delete($service->image);
+            }
             $data['image'] = $request->file('image')->store('services', 'public');
         }
         
         if ($request->hasFile('icon')) {
-             // Storage::disk('public')->delete($service->icon); // Optional delete old
+            if ($service->icon) {
+                Storage::disk('public')->delete($service->icon);
+            }
             $data['icon'] = $request->file('icon')->store('services/icons', 'public');
         }
 
         $service->update($data);
+
+        // Handle Sub-services Sync
+        if ($request->has('children')) {
+            $submittedIds = collect($request->children)->pluck('id')->filter()->toArray();
+            
+            // Delete sub-services that are no longer in the list
+            $service->children()->whereNotIn('id', $submittedIds)->each(function($child) {
+                if ($child->image) {
+                    Storage::disk('public')->delete($child->image);
+                }
+                $child->delete();
+            });
+
+            foreach ($request->children as $index => $childData) {
+                $childImage = null;
+                if ($request->hasFile("children.$index.image")) {
+                    $childImage = $request->file("children.$index.image")->store('services', 'public');
+                }
+
+                if (isset($childData['id']) && $childData['id']) {
+                    // Update existing
+                    $child = Service::find($childData['id']);
+                    $childUpdateData = [
+                        'name_ar' => $childData['name_ar'],
+                        'name_en' => $childData['name_en'],
+                    ];
+                    if ($childImage) {
+                        if ($child->image) {
+                            Storage::disk('public')->delete($child->image);
+                        }
+                        $childUpdateData['image'] = $childImage;
+                    }
+                    $child->update($childUpdateData);
+                } else {
+                    // Create new
+                    Service::create([
+                        'name_ar' => $childData['name_ar'],
+                        'name_en' => $childData['name_en'],
+                        'parent_id' => $service->id,
+                        'image' => $childImage,
+                    ]);
+                }
+            }
+        }
 
         return redirect()->route('admin.services.index')->with('success', __('Service updated successfully.'));
     }

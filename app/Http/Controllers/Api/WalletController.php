@@ -86,7 +86,7 @@ class WalletController extends Controller
             
             // Format amount with sign
             $sign = in_array($transaction->type, ['debit', 'payment']) ? '-' : '+';
-            $transaction->formatted_amount = $sign . ' ₪' . number_format($transaction->amount, 0);
+            $transaction->formatted_amount = $sign . ' ₪' . number_format(abs($transaction->amount), 0);
             
             // Enhanced transaction details
             $transaction->display_title = $transaction->note ?? 'معاملة';
@@ -108,6 +108,9 @@ class WalletController extends Controller
                 }
                 
                 $transaction->reference_number = 'رقم ' . $order->id;
+            } elseif ($transaction->reference_type === 'App\Models\Refund') {
+                $transaction->display_title = 'استرداد مالي إداري';
+                $transaction->display_description = 'تمت الموافقة على طلب الاسترداد';
             } else {
                 // Generic wallet transactions
                 $transaction->display_description = $transaction->type_label;

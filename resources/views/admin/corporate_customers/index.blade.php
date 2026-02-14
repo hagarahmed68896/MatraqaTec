@@ -51,7 +51,7 @@
                     <tr onclick="window.location='{{ route('admin.corporate-customers.show', $item->id) }}'" class="border-b border-slate-50 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer">
                         <td class="py-4 px-6">#{{ $item->id }}</td>
                         <td class="py-4 px-6">
-                            <span class="text-slate-900 dark:text-white font-black">{{ $item->company_name_ar }}</span>
+                            <span class="text-slate-900 dark:text-white font-black">{{ $item->user->name }}</span>
                         </td>
                         <td class="py-4 px-6 font-mono">{{ $item->commercial_record_number ?? '-' }}</td>
                         <td class="py-4 px-6">

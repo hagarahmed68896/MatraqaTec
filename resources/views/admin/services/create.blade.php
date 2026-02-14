@@ -129,18 +129,18 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </button>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
                                 <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">{{ __('Name (Arabic)') }}</label>
-                                <input type="text" :name="`children[${index}][name_ar]`" x-model="sub.name_ar" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-[#1A1A31] border-none text-slate-800 dark:text-white text-xs font-bold shadow-sm" required>
+                                <input type="text" :name="`children[${index}][name_ar]`" x-model="sub.name_ar" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-[#1A1A31] border-none text-slate-800 dark:text-white text-xs font-bold shadow-sm" required placeholder="{{ __('Sub-service label') }}">
                             </div>
                             <div>
                                 <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">{{ __('Name (English)') }}</label>
-                                <input type="text" :name="`children[${index}][name_en]`" x-model="sub.name_en" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-[#1A1A31] border-none text-slate-800 dark:text-white text-xs font-bold shadow-sm" required>
+                                <input type="text" :name="`children[${index}][name_en]`" x-model="sub.name_en" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-[#1A1A31] border-none text-slate-800 dark:text-white text-xs font-bold shadow-sm" required placeholder="{{ __('English label') }}">
                             </div>
                             <div>
                                 <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">{{ __('Image') }}</label>
-                                <input type="file" :name="`children[${index}][image]`" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20">
+                                <input type="file" :name="`children[${index}][image]`" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20">
                             </div>
                         </div>
                     </div>

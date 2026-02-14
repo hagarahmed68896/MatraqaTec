@@ -82,7 +82,7 @@ class RefundController extends Controller
 
     public function changeStatus(Request $request, $id)
     {
-        $refund = Refund::findOrFail($id);
+        $refund = Refund::with(['order.user'])->findOrFail($id);
 
         $request->validate([
             'status' => 'required|in:pending,transferred,rejected',
@@ -90,12 +90,33 @@ class RefundController extends Controller
             'admin_note' => 'nullable|string'
         ]);
 
+        $oldStatus = $refund->status;
         $refund->status = $request->status;
         if ($request->has('reason')) $refund->reason = $request->reason;
         if ($request->has('admin_note')) $refund->admin_note = $request->admin_note;
-        $refund->save();
 
-        return back()->with('success', __('Refund status updated successfully.'));
+        return DB::transaction(function () use ($refund, $oldStatus, $request) {
+            // If status is changed to 'transferred' and it wasn't already transferred
+            if ($refund->status === 'transferred' && $oldStatus !== 'transferred') {
+                $user = $refund->order->user;
+                if ($user) {
+                    $user->wallet_balance += $refund->amount;
+                    $user->save();
+
+                    \App\Models\WalletTransaction::create([
+                        'user_id' => $user->id,
+                        'amount' => $refund->amount,
+                        'type' => 'refund',
+                        'note' => 'Administrative Refund APPROVED for Order #' . ($refund->order->order_number ?? $refund->order_id),
+                        'reference_id' => $refund->id,
+                        'reference_type' => Refund::class,
+                    ]);
+                }
+            }
+
+            $refund->save();
+            return back()->with('success', __('Refund status updated successfully.'));
+        });
     }
 
     public function export(Request $request)

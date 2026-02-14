@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', __('Corporate Profile') . ' - ' . $item->company_name_ar)
+@section('title', __('Corporate Profile') . ' - ' . $item->user->name)
 
 @section('content')
 <div x-data="{ 
@@ -112,7 +112,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
             </a>
-            <h2 class="text-2xl font-black text-slate-800 dark:text-white">{{ $item->company_name_ar }}</h2>
+            <h2 class="text-2xl font-black text-slate-800 dark:text-white">{{ $item->user->name }}</h2>
         </div>
     </div>
 
@@ -138,14 +138,14 @@
                     
                     <div class="relative mt-8">
                         <div class="w-24 h-24 rounded-[2rem] bg-slate-100 dark:bg-white/10 mx-auto overflow-hidden border-4 border-white dark:border-[#1A1A31] shadow-xl flex items-center justify-center text-3xl font-black text-indigo-600 uppercase">
-                            {{ mb_substr($item->company_name_ar, 0, 1) }}
+                            {{ mb_substr($item->user->name, 0, 1) }}
                         </div>
                         <div class="mt-6 text-center">
                             <h3 class="text-xl font-black text-slate-800 dark:text-white">
                                 @if(app()->getLocale() == 'ar')
-                                    {{ $item->company_name_ar ?? $item->company_name_en }}
+                                    {{ $item->user->name }}
                                 @else
-                                    {{ $item->company_name_en ?? $item->company_name_ar }}
+                                    {{ $item->user->name }}
                                 @endif
                             </h3>                        </div>
 
@@ -346,18 +346,18 @@
                                 x-show="(orderSubTab === 'all' || orderSubTab === '{{ $order->status }}') && 
                                        ('{{ $order->order_number }}'.includes(orderSearch) || 
                                         '{{ optional($order->service)->{'name_'.app()->getLocale()} }}'.toLowerCase().includes(orderSearch.toLowerCase()) ||
-                                        '{{ optional($order->technician)->{'name_'.app()->getLocale()} }}'.toLowerCase().includes(orderSearch.toLowerCase()))">
+                                        '{{ optional($order->technician)->user->name }}'.toLowerCase().includes(orderSearch.toLowerCase()))">
                                 <td class="py-5 px-2 text-slate-400">{{ $index + 1 }}</td>
                                 <td class="py-5 px-2 text-slate-800 dark:text-white">{{ __('Order') }} - #{{ $order->order_number }}</td>
-                                <td class="py-5 px-2 text-slate-600 dark:text-slate-300 font-black">{{ $order->service->{'name_'.app()->getLocale()} ?? '-' }}</td>
-                                <td class="py-5 px-2 text-slate-400">{{ $order->service->category->{'name_'.app()->getLocale()} ?? '-' }}</td>
+                                <td class="py-5 px-2 text-slate-600 dark:text-slate-300 font-black">{{ $order->service->{'name'.app()->getLocale()} ?? '-' }}</td>
+                                <td class="py-5 px-2 text-slate-400">{{ $order->service->category->{'name'.app()->getLocale()} ?? '-' }}</td>
                                 <td class="py-5 px-2 text-slate-400 truncate max-w-[150px]">{{ $order->address ?? '-' }}</td>
                                 <td class="py-5 px-2">
                                     <div class="flex items-center gap-2">
                                         <div class="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-[10px] text-primary font-black">
-                                            {{ mb_substr($order->technician->{'name_'.app()->getLocale()} ?? '-', 0, 1) }}
+                                            {{ mb_substr($order->technician->user->name ?? '-', 0, 1) }}
                                         </div>
-                                        <span class="text-slate-800 dark:text-white">{{ $order->technician->{'name_'.app()->getLocale()} ?? '-' }}</span>
+                                        <span class="text-slate-800 dark:text-white">{{ $order->technician->user->name ?? '-' }}</span>
                                     </div>
                                 </td>
                                 <td class="py-5 px-2">
@@ -444,9 +444,9 @@
                                 <td class="py-5 px-2">
                                     <div class="flex items-center gap-2">
                                         <div class="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-[10px] text-primary font-black">
-                                            {{ mb_substr($invoice->order->technician->{'name_'.app()->getLocale()} ?? '-', 0, 1) }}
+                                            {{ mb_substr($invoice->order->technician->user->name ?? '-', 0, 1) }}
                                         </div>
-                                        <span class="text-slate-800 dark:text-white">{{ $invoice->order->technician->{'name_'.app()->getLocale()} ?? '-' }}</span>
+                                        <span class="text-slate-800 dark:text-white">{{ $invoice->order->technician->user->name ?? '-' }}</span>
                                     </div>
                                 </td>
                                 <td class="py-5 px-2">
@@ -513,9 +513,9 @@
                                 <td class="py-5 px-2">
                                     <div class="flex items-center gap-2">
                                         <div class="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-[10px] text-primary font-black">
-                                            {{ mb_substr($payment->order->technician->{'name_'.app()->getLocale()} ?? '-', 0, 1) }}
+                                            {{ mb_substr($payment->order->technician->user->name ?? '-', 0, 1) }}
                                         </div>
-                                        <span class="text-slate-800 dark:text-white">{{ $payment->order->technician->{'name_'.app()->getLocale()} ?? '-' }}</span>
+                                        <span class="text-slate-800 dark:text-white">{{ $payment->order->technician->user->name ?? '-' }}</span>
                                     </div>
                                 </td>
                                 <td class="py-5 px-2">
@@ -614,10 +614,10 @@
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black">
-                                {{ mb_substr($review->technician->{'name_'.app()->getLocale()} ?? '-', 0, 1) }}
+                                {{ mb_substr($review->technician->user->name ?? '-', 0, 1) }}
                             </div>
                             <div>
-                                <h4 class="text-sm font-black text-slate-800 dark:text-white">{{ $review->technician->{'name_'.app()->getLocale()} ?? __('Technician') }}</h4>
+                                <h4 class="text-sm font-black text-slate-800 dark:text-white">{{ $review->technician->user->name ?? __('Technician') }}</h4>
                                 <p class="text-[10px] text-slate-400 font-bold">{{ $review->order->order_number ?? '-' }}</p>
                             </div>
                         </div>
@@ -630,7 +630,7 @@
                     <p class="text-xs text-slate-500 italic">"{{ $review->comment ?? __('No comment provided.') }}"</p>
                     <div class="pt-4 border-t border-slate-50 dark:border-white/5 flex items-center justify-between">
                         <span class="text-[10px] font-bold text-slate-400">{{ $review->created_at->format('d/m/Y') }}</span>
-                        <span class="text-[10px] font-black text-primary uppercase">{{ $review->service->{'name_'.app()->getLocale()} ?? '-' }}</span>
+                        <span class="text-[10px] font-black text-primary uppercase">{{ $review->service->user->name ?? '-' }}</span>
                     </div>
                 </div>
                 @empty

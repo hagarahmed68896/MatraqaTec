@@ -8,7 +8,7 @@
     <div class="flex items-center justify-between mb-6">
         <div>
             <h2 class="text-2xl font-black text-slate-800 dark:text-white">{{ __('Edit Service') }} #{{ $item->id }}</h2>
-            <p class="text-slate-500 dark:text-slate-400 text-sm font-bold mt-1">{{ __('Update service details') }}</p>
+            <p class="text-slate-500 dark:text-slate-400 text-sm font-bold mt-1">{{ __('Update service details and manage sub-services') }}</p>
         </div>
         <a href="{{ route('admin.services.index') }}" class="px-4 py-2 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 text-sm font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
             {{ __('Back to List') }}
@@ -17,18 +17,26 @@
 
     <!-- Form -->
     <form action="{{ route('admin.services.update', $item->id) }}" method="POST" enctype="multipart/form-data" class="space-y-6" x-data="{ 
-        subServices: {{ $item->children->toJson() }},
+        subServices: {{ $item->children->map(function($child) {
+            return [
+                'id' => $child->id,
+                'name_ar' => $child->name_ar,
+                'name_en' => $child->name_en,
+                'image_url' => $child->image ? Storage::url($child->image) : null,
+                'is_existing' => true
+            ];
+        })->toJson() }},
         addSubService() {
             this.subServices.push({
-                id: Date.now(),
+                id: null,
+                temp_id: Date.now(),
                 name_ar: '',
                 name_en: '',
-                image: null,
-                is_new: true
+                image_url: null,
+                is_existing: false
             });
         },
         removeSubService(index) {
-            // Logic to handle removal could be improved to delete from DB if needed
             this.subServices.splice(index, 1);
         }
     }">
@@ -107,6 +115,54 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Sub Services Repeater -->
+        <div class="bg-white dark:bg-[#1A1A31] rounded-2xl p-6 border border-slate-100 dark:border-white/5 shadow-sm space-y-6">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-4">
+                <h3 class="text-lg font-black text-slate-800 dark:text-white">{{ __('Sub Services') }}</h3>
+                <button type="button" @click="addSubService()" class="px-3 py-1.5 bg-primary/10 text-primary text-xs font-black rounded-lg hover:bg-primary/20 transition-all">
+                    + {{ __('Add Sub Service') }}
+                </button>
+            </div>
+            
+            <template x-if="subServices.length === 0">
+                <div class="text-center py-8 text-slate-400 dark:text-slate-500 text-sm font-bold italic">
+                    {{ __('No sub-services added yet.') }}
+                </div>
+            </template>
+
+            <div class="space-y-4">
+                <template x-for="(sub, index) in subServices" :key="sub.id || sub.temp_id">
+                    <div class="p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 relative group">
+                        <button type="button" @click="removeSubService(index)" class="absolute top-2 right-2 p-1 text-slate-400 hover:text-red-500 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                        
+                        <input type="hidden" :name="`children[${index}][id]`" x-model="sub.id">
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">{{ __('Name (Arabic)') }}</label>
+                                <input type="text" :name="`children[${index}][name_ar]`" x-model="sub.name_ar" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-[#1A1A31] border-none text-slate-800 dark:text-white text-xs font-bold shadow-sm" required>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">{{ __('Name (English)') }}</label>
+                                <input type="text" :name="`children[${index}][name_en]`" x-model="sub.name_en" class="w-full px-3 py-2 rounded-lg bg-white dark:bg-[#1A1A31] border-none text-slate-800 dark:text-white text-xs font-bold shadow-sm" required>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="flex-1">
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1">{{ __('Upload Image') }}</label>
+                                    <input type="file" :name="`children[${index}][image]`" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20">
+                                </div>
+                                <template x-if="sub.image_url">
+                                    <img :src="sub.image_url" class="w-10 h-10 rounded-lg object-cover bg-white shadow-sm border border-slate-100">
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </template>
             </div>
         </div>
 

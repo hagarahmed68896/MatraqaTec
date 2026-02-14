@@ -15,7 +15,7 @@ class SupervisorController extends Controller
     {
         $query = User::where('type', 'supervisor')->with('roles');
 
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -24,12 +24,32 @@ class SupervisorController extends Controller
             });
         }
 
-        if ($request->has('status') && $request->status != 'all') {
+        if ($request->filled('status') && $request->status != 'all') {
             $query->where('status', $request->status);
         }
 
-        $items = $query->orderBy('created_at', 'desc')->paginate(10);
-        return view('admin.supervisors.index', compact('items'));
+        if ($request->filled('role_id') && $request->role_id != 'all') {
+            $query->whereHas('roles', function ($q) use ($request) {
+                $q->where('roles.id', $request->role_id);
+            });
+        }
+
+        $sort = $request->input('sort', 'newest');
+        switch ($sort) {
+            case 'name':
+                $query->orderBy('name', 'asc');
+                break;
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+            default:
+                $query->orderBy('created_at', 'desc');
+                break;
+        }
+
+        $items = $query->paginate(10);
+        $roles = Role::all();
+        return view('admin.supervisors.index', compact('items', 'roles'));
     }
 
     public function blockedIndex()
@@ -52,12 +72,14 @@ class SupervisorController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-            'phone' => 'nullable|string|unique:users',
-            'roles' => 'nullable|array',
+            'password' => 'nullable|string|min:8',
+            'phone' => 'required|string|unique:users',
+            'roles' => 'required|array',
             'roles.*' => 'exists:roles,id',
+            'status' => 'required|in:active,blocked',
         ]);
 
         if ($validator->fails()) {
@@ -65,12 +87,12 @@ class SupervisorController extends Controller
         }
 
         $user = User::create([
-            'name' => $request->name,
+            'name' => $request->first_name . ' ' . $request->last_name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($request->password ?? \Illuminate\Support\Str::random(10)),
             'type' => 'supervisor',
             'phone' => $request->phone,
-            'status' => 'active',
+            'status' => $request->status,
         ]);
 
         if ($request->has('roles')) {
@@ -99,18 +121,20 @@ class SupervisorController extends Controller
         $supervisor = User::where('type', 'supervisor')->findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
             'email' => 'required|string|email|max:255|unique:users,email,' . $id,
-            'phone' => 'nullable|string|unique:users,phone,' . $id,
-            'roles' => 'nullable|array',
+            'phone' => 'required|string|unique:users,phone,' . $id,
+            'roles' => 'required|array',
             'roles.*' => 'exists:roles,id',
+            'status' => 'required|in:active,blocked',
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
 
-        $supervisor->name = $request->name;
+        $supervisor->name = $request->first_name . ' ' . $request->last_name;
         $supervisor->email = $request->email;
         if ($request->has('password') && $request->password) {
             $supervisor->password = Hash::make($request->password);
@@ -133,7 +157,40 @@ class SupervisorController extends Controller
     {
         $supervisor = User::where('type', 'supervisor')->findOrFail($id);
         $supervisor->delete();
-        return redirect()->route('admin.supervisors.index')->with('success', __('Supervisor deleted successfully.'));
+        return back()->with('success', __('Supervisor deleted successfully.'));
+    }
+
+    public function bulkBlock(Request $request)
+    {
+        $ids = $request->input('ids');
+        if (empty($ids)) {
+            return back()->with('error', __('No supervisors selected.'));
+        }
+
+        User::where('type', 'supervisor')->whereIn('id', $ids)->update(['status' => 'blocked']);
+
+        return back()->with('success', __('Selected supervisors have been blocked.'));
+    }
+
+    public function bulkUnblock(Request $request)
+    {
+        $ids = $request->input('ids');
+        if (empty($ids)) {
+            return back()->with('error', __('No supervisors selected.'));
+        }
+
+        User::where('type', 'supervisor')->whereIn('id', $ids)->update(['status' => 'active']);
+
+        return back()->with('success', __('Selected supervisors have been unblocked.'));
+    }
+
+    public function toggleBlock($id)
+    {
+        $user = User::where('type', 'supervisor')->findOrFail($id);
+        $user->status = $user->status == 'active' ? 'blocked' : 'active';
+        $user->save();
+
+        return back()->with('success', __('Supervisor status updated.'));
     }
 
     public function download()
@@ -160,8 +217,8 @@ class SupervisorController extends Controller
                 $user->name,
                 $user->email,
                 $user->phone,
-                $user->status,
-                $user->created_at,
+                $user->status == 'active' ? __('Active') : __('Blocked'),
+                $user->created_at->format('Y-m-d'),
             ]);
         }
 

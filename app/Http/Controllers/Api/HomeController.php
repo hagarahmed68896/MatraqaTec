@@ -28,25 +28,70 @@ class HomeController extends Controller
         ];
 
         if (in_array($userType, ['individual', 'corporate_customer'])) {
-            // Customer Home
-            $data['banners'] = Content::with('items')->where('is_visible', true)->get();
-            $data['categories'] = Service::whereNull('parent_id')->get();
-            $data['prominent_services'] = Service::whereNotNull('parent_id')->where('is_featured', true)->take(4)->get();
-            if ($data['prominent_services']->isEmpty()) {
-                $data['prominent_services'] = Service::whereNotNull('parent_id')->take(4)->get();
-            }
+            // Customer Home - Return 3 main keys
             
-            // Latest active order for "Follow your order" section
-            $data['active_order'] = Order::with(['technician.user', 'service', 'city'])
+            // 1. Follow Request - Latest active order
+            $activeOrder = Order::with(['technician.user', 'service', 'city'])
                 ->where('user_id', $user->id)
                 ->whereIn('status', ['new', 'accepted', 'assigned', 'scheduled', 'in_progress'])
                 ->latest()
                 ->first();
+            
+            // Fetch Favorite IDs once
+            $userFavorites = auth()->check() ? $user->favorites()->pluck('service_id')->toArray() : [];
 
-            $data['search_history'] = \App\Models\SearchHistory::where('user_id', $user->id)->latest()->take(5)->get();
-            $data['cities'] = \App\Models\City::with('districts')->get();
-            $data['categories'] = Service::whereNull('parent_id')->get();
-            $data['service_types'] = Service::whereNotNull('parent_id')->get();
+            // 2. Service Categories - Limit to 6
+            $categories = Service::with(['children', 'city'])->whereNull('parent_id')
+                ->take(6)
+                ->get()
+                ->map(function ($service) use ($userFavorites) {
+                    $service->is_favorite = in_array($service->id, $userFavorites);
+                    return $service;
+                });
+            $totalCategories = Service::whereNull('parent_id')->count();
+            
+            // 3. Featured Services (أبرز الخدمات) - Limit to 6
+            $featuredServices = Service::with(['children', 'city'])->whereNotNull('parent_id')
+                ->where('is_featured', true)
+                ->take(6)
+                ->get();
+            
+            // If no featured services, get first 6 services
+            if ($featuredServices->isEmpty()) {
+                $featuredServices = Service::with(['children', 'city'])->whereNotNull('parent_id')
+                    ->take(6)
+                    ->get();
+            }
+
+            // Map favorite status to services
+            $featuredServices = $featuredServices->map(function ($service) use ($userFavorites) {
+                $service->is_favorite = in_array($service->id, $userFavorites);
+                return $service;
+            });
+            
+            $totalFeaturedServices = Service::whereNotNull('parent_id')
+                ->where('is_featured', true)
+                ->count();
+            
+            // If no featured services exist, count all services
+            if ($totalFeaturedServices == 0) {
+                $totalFeaturedServices = Service::whereNotNull('parent_id')->count();
+            }
+            
+            $data['follow_request'] = $activeOrder;
+            $data['categories'] = [
+                'items' => $categories,
+                'total' => $totalCategories,
+                'showing' => $categories->count(),
+                'has_more' => $totalCategories > 6
+            ];
+            $data['featured_services'] = [
+                'items' => $featuredServices,
+                'total' => $totalFeaturedServices,
+                'showing' => $featuredServices->count(),
+                'has_more' => $totalFeaturedServices > 6
+            ];
+
         } elseif ($userType === 'maintenance_company') {
             // Company Home
             $company = $user->maintenanceCompany;
