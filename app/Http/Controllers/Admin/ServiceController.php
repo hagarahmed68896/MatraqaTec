@@ -58,13 +58,22 @@ class ServiceController extends Controller
         }
 
         $data = $request->except(['image', 'icon', 'children']);
+
+        // Ensure directories exist
+        if (!file_exists(public_path('uploads/services/icons'))) {
+            mkdir(public_path('uploads/services/icons'), 0775, true);
+        }
         
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('services', 'public');
+            $imageName = time() . '_' . uniqid() . '.' . $request->file('image')->getClientOriginalExtension();
+            $request->file('image')->move(public_path('uploads/services'), $imageName);
+            $data['image'] = 'uploads/services/' . $imageName;
         }
         
         if ($request->hasFile('icon')) {
-            $data['icon'] = $request->file('icon')->store('services/icons', 'public');
+            $iconName = time() . '_' . uniqid() . '.' . $request->file('icon')->getClientOriginalExtension();
+            $request->file('icon')->move(public_path('uploads/services/icons'), $iconName);
+            $data['icon'] = 'uploads/services/icons/' . $iconName;
         }
 
         $service = Service::create($data);
@@ -73,16 +82,18 @@ class ServiceController extends Controller
         if ($request->has('children') && is_array($request->children)) {
             foreach ($request->children as $index => $childData) {
                 // If sub-service image is uploaded
-                $childImage = null;
+                $childImagePath = null;
                 if ($request->hasFile("children.$index.image")) {
-                    $childImage = $request->file("children.$index.image")->store('services', 'public');
+                    $childImageName = time() . '_' . uniqid() . '.' . $request->file("children.$index.image")->getClientOriginalExtension();
+                    $request->file("children.$index.image")->move(public_path('uploads/services'), $childImageName);
+                    $childImagePath = 'uploads/services/' . $childImageName;
                 }
 
                 Service::create([
                     'name_ar' => $childData['name_ar'],
                     'name_en' => $childData['name_en'],
                     'parent_id' => $service->id,
-                    'image' => $childImage,
+                    'image' => $childImagePath,
                 ]);
             }
         }
@@ -127,19 +138,28 @@ class ServiceController extends Controller
         }
 
         $data = $request->except(['image', 'icon', 'children']);
+
+        // Ensure directories exist
+        if (!file_exists(public_path('uploads/services/icons'))) {
+            mkdir(public_path('uploads/services/icons'), 0775, true);
+        }
         
         if ($request->hasFile('image')) {
-            if ($service->image) {
-                Storage::disk('public')->delete($service->image);
+            if ($service->image && file_exists(public_path($service->image))) {
+                unlink(public_path($service->image));
             }
-            $data['image'] = $request->file('image')->store('services', 'public');
+            $imageName = time() . '_' . uniqid() . '.' . $request->file('image')->getClientOriginalExtension();
+            $request->file('image')->move(public_path('uploads/services'), $imageName);
+            $data['image'] = 'uploads/services/' . $imageName;
         }
         
         if ($request->hasFile('icon')) {
-            if ($service->icon) {
-                Storage::disk('public')->delete($service->icon);
+            if ($service->icon && file_exists(public_path($service->icon))) {
+                unlink(public_path($service->icon));
             }
-            $data['icon'] = $request->file('icon')->store('services/icons', 'public');
+            $iconName = time() . '_' . uniqid() . '.' . $request->file('icon')->getClientOriginalExtension();
+            $request->file('icon')->move(public_path('uploads/services/icons'), $iconName);
+            $data['icon'] = 'uploads/services/icons/' . $iconName;
         }
 
         $service->update($data);
@@ -150,16 +170,18 @@ class ServiceController extends Controller
             
             // Delete sub-services that are no longer in the list
             $service->children()->whereNotIn('id', $submittedIds)->each(function($child) {
-                if ($child->image) {
-                    Storage::disk('public')->delete($child->image);
+                if ($child->image && file_exists(public_path($child->image))) {
+                    unlink(public_path($child->image));
                 }
                 $child->delete();
             });
 
             foreach ($request->children as $index => $childData) {
-                $childImage = null;
+                $childImagePath = null;
                 if ($request->hasFile("children.$index.image")) {
-                    $childImage = $request->file("children.$index.image")->store('services', 'public');
+                    $childImageName = time() . '_' . uniqid() . '.' . $request->file("children.$index.image")->getClientOriginalExtension();
+                    $request->file("children.$index.image")->move(public_path('uploads/services'), $childImageName);
+                    $childImagePath = 'uploads/services/' . $childImageName;
                 }
 
                 if (isset($childData['id']) && $childData['id']) {
@@ -169,11 +191,11 @@ class ServiceController extends Controller
                         'name_ar' => $childData['name_ar'],
                         'name_en' => $childData['name_en'],
                     ];
-                    if ($childImage) {
-                        if ($child->image) {
-                            Storage::disk('public')->delete($child->image);
+                    if ($childImagePath) {
+                        if ($child->image && file_exists(public_path($child->image))) {
+                            unlink(public_path($child->image));
                         }
-                        $childUpdateData['image'] = $childImage;
+                        $childUpdateData['image'] = $childImagePath;
                     }
                     $child->update($childUpdateData);
                 } else {
@@ -182,7 +204,7 @@ class ServiceController extends Controller
                         'name_ar' => $childData['name_ar'],
                         'name_en' => $childData['name_en'],
                         'parent_id' => $service->id,
-                        'image' => $childImage,
+                        'image' => $childImagePath,
                     ]);
                 }
             }

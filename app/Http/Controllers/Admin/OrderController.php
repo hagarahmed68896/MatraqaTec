@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Validator;
 
 class OrderController extends Controller
 {
+    use \App\Traits\HasAutoAssignment;
+
     public function index(Request $request)
     {
         $query = Order::with(['user', 'technician.user', 'maintenanceCompany.user', 'service.parent']);
@@ -108,6 +110,8 @@ class OrderController extends Controller
             'scheduled' => Order::where('status', 'scheduled')->count(),
             'in_progress' => Order::where('status', 'in_progress')->count(),
             'completed' => Order::where('status', 'completed')->count(),
+            'rejected' => Order::where('status', 'rejected')->count(),
+            'new' => Order::where('status', 'new')->count(),
         ];
 
         return view('admin.orders.index', compact('items', 'stats'));
@@ -129,6 +133,8 @@ class OrderController extends Controller
             'status' => 'required|string',
             'total_price' => 'nullable|numeric',
             'description' => 'nullable|string',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
         ]);
 
         Order::create($validated);
@@ -212,5 +218,106 @@ class OrderController extends Controller
         $item = Order::findOrFail($id);
         $item->delete();
         return redirect()->back()->with('success', __('Order deleted successfully.'));
+    }
+    public function getAvailableTechnicians(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+        
+        $start = (clone $order->scheduled_at)->subHours(1)->addMinute();
+        $end = (clone $order->scheduled_at)->addHours(1)->subMinute();
+        
+        $service = $order->service;
+        $categoryId = $service->parent_id ?? $service->id;
+
+        $technicians = Technician::with(['user', 'service'])
+            ->whereHas('user', function($q) use ($order) {
+                $q->where('city_id', $order->city_id)
+                  ->where('status', 'active');
+            })
+            ->where(function($q) use ($order, $categoryId) {
+                $q->where('service_id', $order->service_id)
+                  ->orWhere('category_id', $categoryId);
+            })
+            ->whereDoesntHave('orders', function($q) use ($start, $end) {
+                $q->whereIn('status', ['accepted', 'scheduled', 'in_progress'])
+                  ->whereBetween('scheduled_at', [$start, $end]);
+            })
+            ->whereDoesntHave('appointments', function($q) use ($start, $end) {
+                $q->whereIn('status', ['scheduled', 'in_progress'])
+                  ->whereBetween('appointment_date', [$start, $end]);
+            })
+            ->withAvg('reviews', 'rating')
+            ->withCount('orders')
+            ->orderByDesc('reviews_avg_rating')
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $technicians->map(function($tech, $index) {
+                // For demo purposes, we randomize positions slightly if coordinates are missing or identical
+                $lat = $tech->user->latitude ?? 24.7136;
+                $lng = $tech->user->longitude ?? 46.6753;
+                
+                if ($lat == 24.7136 && $lng == 46.6753) {
+                    $lat += (rand(-100, 100) / 100); // Varied across the region
+                    $lng += (rand(-100, 100) / 100);
+                }
+
+                return [
+                    'id' => $tech->id,
+                    'name' => $tech->user->name,
+                    'avatar' => $tech->user->avatar ? asset('storage/' . $tech->user->avatar) : null,
+                    'specialty' => $tech->bio_ar ?? 'متخصص في خدمات الصيانة',
+                    'service_name' => $tech->service->name_ar ?? 'فني',
+                    'rating' => round($tech->reviews_avg_rating ?? 0, 1),
+                    'district' => is_array($tech->districts) ? implode(', ', $tech->districts) : ($tech->districts ?? 'جميع المناطق'),
+                    'order_count' => $tech->orders_count ?? 5,
+                    'lat' => $lat,
+                    'lng' => $lng,
+                    'status_label' => 'متاح',
+                ];
+            })
+        ]);
+    }
+
+    public function getAvailableCompanies(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+        
+        $categoryId = $order->service->parent_id ?? $order->service_id;
+
+        $companies = MaintenanceCompany::with(['user', 'city'])
+            ->where('city_id', $order->city_id)
+            ->whereHas('services', function($q) use ($order, $categoryId) {
+                $q->where('services.id', $order->service_id)
+                  ->orWhere('services.id', $categoryId);
+            })
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $companies->map(function($comp, $index) {
+                // For demo purposes, we randomize positions slightly if coordinates are missing or identical
+                $lat = $comp->user->latitude ?? 24.7136;
+                $lng = $comp->user->longitude ?? 46.6753;
+                
+                if ($lat == 24.7136 && $lng == 46.6753) {
+                    $lat += (rand(-100, 100) / 100);
+                    $lng += (rand(-100, 100) / 100);
+                }
+
+                return [
+                    'id' => $comp->id,
+                    'name' => $comp->company_name_ar ?? $comp->user->name,
+                    'avatar' => $comp->user->avatar ? asset('storage/' . $comp->user->avatar) : null,
+                    'specialty' => 'شركة صيانة معتمدة',
+                    'rating' => 4.5,
+                    'district' => $comp->city->name_ar ?? 'حي الرياض',
+                    'lat' => $lat,
+                    'lng' => $lng,
+                    'status_label' => 'متاح',
+                ];
+            })
+        ]);
     }
 }

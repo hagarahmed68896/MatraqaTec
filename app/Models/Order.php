@@ -27,6 +27,8 @@ class Order extends Model
         'spare_parts_metadata',
         'client_signature',
         'assigned_at',
+        'latitude',
+        'longitude',
     ];
 
     protected $casts = [

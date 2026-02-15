@@ -34,7 +34,7 @@
                         
                         <td class="py-4 px-6">
                             @if($item->icon)
-                                <img src="{{ Storage::url($item->icon) }}" alt="Icon" class="w-8 h-8 rounded-lg object-contain bg-slate-100 dark:bg-white/5 p-1">
+                                <img src="{{ asset($item->icon) }}" alt="Icon" class="w-8 h-8 rounded-lg object-contain bg-slate-100 dark:bg-white/5 p-1">
                             @else
                                 <span class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-300">-</span>
                             @endif
@@ -43,7 +43,7 @@
                         <td class="py-4 px-6">
                             <div class="flex items-center gap-3">
                                 @if($item->image)
-                                    <img src="{{ Storage::url($item->image) }}" alt="Image" class="w-10 h-10 rounded-lg object-cover">
+                                    <img src="{{ asset($item->image) }}" alt="Image" class="w-10 h-10 rounded-lg object-cover">
                                 @endif
                                 <div>
                                     <p class="text-slate-800 dark:text-white">{{ $item->name }}</p>

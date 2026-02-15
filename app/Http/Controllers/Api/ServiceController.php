@@ -98,12 +98,48 @@ class ServiceController extends Controller
             });
         }
 
-        // NEW: Availability Filter
+        // NEW: Availability Filter (Based on schedule conflicts)
         if ($request->has('availability')) {
             $isAvailable = $request->availability === 'available';
-            $query->whereHas('technicians.user', function($q) use ($isAvailable) {
-                $q->where('is_online', $isAvailable);
-            });
+            
+            $scheduledAt = null;
+            if ($request->filled('scheduled_at')) {
+                $scheduledAt = \Carbon\Carbon::parse($request->scheduled_at);
+            } elseif ($request->filled('date')) {
+                $scheduledAt = \Carbon\Carbon::parse($request->date);
+                if ($request->filled('hour')) {
+                    $scheduledAt->setHour($request->hour)->setMinute(0)->setSecond(0);
+                }
+            } else {
+                $scheduledAt = now();
+            }
+
+            $start = (clone $scheduledAt)->subHours(1)->addMinute();
+            $end = (clone $scheduledAt)->addHours(1)->subMinute();
+
+            if ($isAvailable) {
+                // Service must have at least one technician WHO IS NOT BUSY at this time
+                $query->whereHas('technicians', function($q) use ($start, $end) {
+                    $q->whereDoesntHave('orders', function($q2) use ($start, $end) {
+                        $q2->whereIn('status', ['accepted', 'scheduled', 'in_progress'])
+                           ->whereBetween('scheduled_at', [$start, $end]);
+                    })->whereDoesntHave('appointments', function($q2) use ($start, $end) {
+                        $q2->whereIn('status', ['scheduled', 'in_progress'])
+                           ->whereBetween('appointment_date', [$start, $end]);
+                    });
+                });
+            } else {
+                // Service where ALL technicians ARE BUSY at this time
+                $query->whereDoesntHave('technicians', function($q) use ($start, $end) {
+                    $q->whereDoesntHave('orders', function($q2) use ($start, $end) {
+                        $q2->whereIn('status', ['accepted', 'scheduled', 'in_progress'])
+                           ->whereBetween('scheduled_at', [$start, $end]);
+                    })->whereDoesntHave('appointments', function($q2) use ($start, $end) {
+                        $q2->whereIn('status', ['scheduled', 'in_progress'])
+                           ->whereBetween('appointment_date', [$start, $end]);
+                    });
+                });
+            }
         }
 
         $services = $query->with(['children', 'city'])->get();
@@ -150,7 +186,7 @@ class ServiceController extends Controller
 
     public function show($id)
     {
-        $service = Service::with(['city'])->withCount(['children', 'technicians'])->find($id);
+        $service = Service::with(['city', 'children'])->withCount(['children', 'technicians'])->find($id);
 
         if (!$service) {
             return response()->json(['status' => false, 'message' => 'Service not found'], 404);

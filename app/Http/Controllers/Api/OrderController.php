@@ -159,6 +159,8 @@ class OrderController extends Controller
             'scheduled_at' => 'required|date|after:now',
             'attachments' => 'nullable|array',
             'attachments.*' => 'file|mimes:jpg,jpeg,png,mp4,mov|max:10240',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
             'force' => 'nullable|boolean',
         ], [
             'scheduled_at.after' => 'The scheduled date must be a future date.',
@@ -183,7 +185,7 @@ class OrderController extends Controller
                 'message' => 'The selected time is currently fully booked.',
                 'suggested_time' => $suggestedTime->toDateTimeString(),
                 'suggestion_message' => 'لا يتوفر فني في الموعد الذي اخترته، ولكن نقترح عليك أقرب موعد متاح.'
-            ], 422);
+            ], 200);
         }
 
         // 2. Create Order
@@ -191,6 +193,8 @@ class OrderController extends Controller
         $data['order_number'] = 'ORD-' . strtoupper(Str::random(10));
         $data['user_id'] = $user->id;
         $data['notes'] = $request->description;
+        $data['latitude'] = $request->latitude;
+        $data['longitude'] = $request->longitude;
 
         // Calculate Pricing based on the specific sub-service
         $service = Service::find($request->service_id);
@@ -781,6 +785,8 @@ class OrderController extends Controller
             'scheduled_at' => $request->scheduled_at ?? now()->addDay(),
             'address' => $oldOrder->address,
             'notes' => $oldOrder->notes,
+            'latitude' => $oldOrder->latitude,
+            'longitude' => $oldOrder->longitude,
         ]);
 
         return response()->json(['status' => true, 'message' => 'Order resent', 'data' => $newOrder]);

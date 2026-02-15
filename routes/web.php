@@ -128,6 +128,10 @@ Route::prefix('admin')->group(function () {
                 if ($prefix === 'technicians') {
                     Route::post('/bulk-destroy', [$controller, 'bulkDestroy'])->name('bulk-destroy');
                 }
+                if ($prefix === 'orders') {
+                    Route::get('/{id}/available-technicians', [$controller, 'getAvailableTechnicians'])->name('available-technicians');
+                    Route::get('/{id}/available-companies', [$controller, 'getAvailableCompanies'])->name('available-companies');
+                }
                 if ($prefix === 'roles') {
                     Route::post('/bulk-delete', [$controller, 'bulkDelete'])->name('bulk-delete');
                 }

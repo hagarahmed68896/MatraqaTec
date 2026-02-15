@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Validator;
 
 class MaintenanceCompanyController extends Controller
 {
+    use \App\Traits\HasAutoAssignment;
+
     public function show(Request $request)
     {
         $user = $request->user();
@@ -593,6 +595,8 @@ class MaintenanceCompanyController extends Controller
         $request->validate([
             'service_id' => 'nullable|exists:services,id',
             'district_id' => 'nullable|exists:districts,id',
+            'order_id' => 'nullable|exists:orders,id',
+            'scheduled_at' => 'nullable|date',
         ]);
 
         $query = \App\Models\Technician::with(['user:id,name,avatar,phone,is_online', 'service:id,name_ar,name_en'])
@@ -608,8 +612,30 @@ class MaintenanceCompanyController extends Controller
             $query->whereJsonContains('districts', (string)$request->district_id);
         }
 
-        // Filter by availability (only online technicians)
-        if ($request->boolean('available_only', true)) {
+        // --- NEW: Schedule Conflict Check ---
+        $scheduledAt = null;
+        if ($request->filled('order_id')) {
+            $order = \App\Models\Order::find($request->order_id);
+            $scheduledAt = $order->scheduled_at;
+        } elseif ($request->filled('scheduled_at')) {
+            $scheduledAt = \Carbon\Carbon::parse($request->scheduled_at);
+        }
+
+        if ($scheduledAt) {
+            $start = (clone $scheduledAt)->subHours(1)->addMinute();
+            $end = (clone $scheduledAt)->addHours(1)->subMinute();
+
+            $query->whereDoesntHave('orders', function($q) use ($start, $end) {
+                $q->whereIn('status', ['accepted', 'scheduled', 'in_progress'])
+                  ->whereBetween('scheduled_at', [$start, $end]);
+            })->whereDoesntHave('appointments', function($q) use ($start, $end) {
+                $q->whereIn('status', ['scheduled', 'in_progress'])
+                  ->whereBetween('appointment_date', [$start, $end]);
+            });
+        }
+
+        // Fallback to online status ONLY if no specific time is provided or explicitly requested
+        if ($request->boolean('available_only', false) && !$scheduledAt) {
             $query->whereHas('user', function($q) {
                 $q->where('is_online', true);
             });
@@ -626,7 +652,7 @@ class MaintenanceCompanyController extends Controller
             return [
                 'id' => $tech->id,
                 'name' => $tech->user->name ?? $tech->name_ar,
-                'avatar' => $tech->user->avatar ?? $tech->image,
+                'avatar' => $tech->user->avatar ? asset('storage/' . $tech->user->avatar) : null,
                 'phone' => $tech->user->phone,
                 'rating' => round($tech->reviews_avg_rating ?? 0, 1),
                 'is_online' => $tech->user->is_online ?? false,

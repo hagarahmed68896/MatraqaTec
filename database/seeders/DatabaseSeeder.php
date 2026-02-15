@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             SupervisorSeeder::class,
             SocialLinkSeeder::class,
             PrivacyPolicySeeder::class,
+            ServiceDataSeeder::class,
         ]);
     }
 }
