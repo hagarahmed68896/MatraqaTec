@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', __('Contract Receipts'))
 @section('page_title', __('Contract Receipts'))
@@ -53,7 +53,7 @@
                                 {{ __('View') }}
                             </a>
                         </td>
-                        <td class="py-4 px-6 text-green-500 font-black">+{{ number_format($item->amount, 2) }} {{ __('SAR') }}</td>
+                        <td class="py-4 px-6 text-green-500 font-black">+{{ number_format($item->amount, 2) }} <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></td>
                         <td class="py-4 px-6">
                             <div class="flex items-center justify-center gap-2">
                                 <form action="{{ route('admin.contract-receipts.destroy', $item->id) }}" method="POST" class="inline" onsubmit="return confirm('{{ __('Delete receipt?') }}')">

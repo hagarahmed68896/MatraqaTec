@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', __('Payments Management'))
 @section('page_title', __('Payments Management'))
@@ -14,7 +14,7 @@
                 </div>
                 <div>
                     <h3 class="text-xs font-black text-slate-400 uppercase tracking-wider">{{ __('Total Amount') }}</h3>
-                    <p class="text-2xl font-black text-slate-900 dark:text-white">{{ number_format($stats['total']['sum'], 2) }} <span class="text-xs">{{ __('SAR') }}</span></p>
+                    <p class="text-2xl font-black text-slate-900 dark:text-white">{{ number_format($stats['total']['sum'], 2) }} <span class="text-xs"><img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></span></p>
                 </div>
             </div>
         </div>
@@ -25,7 +25,7 @@
                 </div>
                 <div>
                     <h3 class="text-xs font-black text-slate-400 uppercase tracking-wider">{{ __('Completed') }}</h3>
-                    <p class="text-2xl font-black text-slate-900 dark:text-white">{{ number_format($stats['completed']['sum'], 2) }} <span class="text-xs">{{ __('SAR') }}</span></p>
+                    <p class="text-2xl font-black text-slate-900 dark:text-white">{{ number_format($stats['completed']['sum'], 2) }} <span class="text-xs"><img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></span></p>
                 </div>
             </div>
         </div>
@@ -36,7 +36,7 @@
                 </div>
                 <div>
                     <h3 class="text-xs font-black text-slate-400 uppercase tracking-wider">{{ __('Under Review') }}</h3>
-                    <p class="text-2xl font-black text-slate-900 dark:text-white">{{ number_format($stats['pending']['sum'], 2) }} <span class="text-xs">{{ __('SAR') }}</span></p>
+                    <p class="text-2xl font-black text-slate-900 dark:text-white">{{ number_format($stats['pending']['sum'], 2) }} <span class="text-xs"><img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></span></p>
                 </div>
             </div>
         </div>
@@ -95,7 +95,7 @@
                             -
                             @endif
                         </td>
-                        <td class="py-4 px-6 text-green-600 font-black">{{ number_format($item->amount, 2) }} {{ __('SAR') }}</td>
+                        <td class="py-4 px-6 text-green-600 font-black">{{ number_format($item->amount, 2) }} <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></td>
                         <td class="py-4 px-6 uppercase text-[10px]">{{ __($item->payment_method) }}</td>
                         <td class="py-4 px-6">
                             <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase

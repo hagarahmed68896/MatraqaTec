@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', __('Wallet Transactions'))
 @section('page_title', __('Wallet Transactions'))
@@ -66,7 +66,7 @@
                             </span>
                         </td>
                         <td class="py-4 px-6 font-black {{ in_array($item->type, ['deposit', 'refund']) ? 'text-green-600' : 'text-red-600' }}">
-                            {{ in_array($item->type, ['deposit', 'refund']) ? '+' : '-' }}{{ number_format($item->amount, 2) }} {{ __('SAR') }}
+                            {{ in_array($item->type, ['deposit', 'refund']) ? '+' : '-' }}{{ number_format($item->amount, 2) }} <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle">
                         </td>
                         <td class="py-4 px-6 opacity-70">{{ $item->note ?? '---' }}</td>
                     </tr>

@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', __('Inventory Management'))
 @section('page_title', __('Inventory Management'))
@@ -53,7 +53,7 @@
                             <span class="text-slate-900 dark:text-white block">{{ $item->name_ar }}</span>
                             <span class="text-[10px] opacity-70">{{ $item->name_en }}</span>
                         </td>
-                        <td class="py-4 px-6 text-primary font-black">{{ number_format($item->price, 2) }} {{ __('SAR') }}</td>
+                        <td class="py-4 px-6 text-primary font-black">{{ number_format($item->price, 2) }} <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></td>
                         <td class="py-4 px-6">
                             <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase
                                 {{ $item->status == 'available' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600' }}">

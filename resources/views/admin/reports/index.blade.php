@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', __('Reports Summary'))
 
@@ -34,7 +34,7 @@
                 </span>
             </div>
             <p class="text-sm text-slate-500 dark:text-slate-400 font-bold">{{ __('Total Revenue') }}</p>
-            <h3 class="text-2xl font-black text-slate-800 dark:text-white mt-1">{{ $data['header_stats']['total_revenue']['amount'] }} {{ __('SAR') }}</h3>
+            <h3 class="text-2xl font-black text-slate-800 dark:text-white mt-1">{{ $data['header_stats']['total_revenue']['amount'] }} <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></h3>
         </div>
 
         <!-- Technicians Card -->

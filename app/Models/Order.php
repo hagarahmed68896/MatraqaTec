@@ -37,7 +37,7 @@ class Order extends Model
         'spare_parts_metadata' => 'array',
     ];
 
-    protected $appends = ['status_label', 'status_color', 'formatted_scheduled_date', 'formatted_scheduled_time', 'client_name', 'client_phone'];
+    protected $appends = ['status_label', 'status_color', 'formatted_scheduled_date', 'formatted_scheduled_time', 'client_name', 'client_phone', 'technician_name', 'technician_avatar'];
 
     public function getClientNameAttribute()
     {
@@ -49,6 +49,17 @@ class Order extends Model
         return $this->user->phone ?? '';
     }
 
+    public function getTechnicianNameAttribute()
+    {
+        return $this->technician->user->name ?? ($this->technician->name ?? '');
+    }
+
+    public function getTechnicianAvatarAttribute()
+    {
+        if (!$this->technician || !$this->technician->user) return null;
+        return $this->technician->user->avatar ? asset('storage/' . $this->technician->user->avatar) : null;
+    }
+
     public function getFormattedScheduledDateAttribute()
     {
         return $this->scheduled_at ? $this->scheduled_at->format('Y/m/d') : null;
@@ -57,7 +68,7 @@ class Order extends Model
     public function getFormattedScheduledTimeAttribute()
     {
         if (!$this->scheduled_at) return null;
-        return $this->scheduled_at->translatedFormat('H:i a');
+        return $this->scheduled_at->translatedFormat('h:i a');
     }
 
     public function getStatusLabelAttribute()

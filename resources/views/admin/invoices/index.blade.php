@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', __('Invoices Management'))
 @section('page_title', __('Invoices Management'))
@@ -51,7 +51,7 @@
                         <td class="py-4 px-6">
                             <span class="text-slate-900 dark:text-white">{{ $item->order->user->name ?? '-' }}</span>
                         </td>
-                        <td class="py-4 px-6 text-green-600 font-black">{{ number_format($item->amount, 2) }} {{ __('SAR') }}</td>
+                        <td class="py-4 px-6 text-green-600 font-black">{{ number_format($item->amount, 2) }} <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></td>
                         <td class="py-4 px-6 opacity-70">{{ $item->issue_date ? $item->issue_date->format('Y-m-d') : '-' }}</td>
                         <td class="py-4 px-6">
                             <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase

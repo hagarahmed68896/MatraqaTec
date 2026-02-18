@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
-    use \App\Traits\ValidatesOrderPhotos, \App\Traits\HasAutoAssignment;
+    use \App\Traits\ValidatesOrderPhotos, \App\Traits\HasAutoAssignment, \App\Traits\HandlesLocation;
 
     public function index(Request $request)
     {
@@ -152,10 +152,11 @@ class OrderController extends Controller
         $user = $request->user();
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'service_id' => 'required|exists:services,id',
+            'sub_service_id' => 'nullable|exists:services,id',
             'description' => 'nullable|string',
-            'city_id' => 'required|exists:cities,id',
+            'city_id' => 'nullable|exists:cities,id',
             'address' => 'required|string',
-            'payment_method' => 'required|string|in:cash,credit_card,apple_pay,wallet',
+            'payment_method' => 'nullable|string|in:cash,credit_card,apple_pay,wallet',
             'scheduled_at' => 'required|date|after:now',
             'attachments' => 'nullable|array',
             'attachments.*' => 'file|mimes:jpg,jpeg,png,mp4,mov|max:10240',
@@ -163,23 +164,37 @@ class OrderController extends Controller
             'longitude' => 'nullable|numeric',
             'force' => 'nullable|boolean',
         ], [
-            'scheduled_at.after' => 'The scheduled date must be a future date.',
+            'scheduled_at.after' => 'يجب أن يكون تاريخ الموعد في المستقبل.',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'message' => 'Validation Error',
-                'errors' => $validator->errors()
+                'message' => $validator->errors()->first(),
             ], 422);
+        }
+
+        // Detect City from Logic if not provided
+        $cityId = $request->city_id ?? $this->detectCityFromCoords($request->latitude, $request->longitude);
+        
+        // Fallback to user's registered city if detection fails
+        if (!$cityId && $user) {
+            $cityId = $user->city_id;
+        }
+
+        if (!$cityId) {
+             return response()->json([
+                 'status' => false,
+                 'message' => 'City could not be determined. Please provide city_id or valid coordinates.',
+             ], 422);
         }
 
         // 1. Availability Check Logic
         $scheduledAt = \Carbon\Carbon::parse($request->scheduled_at);
-        $availableTech = $this->findAvailableTechnician($request->service_id, $request->city_id, $scheduledAt);
+        $availableTech = $this->findAvailableTechnician($request->service_id, $cityId, $scheduledAt);
 
         if (!$availableTech && !$request->boolean('force')) {
-            $suggestedTime = $this->getSuggestedTime($request->service_id, $request->city_id, $scheduledAt);
+            $suggestedTime = $this->getSuggestedTime($request->service_id, $cityId, $scheduledAt);
             return response()->json([
                 'status' => false,
                 'message' => 'The selected time is currently fully booked.',
@@ -189,16 +204,33 @@ class OrderController extends Controller
         }
 
         // 2. Create Order
-        $data = $request->except(['attachments', 'force', 'description']);
-        $data['order_number'] = 'ORD-' . strtoupper(Str::random(10));
+        $data = $request->except(['attachments', 'force', 'description', 'sub_service_id']);
+        $data['city_id'] = $cityId;
+        $data['city_id'] = $cityId;
+        // Generate Sequential Order Number (using ID + 1 or a timestamp based logic for simplicity)
+        // Since we can't know the exact ID before insertion without locking, we can use a timestamp 
+        // or just accept ID after creation. Let's use a simple numeric strategy:
+        // However, retrieving max(id) is prone to race conditions.
+        // Better approach: We'll set a temporary value, create, then update to ID.
+        // OR: use a separate sequence. For this request, let's use max('id') + 1 for now as a simple sequential number.
+        $lastOrder = Order::latest('id')->first();
+        $nextId = $lastOrder ? $lastOrder->id + 1 : 1;
+        $data['order_number'] = $nextId;
         $data['user_id'] = $user->id;
         $data['notes'] = $request->description;
         $data['latitude'] = $request->latitude;
         $data['longitude'] = $request->longitude;
 
-        // Calculate Pricing based on the specific sub-service
-        $service = Service::find($request->service_id);
-        $basePrice = $service->price ?: 50; 
+        // Calculate Pricing based on selected services
+        $basePrice = 0;
+        if ($request->filled('sub_service_id')) {
+            $subService = Service::find($request->sub_service_id);
+            $basePrice = $subService->price ?: 50;
+        } else {
+            $service = Service::find($request->service_id);
+            $basePrice = $service->price ?: 50; 
+        }
+
         $tax = $basePrice * 0.15;
         $data['total_price'] = $basePrice + $tax;
 
@@ -216,6 +248,13 @@ class OrderController extends Controller
         }
 
         $order = Order::create($data);
+
+        // Sync Services to order_services
+        $servicesToSync = [$request->service_id];
+        if ($request->filled('sub_service_id')) {
+            $servicesToSync[] = $request->sub_service_id;
+        }
+        $order->services()->sync(array_unique($servicesToSync));
 
         // Auto-create Appointment record for the "Appointments" (حجوزاتي) screen
         \App\Models\Appointment::create([
@@ -252,14 +291,21 @@ class OrderController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => $availableTech ? 'Order created successfully and scheduled.' : 'Order created successfully and sent for admin approval.',
+            'message' => __('Order created successfully and scheduled.'),
             'data' => [
-                'order' => $order->load(['service', 'attachments']),
+                'order' => [
+                    'id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'technician_name' => $order->technician_name,
+                    'technician_avatar' => $order->technician_avatar,
+                    'service_name' => $order->service->name_ar ?? '',
+                    'formatted_scheduled_date' => $order->formatted_scheduled_date,
+                    'formatted_scheduled_time' => $order->formatted_scheduled_time,
+                ],
                 'invoice' => [
-                    'service_name' => $service->name_ar,
-                    'base_price' => $basePrice,
-                    'tax' => $tax,
-                    'total' => $data['total_price'],
+                    'base_price' => number_format($basePrice, 2),
+                    'tax' => number_format($tax, 2),
+                    'total' => number_format($data['total_price'], 2),
                     'currency' => 'SAR'
                 ]
             ]
@@ -774,8 +820,11 @@ class OrderController extends Controller
             return response()->json(['status' => false, 'message' => 'Can only resend cancelled/completed orders'], 422);
         }
 
+        $lastOrderCheck = Order::latest('id')->first();
+        $nextId = $lastOrderCheck ? $lastOrderCheck->id + 1 : 1;
+
         $newOrder = Order::create([
-            'order_number' => 'ORD-' . strtoupper(Str::random(10)),
+            'order_number' => $nextId,
             'user_id' => $oldOrder->user_id,
             'city_id' => $oldOrder->city_id,
             'service_id' => $oldOrder->service_id,

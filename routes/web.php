@@ -103,6 +103,10 @@ Route::prefix('admin')->group(function () {
                     Route::get('/download', [$controller, 'download'])->name('download');
                 }
 
+                if ($prefix === 'orders') {
+                    Route::get('/premium', [$controller, 'premium'])->name('premium');
+                }
+
                 Route::get('/', [$controller, 'index'])->name('index');
                 Route::get('/create', [$controller, 'create'])->name('create');
                 Route::post('/', [$controller, 'store'])->name('store');

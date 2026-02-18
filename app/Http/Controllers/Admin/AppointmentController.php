@@ -10,66 +10,48 @@ class AppointmentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Appointment::with(['order', 'technician']);
+        // 1. Handle Week Range
+        $startDate = $request->filled('start_date') 
+            ? \Carbon\Carbon::parse($request->start_date) 
+            : \Carbon\Carbon::now()->startOfWeek(\Carbon\CarbonInterface::SUNDAY);
+        
+        $endDate = $startDate->copy()->endOfWeek(\Carbon\CarbonInterface::SATURDAY);
 
-        // Filter by tab/status (consistent with OrderController)
-        if ($request->has('tab')) {
-            switch ($request->tab) {
-                case 'scheduled':
-                    $query->where('status', 'scheduled');
-                    break;
-                case 'in_progress':
-                    $query->where('status', 'in_progress');
-                    break;
-                case 'completed':
-                    $query->where('status', 'completed');
-                    break;
-            }
-        }
+        $query = Appointment::with([
+            'order.service', 
+            'order.user',
+            'technician.user',
+            'order.reviews'
+        ])->whereBetween('appointment_date', [$startDate, $endDate]);
 
-        if ($request->has('status')) {
+        // 2. Filter by status
+        if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
 
-        if ($request->has('technician_id')) {
-            $query->where('technician_id', $request->technician_id);
-        }
-
-        // Search by technician name
-        if ($request->has('search')) {
+        // 3. Search Logic
+        if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('technician', function ($q) use ($search) {
-                $q->where('name_en', 'like', "%{$search}%")
-                  ->orWhere('name_ar', 'like', "%{$search}%");
+            $query->where(function($q) use ($search) {
+                $q->whereHas('technician.user', function($q2) use ($search) {
+                    $q2->where('name', 'like', "%{$search}%");
+                })->orWhereHas('order', function($q3) use ($search) {
+                    $q3->where('order_number', 'like', "%{$search}%");
+                });
             });
         }
 
-        // Sorting
-        if ($request->has('sort_by')) {
-            switch ($request->sort_by) {
-                case 'oldest':
-                    $query->orderBy('created_at', 'asc');
-                    break;
-                case 'newest':
-                default:
-                    $query->orderBy('created_at', 'desc');
-                    break;
-            }
-        } else {
-            $query->orderBy('created_at', 'desc');
-        }
+        $items = $query->get();
 
-        $items = $query->paginate(15);
-
-        // Stats for the dashboard
+        // 4. Stats (Filtered by the current week view or global? Let's do global for overview as per standard)
         $stats = [
-            'total' => Appointment::count(),
-            'scheduled' => Appointment::where('status', 'scheduled')->count(),
-            'in_progress' => Appointment::where('status', 'in_progress')->count(),
-            'completed' => Appointment::where('status', 'completed')->count(),
+            'all' => Appointment::whereBetween('appointment_date', [$startDate, $endDate])->count(),
+            'scheduled' => Appointment::whereBetween('appointment_date', [$startDate, $endDate])->where('status', 'scheduled')->count(),
+            'in_progress' => Appointment::whereBetween('appointment_date', [$startDate, $endDate])->where('status', 'in_progress')->count(),
+            'completed' => Appointment::whereBetween('appointment_date', [$startDate, $endDate])->where('status', 'completed')->count(),
         ];
 
-        return view('admin.appointments.index', compact('items', 'stats'));
+        return view('admin.appointments.index', compact('items', 'stats', 'startDate', 'endDate'));
     }
 
     public function show($id)

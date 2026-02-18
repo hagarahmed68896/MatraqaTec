@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', __('Financial Settlements'))
 @section('page_title', __('Financial Settlements'))
@@ -14,7 +14,7 @@
                 </div>
                 <div>
                     <h3 class="text-xs font-black text-slate-400 uppercase tracking-wider">{{ __('Total Settlements') }}</h3>
-                    <p class="text-2xl font-black text-slate-900 dark:text-white">{{ number_format($stats['total']['value'], 2) }} <span class="text-xs">{{ __('SAR') }}</span></p>
+                    <p class="text-2xl font-black text-slate-900 dark:text-white">{{ number_format($stats['total']['value'], 2) }} <span class="text-xs"><img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></span></p>
                 </div>
             </div>
         </div>
@@ -25,7 +25,7 @@
                 </div>
                 <div>
                     <h3 class="text-xs font-black text-slate-400 uppercase tracking-wider">{{ __('Pending') }}</h3>
-                    <p class="text-2xl font-black text-slate-900 dark:text-white">{{ number_format($stats['pending']['value'], 2) }} <span class="text-xs">{{ __('SAR') }}</span></p>
+                    <p class="text-2xl font-black text-slate-900 dark:text-white">{{ number_format($stats['pending']['value'], 2) }} <span class="text-xs"><img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></span></p>
                 </div>
             </div>
         </div>
@@ -36,7 +36,7 @@
                 </div>
                 <div>
                     <h3 class="text-xs font-black text-slate-400 uppercase tracking-wider">{{ __('Transferred') }}</h3>
-                    <p class="text-2xl font-black text-slate-900 dark:text-white">{{ number_format($stats['transferred']['value'], 2) }} <span class="text-xs">{{ __('SAR') }}</span></p>
+                    <p class="text-2xl font-black text-slate-900 dark:text-white">{{ number_format($stats['transferred']['value'], 2) }} <span class="text-xs"><img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></span></p>
                 </div>
             </div>
         </div>
@@ -88,7 +88,7 @@
                             @endif
                         </td>
                         <td class="py-4 px-6 text-primary">#{{ $item->order->order_number ?? $item->order_id }}</td>
-                        <td class="py-4 px-6 text-green-600 font-black">{{ number_format($item->amount, 2) }} {{ __('SAR') }}</td>
+                        <td class="py-4 px-6 text-green-600 font-black">{{ number_format($item->amount, 2) }} <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></td>
                         <td class="py-4 px-6 opacity-70">{{ $item->created_at->format('Y-m-d') }}</td>
                         <td class="py-4 px-6">
                             <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase

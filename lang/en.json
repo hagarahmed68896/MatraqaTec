@@ -188,5 +188,17 @@
     "please_specify_rejection_reason_hint": "Please specify the reason for rejection to be sent to the company",
     "please_specify_rejection_reason_placeholder": "Please specify the reason for rejection...",
     "Technician account activated": "Technician account activated",
-    "Technician account created and credentials sent successfully": "Technician account created and credentials sent successfully"
+    "Technician account created and credentials sent successfully": "Technician account created and credentials sent successfully",
+    "order.on_way": "On Way",
+    "order.arrived": "Arrived",
+    "order.work_started": "Work Started",
+    "order.additional_visit": "Additional Visit",
+    "order.posponed": "Postponed",
+    "order.completed": "Completed",
+    "order.cancelled": "Cancelled",
+    "Add Service": "Add Service",
+    "Sub-services": "Sub-services",
+    "Companies": "Companies",
+    "Technicians": "Technicians",
+    "Edit": "Edit"
 }

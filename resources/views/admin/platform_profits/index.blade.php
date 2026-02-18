@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', __('Platform Profits'))
 @section('page_title', __('Platform Profits'))
@@ -10,7 +10,7 @@
         <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
                 <h3 class="text-white/70 text-sm font-black uppercase tracking-widest mb-2">{{ __('Total Platform Profits') }}</h3>
-                <p class="text-4xl md:text-6xl font-black">{{ number_format($total_profit, 2) }} <span class="text-2xl">{{ __('SAR') }}</span></p>
+                <p class="text-4xl md:text-6xl font-black">{{ number_format($total_profit, 2) }} <span class="text-2xl"><img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></span></p>
             </div>
             <div class="bg-white/10 p-4 rounded-3xl backdrop-blur-md border border-white/10">
                 <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -53,7 +53,7 @@
                             -
                             @endif
                         </td>
-                        <td class="py-4 px-6 text-green-600 font-black">{{ number_format($item->profit_amount, 2) }} {{ __('SAR') }}</td>
+                        <td class="py-4 px-6 text-green-600 font-black">{{ number_format($item->profit_amount, 2) }} <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></td>
                         <td class="py-4 px-6">
                             <span class="px-2 py-1 rounded-lg bg-primary/5 text-primary border border-primary/10">
                                 {{ $item->percentage ?? 0 }}%

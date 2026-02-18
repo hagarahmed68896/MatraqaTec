@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Validator;
 
 class ClientProfileController extends Controller
 {
+    use \App\Traits\HandlesLocation;
+
     /**
      * Get Client Profile (Main Screen + Info Screen data)
      */
@@ -49,10 +51,7 @@ class ClientProfileController extends Controller
         $user = $request->user();
         
         $validator = Validator::make($request->all(), [
-            'first_name_ar' => 'nullable|string|max:255',
-            'first_name_en' => 'nullable|string|max:255',
-            'last_name_ar'  => 'nullable|string|max:255',
-            'last_name_en'  => 'nullable|string|max:255',
+            'name'          => 'nullable|string|max:255',
             'email'         => 'nullable|email|unique:users,email,' . $user->id,
             'phone'         => 'nullable|string|regex:/^5[0-9]{8}$/|unique:users,phone,' . $user->id,
             'avatar'        => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -60,14 +59,17 @@ class ClientProfileController extends Controller
             'latitude'      => 'nullable|numeric|between:-90,90',
             'longitude'     => 'nullable|numeric|between:-180,180',
             // Corporate specific
-            'company_name_ar' => 'nullable|string|max:255',
-            'company_name_en' => 'nullable|string|max:255',
             'commercial_record_number' => 'nullable|string|max:255',
             'tax_number' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['status' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        // Update main name
+        if ($request->filled('name')) {
+            $user->name = $request->name;
         }
 
         // Sanitize phone if present
@@ -125,31 +127,20 @@ class ClientProfileController extends Controller
 
         $user->save();
 
-        // Update Related Profile
-        if ($user->type === 'individual') {
+        // Update Related Profile Tables for consistency
+        if ($user->type === 'individual' && $user->individualCustomer) {
             $user->individualCustomer()->update([
-                'first_name_ar' => $request->first_name_ar ?? $user->individualCustomer->first_name_ar,
-                'first_name_en' => $request->first_name_en ?? $user->individualCustomer->first_name_en,
-                'last_name_ar'  => $request->last_name_ar ?? $user->individualCustomer->last_name_ar,
-                'last_name_en'  => $request->last_name_en ?? $user->individualCustomer->last_name_en,
+                'first_name_ar' => $user->name,
+                'first_name_en' => $user->name,
             ]);
-            
-            // Name update logic for User table (Main display name)
-            // Strategy: Use First Name + Last Name (English/Arabic based on logic or just update name column)
-            // Usually 'name' in users table is a fallback. Let's update it to First Name En + Last Name En
-            $user->save();
-        } elseif ($user->type === 'corporate_customer') {
+        } elseif ($user->type === 'corporate_customer' && $user->corporateCustomer) {
             $user->corporateCustomer()->update([
-                'company_name_ar' => $request->company_name_ar ?? $user->corporateCustomer->company_name_ar,
-                'company_name_en' => $request->company_name_en ?? $user->corporateCustomer->company_name_en,
+                'company_name_ar' => $user->name,
+                'company_name_en' => $user->name,
                 'commercial_record_number' => $request->commercial_record_number ?? $user->corporateCustomer->commercial_record_number,
                 'tax_number' => $request->tax_number ?? $user->corporateCustomer->tax_number,
-                'address' => $request->address ?? $user->corporateCustomer->address,
+                'address' => $user->address,
             ]);
-
-            $newName = $request->company_name_en ?? $user->corporateCustomer->company_name_en;
-            $user->name = trim($newName) ?: $user->name;
-            $user->save();
         }
 
         $user->refresh();
@@ -236,44 +227,5 @@ class ClientProfileController extends Controller
                 'city_id' => $user->city_id
             ]
         ]);
-    }
-
-    /**
-     * Helper: Reverse Geocode (Lat/Lng -> Address & City Name) using OpenStreetMap (Nominatim)
-     */
-    private function getLocationDataFromCoords($lat, $lng)
-    {
-        try {
-            $response = \Illuminate\Support\Facades\Http::withHeaders([
-                'User-Agent' => 'MatraqaTec-App/1.0'
-            ])->get("https://nominatim.openstreetmap.org/reverse", [
-                'format' => 'json',
-                'lat' => $lat,
-                'lon' => $lng,
-                'accept-language' => 'ar', // Prefer Arabic
-                'addressdetails' => 1
-            ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                $address = $data['address'] ?? [];
-                
-                // Extract city name (prioritize city, then town, then village, then state)
-                $cityName = $address['city'] ?? $address['town'] ?? $address['village'] ?? $address['state'] ?? null;
-                
-                // Remove common prefixes if needed (usually handled by LIKE match)
-                if ($cityName) {
-                    $cityName = str_replace(['محافظة ', 'مدينة '], '', $cityName);
-                }
-
-                return [
-                    'display_name' => $data['display_name'] ?? null,
-                    'city_name' => $cityName
-                ];
-            }
-        } catch (\Exception $e) {
-            // Log error
-        }
-        return null;
     }
 }

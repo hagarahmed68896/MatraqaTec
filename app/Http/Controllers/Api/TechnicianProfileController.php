@@ -55,17 +55,31 @@ class TechnicianProfileController extends Controller
         ]);
 
         // Update User
-        $userData = $request->only(['name', 'phone']);
-        if ($request->hasFile('avatar')) {
-            $userData['avatar'] = $request->file('avatar')->store('avatars', 'public');
+        if ($request->filled('name')) {
+            $user->name = $request->name;
         }
-        $user->update($userData);
+        if ($request->filled('phone')) {
+            $user->phone = $request->phone;
+        }
+        
+        if ($request->hasFile('avatar')) {
+            $user->avatar = $request->file('avatar')->store('avatars', 'public');
+        }
+        $user->save();
 
         // Update Technician
         $technicianData = $request->only([
             'bio_ar', 'bio_en', 
             'bank_name', 'account_name', 'account_number', 'iban', 'swift_code'
         ]);
+        
+        // Sync names for consistency
+        if ($request->filled('name')) {
+            $technicianData['name_ar'] = $request->name;
+            $technicianData['name_en'] = $request->name;
+            $technicianData['name']    = $request->name;
+        }
+        
         $technician->update($technicianData);
 
         return response()->json([

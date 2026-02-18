@@ -71,10 +71,10 @@ class WalletController extends Controller
             $query->orderBy('created_at', 'desc'); // Default: newest first
         }
 
-        $transactions = $query->with('order.service')->paginate(15);
+        $transactions = $query->with('order.service')->get();
 
         // Add Arabic labels and enhanced details to transactions
-        $transactions->getCollection()->transform(function ($transaction) {
+        $transactions->transform(function ($transaction) {
             $typeLabels = [
                 'deposit' => 'شحن',
                 'debit' => 'خصم',

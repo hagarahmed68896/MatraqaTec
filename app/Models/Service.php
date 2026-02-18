@@ -68,4 +68,9 @@ class Service extends Model
     {
         return $this->belongsToMany(MaintenanceCompany::class, 'maintenance_company_service');
     }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
 }

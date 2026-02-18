@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 @section('title', __('Financial Report'))
 @section('content')
 <div class="space-y-6">
@@ -18,7 +18,7 @@
                 <tr class="border-b border-slate-50">
                     <td class="py-3">{{ $s->status }}</td>
                     <td class="py-3">{{ $s->count }}</td>
-                    <td class="py-3">{{ $s->total_amount }} SAR</td>
+                    <td class="py-3">{{ $s->total_amount }} <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></td>
                 </tr>
                 @endforeach
             </tbody>

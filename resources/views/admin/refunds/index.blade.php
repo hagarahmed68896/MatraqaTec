@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', __('Refund Requests'))
 @section('page_title', __('Refund Requests'))
@@ -74,7 +74,7 @@
                                 <a href="{{ route('admin.orders.show', $item->order_id) }}" class="text-primary hover:underline">#{{ $item->order->order_number }}</a>
                             @endif
                         </td>
-                        <td class="py-4 px-6 text-red-500">{{ number_format($item->amount, 2) }} {{ __('SAR') }}</td>
+                        <td class="py-4 px-6 text-red-500">{{ number_format($item->amount, 2) }} <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></td>
                         <td class="py-4 px-6">
                             <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase
                                 {{ $item->status == 'transferred' ? 'bg-green-100 text-green-600' : ($item->status == 'pending' ? 'bg-amber-100 text-amber-600' : 'bg-red-100 text-red-600') }}">

@@ -8,6 +8,7 @@ use App\Models\MaintenanceCompany;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ContractController extends Controller
 {
@@ -57,8 +58,15 @@ class ContractController extends Controller
             $query->orderBy('created_at', 'desc');
         }
 
+        $stats = [
+            'total_contracts'   => Contract::count(),
+            'total_companies'   => Contract::distinct('maintenance_company_id')->count(),
+            'collected_amount'  => Contract::sum('paid_amount'),
+            'expired_contracts' => Contract::where('status', 'expired')->orWhereDate('end_date', '<', now())->count(),
+        ];
+
         $items = $query->paginate(15);
-        return view('admin.contracts.index', compact('items'));
+        return view('admin.contracts.index', compact('items', 'stats'));
     }
 
     public function create()
@@ -72,18 +80,34 @@ class ContractController extends Controller
         $validator = Validator::make($request->all(), [
             'contract_number'        => 'required|string|unique:contracts',
             'maintenance_company_id' => 'required|exists:maintenance_companies,id',
-            'project_value'          => 'required|numeric',
+            'project_value'          => 'required|numeric|min:0',
             'start_date'             => 'required|date',
             'end_date'               => 'required|date|after:start_date',
             'status'                 => 'required|in:active,expired,completed',
+            'contract_file'          => 'nullable|file|mimes:pdf|max:5120',
+            'contact_numbers'        => 'nullable|array',
+            'contact_numbers.*'      => 'nullable|string|max:30',
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
 
-        DB::transaction(function () use ($request) {
-            Contract::create($request->all());
+        $data = $request->except(['contract_file', 'contact_numbers']);
+
+        // Handle file upload
+        if ($request->hasFile('contract_file')) {
+            $data['contract_file'] = $request->file('contract_file')->store('contracts', 'public');
+        }
+
+        // Serialize contact numbers
+        if ($request->filled('contact_numbers')) {
+            $phones = array_filter($request->contact_numbers);
+            $data['contact_numbers'] = implode(',', $phones);
+        }
+
+        DB::transaction(function () use ($data) {
+            Contract::create($data);
         });
 
         return redirect()->route('admin.contracts.index')->with('success', __('Contract created successfully.'));
@@ -97,7 +121,7 @@ class ContractController extends Controller
 
     public function edit($id)
     {
-        $item = Contract::findOrFail($id);
+        $item     = Contract::findOrFail($id);
         $companies = MaintenanceCompany::all();
         return view('admin.contracts.edit', compact('item', 'companies'));
     }
@@ -109,18 +133,43 @@ class ContractController extends Controller
         $validator = Validator::make($request->all(), [
             'contract_number'        => 'required|string|unique:contracts,contract_number,' . $id,
             'maintenance_company_id' => 'required|exists:maintenance_companies,id',
-            'project_value'          => 'required|numeric',
+            'project_value'          => 'required|numeric|min:0',
             'start_date'             => 'required|date',
             'end_date'               => 'required|date|after:start_date',
             'status'                 => 'required|in:active,expired,completed',
+            'contract_file'          => 'nullable|file|mimes:pdf|max:5120',
+            'contact_numbers'        => 'nullable|array',
+            'contact_numbers.*'      => 'nullable|string|max:30',
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
 
-        DB::transaction(function () use ($request, $contract) {
-            $contract->update($request->all());
+        $data = $request->except(['contract_file', 'contact_numbers', 'delete_contract_file']);
+
+        // Handle file deletion request
+        if ($request->input('delete_contract_file') == '1' && $contract->contract_file) {
+            Storage::disk('public')->delete($contract->contract_file);
+            $data['contract_file'] = null;
+        }
+
+        // Handle new file upload (replaces old one)
+        if ($request->hasFile('contract_file')) {
+            if ($contract->contract_file) {
+                Storage::disk('public')->delete($contract->contract_file);
+            }
+            $data['contract_file'] = $request->file('contract_file')->store('contracts', 'public');
+        }
+
+        // Serialize contact numbers
+        if ($request->has('contact_numbers')) {
+            $phones = array_filter($request->contact_numbers ?? []);
+            $data['contact_numbers'] = $phones ? implode(',', $phones) : null;
+        }
+
+        DB::transaction(function () use ($data, $contract) {
+            $contract->update($data);
         });
 
         return redirect()->route('admin.contracts.index')->with('success', __('Contract updated successfully.'));
@@ -129,6 +178,11 @@ class ContractController extends Controller
     public function destroy($id)
     {
         $contract = Contract::findOrFail($id);
+
+        if ($contract->contract_file) {
+            Storage::disk('public')->delete($contract->contract_file);
+        }
+
         $contract->delete();
         return redirect()->route('admin.contracts.index')->with('success', __('Contract deleted successfully.'));
     }
@@ -136,13 +190,13 @@ class ContractController extends Controller
     public function download()
     {
         $contracts = Contract::with('maintenanceCompany')->get();
-        return $this->generateCsv($contracts, "contracts.csv");
+        return $this->generateCsv($contracts, 'contracts.csv');
     }
 
     private function generateCsv($contracts, $filename)
     {
         $handle = fopen('php://memory', 'w');
-        fputcsv($handle, ['ID', 'Contract Number', 'Company Name', 'Value', 'Status', 'Start Date', 'End Date']); 
+        fputcsv($handle, ['ID', 'Contract Number', 'Company Name', 'Value', 'Status', 'Start Date', 'End Date']);
 
         foreach ($contracts as $contract) {
             fputcsv($handle, [
@@ -152,12 +206,12 @@ class ContractController extends Controller
                 $contract->project_value,
                 $contract->status,
                 $contract->start_date ? $contract->start_date->format('Y-m-d') : '',
-                $contract->end_date ? $contract->end_date->format('Y-m-d') : '',
+                $contract->end_date   ? $contract->end_date->format('Y-m-d')   : '',
             ]);
         }
 
         fseek($handle, 0);
-        
+
         return response()->stream(
             function () use ($handle) {
                 fpassthru($handle);
@@ -165,7 +219,7 @@ class ContractController extends Controller
             },
             200,
             [
-                'Content-Type' => 'text/csv',
+                'Content-Type'        => 'text/csv',
                 'Content-Disposition' => 'attachment; filename="' . $filename . '"',
             ]
         );

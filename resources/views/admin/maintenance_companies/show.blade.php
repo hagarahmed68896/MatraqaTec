@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', __('Company Profile') . ' - ' . $company->user->name)
 
@@ -74,7 +74,7 @@
                         displayColors: false,
                         callbacks: {
                             label: function(context) {
-                                return context.parsed.y.toLocaleString() + ' {{ __('SAR') }}';
+                                return context.parsed.y.toLocaleString() + ' <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle">';
                             }
                         }
                     }
@@ -303,7 +303,7 @@
                     <div class="bg-white dark:bg-[#1A1A31] p-6 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-sm">
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ __('Revenue') }}</span>
-                            <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-black text-[10px]">{{ __('SAR') }}</div>
+                            <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-black text-[10px]"><img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></div>
                         </div>
                         <h3 class="text-xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total_revenue'], 2) }}</h3>
                     </div>
@@ -443,7 +443,7 @@
                                 <td class="py-5 px-2">
                                     <div class="flex items-baseline gap-1">
                                         <span class="text-slate-800 dark:text-white">{{ number_format($order->total_price, 2) }}</span>
-                                        <span class="text-[9px] text-slate-400">{{ __('SAR') }}</span>
+                                        <span class="text-[9px] text-slate-400"><img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></span>
                                     </div>
                                 </td>
                                 <td class="py-5 px-2">
@@ -522,7 +522,7 @@
                                 <td class="py-5 px-2">
                                     <div class="flex items-baseline gap-1">
                                         <span class="text-slate-800 dark:text-white">{{ number_format($invoice->total_amount, 2) }}</span>
-                                        <span class="text-[9px] text-slate-400">{{ __('SAR') }}</span>
+                                        <span class="text-[9px] text-slate-400"><img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></span>
                                     </div>
                                 </td>
                                 <td class="py-5 px-2">
@@ -586,7 +586,7 @@
                                 <td class="py-5 px-2">
                                     <div class="flex items-baseline gap-1">
                                         <span class="text-slate-800 dark:text-white">{{ number_format($payment->amount, 2) }}</span>
-                                        <span class="text-[9px] text-slate-400">{{ __('SAR') }}</span>
+                                        <span class="text-[9px] text-slate-400"><img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></span>
                                     </div>
                                 </td>
                                 <td class="py-5 px-2">
@@ -690,7 +690,7 @@
                                         <span class="text-slate-800 dark:text-white">{{ $settlement->order->technician->{'name_'.app()->getLocale()} ?? '-' }}</span>
                                     </div>
                                 </td>
-                                <td class="py-5 px-2 text-slate-800 dark:text-white font-black">{{ number_format($settlement->amount, 2) }} {{ __('SAR') }}</td>
+                                <td class="py-5 px-2 text-slate-800 dark:text-white font-black">{{ number_format($settlement->amount, 2) }} <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></td>
                                 <td class="py-5 px-2">
                                     <span class="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider {{ $settlement->status == 'completed' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500' }}">
                                         {{ __($settlement->status) }}

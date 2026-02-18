@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', __('Customer Profile') . ' - ' . $item->user->name)
 
@@ -258,7 +258,7 @@
                         </div>
                         <div class="flex items-baseline gap-1">
                             <h3 class="text-2xl font-black text-slate-700 dark:text-white">{{ number_format($stats['total_payments'], 2) }}</h3>
-                            <span class="text-[10px] font-bold text-slate-400 capitalize">{{ __('SAR') }}</span>
+                            <span class="text-[10px] font-bold text-slate-400 capitalize"><img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></span>
                         </div>
                     </div>
 
@@ -368,7 +368,7 @@
                                 x-show="(orderSubTab === 'all' || orderSubTab === '{{ $order->status }}') && 
                                        ('{{ $order->order_number }}'.includes(orderSearch) || 
                                         '{{ optional($order->service)->{'name_'.app()->getLocale()} }}'.toLowerCase().includes(orderSearch.toLowerCase()) ||
-                                        '{{ optional($order->technician)->user->name }}'.toLowerCase().includes(orderSearch.toLowerCase()))">
+                                        '{{ optional(optional($order->technician)->user)->name }}'.toLowerCase().includes(orderSearch.toLowerCase()))">
                                 <td class="py-5 px-2 text-slate-400">{{ $index + 1 }}</td>
                                 <td class="py-5 px-2 text-slate-800 dark:text-white">{{ __('Order') }} - #{{ $order->order_number }}</td>
                                 <td class="py-5 px-2 text-slate-600 dark:text-slate-300 font-black">{{ $order->service->{'name_'.app()->getLocale()} ?? '-' }}</td>
@@ -377,9 +377,9 @@
                                 <td class="py-5 px-2">
                                     <div class="flex items-center gap-2">
                                         <div class="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-[10px] text-primary font-black">
-                                            {{ mb_substr($order->technician->user->name ?? '-', 0, 1) }}
+                                            {{ mb_substr(optional(optional($order->technician)->user)->name ?? '-', 0, 1) }}
                                         </div>
-                                        <span class="text-slate-800 dark:text-white">{{ $order->technician->user->name ?? '-' }}</span>
+                                        <span class="text-slate-800 dark:text-white">{{ optional(optional($order->technician)->user)->name ?? '-' }}</span>
                                     </div>
                                 </td>
                                 <td class="py-5 px-2">
@@ -390,7 +390,7 @@
                                 <td class="py-5 px-2">
                                     <div class="flex items-baseline gap-1">
                                         <span class="text-slate-800 dark:text-white">{{ number_format($order->total_price, 2) }}</span>
-                                        <span class="text-[9px] text-slate-400">{{ __('SAR') }}</span>
+                                        <span class="text-[9px] text-slate-400"><img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></span>
                                     </div>
                                 </td>
                                 <td class="py-5 px-2">
@@ -476,7 +476,7 @@
                                         {{ $invoice->order->technician && $invoice->order->technician->maintenance_company_id ? __('Company') : __('Platform') }}
                                     </span>
                                 </td>
-                                <td class="py-5 px-2 text-slate-800 dark:text-white font-black">{{ number_format($invoice->amount, 2) }} {{ __('SAR') }}</td>
+                                <td class="py-5 px-2 text-slate-800 dark:text-white font-black">{{ number_format($invoice->amount, 2) }} <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></td>
                                 <td class="py-5 px-2 text-slate-400">{{ $invoice->created_at->format('d/m/Y') }}</td>
                                 <td class="py-5 px-2">
                                     <a href="{{ route('admin.invoices.download', $invoice->id) }}" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 font-black text-[10px] hover:bg-indigo-600 hover:text-white transition-all">
@@ -535,9 +535,9 @@
                                 <td class="py-5 px-2">
                                     <div class="flex items-center gap-2">
                                         <div class="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-[10px] text-primary font-black">
-                                            {{ mb_substr($payment->order->technician->{'name_'.app()->getLocale()} ?? '-', 0, 1) }}
+                                            {{ mb_substr(optional(optional($payment->order->technician)->user)->name ?? '-', 0, 1) }}
                                         </div>
-                                        <span class="text-slate-800 dark:text-white">{{ $payment->order->technician->{'name_'.app()->getLocale()} ?? '-' }}</span>
+                                        <span class="text-slate-800 dark:text-white">{{ optional(optional($payment->order->technician)->user)->name ?? '-' }}</span>
                                     </div>
                                 </td>
                                 <td class="py-5 px-2">
@@ -545,7 +545,7 @@
                                         {{ $payment->order->technician && $payment->order->technician->maintenance_company_id ? __('Company') : __('Platform') }}
                                     </span>
                                 </td>
-                                <td class="py-5 px-2 text-slate-800 dark:text-white font-black">{{ number_format($payment->amount, 2) }} {{ __('SAR') }}</td>
+                                <td class="py-5 px-2 text-slate-800 dark:text-white font-black">{{ number_format($payment->amount, 2) }} <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></td>
                                 <td class="py-5 px-2">
                                     <span class="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider {{ $payment->status == 'paid' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500' }}">
                                         {{ __($payment->status) }}
@@ -571,10 +571,10 @@
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black">
-                                {{ mb_substr($review->technician->{'name_'.app()->getLocale()} ?? '-', 0, 1) }}
+                                {{ mb_substr(optional(optional($review->technician)->user)->name ?? '-', 0, 1) }}
                             </div>
                             <div>
-                                <h4 class="text-sm font-black text-slate-800 dark:text-white">{{ $review->technician->{'name_'.app()->getLocale()} ?? __('Technician') }}</h4>
+                                <h4 class="text-sm font-black text-slate-800 dark:text-white">{{ optional(optional($review->technician)->user)->name ?? __('Technician') }}</h4>
                                 <p class="text-[10px] text-slate-400 font-bold">{{ $review->order->order_number ?? '-' }}</p>
                             </div>
                         </div>

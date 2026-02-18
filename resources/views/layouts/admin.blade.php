@@ -21,6 +21,7 @@
         }
         [x-cloak] { display: none !important; }
     </style>
+    @yield('styles')
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-primary-dark dark:text-slate-100 transition-colors duration-500 overflow-x-hidden">
     <div x-data="{ sidebarOpen: false }" class="flex h-screen overflow-hidden relative">
@@ -86,11 +87,21 @@
                     </div>
                 </div>
 
-                <!-- Order Management -->
-                <a href="{{ route('admin.orders.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('admin.orders.*') ? 'bg-primary/5 dark:bg-white/10 text-primary dark:text-white font-black' : 'hover:bg-slate-50 dark:hover:bg-white/5' }}">
-                    <svg class="w-5 h-5 {{ app()->getLocale() == 'ar' ? 'ml-3' : 'mr-3' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                    <span class="font-bold">{{ __('Orders Management') }}</span>
-                </a>
+                <!-- Order Management Dropdown -->
+                <div x-data="{ open: {{ request()->is('admin/orders*') || request()->is('admin/appointments*') ? 'true' : 'false' }} }" class="space-y-1">
+                    <button @click="open = !open" class="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all hover:bg-slate-50 dark:hover:bg-white/5 {{ request()->is('admin/orders*') || request()->is('admin/appointments*') ? 'text-primary dark:text-white font-black' : '' }}">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 {{ app()->getLocale() == 'ar' ? 'ml-3' : 'mr-3' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                            <span class="font-bold">{{ __('Orders Management') }}</span>
+                        </div>
+                        <svg class="w-4 h-4 transition-transform duration-300" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div x-show="open" x-collapse class="space-y-1 {{ app()->getLocale() == 'ar' ? 'pr-12' : 'pl-12' }}">
+                        <a href="{{ route('admin.orders.index') }}" class="block py-2 text-sm {{ (request()->routeIs('admin.orders.index') && !request()->has('tab')) || request()->get('tab') == 'new' ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('New Orders') }}</a>
+                        <a href="{{ route('admin.appointments.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.appointments.*') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Appointments') }}</a>
+                        <a href="{{ route('admin.orders.premium') }}" class="block py-2 text-sm {{ request()->routeIs('admin.orders.premium') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Orders') }}</a>
+                    </div>
+                </div>
 
                 <!-- Contract Management -->
                 <a href="{{ route('admin.contracts.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('admin.contracts.*') ? 'bg-primary/5 dark:bg-white/10 text-primary dark:text-white font-black' : 'hover:bg-slate-50 dark:hover:bg-white/5' }}">
@@ -376,5 +387,6 @@
 
         updateTheme();
     </script>
+    @yield('scripts')
 </body>
 </html>

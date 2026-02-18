@@ -12,7 +12,7 @@ class ServiceController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Service::withCount(['technicians', 'children']);
+        $query = Service::whereNull('parent_id')->withCount(['technicians', 'children', 'orders']);
 
         if ($request->has('search') && $request->search) {
             $query->where('name_ar', 'like', '%' . $request->search . '%')

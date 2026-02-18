@@ -41,8 +41,6 @@ class MaintenanceCompanyController extends Controller
             'email' => 'sometimes|email|unique:users,email,' . $user->id,
             'password' => 'sometimes|min:8|confirmed',
             'phone' => 'sometimes|string|max:20',
-            'company_name_ar' => 'sometimes|string|max:255',
-            'company_name_en' => 'sometimes|string|max:255',
             'bank_name' => 'sometimes|string|max:255',
             'account_name' => 'sometimes|string|max:255',
             'account_number' => 'sometimes|string|max:255',
@@ -66,10 +64,18 @@ class MaintenanceCompanyController extends Controller
             $userModel->save();
         }
 
-        $company->update($request->only([
-            'company_name_ar', 'company_name_en', 'bank_name', 'account_name', 
+        $updateData = $request->only([
+            'bank_name', 'account_name', 
             'account_number', 'bank_address', 'iban', 'swift_code', 'city_id', 'address'
-        ]));
+        ]);
+
+        if ($request->filled('name')) {
+            $updateData['company_name_ar'] = $request->name;
+            $updateData['company_name_en'] = $request->name;
+            $updateData['name'] = $request->name;
+        }
+        
+        $company->update($updateData);
         
         return response()->json([
             'status' => true, 

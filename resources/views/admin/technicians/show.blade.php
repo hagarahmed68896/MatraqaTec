@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', __('Technician Profile') . ' - ' . $item->{'name_'.app()->getLocale()})
 
@@ -425,7 +425,7 @@
                                 <td class="py-6 px-8">
                                     <div class="flex items-center gap-2">
                                         <span class="text-sm font-black text-slate-800 dark:text-white">{{ number_format($s->amount, 2) }}</span>
-                                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ __('SAR') }}</span>
+                                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"><img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></span>
                                     </div>
                                 </td>
                                 <td class="py-6 px-8 text-sm font-bold text-slate-500">{{ __($s->payment_method) }}</td>
