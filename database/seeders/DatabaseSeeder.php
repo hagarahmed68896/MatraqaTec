@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             SocialLinkSeeder::class,
             PrivacyPolicySeeder::class,
             ServiceDataSeeder::class,
+            ContentSeeder::class,
         ]);
     }
 }

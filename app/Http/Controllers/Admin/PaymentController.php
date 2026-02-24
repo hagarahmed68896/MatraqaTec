@@ -12,15 +12,15 @@ class PaymentController extends Controller
     {
         // 1. Statistics
         $stats = [
-            'total_payments' => [
+            'total' => [
                 'count' => Payment::count(),
                 'sum' => Payment::sum('amount'),
             ],
-            'completed_payments' => [
+            'completed' => [
                 'count' => Payment::where('status', 'completed')->count(),
                 'sum' => Payment::where('status', 'completed')->sum('amount'),
             ],
-            'pending_payments' => [ // Under Review
+            'pending' => [ // Under Review
                 'count' => Payment::where('status', 'pending')->count(),
                 'sum' => Payment::where('status', 'pending')->sum('amount'),
             ],
@@ -34,7 +34,7 @@ class PaymentController extends Controller
         $query = $this->filterQuery($request);
 
         // 3. Sorting
-        if ($request->has('sort_by')) {
+        if ($request->filled('sort_by')) {
             switch ($request->sort_by) {
                 case 'newest':
                     $query->orderBy('created_at', 'desc');
@@ -43,15 +43,15 @@ class PaymentController extends Controller
                     $query->orderBy('created_at', 'asc');
                     break;
                 case 'name':
-                    $query->whereHas('user', function ($q) {
-                        $q->orderBy('name', 'asc');
-                    });
+                    $query->join('users', 'payments.user_id', '=', 'users.id')
+                          ->select('payments.*')
+                          ->orderBy('users.name', 'asc');
                     break;
                 default:
-                    $query->orderBy('id', 'desc');
+                    $query->orderBy('payments.id', 'desc');
             }
         } else {
-            $query->orderBy('id', 'desc');
+            $query->orderBy('payments.id', 'desc');
         }
 
         // 4. Pagination
@@ -122,8 +122,15 @@ class PaymentController extends Controller
     {
         $query = Payment::with(['user', 'order']);
 
+        // Bulk IDs
+        if ($request->filled('ids')) {
+            $ids = is_array($request->ids) ? $request->ids : explode(',', $request->ids);
+            $query->whereIn('payments.id', $ids);
+            return $query; // If specific IDs are requested, we bypass other filters
+        }
+
         // Search (User Name)
-        if ($request->has('search') && $request->search != '') {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->whereHas('user', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%");
@@ -131,8 +138,9 @@ class PaymentController extends Controller
         }
 
         // Client Type
-        if ($request->has('client_type') && $request->client_type != 'all') {
+        if ($request->filled('client_type')) {
             $type = $request->client_type;
+            // Map 'company' from UI to 'maintenance_company' in DB if necessary
             if ($type == 'company') $type = 'maintenance_company';
             
             $query->whereHas('user', function ($q) use ($type) {
@@ -141,7 +149,7 @@ class PaymentController extends Controller
         }
 
         // Transaction/Operation Type
-        if ($request->has('transaction_type') && $request->transaction_type != 'all') {
+        if ($request->filled('transaction_type')) {
             $transType = $request->transaction_type;
             if ($transType == 'service') {
                 $query->whereHas('order', function ($q) {
@@ -155,12 +163,12 @@ class PaymentController extends Controller
         }
 
         // Payment Method
-        if ($request->has('payment_method') && $request->payment_method != 'all') {
+        if ($request->filled('payment_method')) {
             $query->where('payment_method', $request->payment_method);
         }
 
         // Status
-        if ($request->has('status') && $request->status != 'all') {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 

@@ -18,21 +18,19 @@ class InvoiceController extends Controller
         if ($request->has('sort_by')) {
             switch ($request->sort_by) {
                 case 'newest':
-                    $query->orderBy('issue_date', 'desc');
+                    $query->orderBy('invoices.issue_date', 'desc');
                     break;
                 case 'oldest':
-                    $query->orderBy('issue_date', 'asc');
+                    $query->orderBy('invoices.issue_date', 'asc');
                     break;
                 case 'name':
-                    $query->whereHas('order.user', function ($q) {
-                        $q->orderBy('name', 'asc');
-                    });
+                    $query->orderBy('users.name', 'asc');
                     break;
                 default:
-                    $query->orderBy('id', 'desc');
+                    $query->orderBy('invoices.id', 'desc');
             }
         } else {
-            $query->orderBy('id', 'desc');
+            $query->orderBy('invoices.id', 'desc');
         }
 
         $items = $query->paginate(10);
@@ -47,21 +45,16 @@ class InvoiceController extends Controller
         // Prepare items for display
         $items_details = [];
         if ($item->order) {
-            if ($item->order->service_id) {
-                $items_details[] = [
-                    'description' => $item->order->service ? $item->order->service->name_ar : 'خدمة',
-                    'quantity' => 1,
-                    'price' => $item->amount,
-                    'total' => $item->amount
-                ];
-            } else {
-                $items_details[] = [
-                    'description' => 'قطع غيار',
-                    'quantity' => 1,
-                    'price' => $item->amount,
-                    'total' => $item->amount
-                ];
-            }
+            $serviceName = $item->order->service 
+                ? (app()->getLocale() == 'ar' ? $item->order->service->name_ar : $item->order->service->name_en) 
+                : __('Service');
+
+            $items_details[] = [
+                'description' => $serviceName,
+                'quantity' => 1,
+                'price' => $item->amount,
+                'total' => $item->amount
+            ];
         }
 
         return view('admin.invoices.show', compact('item', 'items_details'));
@@ -70,6 +63,13 @@ class InvoiceController extends Controller
     public function download(Request $request)
     {
         $query = $this->filterQuery($request);
+        
+        // If specific IDs are provided, limit to those
+        if ($request->filled('ids')) {
+            $ids = is_array($request->ids) ? $request->ids : explode(',', $request->ids);
+            $query = Invoice::whereIn('id', $ids)->with(['order.user']);
+        }
+
         $invoices = $query->orderBy('id', 'desc')->get();
 
         $filename = "invoices_" . date('Y-m-d_H-i-s') . ".csv";
@@ -78,28 +78,31 @@ class InvoiceController extends Controller
         fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
 
         fputcsv($handle, [
-            'Invoice Number',
-            'Client Name',
-            'Client Type',
-            'Operation Type',
-            'Amount',
-            'Status',
-            'Date'
+            __('Invoice Number'),
+            __('Customer Name'),
+            __('Client Type'),
+            __('Operation Type'),
+            __('Amount'),
+            __('Status'),
+            __('Date')
         ]);
 
         foreach ($invoices as $invoice) {
-            $clientType = ($invoice->order && $invoice->order->user) ? $invoice->order->user->type : 'N/A';
-            $opType = ($invoice->order && $invoice->order->service_id) ? 'Service' : 'Spare Parts';
+                $clientType = ($invoice->order && $invoice->order->user) ? __($invoice->order->user->type) : 'N/A';
+                $service = ($invoice->order && $invoice->order->service) ? $invoice->order->service : null;
+                $opType = $service 
+                    ? (app()->getLocale() == 'ar' ? $service->name_ar : $service->name_en) 
+                    : __('Spare Parts');
 
-            fputcsv($handle, [
-                $invoice->invoice_number ?? $invoice->id,
-                ($invoice->order && $invoice->order->user) ? $invoice->order->user->name : 'N/A',
-                $clientType,
-                $opType,
-                $invoice->amount,
-                $invoice->status == 'sent' ? 'مرسلة' : 'غير مرسلة',
-                $invoice->issue_date ? $invoice->issue_date->format('Y-m-d') : 'N/A',
-            ]);
+                fputcsv($handle, [
+                    $invoice->invoice_number ?? $invoice->id,
+                    ($invoice->order && $invoice->order->user) ? $invoice->order->user->name : 'N/A',
+                    $clientType,
+                    $opType,
+                    $invoice->amount,
+                    $invoice->status == 'sent' ? __('Sent') : __('Not Sent'),
+                    $invoice->issue_date ? $invoice->issue_date->format('Y-m-d') : 'N/A',
+                ]);
         }
 
         fseek($handle, 0);
@@ -136,44 +139,48 @@ class InvoiceController extends Controller
 
     private function filterQuery(Request $request)
     {
-        $query = Invoice::with(['order.user']);
+        $query = Invoice::select('invoices.*')
+            ->join('orders', 'invoices.order_id', '=', 'orders.id')
+            ->join('users', 'orders.user_id', '=', 'users.id')
+            ->with(['order.user']);
 
-        if ($request->has('search') && $request->search != '') {
+        // Bulk IDs
+        if ($request->filled('ids')) {
+            $ids = is_array($request->ids) ? $request->ids : explode(',', $request->ids);
+            $query->whereIn('invoices.id', $ids);
+            return $query;
+        }
+
+        // Search
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('invoice_number', 'like', "%{$search}%")
-                  ->orWhereHas('order.user', function ($u) use ($search) {
-                      $u->where('name', 'like', "%{$search}%");
-                  });
+                $q->where('invoices.invoice_number', 'like', "%{$search}%")
+                  ->orWhere('users.name', 'like', "%{$search}%");
             });
         }
 
-        if ($request->has('client_type') && $request->client_type != 'all') {
+        // Client Type
+        if ($request->filled('client_type') && $request->client_type != 'all') {
             $type = $request->client_type;
             if ($type == 'company') $type = 'maintenance_company';
-            
-            $query->whereHas('order.user', function ($q) use ($type) {
-                $q->where('type', $type);
-            });
+            $query->where('users.type', $type);
         }
 
-        if ($request->has('operation_type') && $request->operation_type != 'all') {
-            $opType = $request->operation_type;
-            if ($opType == 'service') {
-                $query->whereHas('order', function ($q) {
-                    $q->whereNotNull('service_id');
-                });
-            } elseif ($opType == 'spare_parts') {
-                $query->whereHas('order', function ($q) {
-                     $q->whereNull('service_id');
-                });
+        // Operation Type
+        if ($request->filled('operation_type') && $request->operation_type != 'all') {
+            if ($request->operation_type == 'service') {
+                $query->whereNotNull('orders.service_id');
+            } else {
+                $query->whereNull('orders.service_id');
             }
         }
 
-        if ($request->has('status') && $request->status != 'all') {
-            $status = $request->status; 
+        // Status
+        if ($request->filled('status') && $request->status != 'all') {
+            $status = $request->status;
             if ($status == 'unsent') $status = 'not_sent';
-            $query->where('status', $status);
+            $query->where('invoices.status', $status);
         }
 
         return $query;

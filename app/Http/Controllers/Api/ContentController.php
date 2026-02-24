@@ -10,7 +10,7 @@ class ContentController extends Controller
 {
     public function index()
     {
-        $content = Content::all();
+        $content = Content::with('items')->where('is_visible', true)->get();
         return response()->json(['status' => true, 'message' => 'Content retrieved successfully', 'data' => $content]);
     }
 

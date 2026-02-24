@@ -145,16 +145,15 @@ class ServiceController extends Controller
         $services = $query->with(['children', 'city'])->get();
 
         // Add is_favorite status
-        if (auth()->check()) {
-            $userFavorites = auth()->user()->favorites()->pluck('service_id')->toArray();
-            $services->map(function ($service) use ($userFavorites) {
+        $user = auth('sanctum')->user();
+        if ($user) {
+            $userFavorites = $user->favorites()->pluck('service_id')->toArray();
+            $services->each(function ($service) use ($userFavorites) {
                 $service->is_favorite = in_array($service->id, $userFavorites);
-                return $service;
             });
         } else {
-            $services->map(function ($service) {
+            $services->each(function ($service) {
                 $service->is_favorite = false;
-                return $service;
             });
         }
 
@@ -193,8 +192,9 @@ class ServiceController extends Controller
         }
 
         // Add is_favorite status
-        if (auth()->check()) {
-            $userFavorites = auth()->user()->favorites()->pluck('service_id')->toArray();
+        $user = auth('sanctum')->user();
+        if ($user) {
+            $userFavorites = $user->favorites()->pluck('service_id')->toArray();
             $service->is_favorite = in_array($service->id, $userFavorites);
         } else {
             $service->is_favorite = false;
@@ -207,10 +207,9 @@ class ServiceController extends Controller
             ->get();
 
         // Add favorite status to related services too
-        if (auth()->check()) {
-            $relatedServices->map(function ($rs) use ($userFavorites) {
+        if ($user) {
+            $relatedServices->each(function ($rs) use ($userFavorites) {
                 $rs->is_favorite = in_array($rs->id, $userFavorites);
-                return $rs;
             });
         }
 

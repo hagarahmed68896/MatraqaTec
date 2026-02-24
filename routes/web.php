@@ -78,6 +78,7 @@ Route::prefix('admin')->group(function () {
         // Reports
         Route::prefix('reports')->name('admin.reports.')->group(function () {
             Route::get('/summary', [App\Http\Controllers\Admin\ReportController::class, 'index'])->name('index');
+            Route::get('/download', [App\Http\Controllers\Admin\ReportController::class, 'download'])->name('download');
             Route::get('/users', [App\Http\Controllers\Admin\ReportController::class, 'users'])->name('users');
             Route::get('/financials', [App\Http\Controllers\Admin\ReportController::class, 'financials'])->name('financials');
             Route::get('/services', [App\Http\Controllers\Admin\ReportController::class, 'services'])->name('services');
@@ -136,8 +137,24 @@ Route::prefix('admin')->group(function () {
                     Route::get('/{id}/available-technicians', [$controller, 'getAvailableTechnicians'])->name('available-technicians');
                     Route::get('/{id}/available-companies', [$controller, 'getAvailableCompanies'])->name('available-companies');
                 }
-                if ($prefix === 'roles') {
+                if ($prefix === 'roles' || $prefix === 'broadcast-notifications') {
                     Route::post('/bulk-delete', [$controller, 'bulkDelete'])->name('bulk-delete');
+                }
+
+                if ($prefix === 'broadcast-notifications') {
+                    Route::post('/bulk-destroy', [$controller, 'bulkDestroy'])->name('bulk-destroy');
+                }
+
+                if (method_exists($controller, 'changeStatus')) {
+                    Route::post('/{id}/change-status', [$controller, 'changeStatus'])->name('change-status');
+                }
+
+                if (method_exists($controller, 'send')) {
+                    Route::post('/{id}/send', [$controller, 'send'])->name('send');
+                }
+
+                if (method_exists($controller, 'bulkChangeStatus')) {
+                    Route::post('/bulk-status', [$controller, 'bulkChangeStatus'])->name('bulk-status');
                 }
             });
         }

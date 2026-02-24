@@ -98,6 +98,7 @@ Route::apiResource('terms', TermController::class)->only(['index', 'show']);
 Route::apiResource('privacy-policies', PrivacyPolicyController::class)->only(['index', 'show']);
 Route::apiResource('social-links', SocialLinkController::class)->only(['index', 'show']);
 Route::apiResource('faqs', FaqController::class)->only(['index', 'show']);
+Route::get('support', [SupportController::class, 'index']);
 Route::apiResource('reviews', ReviewController::class)->only(['index', 'show']); // Often public
 
 Route::post('/technician-requests', [TechnicianRequestController::class, 'store']); // Public Apply

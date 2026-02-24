@@ -146,6 +146,7 @@
                         <a href="{{ route('admin.payments.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.payments.*') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Payments') }}</a>
                         <a href="{{ route('admin.invoices.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.invoices.*') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Invoices') }}</a>
                         <a href="{{ route('admin.financial-settlements.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.financial-settlements.*') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Settlements') }}</a>
+                        <a href="{{ route('admin.refunds.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.refunds.*') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Returns') }}</a>
                         <a href="{{ route('admin.platform-profits.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.platform-profits.*') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Platform Profits') }}</a>
                     </div>
                 </div>
@@ -206,7 +207,6 @@
 
                     <div class="flex flex-col text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
                         <h1 class="text-lg md:text-xl font-black text-slate-800 dark:text-white leading-tight truncate max-w-[150px] md:max-w-none">{{ __('Welcome') }}, {{ Auth::user()->name }}</h1>
-                        <p class="text-[9px] md:text-[10px] text-slate-400 dark:text-slate-300 font-bold uppercase tracking-widest hidden sm:block">{{ __('Everything is under control.') }}</p>
                     </div>
                 </div>
                 

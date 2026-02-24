@@ -11,7 +11,7 @@ class Notification extends Model
 
     const TYPES = ['alert', 'reminder', 'notification'];
     const TARGET_AUDIENCES = ['clients', 'companies', 'technicians', 'all'];
-    const STATUSES = ['sent', 'scheduled', 'not_sent'];
+    const STATUSES = ['sent', 'scheduled', 'unsent'];
 
     // Specific Notification Type Slugs for Data Logic
     const TYPE_NEW_ORDER = 'new_order';

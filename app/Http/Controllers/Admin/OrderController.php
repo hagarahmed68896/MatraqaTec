@@ -387,14 +387,14 @@ class OrderController extends Controller
                     'id' => $tech->id,
                     'name' => $tech->user->name,
                     'avatar' => $tech->user->avatar ? asset('storage/' . $tech->user->avatar) : null,
-                    'specialty' => $tech->bio_ar ?? 'متخصص في خدمات الصيانة',
-                    'service_name' => $tech->service->name_ar ?? 'فني',
+                    'specialty' => __('Specialist in maintenance services'),
+                    'service_name' => $tech->service->name_ar ?? __('Technician'),
                     'rating' => round($tech->reviews_avg_rating ?? 0, 1),
-                    'district' => is_array($tech->districts) ? implode(', ', $tech->districts) : ($tech->districts ?? 'جميع المناطق'),
+                    'district' => is_array($tech->districts) ? implode(', ', $tech->districts) : ($tech->districts ?? __('All Regions')),
                     'order_count' => $tech->orders_count ?? 5,
                     'lat' => $lat,
                     'lng' => $lng,
-                    'status_label' => 'متاح',
+                    'status_label' => __('Available'),
                 ];
             })
         ]);
@@ -430,12 +430,12 @@ class OrderController extends Controller
                     'id' => $comp->id,
                     'name' => $comp->company_name_ar ?? $comp->user->name,
                     'avatar' => $comp->user->avatar ? asset('storage/' . $comp->user->avatar) : null,
-                    'specialty' => 'شركة صيانة معتمدة',
+                    'specialty' => __('Certified Maintenance Company'),
                     'rating' => 4.5,
-                    'district' => $comp->city->name_ar ?? 'حي الرياض',
+                    'district' => $comp->city->name_ar ?? __('Riyadh District'),
                     'lat' => $lat,
                     'lng' => $lng,
-                    'status_label' => 'متاح',
+                    'status_label' => __('Available'),
                 ];
             })
         ]);

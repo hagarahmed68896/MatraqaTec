@@ -16,4 +16,9 @@ class SocialLink extends Model
         'url',
         'icon',
     ];
+
+    protected $hidden = [
+        'mobile',
+        'email',
+    ];
 }

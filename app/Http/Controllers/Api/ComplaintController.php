@@ -56,7 +56,7 @@ class ComplaintController extends Controller
             'order_id' => [
                 'nullable',
                 'exists:orders,id',
-                Rule::requiredIf(fn() => in_array($request->type, ['complaint_technician', 'complaint_customer'])),
+                Rule::requiredIf(fn() => in_array($request->type, ['complaint_technician', 'complaint_customer', 'payment_issue'])),
             ],
             'attachment' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:2048',
         ]);

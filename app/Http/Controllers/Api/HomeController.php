@@ -38,7 +38,7 @@ class HomeController extends Controller
                 ->first();
             
             // Fetch Favorite IDs once
-            $userFavorites = auth()->check() ? $user->favorites()->pluck('service_id')->toArray() : [];
+            $userFavorites = $user ? $user->favorites()->pluck('service_id')->toArray() : [];
 
             // 2. Service Categories - Limit to 6
             $categories = Service::with(['children', 'city'])->whereNull('parent_id')

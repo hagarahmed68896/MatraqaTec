@@ -47,17 +47,20 @@ class NotificationController extends Controller
         }
 
         // Sorting
-        $sortColumn = $request->input('sort_by', 'created_at');
-        $sortDirection = $request->input('sort_order', 'desc');
-
-        if ($sortColumn === 'name') {
-            $sortColumn = 'title_ar';
+        $sortBy = $request->input('sort_by', 'newest');
+        if ($sortBy === 'newest' || $sortBy === 'newest_date') {
+            $query->latest();
+        } elseif ($sortBy === 'oldest') {
+            $query->oldest();
+        } elseif ($sortBy === 'name') {
+            $query->orderBy('title_ar', 'asc');
+        } else {
+            $query->latest();
         }
-        $query->orderBy($sortColumn, $sortDirection);
 
         // Pagination
         $perPage = $request->input('per_page', 10);
-        $items = $query->paginate($perPage);
+        $items = $query->with('user')->paginate($perPage)->withQueryString();
 
         // Statistics
         $lastWeek = Carbon::now()->subWeek();
@@ -85,7 +88,7 @@ class NotificationController extends Controller
         $statistics = [
             'total' => $getStats(),
             'sent' => $getStats('sent'),
-            'not_sent' => $getStats('not_sent'),
+            'unsent' => $getStats('unsent'),
             'scheduled' => $getStats('scheduled'),
         ];
 

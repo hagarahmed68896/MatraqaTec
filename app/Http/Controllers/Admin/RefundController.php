@@ -14,11 +14,14 @@ class RefundController extends Controller
         $query = Refund::with(['order.user', 'order.maintenanceCompany']);
 
         // Filter by Status: 'pending' (Requests) vs others (History)
-        if ($request->has('status') && $request->status != 'all') {
-            if ($request->status == 'history') {
-                 $query->whereIn('status', ['transferred', 'rejected']);
+        // Default status is 'pending' (Return Requests) if not specified
+        $status = $request->get('status', 'pending');
+        
+        if ($status !== 'all') {
+            if ($status === 'history') {
+                $query->whereIn('status', ['transferred', 'rejected']);
             } else {
-                 $query->where('status', $request->status);
+                $query->where('status', $status);
             }
         }
 
@@ -119,44 +122,64 @@ class RefundController extends Controller
         });
     }
 
-    public function export(Request $request)
+    public function bulkChangeStatus(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:refunds,id',
+            'status' => 'required|in:transferred,rejected,pending',
+        ]);
+
+        Refund::whereIn('id', $request->ids)->update(['status' => $request->status]);
+
+        return back()->with('success', __('Refund statuses updated successfully.'));
+    }
+
+    public function download(Request $request)
     {
         $query = Refund::with(['order.user', 'order.maintenanceCompany']);
 
-        if ($request->has('status') && $request->status != 'all') {
-            if ($request->status == 'history') {
-                 $query->whereIn('status', ['transferred', 'rejected']);
-            } else {
-                 $query->where('status', $request->status);
+        // If specific IDs are provided (bulk export), filter to those
+        if ($request->filled('ids')) {
+            $ids = is_array($request->ids) ? $request->ids : explode(',', $request->ids);
+            $query->whereIn('id', $ids);
+        } else {
+            // Otherwise use existing tab/status/search/client_type filters
+            if ($request->has('status') && $request->status != 'all') {
+                if ($request->status == 'history') {
+                     $query->whereIn('status', ['transferred', 'rejected']);
+                } else {
+                     $query->where('status', $request->status);
+                }
             }
-        }
-        
-        if ($request->has('search') && $request->search != '') {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('refund_number', 'like', "%{$search}%")
-                  ->orWhereHas('order', function ($sub) use ($search) {
-                        $sub->where('order_number', 'like', "%{$search}%")
-                            ->orWhereHas('user', function ($u) use ($search) {
-                                $u->where('name', 'like', "%{$search}%");
-                            })
-                             ->orWhereHas('maintenanceCompany', function ($c) use ($search) {
-                                $c->where('company_name_ar', 'like', "%{$search}%")
-                                  ->orWhere('company_name_en', 'like', "%{$search}%");
-                            });
-                  });
-            });
-        }
+            
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('refund_number', 'like', "%{$search}%")
+                      ->orWhereHas('order', function ($sub) use ($search) {
+                            $sub->where('order_number', 'like', "%{$search}%")
+                                ->orWhereHas('user', function ($u) use ($search) {
+                                    $u->where('name', 'like', "%{$search}%");
+                                })
+                                 ->orWhereHas('maintenanceCompany', function ($c) use ($search) {
+                                    $c->where('company_name_ar', 'like', "%{$search}%")
+                                      ->orWhere('company_name_en', 'like', "%{$search}%");
+                                });
+                      });
+                });
+            }
 
-        if ($request->has('client_type') && $request->client_type != 'all') {
-            $clientType = $request->client_type;
-             $query->whereHas('order.user', function ($q) use ($clientType) {
-                 if ($clientType == 'individual') {
-                     $q->where('type', 'individual');
-                 } elseif ($clientType == 'company') {
-                     $q->where('type', 'maintenance_company');
-                 }
-            });
+            if ($request->filled('client_type') && $request->client_type != 'all') {
+                $clientType = $request->client_type;
+                 $query->whereHas('order.user', function ($q) use ($clientType) {
+                     if ($clientType == 'individual') {
+                         $q->where('type', 'individual');
+                     } elseif ($clientType == 'company') {
+                         $q->where('type', 'maintenance_company');
+                     }
+                });
+            }
         }
         
         $refunds = $query->orderBy('created_at', 'desc')->get();
@@ -164,7 +187,7 @@ class RefundController extends Controller
         $filename = "refunds_" . date('Y-m-d_H-i-s') . ".csv";
         $handle = fopen('php://memory', 'w');
         
-        fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF)); // BOM
+        fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
 
         fputcsv($handle, [
             'Refund Number',

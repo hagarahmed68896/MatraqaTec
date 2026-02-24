@@ -200,7 +200,7 @@
                                placeholder="{{ __('Enter project value') }}"
                                class="w-full pl-14 pr-5 py-4 bg-slate-50 border border-transparent focus:border-[#1A1A31] focus:bg-white rounded-2xl text-sm font-bold transition-all outline-none text-right @error('project_value') border-red-400 @enderror">
                         <div class="absolute left-0 top-0 bottom-0 w-12 flex items-center justify-center bg-slate-100 rounded-r-2xl border-r border-slate-200">
-                            <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="{{ __('SAR') }}" class="w-5 h-5">
+                            <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="{!! __('<img src="/assets/images/Vector (1).svg" alt="SAR" class="inline-block w-4 h-4 align-middle">') !!}" class="w-5 h-5">
                         </div>
                     </div>
                     @error('project_value')

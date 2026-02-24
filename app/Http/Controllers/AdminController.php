@@ -525,7 +525,7 @@ class AdminController extends Controller
     public function notifications()
     {
         $notifications = Auth::user()->notifications()->latest()->paginate(10);
-        return view('admin.notifications.index', compact('notifications'));
+        return view('admin.notifications.system', compact('notifications'));
     }
 
     public function markAllNotificationsRead()

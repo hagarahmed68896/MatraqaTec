@@ -232,19 +232,19 @@
                         </td>
                         <td class="py-6 px-4">
                             <div class="flex items-center gap-1">
-                                <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="{{ __('SAR') }}" class="w-4 h-4 align-middle">
+                                <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="{!! __('<img src="/assets/images/Vector (1).svg" alt="SAR" class="inline-block w-4 h-4 align-middle">') !!}" class="w-4 h-4 align-middle">
                                 <span class="text-md font-black text-[#1A1A31]">{{ number_format($item->project_value) }}</span>
                             </div>
                         </td>
                         <td class="py-6 px-4">
                             <div class="flex items-center gap-1">
-                                <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="{{ __('SAR') }}" class="w-4 h-4 align-middle">
+                                <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="{!! __('<img src="/assets/images/Vector (1).svg" alt="SAR" class="inline-block w-4 h-4 align-middle">') !!}" class="w-4 h-4 align-middle">
                                 <span class="text-md font-black text-[#1A1A31]">{{ number_format($item->paid_amount) }}</span>
                             </div>
                         </td>
                          <td class="py-6 px-4">
                             <div class="flex items-center gap-1">
-                                <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="{{ __('SAR') }}" class="w-4 h-4 align-middle">
+                                <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="{!! __('<img src="/assets/images/Vector (1).svg" alt="SAR" class="inline-block w-4 h-4 align-middle">') !!}" class="w-4 h-4 align-middle">
                                 <span class="text-md font-black text-[#1A1A31]">{{ number_format($item->remaining_amount) }}</span>
                             </div>
                         </td>
