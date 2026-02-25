@@ -174,7 +174,7 @@
                 <div>
                     <p class="text-sm font-black text-[#1A1A31] dark:text-white mb-3">{{ __('Ticket Type') }}:</p>
                     <div class="space-y-2">
-                        @foreach(['all' => __('All'), 'general' => __('General inquiry'), 'technical' => __('Complaint against a technician'), 'payment' => __('Payment issue'), 'suggestion' => __('Suggestion / Note')] as $val => $label)
+                        @foreach(['all' => __('All'), 'general_inquiry' => __('General inquiry'), 'complaint_technician' => __('Complaint against a technician'), 'payment_issue' => __('Payment issue'), 'suggestion_note' => __('Suggestion / Note')] as $val => $label)
                         <label class="flex items-center gap-3 cursor-pointer group py-1">
                             <div class="relative w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all"
                                  :class="type === '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200 dark:border-white/20'">
@@ -229,7 +229,7 @@
                         <th class="py-6 px-8">{{ __('Date') }}</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100/50 dark:divide-white/[0.04]">
+                <tbody class="divide-y divide-slate-50 dark:divide-white/5">
                     @forelse($items as $item)
                     <tr class="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-all group cursor-pointer"
                         onclick="window.location.href='{{ route('admin.complaints.show', $item->id) }}'"
@@ -260,7 +260,19 @@
                             <span class="text-sm font-bold text-slate-500 dark:text-slate-400">{{ $item->phone }}</span>
                         </td>
                         <td class="py-6 px-4">
-                            <span class="text-sm font-bold text-slate-500 dark:text-slate-400">{{ $item->type == 'technical' ? __('Complaint against a technician') : __('General inquiry') }}</span>
+                            @php
+                                $typeLabel = match($item->type) {
+                                    'complaint_technician' => __('Complaint against a technician'),
+                                    'complaint_customer'   => __('Complaint against a technician'),
+                                    'complaint_client'     => __('Complaint against a technician'),
+                                    'payment_issue'        => __('Payment issue'),
+                                    'suggestion_note'      => __('Suggestion / Note'),
+                                    'suggestion'           => __('Suggestion / Note'),
+                                    'general_inquiry'      => __('General inquiry'),
+                                    default                => __('General inquiry'),
+                                };
+                            @endphp
+                            <span class="text-sm font-bold text-slate-500 dark:text-slate-400">{{ $typeLabel }}</span>
                         </td>
                         <td class="py-5 px-4 text-center" @click.stop>
                             @if($item->order_id && $item->order)

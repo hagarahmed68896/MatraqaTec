@@ -87,7 +87,7 @@ class ComplaintController extends Controller
         $complaint = Complaint::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'action_type' => 'required|in:warning,suspension,rejection,clarification,refund',
+            'action_type' => 'required|in:warning,suspension,rejection,explain_invoice,refund,general_reply',
             'notes' => 'nullable|string',
         ]);
 
@@ -108,12 +108,35 @@ class ComplaintController extends Controller
                 case 'rejection':
                     $complaint->status = 'rejected';
                     break;
+                case 'suspension':
                 case 'refund':
+                case 'explain_invoice':
+                case 'general_reply':
                     $complaint->status = 'resolved';
+                    break;
+                case 'warning':
+                    // We don't change status for warnings so buttons stay visible
                     break;
             }
             
             $complaint->save();
+
+            // Notify technician if action is warning
+            if ($request->action_type == 'warning' && $complaint->order && $complaint->order->technician) {
+                if ($complaint->order->technician->user_id) {
+                    \App\Models\Notification::create([
+                        'user_id' => $complaint->order->technician->user_id,
+                        'type' => 'alert',
+                        'title_ar' => 'تنبيه إداري بخصوص شكوى',
+                        'title_en' => 'Administrative Warning Regarding Complaint',
+                        'body_ar' => 'لقد تم تسجيل تنبيه إداري ضدك بخصوص الشكوى رقم #' . $complaint->ticket_number . '. ملاحظات الإدارة: ' . ($request->notes ?? 'لا يوجد'),
+                        'body_en' => 'An administrative warning has been recorded against you regarding complaint #' . $complaint->ticket_number . '. Admin notes: ' . ($request->notes ?? 'None'),
+                        'data' => ['complaint_id' => $complaint->id, 'order_id' => $complaint->order_id],
+                        'status' => 'sent',
+                        'is_read' => false
+                    ]);
+                }
+            }
 
             // If suspension, block user temporary
             if ($request->action_type == 'suspension' && $complaint->user) {

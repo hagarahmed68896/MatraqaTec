@@ -17,7 +17,9 @@ class OrderController extends Controller
         $user = $request->user();
         if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
 
-        $query = Order::with(['user', 'technician.user', 'service.parent']);
+        $query = Order::with(['user', 'technician' => function($q) {
+            $q->withAvg('reviews', 'rating')->withCount('reviews');
+        }, 'technician.user', 'service.parent']);
 
         // 1. Ownership Check
         if ($user->type === 'technician') {
@@ -140,6 +142,18 @@ class OrderController extends Controller
 
         $orders = $query->latest()->paginate(10);
         
+        $orders->getCollection()->transform(function ($order) {
+            if ($order->technician) {
+                $order->technician_data = $this->formatTechnicianData($order->technician);
+                // Keeping original technician for backward compatibility if needed, 
+                // but adding the customized object as well.
+                // Or we can just replace the technician object. 
+                // Let's replace it to match the user's specific request for the technician object.
+                $order->setRelation('technician', $order->technician_data);
+            }
+            return $order;
+        });
+
         return response()->json([
             'status' => true, 
             'message' => 'Orders retrieved', 
@@ -317,7 +331,9 @@ class OrderController extends Controller
     public function show($id)
     {
         $user = auth()->user();
-        $query = Order::with(['user', 'technician', 'service.parent', 'attachments', 'reviews', 'payments', 'appointments'])
+        $query = Order::with(['user', 'technician' => function($q) {
+                        $q->withAvg('reviews', 'rating')->withCount('reviews');
+                    }, 'service.parent', 'attachments', 'reviews', 'payments', 'appointments'])
                     ->where('id', $id);
 
         if ($user->type === 'technician') {
@@ -334,6 +350,11 @@ class OrderController extends Controller
 
         if (!$order) {
             return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+        }
+
+        if ($order->technician) {
+            $order->technician_data = $this->formatTechnicianData($order->technician);
+            $order->setRelation('technician', $order->technician_data);
         }
 
         return response()->json(['status' => true, 'message' => 'Order retrieved', 'data' => $order]);
@@ -1225,5 +1246,25 @@ class OrderController extends Controller
                 'is_read' => false
             ]);
         }
+    }
+
+    private function formatTechnicianData($technician)
+    {
+        if (!$technician) return null;
+
+        return [
+            'id' => $technician->id,
+            'name' => $technician->user->name ?? $technician->name_ar,
+            'maintenance_company_id' => $technician->maintenance_company_id,
+            'order_count' => $technician->order_count ?? 0,
+            'image' => $technician->user->avatar ? asset('storage/' . $technician->user->avatar) : asset('assets/images/default-avatar.png'),
+            'bio_en' => $technician->bio_en,
+            'bio_ar' => $technician->bio_ar,
+            'servic_id' => $technician->service_id,
+            'category_id' => $technician->category_id,
+            'avg_rating' => round($technician->reviews_avg_rating ?? 0, 1),
+            'review_count' => $technician->reviews_count ?? 0,
+            'exper_years' => $technician->years_experience ?? 0,
+        ];
     }
 }

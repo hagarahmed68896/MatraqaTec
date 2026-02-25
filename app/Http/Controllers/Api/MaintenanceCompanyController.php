@@ -23,7 +23,13 @@ class MaintenanceCompanyController extends Controller
         $company = MaintenanceCompany::with(['user', 'technicians', 'districts', 'services', 'city'])->where('user_id', $user->id)->first();
         if (!$company) return response()->json(['status' => false, 'message' => 'Company not found'], 404);
         
-        return response()->json(['status' => true, 'message' => 'Company retrieved', 'data' => $company]);
+        return response()->json([
+            'status' => true, 
+            'message' => 'Company retrieved', 
+            'data' => [
+                'maintenance_company' => $company
+            ]
+        ]);
     }
 
     public function update(Request $request)
@@ -80,7 +86,9 @@ class MaintenanceCompanyController extends Controller
         return response()->json([
             'status' => true, 
             'message' => 'Company profile updated successfully', 
-            'data' => $company->load('user', 'city')
+            'data' => [
+                'maintenance_company' => $company->load('user', 'city')
+            ]
         ]);
     }
 
