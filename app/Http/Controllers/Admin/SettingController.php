@@ -59,6 +59,17 @@ class SettingController extends Controller
         foreach ($settings as $key => $value) {
             if ($value !== null) {
                 Setting::setByKey($key, $value, 'platform');
+                
+                // Immediate effect for current user
+                if ($key === 'default_language') {
+                    session()->put('locale', $value);
+                    app()->setLocale($value);
+                }
+                
+                if ($key === 'system_mode' && $value !== 'auto') {
+                    // Force theme sync for current session in localStorage via meta or flash
+                    session()->flash('force_theme', $value);
+                }
             }
         }
 

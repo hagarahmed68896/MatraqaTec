@@ -31,10 +31,8 @@ class ProfileController extends Controller
 
         $request->validate([
             'phone' => 'nullable|string',
-            'first_name_ar' => 'nullable|string',
-            'last_name_ar' => 'nullable|string',
-            'first_name_en' => 'nullable|string',
-            'last_name_en' => 'nullable|string',
+            'first_name' => 'nullable|string',
+            'last_name' => 'nullable|string',
             'avatar' => 'nullable|image|max:2048', // 2MB max
         ]);
 
@@ -60,7 +58,7 @@ class ProfileController extends Controller
         $user->save();
 
         // Update Admin Profile fields
-        $profileData = $request->only(['first_name_ar', 'last_name_ar', 'first_name_en', 'last_name_en']);
+        $profileData = $request->only(['first_name', 'last_name']);
         
         if ($user->adminProfile) {
             $user->adminProfile->update($profileData);
@@ -74,10 +72,8 @@ class ProfileController extends Controller
         $adminProfile = $user->adminProfile;
         
         $name = null;
-        if ($adminProfile && ($adminProfile->first_name_en || $adminProfile->last_name_en)) {
-            $name = trim(($adminProfile->first_name_en ?? '') . ' ' . ($adminProfile->last_name_en ?? ''));
-        } elseif ($adminProfile && ($adminProfile->first_name_ar || $adminProfile->last_name_ar)) {
-            $name = trim(($adminProfile->first_name_ar ?? '') . ' ' . ($adminProfile->last_name_ar ?? ''));
+        if ($adminProfile && ($adminProfile->first_name || $adminProfile->last_name)) {
+            $name = trim(($adminProfile->first_name ?? '') . ' ' . ($adminProfile->last_name ?? ''));
         }
 
         if ($name) {

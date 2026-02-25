@@ -65,7 +65,6 @@ Route::prefix('admin')->group(function () {
             'terms' => App\Http\Controllers\Admin\TermController::class,
             'privacy-policies' => App\Http\Controllers\Admin\PrivacyPolicyController::class,
             'social-links' => App\Http\Controllers\Admin\SocialLinkController::class,
-            'settings' => App\Http\Controllers\Admin\SettingController::class,
             'inventory' => App\Http\Controllers\Admin\InventoryController::class,
             'roles' => App\Http\Controllers\Admin\RoleController::class,
             'permissions' => App\Http\Controllers\Admin\PermissionController::class,
@@ -96,6 +95,12 @@ Route::prefix('admin')->group(function () {
 
         // Top Technicians Route (before resource routes)
         Route::get('/technicians/top', [App\Http\Controllers\Admin\TechnicianController::class, 'top'])->name('admin.technicians.top');
+
+        // Platform Settings (Defined as singleton)
+        Route::prefix('settings')->name('admin.settings.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Admin\SettingController::class, 'index'])->name('index');
+            Route::post('/update', [App\Http\Controllers\Admin\SettingController::class, 'update'])->name('update');
+        });
 
         foreach ($resources as $prefix => $controller) {
             Route::prefix($prefix)->name("admin.{$prefix}.")->group(function () use ($controller, $prefix) {
@@ -130,8 +135,11 @@ Route::prefix('admin')->group(function () {
                 if (method_exists($controller, 'refuse')) {
                     Route::post('/{id}/refuse', [$controller, 'refuse'])->name('refuse');
                 }
-                if ($prefix === 'technicians') {
+                if ($prefix === 'technicians' || $prefix === 'terms' || $prefix === 'privacy-policies' || $prefix === 'faqs' || $prefix === 'complaints') {
                     Route::post('/bulk-destroy', [$controller, 'bulkDestroy'])->name('bulk-destroy');
+                }
+                if ($prefix === 'complaints') {
+                    Route::post('/{id}/take-action', [$controller, 'takeAction'])->name('take-action');
                 }
                 if ($prefix === 'orders') {
                     Route::get('/{id}/available-technicians', [$controller, 'getAvailableTechnicians'])->name('available-technicians');

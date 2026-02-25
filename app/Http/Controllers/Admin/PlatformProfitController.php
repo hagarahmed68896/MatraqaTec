@@ -10,14 +10,17 @@ class PlatformProfitController extends Controller
 {
     public function index()
     {
-        $items = PlatformProfit::orderBy('created_at', 'desc')->paginate(15);
-        return view('admin.platform_profits.index', compact('items'));
+        $fees = \App\Models\Setting::getByKey('platform_fees', 0);
+        $profit = \App\Models\Setting::getByKey('platform_profit_value', 0);
+        return view('admin.platform_profits.index', compact('fees', 'profit'));
     }
 
     public function store(Request $request)
     {
-        PlatformProfit::create($request->all());
-        return redirect()->route('admin.platform-profits.index')->with('success', __('Profit recorded successfully.'));
+        \App\Models\Setting::setByKey('platform_fees', $request->fees, 'platform');
+        \App\Models\Setting::setByKey('platform_profit_value', $request->amount, 'platform');
+        
+        return redirect()->route('admin.platform-profits.index')->with('success', __('Settings saved successfully.'));
     }
 
     public function show($id)

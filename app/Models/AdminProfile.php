@@ -12,10 +12,8 @@ class AdminProfile extends Model
 
     protected $fillable = [
         'user_id',
-        'first_name_ar',
-        'last_name_ar',
-        'first_name_en',
-        'last_name_en',
+        'first_name',
+        'last_name',
     ];
 
     public function user()

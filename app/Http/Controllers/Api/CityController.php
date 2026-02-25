@@ -11,7 +11,7 @@ class CityController extends Controller
 {
     public function index()
     {
-        $cities = City::with('districts')->get();
+        $cities = City::all();
         return response()->json(['status' => true, 'message' => 'Cities retrieved successfully', 'data' => $cities]);
     }
 

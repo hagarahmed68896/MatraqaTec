@@ -162,4 +162,18 @@ class ComplaintController extends Controller
             ]
         );
     }
+    /**
+     * Bulk delete complaints.
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->ids;
+        if (!is_array($ids)) {
+            return back()->with('error', __('IDs must be an array.'));
+        }
+
+        Complaint::whereIn('id', $ids)->delete();
+
+        return redirect()->route('admin.complaints.index')->with('success', __('Complaint(s) deleted successfully.'));
+    }
 }

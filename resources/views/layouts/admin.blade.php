@@ -133,6 +133,8 @@
                     <span class="font-bold">{{ __('Content Management') }}</span>
                 </a>
 
+
+
                 <!-- Financial Management -->
                 <div x-data="{ open: {{ request()->is('admin/payments*') || request()->is('admin/invoices*') || request()->is('admin/financial-settlements*') || request()->is('admin/platform-profits*') ? 'true' : 'false' }} }" class="space-y-1">
                     <button @click="open = !open" class="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all hover:bg-slate-50 dark:hover:bg-white/5 {{ request()->is('admin/payments*') || request()->is('admin/invoices*') || request()->is('admin/financial-settlements*') || request()->is('admin/platform-profits*') ? 'text-primary dark:text-white font-black' : '' }}">
@@ -147,7 +149,6 @@
                         <a href="{{ route('admin.invoices.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.invoices.*') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Invoices') }}</a>
                         <a href="{{ route('admin.financial-settlements.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.financial-settlements.*') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Settlements') }}</a>
                         <a href="{{ route('admin.refunds.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.refunds.*') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Returns') }}</a>
-                        <a href="{{ route('admin.platform-profits.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.platform-profits.*') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Platform Profits') }}</a>
                     </div>
                 </div>
 
@@ -170,16 +171,37 @@
                 </a>
 
                 <!-- Settings -->
-                <a href="{{ route('admin.settings.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('admin.settings.*') ? 'bg-primary/5 dark:bg-white/10 text-primary dark:text-white font-black' : 'hover:bg-slate-50 dark:hover:bg-white/5' }}">
-                    <svg class="w-5 h-5 {{ app()->getLocale() == 'ar' ? 'ml-3' : 'mr-3' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    <span class="font-bold">{{ __('Settings') }}</span>
-                </a>
+                <div x-data="{ open: {{ request()->is('admin/settings*') || request()->routeIs('admin.profile.show') ? 'true' : 'false' }} }" class="space-y-1">
+                    <button @click="open = !open" class="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all hover:bg-slate-50 dark:hover:bg-white/5 {{ request()->is('admin/settings*') || request()->routeIs('admin.profile.show') ? 'text-primary dark:text-white font-black' : '' }}">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 {{ app()->getLocale() == 'ar' ? 'ml-3' : 'mr-3' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            <span class="font-bold">{{ __('Settings') }}</span>
+                        </div>
+                        <svg class="w-4 h-4 transition-transform duration-300" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div x-show="open" x-collapse class="space-y-1 {{ app()->getLocale() == 'ar' ? 'pr-12' : 'pl-12' }}">
+                        <a href="{{ route('admin.profile.show') }}" class="block py-2 text-sm {{ request()->routeIs('admin.profile.show') ? 'bg-primary/5 dark:bg-white/10 text-primary font-black px-4 rounded-lg' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Personal Account') }}</a>
+                        <a href="{{ route('admin.settings.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.settings.*') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Platform Settings') }}</a>
+                        <a href="{{ route('admin.platform-profits.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.platform-profits.*') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Platform Profits') }}</a>
+                        <a href="{{ route('admin.terms.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.terms.*') || request()->routeIs('admin.privacy-policies.*') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Terms and Policies') }}</a>
+                        <a href="{{ route('admin.social-links.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.social-links.*') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Social Links') }}</a>
+                    </div>
+                </div>
 
-                <!-- Support -->
-                <a href="{{ route('admin.inquiries.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all {{ request()->routeIs('admin.inquiries.*') ? 'bg-primary/5 dark:bg-white/10 text-primary dark:text-white font-black' : 'hover:bg-slate-50 dark:hover:bg-white/5' }}">
-                    <svg class="w-5 h-5 {{ app()->getLocale() == 'ar' ? 'ml-3' : 'mr-3' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    <span class="font-bold">{{ __('Support & Help') }}</span>
-                </a>
+                <!-- Support & Help Dropdown -->
+                <div x-data="{ open: {{ request()->is('admin/faqs*') || request()->is('admin/inquiries*') ? 'true' : 'false' }} }" class="space-y-1">
+                    <button @click="open = !open" class="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all hover:bg-slate-50 dark:hover:bg-white/5 {{ request()->is('admin/faqs*') || request()->is('admin/inquiries*') ? 'text-primary dark:text-white font-black' : '' }}">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 {{ app()->getLocale() == 'ar' ? 'ml-3' : 'mr-3' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                            <span class="font-bold">{{ __('Support & Help') }}</span>
+                        </div>
+                        <svg class="w-4 h-4 transition-transform duration-300" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div x-show="open" x-collapse class="space-y-1 {{ app()->getLocale() == 'ar' ? 'pr-12' : 'pl-12' }}">
+                        <a href="{{ route('admin.faqs.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.faqs.*') ? 'text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('FAQs Management') }}</a>
+                        <a href="{{ route('admin.complaints.index') }}" class="block px-4 py-2 text-sm rounded-lg transition-all {{ request()->routeIs('admin.complaints.*') ? 'bg-primary/10 text-primary font-black' : 'text-slate-500 dark:text-slate-400 hover:text-primary' }}">{{ __('Customer Service and Complaints') }}</a>
+                    </div>
+                </div>
             </nav>
 
             <!-- Sidebar Footer: Logout -->
@@ -375,17 +397,57 @@
 
     <script>
         const themeToggle = document.getElementById('themeToggle');
+        const platformSetting = '{{ \App\Models\Setting::getByKey("system_mode", "light") }}';
+        const forcedTheme = '{{ session("force_theme") }}';
+        
         const updateTheme = () => {
-            const isDark = localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
-            document.documentElement.classList.toggle('dark', isDark);
+            let theme = localStorage.getItem('theme');
+            const isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            // 1. If the admin just saved settings (forced update)
+            if (forcedTheme) {
+                theme = (forcedTheme === 'auto') ? (isSystemDark ? 'dark' : 'light') : forcedTheme;
+                localStorage.setItem('theme', theme);
+                if (forcedTheme === 'auto') localStorage.removeItem('user_manual_toggle'); // Reset manual override if auto is chosen
+            }
+            
+            // 2. If platform is NOT auto, enforce it as global default unless user manually toggled
+            if (platformSetting !== 'auto' && !localStorage.getItem('user_manual_toggle')) {
+                theme = platformSetting;
+                localStorage.setItem('theme', theme);
+            }
+            
+            // 3. If platform IS auto and no manual toggle, follow system
+            if (platformSetting === 'auto' && !localStorage.getItem('user_manual_toggle')) {
+                theme = isSystemDark ? 'dark' : 'light';
+                localStorage.setItem('theme', theme);
+            }
+
+            // 4. Final fallback
+            if (!theme) {
+                theme = isSystemDark ? 'dark' : 'light';
+            }
+            
+            document.documentElement.classList.toggle('dark', theme === 'dark');
         };
 
         themeToggle.addEventListener('click', () => {
             const isDark = document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            const newTheme = isDark ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme);
+            localStorage.setItem('user_manual_toggle', 'true');
         });
 
         updateTheme();
+        
+        // Listen for system theme changes if in auto mode
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if (platformSetting === 'auto' && !localStorage.getItem('user_manual_toggle')) {
+                const newTheme = e.matches ? 'dark' : 'light';
+                document.documentElement.classList.toggle('dark', e.matches);
+                localStorage.setItem('theme', newTheme);
+            }
+        });
     </script>
     @yield('scripts')
 </body>
