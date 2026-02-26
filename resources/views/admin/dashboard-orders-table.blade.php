@@ -24,7 +24,9 @@
         {{ number_format($order->total_price) }}
         <img src="{{ asset('assets/images/Vector (1).svg') }}" class="w-4 h-4 opacity-70 filter dark:invert" alt="SAR">
     </td>
+    @if(($status ?? 'all') == 'new' || ($status ?? 'all') == 'all')
     <td class="py-5 px-2">
+        @if($order->status == 'new')
         <div class="flex items-center justify-center gap-2">
             <!-- Accept/Details Button -->
             <a href="{{ route('admin.orders.show', $order->id) }}" class="w-8 h-8 rounded-full bg-[#1e1b4b] dark:bg-emerald-500 text-white flex items-center justify-center transition-all shadow-lg shadow-indigo-500/20 group/btn border border-white/10" title="{{ __('Accept/Details') }}">
@@ -38,10 +40,16 @@
                 </button>
             </form>
         </div>
+        @else
+        <div class="flex items-center justify-center">
+            <span class="text-slate-300 dark:text-slate-600">-</span>
+        </div>
+        @endif
     </td>
+    @endif
 </tr>
 @empty
 <tr>
-    <td colspan="9" class="py-12 text-center text-slate-400">{{ __('No orders found') }}</td>
+    <td colspan="{{ (($status ?? 'all') == 'new' || ($status ?? 'all') == 'all') ? 10 : 9 }}" class="py-12 text-center text-slate-400">{{ __('No orders found') }}</td>
 </tr>
 @endforelse

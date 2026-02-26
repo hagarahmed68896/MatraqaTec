@@ -14,70 +14,76 @@
     <!-- Stats Grid: Mirroring Screenshot -->
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
         <!-- Available Technicians -->
-        <div class="bg-white dark:bg-[#1A1A31] p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm">
-            <div class="flex items-center justify-between mb-4">
+        <div class="bg-white dark:bg-[#1A1A31] p-8 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+            <div class="flex items-center justify-between relative z-10">
                 <div class="text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
-                    <p class="text-slate-400 dark:text-slate-300 text-xs font-bold mb-1">{{ __('Total Available Technicians') }}</p>
+                    <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Total Available Technicians') }}</p>
                     <div class="flex items-baseline gap-2">
-                        <h3 class="text-2xl font-black text-slate-800 dark:text-white">{{ $stats['available_techs'] }}</h3>
+                        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ $stats['available_techs'] }}</h3>
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-{{ $stats['available_change'] >= 0 ? 'green' : 'red' }}-500/10 text-{{ $stats['available_change'] >= 0 ? 'green' : 'red' }}-500 font-bold border border-{{ $stats['available_change'] >= 0 ? 'green' : 'red' }}-500/20">{{ $stats['available_change'] }}%+</span>
                     </div>
                 </div>
-                <div class="w-16 h-10">
-                    <canvas id="sparkline1"></canvas>
-                </div>
             </div>
-            <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
+            <div class="mt-4 relative z-10">
+                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
+                <canvas id="sparkline1" class="w-full h-full"></canvas>
+            </div>
         </div>
 
         <!-- New Orders -->
-        <div class="bg-white dark:bg-[#1A1A31] p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm">
-            <div class="flex items-center justify-between mb-4">
+        <div class="bg-white dark:bg-[#1A1A31] p-8 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+            <div class="flex items-center justify-between relative z-10">
                 <div class="text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
-                    <p class="text-slate-400 dark:text-slate-300 text-xs font-bold mb-1">{{ __('New Orders') }}</p>
+                    <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('New Orders') }}</p>
                     <div class="flex items-baseline gap-2">
-                        <h3 class="text-2xl font-black text-slate-800 dark:text-white">{{ $stats['new_orders'] }}</h3>
+                        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ $stats['new_orders'] }}</h3>
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-{{ $stats['new_orders_change'] >= 0 ? 'green' : 'red' }}-500/10 text-{{ $stats['new_orders_change'] >= 0 ? 'green' : 'red' }}-500 font-bold border border-{{ $stats['new_orders_change'] >= 0 ? 'green' : 'red' }}-500/20">{{ $stats['new_orders_change'] }}%+</span>
                     </div>
                 </div>
-                <div class="w-16 h-10">
-                    <canvas id="sparkline2"></canvas>
-                </div>
             </div>
-            <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
+            <div class="mt-4 relative z-10">
+                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
+                <canvas id="sparkline2" class="w-full h-full"></canvas>
+            </div>
         </div>
 
         <!-- Total Revenue -->
-        <div class="bg-white dark:bg-[#1A1A31] p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm">
-            <div class="flex items-center justify-between mb-4">
+        <div class="bg-white dark:bg-[#1A1A31] p-8 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+            <div class="flex items-center justify-between relative z-10">
                 <div class="text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
-                    <p class="text-slate-400 dark:text-slate-300 text-xs font-bold mb-1">{{ __('Total Revenue') }}</p>
+                    <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Total Revenue') }}</p>
                     <div class="flex items-baseline gap-2">
-                        <h3 class="text-2xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total_revenue']) }}</h3>
+                        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total_revenue']) }}</h3>
                         <img src="{{ asset('assets/images/Vector (1).svg') }}" class="w-4 h-4 opacity-70 filter dark:invert" alt="SAR">
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-{{ $stats['revenue_change'] >= 0 ? 'green' : 'red' }}-500/10 text-{{ $stats['revenue_change'] >= 0 ? 'green' : 'red' }}-500 font-bold border border-{{ $stats['revenue_change'] >= 0 ? 'green' : 'red' }}-500/20">{{ $stats['revenue_change'] }}%+</span>
                     </div>
                 </div>
-                <div class="w-16 h-10">
-                    <canvas id="sparkline3"></canvas>
-                </div>
             </div>
-            <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
+            <div class="mt-4 relative z-10">
+                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
+                <canvas id="sparkline3" class="w-full h-full"></canvas>
+            </div>
         </div>
 
         <!-- Avg Quality -->
-        <div class="bg-white dark:bg-[#1A1A31] p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm">
+        <div class="bg-white dark:bg-[#1A1A31] p-8 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm">
             <div class="flex items-center justify-between mb-4">
                 <div class="text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
-                    <p class="text-slate-400 dark:text-slate-300 text-xs font-bold mb-1">{{ __('Average Quality') }}</p>
+                    <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Average Quality') }}</p>
                     <div class="flex items-baseline gap-2">
-                        <h3 class="text-2xl font-black text-slate-800 dark:text-white">{{ $stats['avg_quality'] }}/5</h3>
+                        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ $stats['avg_quality'] }}/5</h3>
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-{{ $stats['quality_change'] >= 0 ? 'green' : 'red' }}-500/10 text-{{ $stats['quality_change'] >= 0 ? 'green' : 'red' }}-500 font-bold border border-{{ $stats['quality_change'] >= 0 ? 'green' : 'red' }}-500/20">{{ $stats['quality_change'] }}%+</span>
                     </div>
                 </div>
-                <div class="relative w-12 h-12">
+                <div class="relative w-14 h-14">
                     <canvas id="qualityDoughnut"></canvas>
-                    <span class="absolute inset-0 flex items-center justify-center text-[8px] font-black text-slate-800 dark:text-white">{{ $stats['avg_quality'] }}/5</span>
+                    <span class="absolute inset-0 flex items-center justify-center text-[10px] font-black text-slate-800 dark:text-white">{{ $stats['avg_quality'] }}/5</span>
                 </div>
             </div>
             <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
@@ -352,7 +358,7 @@
 
     <!-- Recent Orders Table FULL WIDTH -->
     <div x-data="{ 
-        status: 'all',
+        status: 'new',
         loading: false,
         filterOrders(val) {
             this.status = val;
@@ -366,7 +372,7 @@
         }
     }" class="bg-white dark:bg-[#1A1A31] p-8 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-sm mt-8">
         <div class="flex items-center justify-between mb-8">
-            <a href="{{ route('admin.orders.index') }}" class="px-6 py-3 bg-secondary text-white text-xs font-black rounded-xl hover:opacity-90 transition-all shadow-lg shadow-secondary/20">
+            <a href="{{ route('admin.orders.index') }}" class="px-6 py-3 bg-[#1A1A31] text-white text-xs font-black rounded-xl hover:opacity-90 transition-all shadow-lg shadow-secondary/20">
                 {{ __('Show More') }}
             </a>
             <div class="flex items-center gap-6">
@@ -397,11 +403,11 @@
                         <th class="pb-4 px-2">{{ __('Address') }}</th>
                         <th class="pb-4 px-2">{{ __('Date/Time') }}</th>
                         <th class="pb-4 px-2">{{ __('Price') }}</th>
-                        <th class="pb-4 px-2 text-center">{{ __('Actions') }}</th>
+                        <th class="pb-4 px-2 text-center" x-show="status == 'new' || status == 'all'">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody id="orders-table-body" class="text-xs font-bold">
-                    @include('admin.dashboard-orders-table', ['recent_orders' => $recent_orders])
+                    @include('admin.dashboard-orders-table', ['recent_orders' => $recent_orders, 'status' => $status])
                 </tbody>
             </table>
         </div>
@@ -424,28 +430,59 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Sparklines
-    ['sparkline1', 'sparkline2', 'sparkline3'].forEach(id => {
-        new Chart(document.getElementById(id), {
+    const sparklineData = {
+        sparkline1: { 
+            color: '{{ $stats['available_change'] >= 0 ? "#10B981" : "#EF4444" }}',
+            data: [{{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}]
+        },
+        sparkline2: { 
+            color: '{{ $stats['new_orders_change'] >= 0 ? "#10B981" : "#EF4444" }}',
+            data: [{{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}]
+        },
+        sparkline3: { 
+            color: '{{ $stats['revenue_change'] >= 0 ? "#10B981" : "#EF4444" }}',
+            data: [{{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}, {{ rand(10, 50) }}]
+        }
+    };
+
+    Object.keys(sparklineData).forEach(id => {
+        const config = sparklineData[id];
+        new Chart(document.getElementById(id).getContext('2d'), {
             type: 'line',
             data: {
-                labels: [1,2,3,4,5,6],
-                datasets: [{ data: [10, 15, 8, 20, 12, 25], borderColor: '#10B981', fill: false }]
+                labels: Array(config.data.length).fill(''),
+                datasets: [{
+                    data: config.data,
+                    borderColor: config.color,
+                    borderWidth: 3,
+                    fill: true,
+                    backgroundColor: (context) => {
+                        const chart = context.chart;
+                        const {ctx, chartArea} = chart;
+                        if (!chartArea) return null;
+                        const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                        gradient.addColorStop(0, 'transparent');
+                        gradient.addColorStop(1, config.color + '20');
+                        return gradient;
+                    },
+                    tension: 0.4
+                }]
             },
             options: commonLineOptions
         });
     });
 
     // Quality Doughnut (Tiny)
-    new Chart(document.getElementById('qualityDoughnut'), {
+    new Chart(document.getElementById('qualityDoughnut').getContext('2d'), {
         type: 'doughnut',
         data: {
             datasets: [{ 
                 data: [{{ $stats['avg_quality'] }}, {{ 5 - $stats['avg_quality'] }}], 
-                backgroundColor: ['#10B981', 'rgba(0,0,0,0.1)'], 
+                backgroundColor: ['#10B981', isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'], 
                 borderWidth: 0 
             }]
         },
-        options: { cutout: '80%', plugins: { legend: { display: false } } }
+        options: { cutout: '80%', plugins: { legend: { display: false }, tooltip: { enabled: false } } }
     });
 
     // Main Revenue Chart

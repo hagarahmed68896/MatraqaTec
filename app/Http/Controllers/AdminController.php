@@ -191,6 +191,7 @@ class AdminController extends Controller
     public function dashboard(Request $request)
     {
         $period = $request->get('period', 'daily');
+        $status = $request->get('status', 'new');
         $revenue_period = $request->get('revenue_period', $period);
         $users_period = $request->get('users_period', $period);
         
@@ -341,6 +342,7 @@ class AdminController extends Controller
 
         // 4. Recent Orders (Initial load)
         $recent_orders = Order::with(['user', 'service', 'technician'])
+            ->where('status', 'new')
             ->latest()
             ->take(10)
             ->get();
@@ -357,7 +359,8 @@ class AdminController extends Controller
             'serviceLabels', 
             'serviceData',
             'topTechnicians',
-            'period'
+            'period',
+            'status'
         ));
     }
 
@@ -372,7 +375,7 @@ class AdminController extends Controller
         
         $recent_orders = $query->latest()->take(10)->get();
         
-        return view('admin.dashboard-orders-table', compact('recent_orders'))->render();
+        return view('admin.dashboard-orders-table', compact('recent_orders', 'status'))->render();
     }
 
     public function dashboardCategories(Request $request)

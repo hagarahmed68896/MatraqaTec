@@ -208,7 +208,7 @@
                 </thead>
                 <tbody class="divide-y divide-slate-50">
                     @forelse($items as $item)
-                    <tr onclick="window.location.href='{{ route('admin.contracts.show', $item->id) }}'" class="hover:bg-slate-50/50 transition-all group cursor-pointer">
+                    <tr class="hover:bg-slate-50/50 transition-all group">
                         <td class="py-6 px-8 flex items-center gap-4" onclick="event.stopPropagation()">
                              <div class="relative w-5 h-5 border-2 border-slate-200 rounded-lg flex items-center justify-center cursor-pointer"
                                   :class="selectedRows.includes('{{ $item->id }}') ? 'bg-[#1A1A31] border-[#1A1A31]' : ''"
@@ -232,19 +232,19 @@
                         </td>
                         <td class="py-6 px-4">
                             <div class="flex items-center gap-1">
-                                <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="{!! __('<img src="/assets/images/Vector (1).svg" alt="SAR" class="inline-block w-4 h-4 align-middle">') !!}" class="w-4 h-4 align-middle">
+                                <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle">
                                 <span class="text-md font-black text-[#1A1A31]">{{ number_format($item->project_value) }}</span>
                             </div>
                         </td>
                         <td class="py-6 px-4">
                             <div class="flex items-center gap-1">
-                                <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="{!! __('<img src="/assets/images/Vector (1).svg" alt="SAR" class="inline-block w-4 h-4 align-middle">') !!}" class="w-4 h-4 align-middle">
+                                <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle">
                                 <span class="text-md font-black text-[#1A1A31]">{{ number_format($item->paid_amount) }}</span>
                             </div>
                         </td>
                          <td class="py-6 px-4">
                             <div class="flex items-center gap-1">
-                                <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="{!! __('<img src="/assets/images/Vector (1).svg" alt="SAR" class="inline-block w-4 h-4 align-middle">') !!}" class="w-4 h-4 align-middle">
+                                <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle">
                                 <span class="text-md font-black text-[#1A1A31]">{{ number_format($item->remaining_amount) }}</span>
                             </div>
                         </td>

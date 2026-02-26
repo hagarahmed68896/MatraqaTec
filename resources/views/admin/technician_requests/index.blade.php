@@ -57,102 +57,126 @@
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Total Requests -->
-        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group">
-            <div class="flex items-start justify-between">
-                <div>
-                    <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-4">{{ __('Total Requests') }}</h3>
-                    <div class="flex items-center gap-3">
-                        <span class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total_requests'] ?? 0) }}</span>
-                        <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                        </div>
-                    </div>
-                     <div class="mt-4 flex items-center gap-2">
-                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full bg-green-500/10 text-[12px] font-bold text-green-500">0.43%</span>
-                        <span class="text-[10px] font-bold text-slate-400">{{ __('Compared to last week') }}</span>
+        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all h-48 flex flex-col justify-between">
+            <div class="flex items-center justify-between relative z-10">
+                <div class="text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
+                    <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Total Requests') }}</p>
+                    <div class="flex items-baseline gap-2">
+                        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total_requests'] ?? 0) }}</h3>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-500 font-bold border border-indigo-500/20">+21.21%</span>
                     </div>
                 </div>
-                <div class="w-24 h-16">
-                     <svg viewBox="0 0 100 40" class="w-full h-full text-green-500 overflow-visible">
-                        <path d="M0,35 Q10,10 20,30 T40,15 T60,35 T80,10 T100,25" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" />
-                        <path d="M0,35 Q10,10 20,30 T40,15 T60,35 T80,10 T100,25 L100,40 L0,40 Z" fill="currentColor" fill-opacity="0.1" />
-                    </svg>
+                <div class="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
                 </div>
+            </div>
+            <div class="mt-4 relative z-10">
+                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
+                <svg viewBox="0 0 100 40" class="w-full h-full text-indigo-500 overflow-visible" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="gradient-total" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="currentColor" stop-opacity="0.2" />
+                            <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M0,35 C10,35 15,10 25,10 C35,10 40,30 50,30 C60,30 65,5 75,5 C85,5 90,25 100,25" fill="none" stroke="currentColor" stroke-width="3" vector-effect="non-scaling-stroke" stroke-linecap="round" />
+                    <path d="M0,35 C10,35 15,10 25,10 C35,10 40,30 50,30 C60,30 65,5 75,5 C85,5 90,25 100,25 L100,40 L0,40 Z" fill="url(#gradient-total)" />
+                </svg>
             </div>
         </div>
 
         <!-- Pending Requests -->
-        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group">
-            <div class="flex items-start justify-between">
-                <div>
-                     <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-4">{{ __('Pending Requests') }}</h3>
-                    <div class="flex items-center gap-3">
-                        <span class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['pending_requests'] ?? 0) }}</span>
-                         <div class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500">
-                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        </div>
-                    </div>
-                    <div class="mt-4 flex items-center gap-2">
-                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-[12px] font-bold text-indigo-500">0.43%</span>
-                        <span class="text-[10px] font-bold text-slate-400">{{ __('Compared to last week') }}</span>
+        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all h-48 flex flex-col justify-between">
+            <div class="flex items-center justify-between relative z-10">
+                <div class="text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
+                    <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Pending Requests') }}</p>
+                    <div class="flex items-baseline gap-2">
+                        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['pending_requests'] ?? 0) }}</h3>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 font-bold border border-blue-500/20">+0%</span>
                     </div>
                 </div>
-                <div class="w-24 h-16">
-                     <svg viewBox="0 0 100 40" class="w-full h-full text-indigo-500 overflow-visible">
-                        <path d="M0,30 Q15,5 30,25 T60,10 T90,35 T100,20" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" />
-                         <path d="M0,30 Q15,5 30,25 T60,10 T90,35 T100,20 L100,40 L0,40 Z" fill="currentColor" fill-opacity="0.1" />
-                    </svg>
+                <div class="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </div>
+            </div>
+            <div class="mt-4 relative z-10">
+                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
+                <svg viewBox="0 0 100 40" class="w-full h-full text-blue-500 overflow-visible" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="gradient-pending" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="currentColor" stop-opacity="0.2" />
+                            <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M0,30 C15,30 20,5 35,5 C50,5 55,25 70,25 C85,25 90,15 100,15" fill="none" stroke="currentColor" stroke-width="3" vector-effect="non-scaling-stroke" stroke-linecap="round" />
+                    <path d="M0,30 C15,30 20,5 35,5 C50,5 55,25 70,25 C85,25 90,15 100,15 L100,40 L0,40 Z" fill="url(#gradient-pending)" />
+                </svg>
             </div>
         </div>
 
         <!-- Accepted Requests -->
-        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group">
-            <div class="flex items-start justify-between">
-                <div>
-                    <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-4">{{ __('Accepted Requests') }}</h3>
-                     <div class="flex items-center gap-3">
-                        <span class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['accepted_requests'] ?? 0) }}</span>
-                         <div class="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500">
-                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        </div>
-                    </div>
-                     <div class="mt-4 flex items-center gap-2">
-                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full bg-green-500/10 text-[12px] font-bold text-green-500">0.43%</span>
-                        <span class="text-[10px] font-bold text-slate-400">{{ __('Compared to last week') }}</span>
+        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all h-48 flex flex-col justify-between">
+            <div class="flex items-center justify-between relative z-10">
+                <div class="text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
+                    <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Accepted Requests') }}</p>
+                    <div class="flex items-baseline gap-2">
+                        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['accepted_requests'] ?? 0) }}</h3>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-bold border border-emerald-500/20">+21.88%</span>
                     </div>
                 </div>
-                 <div class="w-24 h-16">
-                     <svg viewBox="0 0 100 40" class="w-full h-full text-green-500 overflow-visible">
-                        <path d="M0,35 Q10,5 25,25 T50,15 T75,30 T100,5" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" />
-                         <path d="M0,35 Q10,5 25,25 T50,15 T75,30 T100,5 L100,40 L0,40 Z" fill="currentColor" fill-opacity="0.1" />
-                    </svg>
+                <div class="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </div>
+            </div>
+            <div class="mt-4 relative z-10">
+                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
+                <svg viewBox="0 0 100 40" class="w-full h-full text-emerald-500 overflow-visible" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="gradient-accepted" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="currentColor" stop-opacity="0.2" />
+                            <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M0,35 C10,35 20,5 35,5 C50,5 60,25 75,25 C90,25 95,10 100,10" fill="none" stroke="currentColor" stroke-width="3" vector-effect="non-scaling-stroke" stroke-linecap="round" />
+                    <path d="M0,35 C10,35 20,5 35,5 C50,5 60,25 75,25 C90,25 95,10 100,10 L100,40 L0,40 Z" fill="url(#gradient-accepted)" />
+                </svg>
             </div>
         </div>
 
         <!-- Rejected Requests -->
-         <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group">
-            <div class="flex items-start justify-between">
-                <div>
-                     <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-4">{{ __('Rejected Requests') }}</h3>
-                     <div class="flex items-center gap-3">
-                        <span class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['rejected_requests'] ?? 0, 1) }}</span>
-                        <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500">
-                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </div>
-                    </div>
-                    <div class="mt-4 flex items-center gap-2">
-                         <span class="inline-flex items-center px-1.5 py-0.5 rounded-full bg-red-500/10 text-[12px] font-bold text-red-500">0.43%</span>
-                         <span class="text-[10px] font-bold text-slate-400">{{ __('Compared to last week') }}</span>
+        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all h-48 flex flex-col justify-between">
+            <div class="flex items-center justify-between relative z-10">
+                <div class="text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
+                    <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Rejected Requests') }}</p>
+                    <div class="flex items-baseline gap-2">
+                        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['rejected_requests'] ?? 0) }}</h3>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-500 font-bold border border-rose-500/20">+0%</span>
                     </div>
                 </div>
-                 <div class="w-24 h-16">
-                     <svg viewBox="0 0 100 40" class="w-full h-full text-red-500 overflow-visible">
-                        <path d="M0,20 Q20,35 40,10 T70,30 T100,10" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" />
-                         <path d="M0,20 Q20,35 40,10 T70,30 T100,10 L100,40 L0,40 Z" fill="currentColor" fill-opacity="0.1" />
-                    </svg>
+                <div class="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                 </div>
+            </div>
+            <div class="mt-4 relative z-10">
+                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
+                <svg viewBox="0 0 100 40" class="w-full h-full text-rose-500 overflow-visible" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="gradient-rejected" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="currentColor" stop-opacity="0.2" />
+                            <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M0,20 C20,20 30,35 45,35 C60,35 70,10 85,10 C95,10 100,20 100,20" fill="none" stroke="currentColor" stroke-width="3" vector-effect="non-scaling-stroke" stroke-linecap="round" />
+                    <path d="M0,20 C20,20 30,35 45,35 C60,35 70,10 85,10 C95,10 100,20 100,20 L100,40 L0,40 Z" fill="url(#gradient-rejected)" />
+                </svg>
             </div>
         </div>
     </div>

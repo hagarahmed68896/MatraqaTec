@@ -24,103 +24,78 @@
     <!-- Stats Cards (Redesigned with Sparklines) -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Total Customers -->
-        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group">
-            <div class="flex items-start justify-between">
-                <div>
-                    <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-4">{{ __('Total Customers') }}</h3>
-                    <div class="flex items-center gap-3">
-                        <span class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total'] ?? 0) }}</span>
-                        <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                        </div>
-                    </div>
-                    <div class="mt-4 flex items-center gap-2">
-                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full bg-green-500/10 text-[10px] font-bold text-green-500">0.43%</span>
-                        <span class="text-[10px] font-bold text-slate-400">{{ __('Compared to last week') }}</span>
+        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+            <div class="flex items-center justify-between relative z-10">
+                <div class="text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
+                    <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Total Customers') }}</p>
+                    <div class="flex items-baseline gap-2">
+                        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total'] ?? 0) }}</h3>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 font-bold border border-green-500/20">0.43%+</span>
                     </div>
                 </div>
-                <!-- Sparkline SVG -->
-                <div class="w-24 h-16">
-                    <svg viewBox="0 0 100 40" class="w-full h-full text-green-500 overflow-visible">
-                        <path d="M0,35 Q10,10 20,30 T40,15 T60,35 T80,10 T100,25" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" />
-                        <path d="M0,35 Q10,10 20,30 T40,15 T60,35 T80,10 T100,25 L100,40 L0,40 Z" fill="currentColor" fill-opacity="0.1" />
-                    </svg>
-                </div>
+            </div>
+            <div class="mt-4 relative z-10">
+                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
+                <canvas id="sparkline-total" class="w-full h-full"></canvas>
             </div>
         </div>
 
         <!-- Individual Customers -->
-        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group">
-            <div class="flex items-start justify-between">
-                <div>
-                    <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-4">{{ __('Individual Customers') }}</h3>
-                    <div class="flex items-center gap-3">
-                        <span class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total'] ?? 0) }}</span>
-                        <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                        </div>
-                    </div>
-                    <div class="mt-4 flex items-center gap-2">
-                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full bg-green-500/10 text-[10px] font-bold text-green-500">0.43%</span>
-                        <span class="text-[10px] font-bold text-slate-400">{{ __('Compared to last week') }}</span>
+        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+            <div class="flex items-center justify-between relative z-10">
+                <div class="text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
+                    <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Individual Customers') }}</p>
+                    <div class="flex items-baseline gap-2">
+                        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total'] ?? 0) }}</h3>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-500 font-bold border border-indigo-500/20">0.43%+</span>
                     </div>
                 </div>
-                <div class="w-24 h-16">
-                    <svg viewBox="0 0 100 40" class="w-full h-full text-green-500 overflow-visible">
-                        <path d="M0,30 Q15,5 30,25 T60,10 T90,35 T100,20" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" />
-                        <path d="M0,30 Q15,5 30,25 T60,10 T90,35 T100,20 L100,40 L0,40 Z" fill="currentColor" fill-opacity="0.1" />
-                    </svg>
-                </div>
+            </div>
+            <div class="mt-4 relative z-10">
+                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
+                <canvas id="sparkline-individual" class="w-full h-full"></canvas>
             </div>
         </div>
 
         <!-- Inactive Accounts -->
-        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group">
-            <div class="flex items-start justify-between">
-                <div>
-                    <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-4">{{ __('Inactive Accounts') }}</h3>
-                    <div class="flex items-center gap-3">
-                        <span class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['blocked'] ?? 0) }}</span>
-                        <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                        </div>
-                    </div>
-                    <div class="mt-4 flex items-center gap-2">
-                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full bg-red-500/10 text-[10px] font-bold text-red-500">0.43%</span>
-                        <span class="text-[10px] font-bold text-slate-400">{{ __('Compared to last week') }}</span>
+        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+            <div class="flex items-center justify-between relative z-10">
+                <div class="text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
+                    <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Inactive Accounts') }}</p>
+                    <div class="flex items-baseline gap-2">
+                        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['blocked'] ?? 0) }}</h3>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-red-500/10 text-red-500 font-bold border border-red-500/20">0.43%+</span>
                     </div>
                 </div>
-                <div class="w-24 h-16">
-                    <svg viewBox="0 0 100 40" class="w-full h-full text-red-500 overflow-visible">
-                        <path d="M0,35 Q10,5 25,25 T50,15 T75,30 T100,5" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" />
-                        <path d="M0,35 Q10,5 25,25 T50,15 T75,30 T100,5 L100,40 L0,40 Z" fill="currentColor" fill-opacity="0.1" />
-                    </svg>
-                </div>
+            </div>
+            <div class="mt-4 relative z-10">
+                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
+                <canvas id="sparkline-blocked" class="w-full h-full"></canvas>
             </div>
         </div>
 
         <!-- Corporate Customers -->
-        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group">
-            <div class="flex items-start justify-between">
-                <div>
-                    <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-4">{{ __('Corporate Customers') }}</h3>
-                    <div class="flex items-center gap-3">
-                        <span class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total'] ?? 0) }}</span>
-                        <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                        </div>
-                    </div>
-                    <div class="mt-4 flex items-center gap-2">
-                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full bg-green-500/10 text-[10px] font-bold text-green-500">0.43%</span>
-                        <span class="text-[10px] font-bold text-slate-400">{{ __('Compared to last week') }}</span>
+        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+            <div class="flex items-center justify-between relative z-10">
+                <div class="text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
+                    <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Corporate Customers') }}</p>
+                    <div class="flex items-baseline gap-2">
+                        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total'] ?? 0) }}</h3>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 font-bold border border-green-500/20">0.43%+</span>
                     </div>
                 </div>
-                <div class="w-24 h-16">
-                    <svg viewBox="0 0 100 40" class="w-full h-full text-green-500 overflow-visible">
-                        <path d="M0,20 Q20,35 40,10 T70,30 T100,10" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" />
-                        <path d="M0,20 Q20,35 40,10 T70,30 T100,10 L100,40 L0,40 Z" fill="currentColor" fill-opacity="0.1" />
-                    </svg>
-                </div>
+            </div>
+            <div class="mt-4 relative z-10">
+                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
+                <canvas id="sparkline-corporate" class="w-full h-full"></canvas>
             </div>
         </div>
     </div>
@@ -449,4 +424,50 @@
         </div>
     </template>
 </div>
+@endsection
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const commonLineOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        scales: { x: { display: false }, y: { display: false } },
+        elements: { point: { radius: 0 }, line: { tension: 0.4, borderWidth: 3 } }
+    };
+
+    const sparklineData = {
+        'sparkline-total': { color: '#10B981', data: [25, 35, 20, 45, 30, 50, 40] },
+        'sparkline-individual': { color: '#6366F1', data: [30, 20, 40, 25, 45, 35, 50] },
+        'sparkline-blocked': { color: '#EF4444', data: [20, 40, 30, 50, 25, 45, 35] },
+        'sparkline-corporate': { color: '#10B981', data: [40, 30, 50, 35, 20, 45, 30] }
+    };
+
+    Object.keys(sparklineData).forEach(id => {
+        const config = sparklineData[id];
+        const ctx = document.getElementById(id).getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array(config.data.length).fill(''),
+                datasets: [{
+                    data: config.data,
+                    borderColor: config.color,
+                    fill: true,
+                    backgroundColor: (context) => {
+                        const chart = context.chart;
+                        const {ctx, chartArea} = chart;
+                        if (!chartArea) return null;
+                        const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                        gradient.addColorStop(0, 'transparent');
+                        gradient.addColorStop(1, config.color + '20');
+                        return gradient;
+                    }
+                }]
+            },
+            options: commonLineOptions
+        });
+    });
+});
+</script>
 @endsection

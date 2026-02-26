@@ -812,5 +812,10 @@
     "Explain Invoice": "شرح الفاتورة",
     "Send Response": "إرسال الرد",
     "Send Invoice": "إرسال الفاتورة",
-    "Write your response here...": "اكتب الرد هنا..."
+    "Write your response here...": "اكتب الرد هنا...",
+    "Target Audience": "الفئة المستهدفه",
+    "NOTIFICATION": "اشعار",
+    "ALERT": "تنبيه",
+    "REMINDER": "تذكير",
+    "Experience": "الخبرة"
 }
