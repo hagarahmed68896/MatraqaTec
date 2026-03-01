@@ -224,7 +224,7 @@
 </a>
                             <form action="{{ route('admin.corporate-customers.toggle-block', $item->id) }}" method="POST" class="w-full">
                                 @csrf
-                                <button type="submit" class="w-full py-4 rounded-2xl font-black text-xs transition-all border-2 {{ $item->user->status == 'active' ? 'border-rose-500 text-rose-500 hover:bg-rose-500 hover:text-white' : 'border-emerald-500 text-emerald-500 hover:bg-emerald-500 hover:text-white' }}">
+                                <button type="submit" class="w-full py-4 rounded-2xl font-black text-xs transition-all border-2 {{ $item->user->status == 'active' ? 'border-rose-500 text-rose-500 ' : 'border-emerald-500 text-emerald-500 hover:bg-emerald-500 hover:text-white' }}">
                                     {{ $item->user->status == 'active' ? __('Block User') : __('Unblock User') }}
                                 </button>
                             </form>

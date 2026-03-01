@@ -181,7 +181,7 @@ class MaintenanceCompanyController extends Controller
             $q->where('maintenance_company_id', $company->id);
         })->with(['technician.user', 'order', 'service'])->latest()->get();
         
-        $company->services = $technicians->pluck('service')->unique('id')->values();
+        $company_services = $technicians->pluck('service')->unique('id')->values();
 
         // Statistics Summary
         $stats = [
@@ -232,7 +232,7 @@ class MaintenanceCompanyController extends Controller
             return response()->json(['performanceData' => $performanceData]);
         }
         
-        return view('admin.maintenance_companies.show', compact('company', 'stats', 'technicians', 'orders', 'settlements', 'invoices', 'payments', 'reviews', 'performanceData', 'chartType'));
+        return view('admin.maintenance_companies.show', compact('company', 'stats', 'technicians', 'orders', 'settlements', 'invoices', 'payments', 'reviews', 'performanceData', 'chartType', 'company_services'));
     }
 
     public function edit($id)
@@ -318,9 +318,53 @@ class MaintenanceCompanyController extends Controller
         return back()->with('error', __('User record not found'));
     }
 
+    public function bulkBlock(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:maintenance_companies,id',
+        ]);
+
+        $companies = MaintenanceCompany::whereIn('id', $request->ids)->with('user')->get();
+        foreach ($companies as $company) {
+            if ($company->user && $company->user->status !== 'blocked') {
+                $company->user->status = 'blocked';
+                $company->user->blocked_at = now();
+                $company->user->save();
+            }
+        }
+
+        return back()->with('success', __('Customers blocked successfully.'));
+    }
+
+    public function bulkUnblock(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:maintenance_companies,id',
+        ]);
+
+        $companies = MaintenanceCompany::whereIn('id', $request->ids)->with('user')->get();
+        foreach ($companies as $company) {
+            if ($company->user && $company->user->status === 'blocked') {
+                $company->user->status = 'active';
+                $company->user->blocked_at = null;
+                $company->user->save();
+            }
+        }
+
+        return back()->with('success', __('Customers unblocked successfully.'));
+    }
+
     public function download(Request $request)
     {
         $query = MaintenanceCompany::with(['user', 'technicians', 'orders']);
+
+        if ($request->has('ids') && !empty($request->ids)) {
+            // Assume ids might be a comma-separated string if passed directly in URL from javascript array.join(',')
+            $ids = is_string($request->ids) ? explode(',', $request->ids) : $request->ids;
+            $query->whereIn('id', $ids);
+        }
 
         // Apply same filters as index
         if ($request->has('search') && $request->search) {

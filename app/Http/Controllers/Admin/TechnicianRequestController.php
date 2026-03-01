@@ -148,6 +148,7 @@ class TechnicianRequestController extends Controller
             'category_id' => $techRequest->category_id,
             'service_id' => $techRequest->service_id,
             'years_experience' => $techRequest->years_experience,
+            'name' => $techRequest->name ?? $techRequest->name_ar,
             'name_ar' => $techRequest->name_ar,
             'name_en' => $techRequest->name_en,
             'bio_ar' => $techRequest->bio_ar,

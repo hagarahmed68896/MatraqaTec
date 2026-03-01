@@ -138,6 +138,11 @@ Route::prefix('admin')->group(function () {
                 if ($prefix === 'technicians' || $prefix === 'terms' || $prefix === 'privacy-policies' || $prefix === 'faqs' || $prefix === 'complaints') {
                     Route::post('/bulk-destroy', [$controller, 'bulkDestroy'])->name('bulk-destroy');
                 }
+                
+                if (in_array($prefix, ['individual-customers', 'corporate-customers', 'maintenance-companies'])) {
+                    Route::post('/bulk-block', [$controller, 'bulkBlock'])->name('bulk-block');
+                    Route::post('/bulk-unblock', [$controller, 'bulkUnblock'])->name('bulk-unblock');
+                }
                 if ($prefix === 'complaints') {
                     Route::post('/{id}/take-action', [$controller, 'takeAction'])->name('take-action');
                 }

@@ -271,9 +271,16 @@ class CorporateCustomerController extends Controller
         return redirect()->route('admin.corporate-customers.index')->with('success', __('Customer updated successfully.'));
     }
 
-    public function download()
+    public function download(Request $request)
     {
-        $items = CorporateCustomer::with('user')->get();
+        $query = CorporateCustomer::with('user');
+        
+        if ($request->has('ids') && !empty($request->ids)) {
+            $ids = explode(',', $request->ids);
+            $query->whereIn('id', $ids);
+        }
+        
+        $items = $query->get();
         $filename = "corporate_customers_" . date('Y-m-d') . ".csv";
         $handle = fopen('php://temp', 'w+');
         fputs($handle, $bom = (chr(0xEF) . chr(0xBB) . chr(0xBF))); // UTF-8 BOM
@@ -340,5 +347,34 @@ class CorporateCustomerController extends Controller
 
         $message = ($user->status == 'inactive') ? __('Account deactivated successfully.') : __('Account activated successfully.');
         return back()->with('success', $message);
+    }
+    
+    public function bulkBlock(Request $request)
+    {
+        $request->validate(['ids' => 'required|array']);
+        $customers = CorporateCustomer::whereIn('id', $request->ids)->with('user')->get();
+        
+        foreach ($customers as $customer) {
+            if ($customer->user) {
+                // Inactive is used as blocked for corporate in some places based on toggleBlock logic above
+                $customer->user->update(['status' => 'inactive']); 
+            }
+        }
+        
+        return back()->with('success', __('Customers blocked successfully.'));
+    }
+
+    public function bulkUnblock(Request $request)
+    {
+        $request->validate(['ids' => 'required|array']);
+        $customers = CorporateCustomer::whereIn('id', $request->ids)->with('user')->get();
+        
+        foreach ($customers as $customer) {
+            if ($customer->user) {
+                $customer->user->update(['status' => 'active']);
+            }
+        }
+        
+        return back()->with('success', __('Customers unblocked successfully.'));
     }
 }

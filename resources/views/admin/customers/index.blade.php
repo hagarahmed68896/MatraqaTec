@@ -21,7 +21,8 @@
         this.showBlockModal = true;
     }
 }">
-    <!-- Stats Cards (Redesigned with Sparklines) -->
+    <!-- Stats Cards
+      (Redesigned with Sparklines) -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Total Customers -->
         <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
@@ -32,10 +33,8 @@
                         <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total'] ?? 0) }}</h3>
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 font-bold border border-green-500/20">0.43%+</span>
                     </div>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium mt-1">{{ __('Compared to last week') }}</p>
                 </div>
-            </div>
-            <div class="mt-4 relative z-10">
-                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
             </div>
             <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
                 <canvas id="sparkline-total" class="w-full h-full"></canvas>
@@ -51,10 +50,8 @@
                         <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total'] ?? 0) }}</h3>
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-500 font-bold border border-indigo-500/20">0.43%+</span>
                     </div>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium mt-1">{{ __('Compared to last week') }}</p>
                 </div>
-            </div>
-            <div class="mt-4 relative z-10">
-                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
             </div>
             <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
                 <canvas id="sparkline-individual" class="w-full h-full"></canvas>
@@ -70,10 +67,8 @@
                         <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['blocked'] ?? 0) }}</h3>
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-red-500/10 text-red-500 font-bold border border-red-500/20">0.43%+</span>
                     </div>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium mt-1">{{ __('Compared to last week') }}</p>
                 </div>
-            </div>
-            <div class="mt-4 relative z-10">
-                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
             </div>
             <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
                 <canvas id="sparkline-blocked" class="w-full h-full"></canvas>
@@ -89,10 +84,8 @@
                         <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total'] ?? 0) }}</h3>
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 font-bold border border-green-500/20">0.43%+</span>
                     </div>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium mt-1">{{ __('Compared to last week') }}</p>
                 </div>
-            </div>
-            <div class="mt-4 relative z-10">
-                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
             </div>
             <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
                 <canvas id="sparkline-corporate" class="w-full h-full"></canvas>
@@ -117,126 +110,162 @@
     <!-- Main Container -->
     <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-sm overflow-visible" x-data="{ selectedIds: [] }">
         
-     <div class="p-6 flex items-center justify-between gap-6">
+    <div class="p-6 flex flex-wrap items-center justify-between gap-6 relative min-h-[5rem]">
 
-
-
-    <!-- RIGHT SECTION (Filter + Search) -->
-    <div class="flex items-center gap-3 shrink-0">
-
-        <!-- Filter Button -->
-        <div class="relative">
-            <button @click="showFilters = !showFilters"
-                class="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-slate-400 hover:text-primary transition shadow-sm">
-               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-sliders" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd" d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z"/>
-                </svg>
-            </button>
-
-            <!-- Filter Dropdown -->
-            <div x-show="showFilters" 
-                 @click.away="showFilters = false"
-                 x-transition:enter="transition ease-out duration-100"
-                 x-transition:enter-start="opacity-0 scale-95"
-                 x-transition:enter-end="opacity-100 scale-100"
-                 class="absolute right-0 mt-3 w-80 bg-white dark:bg-[#1A1A31] rounded-2xl shadow-2xl border border-slate-100 dark:border-white/10 z-[100] p-6">
+        <!-- Bulk Actions Bar (Visible when rows selected) -->
+        <div x-show="selectedIds.length > 0" x-cloak class="absolute inset-0 bg-white dark:bg-[#1A1A31] z-20 flex items-center justify-between px-6 border-b border-slate-100 dark:border-white/5 animate-fade-in-up">
+            <div class="flex items-center gap-4">
+                <span class="text-sm font-bold text-slate-500 bg-slate-100 dark:bg-white/5 dark:text-slate-300 px-4 py-3 rounded-2xl">
+                    <span x-text="selectedIds.length"></span> {{ __('Selected') }}
+                </span>
                 
-                <form action="{{ url()->current() }}" method="GET" class="space-y-6">
-                    @if(request('search'))
-                        <input type="hidden" name="search" value="{{ request('search') }}">
-                    @endif
-
-                    <!-- Sort By -->
-                    <div>
-                        <label class="text-xs font-black text-slate-400 uppercase tracking-widest block mb-4">{{ __('Sort by') }}</label>
-                        <div class="space-y-3">
-                            <label class="flex items-center gap-3 cursor-pointer group">
-                                <input type="radio" name="sort_by" value="all" x-model="selectedSort" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('All') }}</span>
-                            </label>
-                            <label class="flex items-center gap-3 cursor-pointer group">
-                                <input type="radio" name="sort_by" value="name" x-model="selectedSort" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('Name') }}</span>
-                            </label>
-                            <label class="flex items-center gap-3 cursor-pointer group">
-                                <input type="radio" name="sort_by" value="newest" x-model="selectedSort" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('Newest') }}</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <hr class="border-slate-100 dark:border-white/5">
-
-                    <!-- Status -->
-                    <div>
-                        <label class="text-xs font-black text-slate-400 uppercase tracking-widest block mb-4">{{ __('Status:') }}</label>
-                        <div class="space-y-3">
-                            <label class="flex items-center gap-3 cursor-pointer group">
-                                <input type="radio" name="status" value="" x-model="selectedStatus" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('All') }}</span>
-                            </label>
-                            <label class="flex items-center gap-3 cursor-pointer group">
-                                <input type="radio" name="status" value="active" x-model="selectedStatus" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('نشط') }}</span>
-                            </label>
-                            <label class="flex items-center gap-3 cursor-pointer group">
-                                <input type="radio" name="status" value="inactive" x-model="selectedStatus" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('غير نشط') }}</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-2 pt-2">
-                        <button type="submit" class="flex-1 py-3 bg-[#1A1A31] text-white text-sm font-bold rounded-xl hover:bg-black transition-all shadow-lg">{{ __('Apply') }}</button>
-                        <button type="button" @click="selectedSort = 'newest'; selectedStatus = ''; $el.form.submit()" class="px-4 py-3 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-sm font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all text-center">{{ __('Reset') }}</button>
-                    </div>
+                <form :action="'{{ url('admin') }}/' + '{{ $type == 'individual' ? 'individual-customers' : 'corporate-customers' }}/bulk-block'" method="POST" class="inline">
+                    @csrf
+                    <template x-for="id in selectedIds" :key="id">
+                        <input type="hidden" name="ids[]" :value="id">
+                    </template>
+                    <button type="submit" class="px-6 py-3 bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-500 rounded-2xl font-black text-xs hover:bg-red-100 dark:hover:bg-red-500/20 transition-all flex items-center gap-2 uppercase tracking-widest">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        {{ __('Block Selected') }}
+                    </button>
                 </form>
+
+                <form :action="'{{ url('admin') }}/' + '{{ $type == 'individual' ? 'individual-customers' : 'corporate-customers' }}/bulk-unblock'" method="POST" class="inline">
+                    @csrf
+                    <template x-for="id in selectedIds" :key="id">
+                        <input type="hidden" name="ids[]" :value="id">
+                    </template>
+                    <button type="submit" class="px-6 py-3 bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-500 rounded-2xl font-black text-xs hover:bg-green-100 dark:hover:bg-green-500/20 transition-all flex items-center gap-2 uppercase tracking-widest">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                        {{ __('Unblock Selected') }}
+                    </button>
+                </form>
+
+                <button type="button" @click="window.location.href = '{{ $type == 'individual' ? route('admin.individual-customers.download') : route('admin.corporate-customers.download') }}?ids=' + selectedIds.join(',')" class="px-6 py-3 bg-[#1A1A31] text-white rounded-2xl font-black text-xs shadow-lg shadow-[#1A1A31]/20 hover:scale-[1.02] transition-all flex items-center gap-2 uppercase tracking-widest">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    {{ __('Download Selected') }}
+                </button>
             </div>
+            <button @click="selectedIds = []" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-red-500 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
         </div>
 
-        <!-- Search -->
-        <form action="{{ url()->current() }}" method="GET" class="relative w-72">
-            @foreach(request()->except('search','page') as $key => $value)
-                <input type="hidden" name="{{ $key }}" value="{{ $value }}">
-            @endforeach
+        <!-- RIGHT SECTION (Filter + Search - Visible when no rows selected) -->
+        <div x-show="selectedIds.length === 0" class="flex items-center gap-3 shrink-0">
 
-            <input type="text"
-                   name="search"
-                   x-model="search"
-                   class="w-full pr-10 pl-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl text-sm font-bold text-slate-800 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-primary/20 transition-all">
+            <!-- Filter Button -->
+            <div class="relative">
+                <button @click="showFilters = !showFilters"
+                    class="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-slate-400 hover:text-primary transition shadow-sm">
+                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-sliders" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z"/>
+                    </svg>
+                </button>
 
-            <button type="submit"
-                class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                <!-- Filter Dropdown -->
+                <div x-show="showFilters" 
+                     @click.away="showFilters = false"
+                     x-transition:enter="transition ease-out duration-100"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     class="absolute right-0 mt-3 w-80 bg-white dark:bg-[#1A1A31] rounded-2xl shadow-2xl border border-slate-100 dark:border-white/10 z-[100] p-6">
+                    
+                    <form action="{{ url()->current() }}" method="GET" class="space-y-6">
+                        @if(request('search'))
+                            <input type="hidden" name="search" value="{{ request('search') }}">
+                        @endif
+
+                        <!-- Sort By -->
+                        <div>
+                            <label class="text-xs font-black text-slate-400 uppercase tracking-widest block mb-4">{{ __('Sort by') }}</label>
+                            <div class="space-y-3">
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <input type="radio" name="sort_by" value="all" x-model="selectedSort" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
+                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('All') }}</span>
+                                </label>
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <input type="radio" name="sort_by" value="name" x-model="selectedSort" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
+                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('Name') }}</span>
+                                </label>
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <input type="radio" name="sort_by" value="newest" x-model="selectedSort" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
+                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('Newest') }}</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <hr class="border-slate-100 dark:border-white/5">
+
+                        <!-- Status -->
+                        <div>
+                            <label class="text-xs font-black text-slate-400 uppercase tracking-widest block mb-4">{{ __('Status:') }}</label>
+                            <div class="space-y-3">
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <input type="radio" name="status" value="" x-model="selectedStatus" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
+                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('All') }}</span>
+                                </label>
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <input type="radio" name="status" value="active" x-model="selectedStatus" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
+                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('نشط') }}</span>
+                                </label>
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <input type="radio" name="status" value="inactive" x-model="selectedStatus" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
+                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('غير نشط') }}</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2 pt-2">
+                            <button type="submit" class="flex-1 py-3 bg-[#1A1A31] text-white text-sm font-bold rounded-xl hover:bg-black transition-all shadow-lg">{{ __('Apply') }}</button>
+                            <button type="button" @click="selectedSort = 'newest'; selectedStatus = ''; $el.form.submit()" class="px-4 py-3 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-sm font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all text-center">{{ __('Reset') }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Search -->
+            <form action="{{ url()->current() }}" method="GET" class="relative w-72">
+                @foreach(request()->except('search','page') as $key => $value)
+                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                @endforeach
+
+                <input type="text"
+                       name="search"
+                       x-model="search"
+                       class="w-full pr-10 pl-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl text-sm font-bold text-slate-800 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-primary/20 transition-all">
+
+                <button type="submit"
+class="absolute {{ app()->getLocale() == 'ar' ? 'right-4' : 'left-4' }} top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors">                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+            </form>
+
+        </div>
+
+        <!-- LEFT SECTION (Add + Download - Visible when no rows selected) -->
+        <div x-show="selectedIds.length === 0" class="flex items-center gap-3 shrink-0">
+
+            <a href="{{ $type == 'individual' ? route('admin.individual-customers.create') : route('admin.corporate-customers.create') }}"
+               class="flex items-center gap-2 px-5 py-3 bg-[#1A1A31] text-white text-sm font-bold rounded-xl hover:bg-black transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"/>
                 </svg>
-            </button>
-        </form>
+                {{ __('Add New Account') }}
+            </a>
 
+            <a href="{{ ($type == 'individual' ? route('admin.individual-customers.download') : route('admin.corporate-customers.download')) . '?' . http_build_query(request()->all()) }}"
+               class="flex items-center gap-2 px-5 py-3 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white text-sm font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M7 10l5 5m0 0l5-5m-5 5V3"/>
+                </svg>
+                {{ __('Download') }}
+            </a>
+
+        </div>
     </div>
-
-    <!-- LEFT SECTION (Add + Download) -->
-    <div class="flex items-center gap-3 shrink-0">
-
-        <a href="{{ $type == 'individual' ? route('admin.individual-customers.create') : route('admin.corporate-customers.create') }}"
-           class="flex items-center gap-2 px-5 py-3 bg-[#1A1A31] text-white text-sm font-bold rounded-xl hover:bg-black transition">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"/>
-            </svg>
-            {{ __('Add New Account') }}
-        </a>
-
-        <a href="{{ ($type == 'individual' ? route('admin.individual-customers.download') : route('admin.corporate-customers.download')) . '?' . http_build_query(request()->all()) }}"
-           class="flex items-center gap-2 px-5 py-3 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white text-sm font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M7 10l5 5m0 0l5-5m-5 5V3"/>
-            </svg>
-            {{ __('Download') }}
-        </a>
-
-    </div>
-</div>
 
 
         <!-- Table -->
@@ -246,7 +275,7 @@
                     <tr class="bg-slate-50/50 dark:bg-white/5 border-b border-slate-100 dark:border-white/5 text-[13px] uppercase tracking-wider text-slate-400 font-black">
                         <!-- Column order for RTL -->
                         <th class="px-6 py-5 text-start w-10">
-                            <input type="checkbox" @change="if($event.target.checked) selectedIds = @json($items->pluck('id')); else selectedIds = []" 
+                            <input type="checkbox" @change="selectedIds = $event.target.checked ? @json($items->pluck('id')) : []" :checked="selectedIds.length > 0 && selectedIds.length === {{ $items->count() }}"
                                    class="w-4 h-4 rounded border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
                         </th>
                         <th class="px-6 py-5 text-start">#</th>
@@ -254,6 +283,10 @@
                         <th class="px-6 py-5 text-start">{{ __('Phone Number') }}</th>
                         <th class="px-6 py-5 text-start">{{ __('Email') }}</th>
                         <th class="px-6 py-5 text-start">{{ __('Address') }}</th>
+                        @if($type == 'corporate')
+                            <th class="px-6 py-5 text-start">{{ __('Commercial Record') }}</th>
+                            <th class="px-6 py-5 text-start">{{ __('Tax Number') }}</th>
+                        @endif
                         <th class="px-6 py-5 text-center">{{ __('Orders Count') }}</th>
                         <th class="px-6 py-5 text-center">{{ __('Status') }}</th>
                         <th class="px-6 py-5 text-end">{{ __('Date') }}</th>
@@ -286,6 +319,14 @@
                                 {{ $item->address ?? '-' }}
                             </span>
                         </td>
+                        @if($type == 'corporate')
+                            <td class="px-6 py-4 text-sm font-bold text-slate-600 dark:text-slate-400">
+                                {{ $item->commercial_record_number ?? '-' }}
+                            </td>
+                            <td class="px-6 py-4 text-sm font-bold text-slate-600 dark:text-slate-400">
+                                {{ $item->tax_number ?? '-' }}
+                            </td>
+                        @endif
                         <td class="px-6 py-4 text-center">
                             <span class="text-sm font-black text-slate-600 dark:text-slate-300">
                                 {{ $item->order_count ?? $item->user->orders_count ?? 0 }}

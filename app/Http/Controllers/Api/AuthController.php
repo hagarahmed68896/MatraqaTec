@@ -110,12 +110,12 @@ class AuthController extends Controller
 
         $this->sendOtp($user);
 
+        $profileData = $this->getProfileData($user);
+
         return response()->json([
             'status' => true,
             'message' => 'User registered successfully. Please verify your phone with OTP.',
-            'data' => [
-                'user' => $user->load(['maintenanceCompany', 'corporateCustomer']), 
-            ],
+            'data' => $profileData,
         ], 200);
     }
 
@@ -162,14 +162,15 @@ class AuthController extends Controller
         $user = Auth::user();
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        $profileData = $this->getProfileData($user);
+
         return response()->json([
             'status' => true,
             'message' => 'Login successful',
-            'data' => [
-                'user' => $user,
+            'data' => array_merge($profileData, [
                 'access_token' => $token,
                 'token_type' => 'Bearer',
-            ],
+            ]),
         ]);
     }
 
@@ -209,14 +210,15 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        $profileData = $this->getProfileData($user);
+
         return response()->json([
             'status' => true,
             'message' => 'Phone verified successfully',
-            'data' => [
-                'user' => $user,
+            'data' => array_merge($profileData, [
                 'access_token' => $token,
                 'token_type' => 'Bearer',
-            ],
+            ]),
         ]);
     }
 
@@ -347,21 +349,53 @@ class AuthController extends Controller
     public function profile(Request $request)
     {
         $user = $request->user();
-        
-        if ($user->type === 'individual') {
-            $user->load('individualCustomer');
-        } elseif ($user->type === 'maintenance_company') {
-            $user->load('maintenanceCompany');
-        } elseif ($user->type === 'corporate_customer') {
-            $user->load('corporateCustomer');
-        } elseif ($user->type === 'technician') {
-            $user->load('technician');
-        }
+        $profileData = $this->getProfileData($user);
 
         return response()->json([
             'status' => true,
             'message' => 'Profile retrieved successfully',
-            'data' => $user
+            'data' => $profileData
         ]);
+    }
+
+    private function getProfileData($user)
+    {
+        $stats = null;
+        
+        if ($user->type === 'individual' || $user->type === 'corporate_customer') {
+            $user->load(['individualCustomer', 'corporateCustomer', 'favorites', 'searchHistories']);
+            $ordersCount = \App\Models\Order::where('user_id', $user->id)->count();
+            $stats = [
+                'orders_count' => $ordersCount,
+                'wallet_balance' => $user->wallet_balance ?? "0.00"
+            ];
+        } elseif ($user->type === 'maintenance_company') {
+            $user->load(['maintenanceCompany.technicians', 'maintenanceCompany.districts', 'maintenanceCompany.services', 'maintenanceCompany.city']);
+            $ordersCount = 0;
+            if ($user->maintenanceCompany) {
+                $ordersCount = \App\Models\Order::where('maintenance_company_id', $user->maintenanceCompany->id)->count();
+            }
+            $stats = [
+                'orders_count' => $ordersCount,
+                'wallet_balance' => $user->wallet_balance ?? "0.00"
+            ];
+        } elseif ($user->type === 'technician') {
+            $user->load(['technician.service', 'technician.maintenanceCompany']);
+            $ordersCount = 0;
+            if ($user->technician) {
+                $ordersCount = \App\Models\Order::where('technician_id', $user->technician->id)->count();
+            }
+            $stats = [
+                'orders_count' => $ordersCount,
+                'wallet_balance' => $user->wallet_balance ?? "0.00"
+            ];
+        }
+
+        $data = ['user' => $user];
+        if ($stats !== null) {
+            $data['stats'] = $stats;
+        }
+
+        return $data;
     }
 }

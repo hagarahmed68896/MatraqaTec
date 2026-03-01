@@ -20,14 +20,23 @@ class MaintenanceCompanyController extends Controller
              return response()->json(['status' => false, 'message' => 'Unauthorized access'], 403);
         }
 
-        $company = MaintenanceCompany::with(['user', 'technicians', 'districts', 'services', 'city'])->where('user_id', $user->id)->first();
-        if (!$company) return response()->json(['status' => false, 'message' => 'Company not found'], 404);
+        $user->load(['maintenanceCompany.technicians', 'maintenanceCompany.districts', 'maintenanceCompany.services', 'maintenanceCompany.city']);
+
+        if (!$user->maintenanceCompany) {
+            return response()->json(['status' => false, 'message' => 'Company not found'], 404);
+        }
         
+        $ordersCount = \App\Models\Order::where('maintenance_company_id', $user->maintenanceCompany->id)->count();
+
         return response()->json([
             'status' => true, 
-            'message' => 'Company retrieved', 
+            'message' => 'Profile retrieved successfully', 
             'data' => [
-                'maintenance_company' => $company
+                'user' => $user,
+                'stats' => [
+                    'orders_count' => $ordersCount,
+                    'wallet_balance' => $user->wallet_balance ?? "0.00"
+                ]
             ]
         ]);
     }
@@ -82,12 +91,21 @@ class MaintenanceCompanyController extends Controller
         }
         
         $company->update($updateData);
+
+        $user->refresh();
+        $user->load(['maintenanceCompany.technicians', 'maintenanceCompany.districts', 'maintenanceCompany.services', 'maintenanceCompany.city']);
+
+        $ordersCount = \App\Models\Order::where('maintenance_company_id', $company->id)->count();
         
         return response()->json([
             'status' => true, 
-            'message' => 'Company profile updated successfully', 
+            'message' => 'Profile updated successfully', 
             'data' => [
-                'maintenance_company' => $company->load('user', 'city')
+                'user' => $user,
+                'stats' => [
+                    'orders_count' => $ordersCount,
+                    'wallet_balance' => $user->wallet_balance ?? "0.00"
+                ]
             ]
         ]);
     }
@@ -197,6 +215,11 @@ class MaintenanceCompanyController extends Controller
         }
 
         $technicians = $query->orderByDesc('completed_orders_count')->get();
+        
+        $technicians->each(function($tech) {
+            $tech->name = $tech->name ?? $tech->name_ar ?? $tech->name_en;
+            $tech->makeHidden(['name_ar', 'name_en']);
+        });
 
         return response()->json(['status' => true, 'message' => 'Technicians retrieved', 'data' => $technicians]);
     }
@@ -214,8 +237,7 @@ class MaintenanceCompanyController extends Controller
         if (!$company) return response()->json(['status' => false, 'message' => 'Company not found'], 404);
 
         $validator = Validator::make($request->all(), [
-            'name_ar' => 'required|string|max:255',
-            'name_en' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'phone' => 'required|string|max:20',
             'email' => 'required|email|max:255',
             'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -245,9 +267,9 @@ class MaintenanceCompanyController extends Controller
         }
 
         $techRequest = \App\Models\TechnicianRequest::create([
-            'name_ar' => $request->name_ar,
-            'name_en' => $request->name_en,
-            'name' => $request->name_ar, // For backward compatibility
+            'name_ar' => $request->name,
+            'name_en' => $request->name,
+            'name' => $request->name, // For backward compatibility
             'phone' => $request->phone,
             'email' => $request->email,
             'photo' => $imagePath,
@@ -270,8 +292,8 @@ class MaintenanceCompanyController extends Controller
                 'type' => 'alert',
                 'title_ar' => 'طلب إضافة فني جديد',
                 'title_en' => 'New Technician Request',
-                'body_ar' => "قامت شركة {$company->company_name_ar} بإرسال طلب إضافة فني جديد: {$request->name_ar}",
-                'body_en' => "Company {$company->company_name_en} sent a request to add a new technician: {$request->name_en}",
+                'body_ar' => "قامت شركة {$company->company_name_ar} بإرسال طلب إضافة فني جديد: {$request->name}",
+                'body_en' => "Company {$company->company_name_en} sent a request to add a new technician: {$request->name}",
                 'target_audience' => 'all',
                 'data' => [
                     'type' => 'technician_request',
@@ -316,6 +338,11 @@ class MaintenanceCompanyController extends Controller
             })
             ->take($limit)
             ->values();
+
+        $technicians->each(function($tech) {
+            $tech->name = $tech->name ?? $tech->name_ar ?? $tech->name_en;
+            $tech->makeHidden(['name_ar', 'name_en']);
+        });
 
         return response()->json([
             'status' => true,
@@ -363,6 +390,8 @@ class MaintenanceCompanyController extends Controller
         }
 
         // Format response with additional stats
+        $technician->name = $technician->name ?? $technician->name_ar ?? $technician->name_en;
+        $technician->makeHidden(['name_ar', 'name_en']);
         $data = $technician->toArray();
         $data['stats'] = [
             'total_orders' => $technician->total_orders_count ?? 0,
@@ -417,8 +446,7 @@ class MaintenanceCompanyController extends Controller
         }
 
         $request->validate([
-            'name_ar' => 'sometimes|string|max:255',
-            'name_en' => 'sometimes|string|max:255',
+            'name' => 'sometimes|string|max:255',
             'phone' => 'sometimes|string|max:20',
             'category_id' => 'sometimes|exists:services,id',
             'service_id' => 'sometimes|exists:services,id',
@@ -426,18 +454,28 @@ class MaintenanceCompanyController extends Controller
             'availability_status' => 'sometimes|in:available,unavailable,busy',
         ]);
 
+        if ($request->has('name')) {
+            $request->merge([
+                'name_ar' => $request->name,
+                'name_en' => $request->name
+            ]);
+        }
+
         $technician->update($request->only([
-            'name_ar', 'name_en', 'category_id', 'service_id', 
+            'name', 'name_ar', 'name_en', 'category_id', 'service_id', 
             'districts', 'availability_status'
         ]));
 
         // Update user info if provided
-        if ($technician->user && ($request->has('name_ar') || $request->has('phone'))) {
+        if ($technician->user && ($request->has('name') || $request->has('phone'))) {
             $technician->user->update([
-                'name' => $request->name_ar ?? $technician->user->name,
+                'name' => $request->name ?? $technician->user->name,
                 'phone' => $request->phone ?? $technician->user->phone,
             ]);
         }
+
+        $technician->name = $technician->name ?? $technician->name_ar ?? $technician->name_en;
+        $technician->makeHidden(['name_ar', 'name_en']);
 
         return response()->json([
             'status' => true,
@@ -581,6 +619,11 @@ class MaintenanceCompanyController extends Controller
         }
 
         $technicians = $techQuery->latest()->take(20)->get();
+
+        $technicians->each(function($tech) {
+            $tech->name = $tech->name ?? $tech->name_ar ?? $tech->name_en;
+            $tech->makeHidden(['name_ar', 'name_en']);
+        });
 
         return response()->json([
             'status' => true,

@@ -246,9 +246,16 @@ class IndividualCustomerController extends Controller
         return redirect()->route('admin.individual-customers.index')->with('success', __('Customer updated successfully.'));
     }
 
-    public function download()
+    public function download(Request $request)
     {
-        $items = IndividualCustomer::with('user')->get();
+        $query = IndividualCustomer::with('user');
+        
+        if ($request->has('ids') && !empty($request->ids)) {
+            $ids = explode(',', $request->ids);
+            $query->whereIn('id', $ids);
+        }
+        
+        $items = $query->get();
         $filename = "individual_customers_" . date('Y-m-d') . ".csv";
         $handle = fopen('php://temp', 'w+');
         fputs($handle, $bom = (chr(0xEF) . chr(0xBB) . chr(0xBF))); // UTF-8 BOM
@@ -313,5 +320,33 @@ class IndividualCustomerController extends Controller
 
         $message = ($user->status == 'blocked') ? __('Customer blocked successfully.') : __('Customer unblocked successfully.');
         return back()->with('success', $message);
+    }
+    
+    public function bulkBlock(Request $request)
+    {
+        $request->validate(['ids' => 'required|array']);
+        $customers = IndividualCustomer::whereIn('id', $request->ids)->with('user')->get();
+        
+        foreach ($customers as $customer) {
+            if ($customer->user) {
+                $customer->user->update(['status' => 'blocked']);
+            }
+        }
+        
+        return back()->with('success', __('Customers blocked successfully.'));
+    }
+
+    public function bulkUnblock(Request $request)
+    {
+        $request->validate(['ids' => 'required|array']);
+        $customers = IndividualCustomer::whereIn('id', $request->ids)->with('user')->get();
+        
+        foreach ($customers as $customer) {
+            if ($customer->user) {
+                $customer->user->update(['status' => 'active']);
+            }
+        }
+        
+        return back()->with('success', __('Customers unblocked successfully.'));
     }
 }

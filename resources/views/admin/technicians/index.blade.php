@@ -82,10 +82,8 @@
                         <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total_technicians'] ?? 0) }}</h3>
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 font-bold border border-green-500/20">0.43%+</span>
                     </div>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium mt-1">{{ __('Compared to last week') }}</p>
                 </div>
-            </div>
-            <div class="mt-4 relative z-10 text-right">
-                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
             </div>
             <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
                 <canvas id="sparkline-total" class="w-full h-full"></canvas>
@@ -101,10 +99,8 @@
                         <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['active_technicians'] ?? 0) }}</h3>
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-500 font-bold border border-indigo-500/20">0.43%+</span>
                     </div>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium mt-1">{{ __('Compared to last week') }}</p>
                 </div>
-            </div>
-            <div class="mt-4 relative z-10 text-right">
-                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
             </div>
             <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
                 <canvas id="sparkline-active" class="w-full h-full"></canvas>
@@ -120,10 +116,8 @@
                         <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total_completed_orders'] ?? 0) }}</h3>
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 font-bold border border-blue-500/20">0.43%+</span>
                     </div>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium mt-1">{{ __('Compared to last week') }}</p>
                 </div>
-            </div>
-            <div class="mt-4 relative z-10 text-right">
-                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
             </div>
             <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
                 <canvas id="sparkline-orders" class="w-full h-full"></canvas>
@@ -139,10 +133,8 @@
                         <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['average_rating'] ?? 0, 1) }}</h3>
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-500 font-bold border border-yellow-500/20">0.43%+</span>
                     </div>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium mt-1">{{ __('Compared to last week') }}</p>
                 </div>
-            </div>
-            <div class="mt-4 relative z-10 text-right">
-                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
             </div>
             <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
                 <canvas id="sparkline-rating" class="w-full h-full"></canvas>

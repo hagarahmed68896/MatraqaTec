@@ -22,10 +22,8 @@
                         <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ $stats['available_techs'] }}</h3>
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-{{ $stats['available_change'] >= 0 ? 'green' : 'red' }}-500/10 text-{{ $stats['available_change'] >= 0 ? 'green' : 'red' }}-500 font-bold border border-{{ $stats['available_change'] >= 0 ? 'green' : 'red' }}-500/20">{{ $stats['available_change'] }}%+</span>
                     </div>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium mt-1">{{ __('Compared to last week') }}</p>
                 </div>
-            </div>
-            <div class="mt-4 relative z-10">
-                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
             </div>
             <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
                 <canvas id="sparkline1" class="w-full h-full"></canvas>
@@ -41,10 +39,8 @@
                         <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ $stats['new_orders'] }}</h3>
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-{{ $stats['new_orders_change'] >= 0 ? 'green' : 'red' }}-500/10 text-{{ $stats['new_orders_change'] >= 0 ? 'green' : 'red' }}-500 font-bold border border-{{ $stats['new_orders_change'] >= 0 ? 'green' : 'red' }}-500/20">{{ $stats['new_orders_change'] }}%+</span>
                     </div>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium mt-1">{{ __('Compared to last week') }}</p>
                 </div>
-            </div>
-            <div class="mt-4 relative z-10">
-                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
             </div>
             <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
                 <canvas id="sparkline2" class="w-full h-full"></canvas>
@@ -61,10 +57,8 @@
                         <img src="{{ asset('assets/images/Vector (1).svg') }}" class="w-4 h-4 opacity-70 filter dark:invert" alt="SAR">
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-{{ $stats['revenue_change'] >= 0 ? 'green' : 'red' }}-500/10 text-{{ $stats['revenue_change'] >= 0 ? 'green' : 'red' }}-500 font-bold border border-{{ $stats['revenue_change'] >= 0 ? 'green' : 'red' }}-500/20">{{ $stats['revenue_change'] }}%+</span>
                     </div>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium mt-1">{{ __('Compared to last week') }}</p>
                 </div>
-            </div>
-            <div class="mt-4 relative z-10">
-                <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
             </div>
             <div class="absolute bottom-0 left-0 right-0 h-20 opacity-30 group-hover:opacity-50 transition-opacity">
                 <canvas id="sparkline3" class="w-full h-full"></canvas>
@@ -80,13 +74,13 @@
                         <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ $stats['avg_quality'] }}/5</h3>
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-{{ $stats['quality_change'] >= 0 ? 'green' : 'red' }}-500/10 text-{{ $stats['quality_change'] >= 0 ? 'green' : 'red' }}-500 font-bold border border-{{ $stats['quality_change'] >= 0 ? 'green' : 'red' }}-500/20">{{ $stats['quality_change'] }}%+</span>
                     </div>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium mt-1">{{ __('Compared to last week') }}</p>
                 </div>
                 <div class="relative w-14 h-14">
                     <canvas id="qualityDoughnut"></canvas>
                     <span class="absolute inset-0 flex items-center justify-center text-[10px] font-black text-slate-800 dark:text-white">{{ $stats['avg_quality'] }}/5</span>
                 </div>
             </div>
-            <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium">{{ __('Compared to last week') }}</p>
         </div>
     </div>
 
