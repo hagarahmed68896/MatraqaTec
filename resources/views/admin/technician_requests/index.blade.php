@@ -57,7 +57,7 @@
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Total Requests -->
-        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all h-48 flex flex-col justify-between">
+        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all h-48 flex flex-col justify-between z-0">
             <div class="flex items-center justify-between relative z-10">
                 <div class="text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Total Requests') }}</p>
@@ -86,7 +86,7 @@
         </div>
 
         <!-- Pending Requests -->
-        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all h-48 flex flex-col justify-between">
+        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all h-48 flex flex-col justify-between z-0">
             <div class="flex items-center justify-between relative z-10">
                 <div class="text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Pending Requests') }}</p>
@@ -115,7 +115,7 @@
         </div>
 
         <!-- Accepted Requests -->
-        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all h-48 flex flex-col justify-between">
+        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all h-48 flex flex-col justify-between z-0">
             <div class="flex items-center justify-between relative z-10">
                 <div class="text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Accepted Requests') }}</p>
@@ -144,7 +144,7 @@
         </div>
 
         <!-- Rejected Requests -->
-        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all h-48 flex flex-col justify-between">
+        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all h-48 flex flex-col justify-between z-0">
             <div class="flex items-center justify-between relative z-10">
                 <div class="text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Rejected Requests') }}</p>
@@ -197,9 +197,15 @@
                          x-transition:enter-end="opacity-100 scale-100"
                          class="absolute {{ app()->getLocale() == 'ar' ? 'right-0' : 'left-0' }} mt-3 w-80 bg-white dark:bg-[#1A1A31] rounded-3xl shadow-2xl border border-slate-100 dark:border-white/10 z-[100] p-6 lg:p-8">
                         
-                        <form action="{{ url()->current() }}" method="GET" class="space-y-8">
+                        <form action="{{ url()->current() }}" method="GET" class="space-y-8" x-data="{ selectedCategory: '{{ request('category_id') }}' }">
                             @foreach(request()->except(['sort_by', 'category_id', 'service_id']) as $key => $value)
-                                <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                                @if(is_array($value))
+                                    @foreach($value as $val)
+                                        <input type="hidden" name="{{ $key }}[]" value="{{ $val }}">
+                                    @endforeach
+                                @else
+                                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                                @endif
                             @endforeach
 
                             <!-- Sort By (Radio Buttons) -->
@@ -230,29 +236,27 @@
                                 <div class="grid grid-cols-1 gap-3">
                                     <label class="flex items-center justify-between cursor-pointer group">
                                         <span class="text-sm font-bold text-slate-500 group-hover:text-primary transition-colors">{{ __('All') }}</span>
-                                        <input type="radio" name="category_id" value="" {{ !request('category_id') ? 'checked' : '' }}
+                                        <input type="radio" name="category_id" value="" x-model="selectedCategory" {{ !request('category_id') ? 'checked' : '' }}
                                                class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
                                     </label>
                                     @foreach($categories as $cat)
                                     <label class="flex items-center justify-between cursor-pointer group">
                                         <span class="text-sm font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $cat->name_ar }}</span>
-                                        <input type="radio" name="category_id" value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'checked' : '' }}
+                                        <input type="radio" name="category_id" value="{{ $cat->id }}" x-model="selectedCategory" {{ request('category_id') == $cat->id ? 'checked' : '' }}
                                                class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
                                     </label>
                                     @endforeach
                                 </div>
                             </div>
 
-                            <div class="h-px bg-slate-100 dark:bg-white/5"></div>
-
                             <!-- Service Type (Checkboxes) -->
-                            <div class="space-y-4">
+                            <div class="space-y-4 border-t border-slate-100 dark:border-white/5 pt-6" x-show="selectedCategory && selectedCategory !== ''" x-cloak>
                                 <label class="text-sm font-black text-[#1A1A31] dark:text-white flex items-center gap-2">
                                     {{ __('Service Type') }}:
                                 </label>
                                 <div class="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                                     @foreach($services as $service)
-                                    <label class="flex items-center justify-between cursor-pointer group">
+                                    <label class="flex items-center justify-between cursor-pointer group" x-show="selectedCategory == '{{ $service->parent_id }}'">
                                         <span class="text-sm font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $service->name_ar }}</span>
                                         <input type="checkbox" name="service_id[]" value="{{ $service->id }}" {{ is_array(request('service_id')) && in_array($service->id, request('service_id')) ? 'checked' : '' }}
                                                class="w-5 h-5 border-2 border-slate-200 rounded-lg text-primary focus:ring-primary transition-all cursor-pointer">
@@ -276,16 +280,22 @@
 
                  <!-- Search (Refined) -->
                 <form action="{{ url()->current() }}" method="GET" class="relative group" x-data="{ search: '{{ request('search') }}' }">
-                    @foreach(request()->except('search','page') as $key => $value)
-                        <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                    @foreach(request()->except(['search', 'page']) as $key => $value)
+                        @if(is_array($value))
+                            @foreach($value as $val)
+                                <input type="hidden" name="{{ $key }}[]" value="{{ $val }}">
+                            @endforeach
+                        @else
+                            <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                        @endif
                     @endforeach
 
                     <input type="text"
                         name="search"
                         x-model="search"
-                        class="w-80 pl-10 pr-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl text-sm font-bold text-slate-800 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-primary/20 transition-all">
+                        class="w-80 {{ app()->getLocale() == 'ar' ? 'pr-10 pl-4' : 'pl-10 pr-4' }} py-3 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl text-sm font-bold text-slate-800 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-primary/20 transition-all">
 
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <div class="absolute inset-y-0 {{ app()->getLocale() == 'ar' ? 'right-0' : 'left-0' }} px-4 flex items-center pointer-events-none">
                         <svg class="w-4 h-4 text-slate-400 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     </div>
                 </form>
@@ -301,12 +311,15 @@
                         <input type="checkbox" @change="if($el.checked) selectedIds = @json($items->pluck('id')); else selectedIds = []" class="rounded border-slate-300 text-primary focus:ring-primary">
                     </th>
                     <th class="py-4 px-6">{{ __('Technician') }}</th>
+                    <th class="py-4 px-6">{{ __('Phone Number') }}</th>
                     <th class="py-4 px-6">{{ __('Email') }}</th>
                     <th class="py-4 px-6">{{ __('Company') }}</th>
                     <th class="py-4 px-6">{{ __('Service') }}</th>
                     <th class="py-4 px-6 text-center">{{ __('Experience') }}</th>
                     <th class="py-4 px-6">{{ __('Date') }}</th>
+                    @if(request('status') !== 'accepted' && request('status') !== 'rejected')
                     <th class="py-4 px-6 text-center">{{ __('Actions') }}</th>
+                    @endif
                 </tr>
                 </thead>
                 <tbody class="text-xs font-bold text-slate-600 dark:text-white/70">
@@ -326,10 +339,10 @@
                                 </div>
                                 <div class="flex flex-col">
                                     <span class="text-slate-900 dark:text-white font-black group-hover:text-primary transition-colors">{{ $item->name_ar ?? $item->name }}</span>
-                                    <span class="text-[10px] text-slate-400">{{ $item->phone }}</span>
                                 </div>
                             </div>
                         </td>
+                        <td class="py-4 px-6 text-slate-600 dark:text-slate-300 font-medium" dir="ltr">{{ $item->phone }}</td>
                         <td class="py-4 px-6 opacity-70">{{ $item->email }}</td>
                         <td class="py-4 px-6">
                             @if($item->maintenanceCompany)
@@ -345,6 +358,7 @@
                             <span class="px-2 py-1 rounded-lg bg-indigo-50 dark:bg-[#1A1A31] text-indigo-600 dark:text-indigo-400 font-black">{{ $item->years_experience }} {{ __('Years') }}</span>
                         </td>
                          <td class="py-4 px-6 opacity-50 text-[12px] whitespace-nowrap">{{ $item->created_at->format('d/m/Y') }}</td>
+                        @if(request('status') !== 'accepted' && request('status') !== 'rejected')
                         <td class="py-4 px-6 text-center" @click.stop anchor="top">
                             <div class="flex items-center justify-center gap-1">
                                 @if($item->status == 'pending')
@@ -357,14 +371,10 @@
                                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
                                     </button>
                                 @endif
-                                <a href="{{ route('admin.technician-requests.show', $item->id) }}" 
-                                   class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-all">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                    </svg>
-                                </a>
+                          
                             </div>
                         </td>
+                        @endif
                     </tr>
                     @empty
                     <tr>
@@ -385,145 +395,145 @@
             {{ $items->links() }}
         </div>
         @endif
-        </div>
+    </div>
 
-        <!-- Accept Confirmation Modal -->
-        <div x-show="showAcceptModal" 
-             x-cloak
-             class="fixed inset-0 z-[1000] flex items-center justify-center p-4"
+
+    <!-- Accept Confirmation Modal -->
+    <div x-show="showAcceptModal" 
+         x-cloak
+         class="fixed inset-0 z-[1000] flex items-center justify-center p-4"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showAcceptModal = false"></div>
+        
+        <div class="bg-white dark:bg-[#1A1A31] w-full max-w-2xl rounded-[1.5rem] overflow-hidden shadow-2xl relative z-10"
              x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="transition ease-in duration-200"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0">
+             x-transition:enter-start="opacity-0 translate-y-8 scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 scale-100">
             
-            <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showAcceptModal = false"></div>
-            
-            <div class="bg-white dark:bg-[#1A1A31] w-full max-w-2xl rounded-[1.5rem] overflow-hidden shadow-2xl relative z-10"
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0 translate-y-8 scale-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 scale-100">
-                
-                <button @click="showAcceptModal = false" class="absolute top-6 {{ app()->getLocale() == 'ar' ? 'left-6' : 'right-6' }} text-slate-400 hover:text-slate-600 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
+            <button @click="showAcceptModal = false" class="absolute top-6 {{ app()->getLocale() == 'ar' ? 'left-6' : 'right-6' }} text-slate-400 hover:text-slate-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
 
-                <div class="p-10">
-                    <div class="mb-10 {{ app()->getLocale() == 'ar' ? 'text-right' : 'text-left' }}">
-                        <h3 class="text-2xl font-black text-[#1A1A31] dark:text-white mb-2">{{ __('Accept Technician Request') }}</h3>
-                        <p class="text-slate-400 font-bold text-sm">
-                            {{ __('will_create_account_email_hint') }}
-                        </p>
-                    </div>
-
-                    <form :action="'{{ url('admin/technician-requests') }}/' + acceptTargetId + '/accept'" method="POST" class="space-y-8">
-                        @csrf
-                        <div>
-                            <label class="text-sm font-black text-[#1A1A31] dark:text-white block mb-3">{{ __('Password') }}</label>
-                            <input type="password" name="password" required minlength="8" placeholder="{{ __('Enter password') }}"
-                                   class="w-full px-5 py-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl text-md font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 transition-all text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
-                        </div>
-
-                    <div class="flex justify-end gap-3 pt-4">
-                        <button type="button" @click="showAcceptModal = false" 
-                                class="px-10 py-4 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-xl font-black hover:bg-slate-200 transition-all uppercase tracking-widest text-sm">
-                            {{ __('Cancel') }}
-                        </button>
-                        <button type="submit" 
-                                class="px-10 py-4 bg-[#1A1A31] text-white rounded-xl font-black hover:bg-[#2A2A41] transition-all shadow-xl shadow-[#1A1A31]/20 uppercase tracking-widest text-sm">
-                            {{ __('Confirm & Create Account') }}
-                        </button>
-                    </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- Reject Confirmation Modal -->
-        <div x-show="showRejectModal" 
-             x-cloak
-             class="fixed inset-0 z-[1000] flex items-center justify-center p-4"
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="transition ease-in duration-200"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0">
-            
-            <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showRejectModal = false"></div>
-            
-            <div class="bg-white dark:bg-[#1A1A31] w-full max-w-2xl rounded-[1.5rem] overflow-hidden shadow-2xl relative z-10"
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0 translate-y-8 scale-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 scale-100">
-                
-                <button @click="showRejectModal = false" class="absolute top-6 {{ app()->getLocale() == 'ar' ? 'left-6' : 'right-6' }} text-slate-400 hover:text-slate-600 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-
-                <div class="p-10">
-                    <div class="mb-10 {{ app()->getLocale() == 'ar' ? 'text-right' : 'text-left' }}">
-                        <h3 class="text-2xl font-black text-[#1A1A31] dark:text-white mb-2">{{ __('Reject Technician Request') }}</h3>
-                        <p class="text-slate-400 font-bold text-sm">
-                            {{ __('please_specify_rejection_reason_hint') }}
-                        </p>
-                    </div>
-
-                    <form :action="'{{ url('admin/technician-requests') }}/' + rejectTargetId + '/refuse'" method="POST" class="space-y-8">
-                        @csrf
-                        <div>
-                            <label class="text-sm font-black text-[#1A1A31] dark:text-white block mb-3">{{ __('Rejection Reason') }}</label>
-                            <textarea name="rejection_reason" required rows="4" placeholder="{{ __('please_specify_rejection_reason_placeholder') }}"
-                                      class="w-full px-5 py-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl text-md font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 transition-all text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}"></textarea>
-                        </div>
-
-                    <div class="flex justify-end gap-3 pt-4">
-                        <button type="button" @click="showRejectModal = false" 
-                                class="px-10 py-4 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-xl font-black hover:bg-slate-200 transition-all uppercase tracking-widest text-sm">
-                            {{ __('Cancel') }}
-                        </button>
-                        <button type="submit" 
-                                class="px-10 py-4 bg-[#1A1A31] text-white rounded-xl font-black hover:bg-[#2A2A41] transition-all shadow-xl shadow-[#1A1A31]/20 uppercase tracking-widest text-sm">
-                            {{ __('Send') }}
-                        </button>
-                    </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- Success Modal -->
-        <div x-show="showSuccessModal" 
-             x-cloak
-             class="fixed inset-0 z-[1100] flex items-center justify-center p-4"
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="transition ease-in duration-200"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0">
-            
-            <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showSuccessModal = false"></div>
-            
-            <div class="bg-white dark:bg-[#1A1A31] w-full max-w-2xl rounded-[1.5rem] overflow-hidden shadow-2xl relative z-10"
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0 translate-y-8 scale-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 scale-100">
-                
-                <button @click="showSuccessModal = false" class="absolute top-6 {{ app()->getLocale() == 'ar' ? 'left-6' : 'right-6' }} text-slate-400 hover:text-slate-600 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-
-                <div class="p-16 text-center">
-                    <div class="w-48 h-48 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-10 shadow-2xl shadow-green-500/40">
-                        <svg class="w-32 h-32 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
-                    </div>
-                    <h3 class="text-3xl font-black text-[#1A1A31] dark:text-white mb-4">{{ __('Technician account activated') }}</h3>
-                    <p class="text-slate-400 font-bold text-lg">
-                        {{ __('Technician account created and credentials sent successfully') }}
+            <div class="p-10">
+                <div class="mb-10 {{ app()->getLocale() == 'ar' ? 'text-right' : 'text-left' }}">
+                    <h3 class="text-2xl font-black text-[#1A1A31] dark:text-white mb-2">{{ __('Accept Technician Request') }}</h3>
+                    <p class="text-slate-400 font-bold text-sm">
+                        {{ __('will_create_account_email_hint') }}
                     </p>
                 </div>
+
+                <form :action="'{{ url('admin/technician-requests') }}/' + acceptTargetId + '/accept'" method="POST" class="space-y-8">
+                    @csrf
+                    <div>
+                        <label class="text-sm font-black text-[#1A1A31] dark:text-white block mb-3">{{ __('Password') }}</label>
+                        <input type="password" name="password" required minlength="8" placeholder="{{ __('Enter password') }}"
+                               class="w-full px-5 py-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl text-md font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 transition-all text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
+                    </div>
+
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" @click="showAcceptModal = false" 
+                            class="px-8 py-4 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-xl font-black hover:bg-slate-200 transition-all uppercase tracking-widest text-sm">
+                        {{ __('Cancel') }}
+                    </button>
+                    <button type="submit" 
+                            class="px-8 py-4 bg-[#1A1A31] text-white rounded-xl font-black hover:bg-[#2A2A41] transition-all shadow-xl shadow-[#1A1A31]/20 uppercase tracking-widest text-sm">
+                        {{ __('Confirm & Create Account') }}
+                    </button>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Confirmation Modal -->
+    <div x-show="showRejectModal" 
+         x-cloak
+         class="fixed inset-0 z-[1000] flex items-center justify-center p-4"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showRejectModal = false"></div>
+        
+        <div class="bg-white dark:bg-[#1A1A31] w-full max-w-2xl rounded-[1.5rem] overflow-hidden shadow-2xl relative z-10"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-8 scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 scale-100">
+            
+            <button @click="showRejectModal = false" class="absolute top-6 {{ app()->getLocale() == 'ar' ? 'left-6' : 'right-6' }} text-slate-400 hover:text-slate-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+
+            <div class="p-10">
+                <div class="mb-10 {{ app()->getLocale() == 'ar' ? 'text-right' : 'text-left' }}">
+                    <h3 class="text-2xl font-black text-[#1A1A31] dark:text-white mb-2">{{ __('Reject Technician Request') }}</h3>
+                    <p class="text-slate-400 font-bold text-sm">
+                        {{ __('please_specify_rejection_reason_hint') }}
+                    </p>
+                </div>
+
+                <form :action="'{{ url('admin/technician-requests') }}/' + rejectTargetId + '/refuse'" method="POST" class="space-y-8">
+                    @csrf
+                    <div>
+                        <label class="text-sm font-black text-[#1A1A31] dark:text-white block mb-3">{{ __('Rejection Reason') }}</label>
+                        <textarea name="rejection_reason" required rows="4" placeholder="{{ __('please_specify_rejection_reason_placeholder') }}"
+                                  class="w-full px-5 py-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl text-md font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 transition-all text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}"></textarea>
+                    </div>
+
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" @click="showRejectModal = false" 
+                            class="px-8 py-4 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-xl font-black hover:bg-slate-200 transition-all uppercase tracking-widest text-sm">
+                        {{ __('Cancel') }}
+                    </button>
+                    <button type="submit" 
+                            class="px-8 py-4 bg-[#1A1A31] text-white rounded-xl font-black hover:bg-[#2A2A41] transition-all shadow-xl shadow-[#1A1A31]/20 uppercase tracking-widest text-sm">
+                        {{ __('Send') }}
+                    </button>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div x-show="showSuccessModal" 
+         x-cloak
+         class="fixed inset-0 z-[1100] flex items-center justify-center p-4"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showSuccessModal = false"></div>
+        
+        <div class="bg-white dark:bg-[#1A1A31] w-full max-w-2xl rounded-[1.5rem] overflow-hidden shadow-2xl relative z-10"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-8 scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 scale-100">
+            
+            <button @click="showSuccessModal = false" class="absolute top-6 {{ app()->getLocale() == 'ar' ? 'left-6' : 'right-6' }} text-slate-400 hover:text-slate-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+
+            <div class="p-16 text-center">
+                <div class="w-48 h-48 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-10 shadow-2xl shadow-green-500/40">
+                    <svg class="w-32 h-32 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                <h3 class="text-3xl font-black text-[#1A1A31] dark:text-white mb-4">{{ __('Technician account activated') }}</h3>
+                <p class="text-slate-400 font-bold text-lg">
+                    {{ __('Technician account created and credentials sent successfully') }}
+                </p>
             </div>
         </div>
     </div>

@@ -205,10 +205,23 @@ class OrderController extends Controller
 
         // 1. Availability Check Logic
         $scheduledAt = \Carbon\Carbon::parse($request->scheduled_at);
-        $availableTech = $this->findAvailableTechnician($request->service_id, $cityId, $scheduledAt);
+        
+        // Priority to sub_service_id if provided
+        $targetServiceId = $request->sub_service_id ?? $request->service_id;
+        $availableTech = $this->findAvailableTechnician($targetServiceId, $cityId, $scheduledAt);
 
         if (!$availableTech && !$request->boolean('force')) {
-            $suggestedTime = $this->getSuggestedTime($request->service_id, $cityId, $scheduledAt);
+            $suggestedTime = $this->getSuggestedTime($targetServiceId, $cityId, $scheduledAt);
+            
+            // If suggestedTime is null, it means there are NO technicians for this service at all
+            if (!$suggestedTime) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'No technician available for this service in your area currently.',
+                    'suggestion_message' => 'عذراً، لا يوجد فني متاح لهذه الخدمة في منطقتك حالياً، سنعمل على توفيرها قريباً.'
+                ], 200);
+            }
+
             return response()->json([
                 'status' => false,
                 'message' => 'The selected time is currently fully booked.',

@@ -22,8 +22,8 @@
             <div class="p-6 hover:bg-slate-50 dark:hover:bg-white/5 transition-all group relative {{ !$notification->read_at ? 'bg-primary/5 dark:bg-white/5' : '' }}">
                 <div class="flex items-start gap-4">
                     <!-- Icon -->
-                    <div class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/10 flex items-center justify-center flex-shrink-0 text-slate-500 dark:text-white">
-                        <span class="text-lg font-black">{{ strtoupper(substr($notification->data['title'] ?? 'N', 0, 1)) }}</span>
+                    <div class="w-12 h-12 rounded-[1.25rem] bg-slate-900 dark:bg-white flex items-center justify-center flex-shrink-0 text-white dark:text-slate-900">
+                        <span class="text-xl font-black">{{ strtoupper(substr($notification->data['title'] ?? 'N', 0, 1)) }}</span>
                     </div>
 
                     <div class="flex-1">
@@ -58,12 +58,16 @@
                         <!-- Actions for Technician Requests -->
                         @if(($notification->data['type'] ?? '') == 'technician_request' && isset($notification->data['request_id']))
                         <div class="flex items-center gap-3 mb-3">
-                            <a href="{{ route('admin.technician-requests.show', $notification->data['request_id']) }}" class="flex items-center gap-2 px-6 py-2 rounded-xl bg-slate-800 dark:bg-white text-white dark:text-slate-800 font-bold hover:opacity-90 transition-all">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                {{ __('Accept') }}
-                            </a>
-                            <form action="#" method="POST"> <!-- Placeholder reject action -->
-                                <button type="button" class="flex items-center gap-2 px-6 py-2 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-white font-bold hover:bg-slate-200 dark:hover:bg-white/20 transition-all">
+                            <form action="{{ route('admin.technician-requests.accept', $notification->data['request_id']) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="flex items-center gap-2 px-6 py-2 rounded-xl bg-slate-800 dark:bg-white text-white dark:text-slate-800 font-bold hover:opacity-90 transition-all">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    {{ __('Accept') }}
+                                </button>
+                            </form>
+                            <form action="{{ route('admin.technician-requests.refuse', $notification->data['request_id']) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="flex items-center gap-2 px-6 py-2 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-white font-bold hover:bg-slate-200 dark:hover:bg-white/20 transition-all">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                     {{ __('Refuse') }}
                                 </button>

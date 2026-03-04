@@ -2,8 +2,39 @@
 
 use App\Http\Controllers\AdminController;
 
+use App\Models\Service;
+use App\Models\Review;
+use App\Models\User;
+
 Route::get('/', function () {
-    return view('welcome');
+    $reviews = Review::with('user')
+        ->where('status', 'active')
+        ->where('rating', '>=', 4)
+        ->latest()
+        ->take(4)
+        ->get();
+
+    $services = Service::where('is_featured', true)
+        ->whereNull('parent_id')
+        ->take(4)
+        ->get();
+
+    // Stats for the badge
+    $happy_customers_count = Review::where('status', 'active')->distinct('user_id')->count('user_id');
+    if ($happy_customers_count < 10) {
+        $happy_customers_count = User::where('type', 'individual')->count();
+    }
+    
+    $average_rating = Review::where('status', 'active')->avg('rating') ?: 4.5;
+    $average_rating = number_format($average_rating, 1);
+
+    $sample_avatars = User::whereNotNull('avatar')
+        ->where('avatar', '!=', '')
+        ->latest()
+        ->take(3)
+        ->get();
+        
+    return view('welcome', compact('reviews', 'services', 'happy_customers_count', 'average_rating', 'sample_avatars'));
 });
 
 Route::prefix('admin')->group(function () {

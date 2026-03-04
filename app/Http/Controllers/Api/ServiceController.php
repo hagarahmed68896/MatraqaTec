@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Validator;
 
 class ServiceController extends Controller
 {
+    use \App\Traits\HandlesLocation;
+
     public function index(Request $request)
     {
         $query = Service::query();
@@ -70,10 +72,31 @@ class ServiceController extends Controller
             $query->where('price', '<=', $request->max_price);
         }
 
-        // Filter by city
-        if ($request->has('city_id')) {
-            $query->where('city_id', $request->city_id);
+        // Determine City ID for filtering
+        $cityId = $request->city_id;
+        
+        // 1. Detect from coordinates if provided
+        if ($request->filled('latitude') && $request->filled('longitude')) {
+            $detectedCityId = $this->detectCityFromCoords($request->latitude, $request->longitude);
+            if ($detectedCityId) {
+                $cityId = $detectedCityId;
+            }
         }
+        
+        // 2. Fallback to auth user's city if still null
+        if (!$cityId && auth('sanctum')->check()) {
+            $cityId = auth('sanctum')->user()->city_id;
+        }
+
+        // Filter by city (Technician availability in the city)
+        if ($cityId) {
+            $query->whereHas('technicians', function($q) use ($cityId) {
+                $q->whereHas('user', function($q2) use ($cityId) {
+                    $q2->where('city_id', $cityId)->where('status', 'active');
+                });
+            });
+        }
+
 
         // NEW: District Filter (OR Logic for multi-select)
         if ($request->filled('district_ids')) {
@@ -142,7 +165,16 @@ class ServiceController extends Controller
             }
         }
 
-        $services = $query->with(['children', 'city'])->get();
+        // Apply city filtering to child services as well if cityId is determined
+        $services = $query->with(['children' => function($q) use ($cityId) {
+            if ($cityId) {
+                $q->whereHas('technicians', function($q2) use ($cityId) {
+                    $q2->whereHas('user', function($q3) use ($cityId) {
+                        $q3->where('city_id', $cityId)->where('status', 'active');
+                    });
+                });
+            }
+        }, 'city'])->get();
 
         // Add is_favorite status
         $user = auth('sanctum')->user();

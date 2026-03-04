@@ -69,9 +69,25 @@ trait HasAutoAssignment
 
     /**
      * Suggest the next available time slot for a technician.
+     * Returns null if no technicians are assigned to this service at all.
      */
     protected function getSuggestedTime($serviceId, $cityId, $requestedTime)
     {
+        // First, check if there are ANY technicians for this service/category in the city
+        $service = Service::find($serviceId);
+        if (!$service) return null;
+        $categoryId = $service->parent_id ?? $service->id;
+
+        $hasAnyTech = Technician::whereHas('user', function($q) use ($cityId) {
+                $q->where('city_id', $cityId)->where('status', 'active');
+            })
+            ->where(function($q) use ($serviceId, $categoryId) {
+                $q->where('service_id', $serviceId)
+                  ->orWhere('category_id', $categoryId);
+            })->exists();
+
+        if (!$hasAnyTech) return null;
+
         $suggestion = (clone $requestedTime)->addHours(1);
         $attempts = 0;
         while ($attempts < 24) { 

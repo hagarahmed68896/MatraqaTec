@@ -291,19 +291,60 @@
                                 @forelse(($adminNotifications ?? [])->take(4) as $notification)
                                 <div class="notification-item p-4 border-b border-slate-50 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer relative group {{ $notification->read_at ? 'opacity-50' : '' }}">
                                     <div class="flex gap-3">
-                                        <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <div class="w-8 h-8 rounded-full bg-slate-900 dark:bg-white flex items-center justify-center text-white dark:text-slate-900 font-bold flex-shrink-0">
+                                            {{ strtoupper(substr($notification->data['title'] ?? 'N', 0, 1)) }}
                                         </div>
                                         <div class="flex-1">
                                             <p class="text-xs font-bold text-slate-800 dark:text-white mb-1">{{ $notification->data['title'] ?? __('Notification') }}</p>
-                                            <p class="text-[10px] text-slate-500 dark:text-slate-300 leading-relaxed">{{ Str::limit($notification->data['body'] ?? $notification->data['message'] ?? '', 50) }}</p>
-                                            <span class="text-[9px] text-slate-400 dark:text-slate-400 mt-2 block">{{ $notification->created_at->diffForHumans() }}</span>
+                                            <p class="text-[10px] text-slate-500 dark:text-slate-300 leading-relaxed mb-2">{{ Str::limit($notification->data['body'] ?? $notification->data['message'] ?? '', 100) }}</p>
+                                            
+                                            <!-- Actions for Technician Requests -->
+                                            @if(($notification->data['type'] ?? '') == 'technician_request' && isset($notification->data['request_id']))
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <form action="{{ route('admin.technician-requests.accept', $notification->data['request_id']) }}" method="POST" class="flex-1">
+                                                    @csrf
+                                                    <button type="submit" class="w-full py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-black transition-all">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                                        {{ __('Accept') }}
+                                                    </button>
+                                                </form>
+                                                <form action="{{ route('admin.technician-requests.refuse', $notification->data['request_id']) }}" method="POST" class="flex-1">
+                                                    @csrf
+                                                    <button type="submit" class="w-full py-1.5 bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-white rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-slate-300 dark:hover:bg-white/20 transition-all">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                                        {{ __('Refuse') }}
+                                                    </button>
+                                                </form>
+                                            </div>
+                                            @endif
+
+                                            <span class="text-[9px] text-slate-400 dark:text-slate-400 block">{{ $notification->created_at->diffForHumans() }}</span>
                                         </div>
-                                        @if(!$notification->read_at)
-                                        <button @click="markRead('{{ $notification->id }}', $event)" class="absolute top-4 {{ app()->getLocale() == 'ar' ? 'left-4' : 'right-4' }} text-slate-300 dark:text-slate-500 hover:text-green-500 opacity-0 group-hover:opacity-100 transition-all" title="{{ __('Mark as read') }}">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        </button>
-                                        @endif
+                                        
+                                        <!-- Dropdown Menu (...) next to the notification -->
+                                        <div class="absolute top-4 {{ app()->getLocale() == 'ar' ? 'left-4' : 'right-4' }}">
+                                            <div x-data="{ openMenu: false }" class="relative">
+                                                <button @click="openMenu = !openMenu" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors p-1">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
+                                                </button>
+                                                <div x-show="openMenu" @click.away="openMenu = false" class="absolute {{ app()->getLocale() == 'ar' ? 'left-0' : 'right-0' }} mt-1 w-36 bg-white dark:bg-[#1A1A31] rounded-lg shadow-xl border border-slate-100 dark:border-white/10 z-20 overflow-hidden" style="display: none;">
+                                                    @if(!$notification->read_at)
+                                                    <button @click="markRead('{{ $notification->id }}', $event)" class="w-full text-start px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                                        {{ __('Mark as read') }}
+                                                    </button>
+                                                    @endif
+                                                    <form action="{{ route('admin.notifications.destroy', $notification->id) }}" method="POST">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="w-full text-start px-3 py-2 text-[10px] font-bold text-red-500 hover:bg-red-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2">
+                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                            {{ __('Delete Notification') }}
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 @empty
