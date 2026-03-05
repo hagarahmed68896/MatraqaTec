@@ -51,11 +51,17 @@ class Order extends Model
 
     public function getTechnicianNameAttribute()
     {
+        if (is_array($this->technician)) {
+            return $this->technician['name'] ?? '';
+        }
         return $this->technician->user->name ?? ($this->technician->name ?? '');
     }
 
     public function getTechnicianAvatarAttribute()
     {
+        if (is_array($this->technician)) {
+            return $this->technician['image'] ?? null;
+        }
         if (!$this->technician || !$this->technician->user) return null;
         return $this->technician->user->avatar ? asset('storage/' . $this->technician->user->avatar) : null;
     }

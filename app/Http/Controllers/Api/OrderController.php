@@ -771,9 +771,13 @@ class OrderController extends Controller
             'type' => \App\Models\Notification::TYPE_WORK_FINISHED,
             'title_ar' => 'تم الانتهاء من العمل',
             'title_en' => 'Work Completed',
-            'body_ar' => 'لقد قام الفني بإنهاء العمل بنجاح. يمكنك الآن مراجعة الفاتورة',
-            'body_en' => 'The technician has successfully finished the work. You can now review the invoice',
-            'data' => ['order_id' => $order->id]
+            'body_ar' => 'لقد قام الفني بإنهاء العمل بنجاح. يمكنك الآن مراجعة الفاتورة وتقييم الخدمة',
+            'body_en' => 'The technician has successfully finished the work. You can now review the invoice and rate the service',
+            'data' => [
+                'order_id' => $order->id,
+                'technician_id' => $order->technician_id,
+                'can_rate' => true
+            ]
         ]);
 
         return response()->json([
@@ -1267,13 +1271,13 @@ class OrderController extends Controller
 
         return [
             'id' => $technician->id,
-            'name' => $technician->user->name ?? $technician->name_ar,
+            'name' => $technician->user?->name ?? $technician->name_ar,
             'maintenance_company_id' => $technician->maintenance_company_id,
             'order_count' => $technician->order_count ?? 0,
-            'image' => $technician->user->avatar ? asset('storage/' . $technician->user->avatar) : asset('assets/images/default-avatar.png'),
+            'image' => ($technician->user && $technician->user->avatar) ? asset('storage/' . $technician->user->avatar) : asset('assets/images/default-avatar.png'),
             'bio_en' => $technician->bio_en,
             'bio_ar' => $technician->bio_ar,
-            'servic_id' => $technician->service_id,
+            'service_id' => $technician->service_id,
             'category_id' => $technician->category_id,
             'avg_rating' => round($technician->reviews_avg_rating ?? 0, 1),
             'review_count' => $technician->reviews_count ?? 0,

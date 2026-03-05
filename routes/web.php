@@ -34,7 +34,9 @@ Route::get('/', function () {
         ->take(3)
         ->get();
         
-    return view('welcome', compact('reviews', 'services', 'happy_customers_count', 'average_rating', 'sample_avatars'));
+    $social_links = \App\Models\SocialLink::all();
+        
+    return view('welcome', compact('reviews', 'services', 'happy_customers_count', 'average_rating', 'sample_avatars', 'social_links'));
 });
 
 Route::prefix('admin')->group(function () {
