@@ -37,7 +37,18 @@ class Order extends Model
         'spare_parts_metadata' => 'array',
     ];
 
-    protected $appends = ['status_label', 'status_color', 'formatted_scheduled_date', 'formatted_scheduled_time', 'client_name', 'client_phone', 'technician_name', 'technician_avatar'];
+    protected $appends = ['status_label', 'status_color', 'formatted_scheduled_date', 'formatted_scheduled_time', 'client_name', 'client_phone', 'technician_name', 'technician_avatar', 'acceptance_duration_minutes', 'acceptance_expiry_time'];
+
+    public function getAcceptanceDurationMinutesAttribute()
+    {
+        return (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
+    }
+
+    public function getAcceptanceExpiryTimeAttribute()
+    {
+        if (!$this->assigned_at) return null;
+        return $this->assigned_at->copy()->addMinutes($this->acceptance_duration_minutes);
+    }
 
     public function getClientNameAttribute()
     {

@@ -133,6 +133,7 @@ class AuthController extends Controller
             'email' => 'required_without:phone|email',
             'phone' => 'required_without:email|string',
             'password' => 'required|string',
+            'required_type' => 'required|string|in:individual,technician,maintenance_company,corporate_customer',
         ]);
 
         if ($validator->fails()) {
@@ -160,6 +161,26 @@ class AuthController extends Controller
         }
 
         $user = Auth::user();
+
+        // Check if user type matches the required type if provided
+        if ($request->filled('required_type')) {
+            if ($user->type !== $request->required_type) {
+                // If it's a technician app but the user is an individual, or vice versa
+                $typeLabels = [
+                    'individual' => 'عميل',
+                    'technician' => 'فني',
+                    'maintenance_company' => 'شركة صيانة',
+                    'corporate_customer' => 'عميل شركات'
+                ];
+                $label = $typeLabels[$request->required_type] ?? $request->required_type;
+                
+                return response()->json([
+                    'status' => false,
+                    'message' => "عذراً، هذا الحساب غير مسجل كـ {$label}."
+                ], 403);
+            }
+        }
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         $profileData = $this->getProfileData($user);

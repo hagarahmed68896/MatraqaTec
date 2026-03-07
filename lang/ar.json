@@ -623,6 +623,7 @@
     "Sort by:": "الترتيب حسب:",
     "Spare Parts": "قطع غيار",
     "Spare Parts Cost": "تكاليف قطع الغيار",
+    "Specialized in": "متخصص في",
     "Specialist in": "متخصص في",
     "Specialist in maintenance services": "متخصص في خدمات الصيانة",
     "Specialization": "التخصص",
@@ -880,7 +881,7 @@
     "All rights reserved to our company.": "جميع الحقوق محفوظة لشركتنا.",
     "Ar": "عربي",
     "En": "إنجليزي",
-    "About Us": "من نحن",
+    "About Us": "نبذة عنا",
     "View Reviews": "للاطلاع على التقييمات",
     "Our platform connects you with thousands of trusted technicians, providing seamless access to all home services through our application.": "تتيح لك منصتنا التواصل مع آلاف المهنيين المعتمدين، مما يوفر وصولاً سلساً إلى جميع خدمات المنازل من خلال تطبيقنا.",
     "Find trusted technicians for your home tasks easily. We guarantee quality and speed in all repairs from plumbing to electricity.": "اعثر على فنيين موثوقين لمهام منزلك بسهولة. نضمن لك الجودة والسرعة في كافة الإصلاحات من السباكة إلى الكهرباء.",
@@ -889,5 +890,6 @@
     "Our platform is always available, connecting you with available specialists when needed.": "منصتنا متاحة دائماً وتربطك بالمتخصصين المتاحين عند الحاجة.",
     "Happy Customers": "عميل سعيد",
     "MatraqaTec is a leading service platform in the region that connects you with the best specialized technicians.": "مطرقة تك هي منصة خدمية رائدة بالمنطقة تربطك بأفضل الفنيين المتخصصين في أعمال الصيانة العامة بجودة وسرعة موثوقة.",
-    "All rights reserved.": "جميع الحقوق محفوظة"
+    "All rights reserved.": "جميع الحقوق محفوظة",
+    "Happy Users": "العملاء الراضين"
 }

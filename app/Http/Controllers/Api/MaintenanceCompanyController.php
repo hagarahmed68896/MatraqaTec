@@ -156,7 +156,7 @@ class MaintenanceCompanyController extends Controller
         $company = MaintenanceCompany::where('user_id', $user->id)->first();
         if (!$company) return response()->json(['status' => false, 'message' => 'Company not found'], 404);
 
-        $query = \App\Models\Technician::with(['user:id,name,avatar,phone,is_online', 'service:id,name_ar'])
+        $query = \App\Models\Technician::with(['user:id,name,avatar,phone,is_online', 'service:id,name_ar', 'maintenanceCompany', 'category'])
             ->where('maintenance_company_id', $company->id)
             ->withCount(['orders as completed_orders_count' => function($q) {
                 $q->where('status', 'completed');
@@ -216,9 +216,12 @@ class MaintenanceCompanyController extends Controller
 
         $technicians = $query->orderByDesc('completed_orders_count')->get();
         
-        $technicians->each(function($tech) {
+        $locale = app()->getLocale();
+        $technicians->each(function($tech) use ($locale) {
             $tech->name = $tech->name ?? $tech->name_ar ?? $tech->name_en;
-            $tech->makeHidden(['name_ar', 'name_en']);
+            $tech->company_name = $locale == 'ar' ? ($tech->maintenanceCompany?->company_name_ar ?? $tech->maintenanceCompany?->name) : ($tech->maintenanceCompany?->company_name_en ?? $tech->maintenanceCompany?->name);
+            $tech->specialty = $tech->category ? (__('Specialized in') . ' ' . ($locale == 'ar' ? $tech->category->name_ar : ($tech->category->name_en ?? $tech->category->name_ar))) : null;
+            $tech->makeHidden(['name_ar', 'name_en', 'maintenanceCompany', 'category']);
         });
 
         return response()->json(['status' => true, 'message' => 'Technicians retrieved', 'data' => $technicians]);
@@ -326,7 +329,7 @@ class MaintenanceCompanyController extends Controller
 
         $limit = $request->get('limit', 5);
 
-        $technicians = \App\Models\Technician::with(['user:id,name,avatar,phone,is_online', 'service:id,name_ar'])
+        $technicians = \App\Models\Technician::with(['user:id,name,avatar,phone,is_online', 'service:id,name_ar', 'maintenanceCompany', 'category'])
             ->where('maintenance_company_id', $company->id)
             ->withCount(['orders as completed_orders_count' => function($q) {
                 $q->where('status', 'completed');
@@ -339,9 +342,12 @@ class MaintenanceCompanyController extends Controller
             ->take($limit)
             ->values();
 
-        $technicians->each(function($tech) {
+        $locale = app()->getLocale();
+        $technicians->each(function($tech) use ($locale) {
             $tech->name = $tech->name ?? $tech->name_ar ?? $tech->name_en;
-            $tech->makeHidden(['name_ar', 'name_en']);
+            $tech->company_name = $locale == 'ar' ? ($tech->maintenanceCompany?->company_name_ar ?? $tech->maintenanceCompany?->name) : ($tech->maintenanceCompany?->company_name_en ?? $tech->maintenanceCompany?->name);
+            $tech->specialty = $tech->category ? (__('Specialized in') . ' ' . ($locale == 'ar' ? $tech->category->name_ar : ($tech->category->name_en ?? $tech->category->name_ar))) : null;
+            $tech->makeHidden(['name_ar', 'name_en', 'maintenanceCompany', 'category']);
         });
 
         return response()->json([
@@ -369,7 +375,9 @@ class MaintenanceCompanyController extends Controller
             'service:id,name_ar,name_en,parent_id',
             'service.parent:id,name_ar,name_en',
             'reviews.user:id,name,avatar',
-            'reviews.order:id,order_number'
+            'reviews.order:id,order_number',
+            'maintenanceCompany',
+            'category'
         ])
         ->where('id', $id)
         ->where('maintenance_company_id', $company->id)
@@ -400,6 +408,10 @@ class MaintenanceCompanyController extends Controller
             'average_rating' => round($technician->reviews_avg_rating ?? 0, 1),
             'total_reviews' => $technician->reviews->count(),
         ];
+
+        $locale = app()->getLocale();
+        $data['company_name'] = $locale == 'ar' ? ($technician->maintenanceCompany?->company_name_ar ?? $technician->maintenanceCompany?->name) : ($technician->maintenanceCompany?->company_name_en ?? $technician->maintenanceCompany?->name);
+        $data['specialty'] = $technician->category ? (__('Specialized in') . ' ' . ($locale == 'ar' ? $technician->category->name_ar : ($technician->category->name_en ?? $technician->category->name_ar))) : null;
 
         // Format reviews
         $data['reviews'] = $technician->reviews->map(function($review) {
@@ -656,7 +668,7 @@ class MaintenanceCompanyController extends Controller
             'scheduled_at' => 'nullable|date',
         ]);
 
-        $query = \App\Models\Technician::with(['user:id,name,avatar,phone,is_online', 'service:id,name_ar,name_en'])
+        $query = \App\Models\Technician::with(['user:id,name,avatar,phone,is_online', 'service:id,name_ar,name_en', 'maintenanceCompany', 'category'])
             ->where('maintenance_company_id', $company->id);
 
         // Filter by service if provided
@@ -705,16 +717,19 @@ class MaintenanceCompanyController extends Controller
             ->values();
 
         // Format response
-        $technicians = $technicians->map(function($tech) {
+        $locale = app()->getLocale();
+        $technicians = $technicians->map(function($tech) use ($locale) {
             return [
                 'id' => $tech->id,
-                'name' => $tech->user->name ?? $tech->name_ar,
+                'name' => $tech->user->name ?? ($locale == 'ar' ? $tech->name_ar : ($tech->name_en ?? $tech->name_ar)),
                 'avatar' => $tech->user->avatar ? asset('storage/' . $tech->user->avatar) : null,
                 'phone' => $tech->user->phone,
                 'rating' => round($tech->reviews_avg_rating ?? 0, 1),
                 'is_online' => $tech->user->is_online ?? false,
                 'districts' => $tech->districts,
-                'service_name' => $tech->service->name_ar ?? '',
+                'service_name' => $locale == 'ar' ? ($tech->service->name_ar ?? '') : ($tech->service->name_en ?? $tech->service->name_ar ?? ''),
+                'company_name' => $locale == 'ar' ? ($tech->maintenanceCompany?->company_name_ar ?? $tech->maintenanceCompany?->name) : ($tech->maintenanceCompany?->company_name_en ?? $tech->maintenanceCompany?->name),
+                'specialty' => $tech->category ? (__('Specialized in') . ' ' . ($locale == 'ar' ? $tech->category->name_ar : ($tech->category->name_en ?? $tech->category->name_ar))) : null,
             ];
         });
 

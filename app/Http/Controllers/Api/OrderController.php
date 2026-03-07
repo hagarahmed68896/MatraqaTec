@@ -84,6 +84,18 @@ class OrderController extends Controller
                 // في الطريق, وصل, مجدولة, بدأ العمل
                 // Maps to: accepted, scheduled, in_progress (and sub_status variations)
                 $query->whereIn('status', ['accepted', 'scheduled', 'in_progress']);
+                
+                // For technicians, hide 'scheduled' orders that have expired (assigned more than the admin-defined duration ago and not accepted)
+                if ($user->type === 'technician') {
+                    $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
+                    $query->where(function($q) use ($duration) {
+                        // Orders that are currently scheduled but haven't expired
+                        $q->where('status', 'scheduled')
+                          ->where('assigned_at', '>=', now()->subMinutes($duration))
+                          // OR orders that are already accepted/in_progress (they don't expire)
+                          ->orWhereIn('status', ['accepted', 'in_progress']);
+                    });
+                }
             }
         }
 
@@ -345,7 +357,7 @@ class OrderController extends Controller
     {
         $user = auth()->user();
         $query = Order::with(['user', 'technician' => function($q) {
-                        $q->withAvg('reviews', 'rating')->withCount('reviews');
+                        $q->with(['maintenanceCompany', 'category'])->withAvg('reviews', 'rating')->withCount('reviews');
                     }, 'service.parent', 'attachments', 'reviews', 'payments', 'appointments'])
                     ->where('id', $id);
 
@@ -1043,6 +1055,8 @@ class OrderController extends Controller
             $order->technician_id = $request->technician_id;
             $order->assigned_at = now(); // Start the timer for the technician
 
+            $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
+        
             // Notify Technician
             $tech = \App\Models\Technician::find($request->technician_id);
             if ($tech && $tech->user_id) {
@@ -1050,8 +1064,8 @@ class OrderController extends Controller
                     'type' => \App\Models\Notification::TYPE_NEW_ORDER ?? 'new_order',
                     'title_ar' => 'مهمة جديدة',
                     'title_en' => 'New Task Assigned',
-                    'body_ar' => 'تم تعيين مهمة جديدة لك، يرجى القبول أو الرفض خلال 15 دقيقة',
-                    'body_en' => 'You have been assigned a new task. Please accept or reject within 15 minutes',
+                    'body_ar' => "تم تعيين مهمة جديدة لك، يرجى القبول أو الرفض خلال $duration دقيقة",
+                    'body_en' => "You have been assigned a new task. Please accept or reject within $duration minutes",
                     'data' => ['order_id' => $order->id]
                 ]);
             }
@@ -1093,9 +1107,10 @@ class OrderController extends Controller
             return response()->json(['status' => false, 'message' => 'Order is not assigned to you'], 403);
         }
 
-        // 15-minute expiration check
-        if ($order->assigned_at && $order->assigned_at->diffInMinutes(now()) > 15) {
-            return response()->json(['status' => false, 'message' => 'Order request expired (15 minutes limit)'], 422);
+        // Expiration check using dynamic duration
+        $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
+        if ($order->assigned_at && $order->assigned_at->diffInMinutes(now()) > $duration) {
+            return response()->json(['status' => false, 'message' => "Order request expired ($duration minutes limit)"], 422);
         }
 
         if ($order->status !== 'scheduled') { // Assuming 'scheduled' is the state when assigned by company/admin
@@ -1153,7 +1168,7 @@ class OrderController extends Controller
         // But maybe we don't block refusal if expired.
 
         $request->validate([
-            'rejection_reason' => 'required|string|max:500',
+            'rejection_reason' => 'nullable|string|max:500',
         ]);
 
         $order->technician_id = null; // Unassign
@@ -1179,8 +1194,8 @@ class OrderController extends Controller
                     'type' => \App\Models\Notification::TYPE_ORDER_REJECTED,
                     'title_ar' => 'الفني رفض المهمة',
                     'title_en' => 'Technician Rejected Task',
-                    'body_ar' => "قام الفني {$technician->name_ar} برفض المهمة رقم {$order->order_number}. السبب: {$request->rejection_reason}",
-                    'body_en' => "Technician {$technician->name_en} rejected task #{$order->order_number}. Reason: {$request->rejection_reason}",
+                    'body_ar' => "قام الفني {$technician->name_ar} برفض المهمة رقم {$order->order_number}." . ($request->rejection_reason ? " السبب: {$request->rejection_reason}" : ""),
+                    'body_en' => "Technician {$technician->name_en} rejected task #{$order->order_number}." . ($request->rejection_reason ? " Reason: {$request->rejection_reason}" : ""),
                     'data' => ['order_id' => $order->id]
                 ]);
             }
@@ -1207,7 +1222,7 @@ class OrderController extends Controller
         }
 
         $request->validate([
-            'rejection_reason' => 'required|string|max:500',
+            'rejection_reason' => 'nullable|string|max:500',
         ]);
 
         $order->status = 'rejected';
@@ -1215,12 +1230,15 @@ class OrderController extends Controller
         $order->save();
 
         // Notify client
+        $reasonAr = $order->rejection_reason ? (' للسبب التالي: ' . $order->rejection_reason) : '';
+        $reasonEn = $order->rejection_reason ? (' for: ' . $order->rejection_reason) : '';
+
         $this->sendNotification($order->user_id, [
             'type' => \App\Models\Notification::TYPE_ORDER_REJECTED,
             'title_ar' => 'تم رفض طلبك',
             'title_en' => 'Your order was rejected',
-            'body_ar' => 'نعتذر، تم رفض طلبك للسبب التالي: ' . $order->rejection_reason,
-            'body_en' => 'Sorry, your order was rejected for: ' . $order->rejection_reason,
+            'body_ar' => 'نعتذر، تم رفض طلبك' . $reasonAr,
+            'body_en' => 'Sorry, your order was rejected' . $reasonEn,
             'data' => ['order_id' => $order->id]
         ]);
 
@@ -1269,10 +1287,13 @@ class OrderController extends Controller
     {
         if (!$technician) return null;
 
+        $locale = app()->getLocale();
         return [
             'id' => $technician->id,
-            'name' => $technician->user?->name ?? $technician->name_ar,
+            'name' => $technician->user?->name ?? ($locale == 'ar' ? $technician->name_ar : ($technician->name_en ?? $technician->name_ar)),
             'maintenance_company_id' => $technician->maintenance_company_id,
+            'company_name' => $locale == 'ar' ? ($technician->maintenanceCompany?->company_name_ar ?? $technician->maintenanceCompany?->name) : ($technician->maintenanceCompany?->company_name_en ?? $technician->maintenanceCompany?->name),
+            'specialty' => $technician->category ? (__('Specialized in') . ' ' . ($locale == 'ar' ? $technician->category->name_ar : ($technician->category->name_en ?? $technician->category->name_ar))) : null,
             'order_count' => $technician->order_count ?? 0,
             'image' => ($technician->user && $technician->user->avatar) ? asset('storage/' . $technician->user->avatar) : asset('assets/images/default-avatar.png'),
             'bio_en' => $technician->bio_en,

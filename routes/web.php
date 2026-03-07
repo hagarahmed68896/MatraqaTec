@@ -14,16 +14,27 @@ Route::get('/', function () {
         ->take(4)
         ->get();
 
-    $services = Service::where('is_featured', true)
-        ->whereNull('parent_id')
-        ->take(4)
+    $services = Service::whereNull('parent_id')
+        ->whereNotNull('icon')
+        ->latest()
+        ->take(6)
         ->get();
 
-    // Stats for the badge
-    $happy_customers_count = Review::where('status', 'active')->distinct('user_id')->count('user_id');
-    if ($happy_customers_count < 10) {
-        $happy_customers_count = User::where('type', 'individual')->count();
+    if ($services->count() < 6) {
+        $extraServices = Service::whereNull('parent_id')
+            ->whereNull('icon')
+            ->latest()
+            ->take(6 - $services->count())
+            ->get();
+        $services = $services->concat($extraServices);
     }
+
+    // Stats for the badge
+    $individual_users_count = User::where('type', 'individual')->count();
+    $happy_customers_count = Review::where('status', 'active')->distinct('user_id')->count('user_id');
+    
+    // Total interactions or users
+    $happy_customers_count = max($individual_users_count, $happy_customers_count, 120); // Small base for better UI
     
     $average_rating = Review::where('status', 'active')->avg('rating') ?: 4.5;
     $average_rating = number_format($average_rating, 1);

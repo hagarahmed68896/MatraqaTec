@@ -23,7 +23,7 @@
      :class=" scrolled ? 'bg-white dark:bg-[#1A1A31] shadow-lg' : 'bg-white dark:bg-[#1A1A31] border-b border-slate-100 dark:border-slate-800 shadow-sm'"
      class="w-full z-50 transition-all duration-500 ">
 
-<div class="max-w-6xl mx-auto px-6 h-20 flex justify-between items-center flex-row-reverse">            <!-- Logo (Right in RTL) -->
+<div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center flex-row-reverse">            <!-- Logo (Right in RTL) -->
             <a href="#" class="flex items-center">
                 <img src="{{ asset('assets/images/41b68e035292ba7aa97a9bb8b16143cb90992358.png') }}" class="h-10 object-contain" alt="MatraqaTec">
             </a>
@@ -70,7 +70,7 @@
 
     <!-- Hero Section -->
     <section class="hero-bg dark:bg-[#111122] transition-colors duration-300 relative pt-40 lg:pt-48 pb-10 overflow-hidden flex items-center">
-        <div class="max-w-6xl mx-auto px-6 relative z-10 flex flex-col lg:flex-row items-center justify-center gap-12 w-full">
+        <div class="max-w-7xl mx-auto px-6 relative z-10 flex flex-col lg:flex-row items-center justify-center gap-12 w-full">
            
             <!-- Hero Content (Right side) -->
             <div class="flex-1 space-y-8 pb-20 lg:pb-32">
@@ -99,15 +99,14 @@
              
             <!-- Hero Graphics (Phone Mockup - Left side) -->
             <div class="flex-1 relative w-full flex justify-center lg:justify-end">
-                <div class="relative w-[280px]  rounded-[1rem] border-[12px] border-[#1A1A31] dark:border-slate-800 overflow-hidden flex flex-col duration-500">
+                <div class="relative w-[350px]  rounded-[1rem] border-[12px] border-[#1A1A31] dark:border-slate-800 overflow-hidden flex flex-col duration-500">
                     <!-- Notch / Dynamic Island -->
                     <div class="absolute top-0 inset-x-0 h-10 flex justify-center z-30">
-                        <div class="mt-3 w-24 h-6 bg-[#1A1A31] dark:bg-slate-800 rounded-full"></div>
+                        <div class="mt-3 w-32 h-6 bg-[#1A1A31] dark:bg-slate-800 rounded-full"></div>
                     </div>
                     
-                    <!-- Content -->
                     <div class="flex-1 w-full px-1 pb-1 flex flex-col relative rounded-b-[2.5rem] overflow-hidden">
-                        <img src="{{ asset('assets/images/Screenshot 2026-03-02 124457.png') }}" class="w-full h-full object-cover object-bottom rounded-b-[2rem]" alt="App Preview">
+                        <img src="{{ asset('assets/images/Screenshot 2026-03-02 124457.png') }}" class="w-[110%] max-w-none transform ltr:-translate-x-4 rtl:translate-x-4 h-full object-cover object-bottom rounded-b-[2rem]" alt="App Preview">
                     </div>
                 </div>
             </div>
@@ -116,8 +115,8 @@
     </section>
 
     <!-- Features Section -->
-    <section class="dark:bg-[#1A1A31] transition-colors duration-300 py-12 relative z-20">
-        <div class="max-w-6xl mx-auto px-6">
+    <section class="dark:bg-[#1A1A31] transition-colors duration-300 py-10 relative z-20">
+        <div class="max-w-7xl mx-auto px-6">
             <div class="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
          <!-- Text Side -->
                 <div class="flex-1 space-y-10 ">
@@ -133,7 +132,7 @@
 
                     <div class="space-y-8 pt-4">
                         <div class="flex gap-6 items-start text-right group">
-                            <div class="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-200">
+                            <div class="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-200">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                             </div>
                             <div>
@@ -142,7 +141,7 @@
                             </div>
                         </div>
                         <div class="flex gap-6 items-start text-right group">
-                            <div class="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-200">
+                            <div class="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-200">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                             </div>
                             <div>
@@ -151,58 +150,80 @@
                             </div>
                         </div>
                     </div>
-                </div>           
-    <!-- Graphic Side -->
-<div class="flex-1 w-full flex justify-center items-center relative">
+                </div>  
+                
+
+
+            <!-- Graphic Side -->
+           <div class="flex-1 relative w-full flex justify-center py-10 lg:pl-10">
     
-    <div class="relative w-[260px] md:w-[280px] z-30 group">
-     <div class="w-full rounded-[1.8rem] relative">
-    <img src="{{ asset('assets/images/iphone13.png') }}" class="w-30 h-30"
-         alt="App Preview">
-</div>
+               <!-- Main Wrapper for Graphic and Overlays -->
+               <div class="relative w-[280px] sm:w-[320px]">
+                   
+                   <!-- Phone Mockup Frame -->
+                   <div class="relative w-full rounded-[3rem] border-[12px] border-[#1A1A31] dark:border-slate-800 overflow-hidden flex flex-col z-30 bg-white shadow-2xl h-[500px]">
+             
+                       <!-- Image -->
+                       <img src="{{ asset('assets/images/iphone13_4_283x570.png') }}" 
+                            class="w-[110%] max-w-none transform -translate-x-4 h-full object-cover object-bottom" 
+                            alt="App Preview">
+                   </div>
+
+                   <!-- Bottom Left Card (Happy Users) -->
+                   <div class="absolute bg-white dark:bg-slate-800/95  px-5 py-4 rounded-3xl 
+                   shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] items-center
+                  border border-slate-100 dark:border-slate-700 z-50 transform 
+                   hover:scale-105 transition-all duration-300"
+                        style="bottom: 10%; right: auto; left: -45%; width: max-content;">
+                       <div class="flex -space-x-3 rtl:space-x-reverse">
+                           @foreach($sample_avatars->take(5) as $user)
+                               <img src="{{ asset($user->avatar) }}" class="w-10 h-10 rounded-full border-2 border-white dark:border-slate-800 object-cover shadow-sm">
+                           @endforeach
+                       </div>
+                       <div class="flex flex-col text-right mt-2">
+                           <div class="flex items-center justify-end gap-1 mb-0.5">
+                                                                                     <p class="text-[12px] font-bold text-slate-600 dark:text-slate-300 uppercase leading-none">{{ __('العملاء الراضين') }}</p>   
+                           <span class="text-xs text-yellow-400">★</span>
+                               <span class="text-sm font-black text-[#1A1A31] dark:text-white">4.5</span>
+
+                           </div>
+                       </div>
+                   </div>
+
+                   <!-- Top Right Card (Services) -->
+                   <div class="flex absolute bg-white dark:bg-slate-800/95 rounded-3xl p-5 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.15)]
+                    border border-slate-100 dark:border-slate-700 z-50 transform 
+                    hover:-translate-y-2 hover:scale-105 transition-all duration-300"
+                        style="top: 25%; left: auto; right: -40%; width: max-content;">
+                       <div class="flex gap-4 w-full">
+                           @foreach($services->take(4) as $service)
+                               <div class="flex flex-col items-center justify-center gap-2">
+                                   <div class="w-10 h-10 bg-slate-50 dark:bg-slate-700/50 rounded-2xl flex items-center justify-center shadow-sm border border-slate-100/50 dark:border-slate-600">
+                                       @if($service->icon)
+                                           <img src="{{ asset($service->icon) }}" class="w-6 h-6 object-contain">
+                                       @else
+                                           <span class="text-lg">🛠️</span>
+                                       @endif
+                                   </div>
+                                   <span class="text-[10px] whitespace-nowrap font-bold text-[#1A1A31] dark:text-slate-300 text-center leading-tight">
+                                       {{ app()->getLocale() == 'ar' ? $service->name_ar : $service->name_en }}
+                                   </span>
+                               </div>
+                           @endforeach
+                       </div>
+                   </div>
+
+               </div>
+           </div>
+
+            </div>
+        </div>
         
-        <div class="absolute top-8 left-1  w-24 h-5 bg-slate-900 rounded-b-xl z-20"></div>
-    </div>
-
-    <div class="hidden lg:block absolute -right-8 top-1/4 w-[200px] bg-white/90 dark:bg-slate-800/95 backdrop-blur-md rounded-2xl p-4 shadow-2xl border border-slate-100 dark:border-slate-700 z-30 transform hover:-translate-y-2 transition-all duration-300">
-        <p class="text-[12px] font-bold mb-3 text-slate-400 uppercase tracking-wider">{{ __('Our Services') }}</p>
-        <div class="grid grid-cols-3 gap-3">
-            @foreach($services->take(6) as $service)
-                <div class="flex flex-col items-center gap-1">
-                    <div class="w-10 h-10 bg-emerald-50 dark:bg-slate-700 rounded-xl flex items-center justify-center shadow-sm">
-                        @if($service->icon)
-                            <img src="{{ asset($service->icon) }}" class="w-6 h-6 object-contain">
-                        @else
-                            <span class="text-xl">🛠️</span>
-                        @endif
-                    </div>
-                </div>
-            @endforeach
-        </div>
-    </div>
-
-    <div class="absolute -bottom-6 -left-4 bg-white/90 dark:bg-slate-800/95 backdrop-blur-md px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-100 dark:border-slate-700 z-30 transform hover:scale-105 transition-all duration-300">
-        <div class="flex -space-x-3">
-            @foreach($sample_avatars->take(3) as $user)
-                <img src="{{ asset($user->avatar) }}" class="w-10 h-10 rounded-full border-2 border-white dark:border-slate-800 object-cover shadow-md">
-            @endforeach
-        </div>
-        <div>
-            <div class="flex items-center gap-1">
-                <span class="text-sm font-black text-[#1A1A31] dark:text-white">+{{ $happy_customers_count }}</span>
-                <span class="text-xs text-orange-400">★</span>
-            </div>
-            <p class="text-[10px] font-bold text-slate-400 uppercase leading-none">{{ __('Happy Users') }}</p>
-        </div>
-    </div>
-</div>  
-            </div>
-        </div>
     </section>
 
     <!-- Testimonials Section -->
-    <section class="bg-white dark:bg-[#111122] transition-colors duration-300 py-20 border-t border-slate-100 dark:border-slate-800">
-        <div class="max-w-6xl mx-auto px-6">
+    <section class="bg-white dark:bg-[#111122] transition-colors duration-300 py-12">
+        <div class="max-w-7xl mx-auto px-6">
 
             <!-- Header -->
             <div class="text-center mb-16">
@@ -223,25 +244,62 @@
                 ]);
             @endphp
 
-            <div x-data="{ current: 0, total: {{ count($reviewItems) }}, perPage: 4 }" class="relative">
+            <div x-data="{ 
+                current: 0, 
+                total: {{ count($reviewItems) }},
+                perPage: 4,
+                updatePerPage() {
+                    if (window.innerWidth < 768) this.perPage = 1;
+                    else if (window.innerWidth < 1024) this.perPage = 2;
+                    else this.perPage = 4;
+                },
+                next() {
+                    if (this.current < this.total - this.perPage) {
+                        this.current++;
+                    } else {
+                        this.current = 0;
+                    }
+                },
+                prev() {
+                    if (this.current > 0) {
+                        this.current--;
+                    } else {
+                        this.current = Math.max(0, this.total - this.perPage);
+                    }
+                }
+            }" 
+            x-init="updatePerPage(); window.addEventListener('resize', () => updatePerPage())"
+            class="relative group">
 
-                <!-- Navigation Arrow (Left) -->
-                <button @click="current = current > 0 ? current - 1 : 0"
-                        class="absolute -left-5 top-1/2 -translate-y-1/2 w-10 h-10 bg-white dark:bg-slate-800 rounded-full shadow-lg border border-slate-100 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:text-[#1A1A31] dark:hover:text-white transition-all z-10 hover:scale-105">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- Navigation Arrow (Left - Dark) -->
+                <button x-show="total > perPage" 
+                        @click="prev()"
+                        class="absolute -left-6 top-1/2 -translate-y-1/2 w-14 h-14 bg-[#1A1A31] text-white rounded-full shadow-2xl flex items-center justify-center transition-all z-20 hover:scale-110 active:scale-95">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
                 </button>
 
+                <!-- Navigation Arrow (Right - White) -->
+                <button x-show="total > perPage"
+                        @click="next()"
+                        class="absolute -right-6 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-[#1A1A31] border border-slate-100 dark:border-slate-700 rounded-full shadow-xl flex items-center justify-center transition-all z-20 hover:scale-110 active:scale-95">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
+
                 <!-- Cards Container -->
-                <div class="overflow-hidden">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="overflow-hidden px-4 pb-8 -mb-8">
+                    <div class="flex transition-transform duration-500 ease-out gap-8"
+                         :style="'transform: translateX(calc(' + (current * (document.documentElement.dir === \'rtl\' ? 1 : -1)) + ' * (100% + 2rem) / ' + perPage + '))'">
                         @foreach($reviewItems as $review)
-                            <div class="bg-white dark:bg-slate-800/50 rounded-2xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
-                                <!-- Top: Avatar + Name + Stars -->
-                                <div class="flex items-center gap-4 mb-4 flex-row-reverse text-right">
+                            <div class="flex-shrink-0 bg-white dark:bg-slate-800/40 rounded-[2rem] p-8 border border-slate-50 dark:border-slate-700/50 shadow-sm hover:shadow-xl transition-all duration-500"
+                                 :style="'width: calc((100% - (' + (perPage - 1) + ' * 2rem)) / ' + perPage + ')'">
+                                <!-- Top: Avatar + (Name & Stars) in RTL -->
+                                <div class="flex items-center gap-5 mb-6 flex-row-reverse text-right">
                                     <!-- Avatar -->
-                                    <div class="w-12 h-12 rounded-full bg-[#1A1A31] dark:bg-slate-700 text-white flex items-center justify-center font-black text-lg flex-shrink-0 overflow-hidden shadow-md">
+                                    <div class="w-16 h-16 rounded-full bg-[#1A1A31] dark:bg-slate-700 text-white flex items-center justify-center font-black text-2xl flex-shrink-0 overflow-hidden shadow-lg border-2 border-white dark:border-slate-800">
                                         @if($review->user && $review->user->avatar)
                                             <img src="{{ asset($review->user->avatar) }}" class="w-full h-full object-cover">
                                         @else
@@ -250,16 +308,18 @@
                                     </div>
                                     <!-- Name + Stars -->
                                     <div class="flex-1">
-                                        <h4 class="font-bold text-[#1A1A31] dark:text-white text-sm leading-tight mb-1">{{ $review->user->name ?? __('User') }}</h4>
-                                        <div class="flex gap-0.5">
+                                        <h4 class="font-bold text-[#1A1A31] dark:text-white text-lg leading-tight mb-2">{{ $review->user->name ?? __('User') }}</h4>
+                                        <div class="flex gap-0.5 justify-end">
                                             @for($i = 0; $i < 5; $i++)
-                                                <span class="text-sm text-[#FFB300] {{ $i < $review->rating ? 'text-yellow-400' : 'text-yellow-400 dark:text-slate-600' }}">★</span>
+                                                <span class="text-lg {{ $i < ($review->rating ?? 5) ? 'text-yellow-400' : 'text-slate-200 dark:text-slate-600' }}">★</span>
                                             @endfor
                                         </div>
                                     </div>
                                 </div>
                                 <!-- Comment -->
-                                <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed text-right italic line-clamp-4">"{{ $review->comment }}"</p>
+                                <p class="text-slate-500 dark:text-slate-400 text-sm leading-[1.8] text-center italic">
+                                    "{{ $review->comment }}"
+                                </p>
                             </div>
                         @endforeach
                     </div>
@@ -269,8 +329,8 @@
         </div>
     </section>
 
- <section class="bg-white mb-8 dark:bg-[#1A1A31] transition-colors duration-300 py-16">
-    <div class="max-w-6xl mx-auto px-6">
+ <section class="bg-white mb-8 dark:bg-[#1A1A31] transition-colors duration-300 py-20">
+    <div class="max-w-7xl mx-auto px-6">
         <div class="hero-bg dark:bg-[#111122] rounded-[3rem] relative border-4 border-white dark:border-slate-800 shadow-2xl">
 
             {{-- ═══════════════════════════════════════ --}}
@@ -338,18 +398,18 @@
                 </div>
 
                 {{-- Staggered phones --}}
-                <div class="flex-1 relative h-72">
+                <div class="flex-1" style="position: relative;">
                     {{-- Phone 1: rises above the card (uses -translate-y so it pops above) --}}
-                    <div class="absolute bottom-4 left-0 w-56 h-96 z-10 -translate-y-16">
+                    <div style="position: absolute; left: 0;  width: 224px; z-index: 10;">
                         <div class="overflow-hidden h-full rounded-[2.5rem] border-8 border-[#1A1A31] shadow-2xl bg-[#C8C9E0]">
-                            <img src="{{ asset('assets/images/iphone13 (2).png') }}"
+                            <img src="{{ asset('assets/images/iphone13 (1).png') }}"
                                  class="w-full h-full object-cover object-top" alt="App Preview Top">
                         </div>
                     </div>
                     {{-- Phone 2: sits at bottom edge --}}
-                    <div class="absolute bottom-0 right-0 w-56 h-80 z-20">
+                    <div style="position: absolute; bottom: 0; right: 0; width: 224px; height: 320px; z-index: 20;">
                         <div class="overflow-hidden h-full rounded-[2.5rem] border-8 border-[#1A1A31] shadow-2xl bg-[#C8C9E0]">
-                            <img src="{{ asset('assets/images/iphone13 (1).png') }}"
+                            <img src="{{ asset('assets/images/iphone13 (2).png') }}"
                                  class="w-full h-full object-cover object-top" alt="App Preview Bottom">
                         </div>
                     </div>
@@ -363,7 +423,7 @@
 
     <!-- Footer -->
     <footer class="bg-[#1A1A31] dark:bg-[#0B0B1A] pt-20 pb-12 text-white transition-colors duration-300 border-t-4 border-white/10 dark:border-white/5">
-        <div class="max-w-6xl mx-auto px-6">
+        <div class="max-w-7xl mx-auto px-6">
             <div class="flex flex-col items-center text-center space-y-10 mb-20">
                 <img src="{{ asset('assets/images/9802a3c60b5a7d4a948f48f2ddfe26cb7d01812f (1).png') }}" class="h-24 mb-4 mt-8 invert" alt="MatraqaTec">
                 <p class="text-slate-300 text-lg mb-4 font-medium max-w-2xl mx-auto leading-relaxed italic opacity-80">
