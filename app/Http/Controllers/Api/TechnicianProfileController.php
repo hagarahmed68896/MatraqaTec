@@ -262,12 +262,24 @@ class TechnicianProfileController extends Controller
         // Order Tabs filtering
         $statusTab = $request->input('tab', 'all'); 
         
+        // Auto-detach expired unaccepted orders for all technicians before retrieving the list
+        $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
+        \App\Models\Order::whereNotNull('technician_id')
+            ->whereIn('status', ['new', 'scheduled'])
+            ->where('assigned_at', '<', now()->subMinutes($duration))
+            ->update([
+                'technician_id' => null,
+                'status' => 'new',
+                'assigned_at' => null
+            ]);
+
         $assignedQuery = Order::where('technician_id', $technician->id ?? null);
-        
+
         // For independent technicians, "New" orders are those in their city/specialty not yet assigned
         if ($technician && !$technician->maintenance_company_id) {
             $newOrdersQuery = Order::where('status', 'new')
                 ->where('city_id', $user->city_id)
+                ->whereNull('technician_id') // Ensure it's not already assigned to someone else
                 ->where(function($q) use ($technician) {
                     $q->where('service_id', $technician->service_id)
                       ->orWhereHas('service', function($q2) use ($technician) {

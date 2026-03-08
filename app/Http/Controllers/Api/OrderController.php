@@ -17,6 +17,17 @@ class OrderController extends Controller
         $user = $request->user();
         if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
 
+        // Auto-detach expired unaccepted orders for all technicians before retrieving the list
+        $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
+        \App\Models\Order::whereNotNull('technician_id')
+            ->whereIn('status', ['new', 'scheduled'])
+            ->where('assigned_at', '<', now()->subMinutes($duration))
+            ->update([
+                'technician_id' => null,
+                'status' => 'new',
+                'assigned_at' => null
+            ]);
+
         $query = Order::with(['user', 'technician' => function($q) {
             $q->withAvg('reviews', 'rating')->withCount('reviews');
         }, 'technician.user', 'service.parent']);
@@ -84,18 +95,6 @@ class OrderController extends Controller
                 // في الطريق, وصل, مجدولة, بدأ العمل
                 // Maps to: accepted, scheduled, in_progress (and sub_status variations)
                 $query->whereIn('status', ['accepted', 'scheduled', 'in_progress']);
-                
-                // For technicians, hide 'scheduled' orders that have expired (assigned more than the admin-defined duration ago and not accepted)
-                if ($user->type === 'technician') {
-                    $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
-                    $query->where(function($q) use ($duration) {
-                        // Orders that are currently scheduled but haven't expired
-                        $q->where('status', 'scheduled')
-                          ->where('assigned_at', '>=', now()->subMinutes($duration))
-                          // OR orders that are already accepted/in_progress (they don't expire)
-                          ->orWhereIn('status', ['accepted', 'in_progress']);
-                    });
-                }
             }
         }
 

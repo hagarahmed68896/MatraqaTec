@@ -66,10 +66,11 @@
                 </a>
             </div>
         </div>
-    </nav>
+</nav>
 
     <!-- Hero Section -->
-    <section class="hero-bg dark:bg-[#111122] transition-colors duration-300 relative pt-40 lg:pt-48 pb-10 overflow-hidden flex items-center">
+    <section class="hero-bg dark:bg-[#111122] transition-colors duration-300 relative pt-40
+     md:pt-48 pt-20 pb-10 overflow-hidden flex items-center">
         <div class="max-w-7xl mx-auto px-6 relative z-10 flex flex-col lg:flex-row items-center justify-center gap-12 w-full">
            
             <!-- Hero Content (Right side) -->
@@ -86,7 +87,7 @@
                     <span class="text-[#4A4A5C] font-bold">{{ __('for Home Services') }}</span>
                 </h1>
                 
-                <p class="text-[24px]  text-[#4A4A5C] dark:text-white tracking-tight mb-2">
+                <p class="text-xl text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
                     {{ __('Find trusted professionals to meet all your repair, maintenance, and home improvement needs easily and safely.') }}
                 </p>
                 
@@ -115,13 +116,27 @@
     </section>
 
     <!-- Features Section -->
+    <style>
+        @media (max-width: 1024px) {
+            .feature-card-happy-users {
+                left: -1rem !important;
+                bottom: 5% !important;
+                max-width: 90% !important;
+            }
+            .feature-card-services {
+                right: -1rem !important;
+                top: 15% !important;
+                max-width: 95% !important;
+            }
+        }
+    </style>
     <section class="dark:bg-[#1A1A31] transition-colors duration-300 py-10 relative z-20">
         <div class="max-w-7xl mx-auto px-6">
             <div class="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
          <!-- Text Side -->
                 <div class="flex-1 space-y-10 ">
                     <div class="space-y-6">
-                        <span class="inline-block px-6 py-2 bg-slate-100 dark:bg-slate-800 text-[#1A1A31]  font-bold text-sm tracking-wide rounded-full">{{ __('About Us') }}</span>
+                        <span class="inline-block px-6 py-2 bg-slate-100 dark:bg-slate-800 text-[#1A1A31] dark:text-slate-400 font-bold text-sm tracking-wide rounded-full">{{ __('About Us') }}</span>
                         <h2 class="text-4xl lg:text-5xl font-black text-[#1A1A31] dark:text-white leading-[1.2]">
                             {{ __('Smart and Safe Home Services') }}
                         </h2>
@@ -158,7 +173,7 @@
            <div class="flex-1 relative w-full flex justify-center py-10 lg:pl-10">
     
                <!-- Main Wrapper for Graphic and Overlays -->
-               <div class="relative w-[280px] sm:w-[320px]">
+               <div class="relative w-[280px]">
                    
                    <!-- Phone Mockup Frame -->
                    <div class="relative w-full rounded-[3rem] border-[12px] border-[#1A1A31] dark:border-slate-800 overflow-hidden flex flex-col z-30 bg-white shadow-2xl h-[500px]">
@@ -170,9 +185,9 @@
                    </div>
 
                    <!-- Bottom Left Card (Happy Users) -->
-                   <div class="absolute bg-white dark:bg-slate-800/95  px-5 py-4 rounded-3xl 
+                   <div class="feature-card-happy-users absolute bg-white dark:bg-slate-800/95 px-5 py-4 rounded-3xl 
                    shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] items-center
-                  border border-slate-100 dark:border-slate-700 z-50 transform 
+                   border border-slate-100 dark:border-slate-700 z-50 transform 
                    hover:scale-105 transition-all duration-300"
                         style="bottom: 10%; right: auto; left: -45%; width: max-content;">
                        <div class="flex -space-x-3 rtl:space-x-reverse">
@@ -182,7 +197,7 @@
                        </div>
                        <div class="flex flex-col text-right mt-2">
                            <div class="flex items-center justify-end gap-1 mb-0.5">
-                                                                                     <p class="text-[12px] font-bold text-slate-600 dark:text-slate-300 uppercase leading-none">{{ __('العملاء الراضين') }}</p>   
+                                                                                     <p class="text-[12px] font-bold text-slate-600 dark:text-slate-300 uppercase leading-none">{{ __('Happy Users') }}</p>   
                            <span class="text-xs text-yellow-400">★</span>
                                <span class="text-sm font-black text-[#1A1A31] dark:text-white">4.5</span>
 
@@ -191,9 +206,9 @@
                    </div>
 
                    <!-- Top Right Card (Services) -->
-                   <div class="flex absolute bg-white dark:bg-slate-800/95 rounded-3xl p-5 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.15)]
+                   <div class="feature-card-services flex absolute bg-white dark:bg-slate-800/95 rounded-3xl p-5 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.15)]
                     border border-slate-100 dark:border-slate-700 z-50 transform 
-                    hover:-translate-y-2 hover:scale-105 transition-all duration-300"
+                    hover:-translate-y-2 hover:scale-105 transition-all duration-300 overflow-hidden"
                         style="top: 25%; left: auto; right: -40%; width: max-content;">
                        <div class="flex gap-4 w-full">
                            @foreach($services->take(4) as $service)
@@ -222,14 +237,14 @@
     </section>
 
     <!-- Testimonials Section -->
-    <section class="bg-white dark:bg-[#111122] transition-colors duration-300 py-12">
+    <section class="bg-white dark:bg-[#1A1A31] transition-colors duration-300 py-12">
         <div class="max-w-7xl mx-auto px-6">
 
             <!-- Header -->
             <div class="text-center mb-16">
                 <span class="inline-block px-5 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold text-sm rounded-full mb-6">{{ __('View Reviews') }}</span>
                 <h2 class="text-3xl lg:text-4xl font-black text-[#1A1A31] dark:text-white mb-4">{{ __('What Our Customers Say') }}</h2>
-                <p class="text-[24px] mb-8 text-[#4A4A5C]  max-w-xl mx-auto leading-relaxed">
+                <p class="text-xl text-slate-500 dark:text-slate-400 leading-relaxed font-medium mb-8">
                     {{ __('Our platform connects you with thousands of trusted technicians, providing seamless access to all home services through our application.') }}
                 </p>
             </div>
@@ -248,10 +263,15 @@
                 current: 0, 
                 total: {{ count($reviewItems) }},
                 perPage: 4,
+                autoplayInterval: null,
                 updatePerPage() {
                     if (window.innerWidth < 768) this.perPage = 1;
                     else if (window.innerWidth < 1024) this.perPage = 2;
                     else this.perPage = 4;
+                    // Reset current if it's out of bounds after resize
+                    if (this.current > this.total - this.perPage) {
+                        this.current = Math.max(0, this.total - this.perPage);
+                    }
                 },
                 next() {
                     if (this.current < this.total - this.perPage) {
@@ -266,44 +286,56 @@
                     } else {
                         this.current = Math.max(0, this.total - this.perPage);
                     }
+                },
+                goTo(index) {
+                    this.current = Math.min(index, this.total - this.perPage);
+                },
+                startAutoplay() {
+                    // Autoplay disabled per user request
+                },
+                stopAutoplay() {
+                    // Autoplay disabled per user request
                 }
             }" 
             x-init="updatePerPage(); window.addEventListener('resize', () => updatePerPage())"
             class="relative group">
 
-                <!-- Navigation Arrow (Left - Dark) -->
+                <!-- Navigation Arrow (Left) -->
                 <button x-show="total > perPage" 
                         @click="prev()"
-                        class="absolute -left-6 top-1/2 -translate-y-1/2 w-14 h-14 bg-[#1A1A31] text-white rounded-full shadow-2xl flex items-center justify-center transition-all z-20 hover:scale-110 active:scale-95">
+                        class="absolute -left-4 lg:-left-6 top-1/2 -translate-y-1/2 w-10 h-10 lg:w-14 lg:h-14 bg-[#1A1A31] text-white rounded-full shadow-2xl flex items-center justify-center transition-all z-20 hover:scale-110 active:scale-95">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
                 </button>
 
-                <!-- Navigation Arrow (Right - White) -->
+                <!-- Navigation Arrow (Right) -->
                 <button x-show="total > perPage"
                         @click="next()"
-                        class="absolute -right-6 top-1/2 -translate-y-1/2 w-14 h-14 bg-white text-[#1A1A31] border border-slate-100 dark:border-slate-700 rounded-full shadow-xl flex items-center justify-center transition-all z-20 hover:scale-110 active:scale-95">
+                        class="absolute -right-4 lg:-right-6 top-1/2 -translate-y-1/2 w-10 h-10 lg:w-14 lg:h-14 bg-white text-[#1A1A31] border border-slate-100 dark:border-slate-700 rounded-full shadow-xl flex items-center justify-center transition-all z-20 hover:scale-110 active:scale-95">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                     </svg>
                 </button>
 
                 <!-- Cards Container -->
-                <div class="overflow-hidden px-4 pb-8 -mb-8">
-                    <div class="flex transition-transform duration-500 ease-out gap-8"
-                         :style="'transform: translateX(calc(' + (current * (document.documentElement.dir === \'rtl\' ? 1 : -1)) + ' * (100% + 2rem) / ' + perPage + '))'">
+                <div class="overflow-hidden px-1 pb-12">
+                    <div class="flex transition-transform duration-700 ease-in-out"
+                         :style="'gap: 2rem; transform: translateX(calc(' + (current * (document.documentElement.dir === \'rtl\' ? 1 : -1)) + ' * (100% + 2rem) / ' + perPage + '))'">
                         @foreach($reviewItems as $review)
-                            <div class="flex-shrink-0 bg-white dark:bg-slate-800/40 rounded-[2rem] p-8 border border-slate-50 dark:border-slate-700/50 shadow-sm hover:shadow-xl transition-all duration-500"
+                            <div class="flex-shrink-0 mx-2 bg-white dark:bg-slate-800/40 rounded-[2.5rem] p-8 lg:p-10 border border-slate-50 dark:border-slate-700/50 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500"
                                  :style="'width: calc((100% - (' + (perPage - 1) + ' * 2rem)) / ' + perPage + ')'">
-                                <!-- Top: Avatar + (Name & Stars) in RTL -->
+                                
+                                <!-- Top Info: Avatar + Name (RTL) -->
                                 <div class="flex items-center gap-5 mb-6 flex-row-reverse text-right">
                                     <!-- Avatar -->
-                                    <div class="w-16 h-16 rounded-full bg-[#1A1A31] dark:bg-slate-700 text-white flex items-center justify-center font-black text-2xl flex-shrink-0 overflow-hidden shadow-lg border-2 border-white dark:border-slate-800">
+                                    <div class="w-14 h-14 rounded-full bg-[#1A1A31] dark:bg-slate-700 text-white dark:text-slate-400 flex items-center justify-center font-black text-2xl flex-shrink-0 overflow-hidden shadow-lg border-2 border-white dark:border-slate-800">
                                         @if($review->user && $review->user->avatar)
                                             <img src="{{ asset($review->user->avatar) }}" class="w-full h-full object-cover">
                                         @else
-                                            {{ mb_substr($review->user->name ?? 'U', 0, 1) }}
+                                            <div class="w-full h-full flex items-center justify-center font-bold text-indigo-600 bg-indigo-50">
+                                                {{ mb_substr($review->user->name ?? 'U', 0, 1) }}
+                                            </div>
                                         @endif
                                     </div>
                                     <!-- Name + Stars -->
@@ -311,73 +343,95 @@
                                         <h4 class="font-bold text-[#1A1A31] dark:text-white text-lg leading-tight mb-2">{{ $review->user->name ?? __('User') }}</h4>
                                         <div class="flex gap-0.5 justify-end">
                                             @for($i = 0; $i < 5; $i++)
-                                                <span class="text-lg {{ $i < ($review->rating ?? 5) ? 'text-yellow-400' : 'text-slate-200 dark:text-slate-600' }}">★</span>
+                                                <span class="text-2xl font-bold" style="color: {{ $i < (int)($review->rating ?? $review->stars ?? 5) ? '#FFD700' : '#E2E8F0' }}; line-height: 1;">★</span>
                                             @endfor
                                         </div>
                                     </div>
                                 </div>
+
                                 <!-- Comment -->
-                                <p class="text-slate-500 dark:text-slate-400 text-sm leading-[1.8] text-center italic">
+                                <p class="text-slate-600 dark:text-slate-300 text-sm leading-[1.8] text-right">
                                     "{{ $review->comment }}"
                                 </p>
                             </div>
                         @endforeach
                     </div>
                 </div>
+
+                <!-- Pagination Dots -->
+                <div class="flex justify-center gap-2 mt-4">
+                    <template x-for="i in (total > perPage ? total - perPage + 1 : 1)" :key="i">
+                        <button @click="goTo(i-1)" 
+                                :class="current === (i-1) ? 'w-8 bg-indigo-600' : 'w-2 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400'"
+                                class="h-2 rounded-full transition-all duration-300"></button>
+                    </template>
+                </div>
             </div>
 
         </div>
     </section>
 
- <section class="bg-white mb-8 dark:bg-[#1A1A31] transition-colors duration-300 py-20">
+ <section class="bg-white mb-8 dark:bg-[#1A1A31] transition-colors duration-300 py-12">
     <div class="max-w-7xl mx-auto px-6">
         <div class="hero-bg dark:bg-[#111122] rounded-[3rem] relative border-4 border-white dark:border-slate-800 shadow-2xl">
 
+           
             {{-- ═══════════════════════════════════════ --}}
-            {{-- MOBILE LAYOUT: phone | text | phone     --}}
+            {{-- MOBILE LAYOUT: Modern Tilted Design     --}}
             {{-- ═══════════════════════════════════════ --}}
-            <div class="flex lg:hidden items-stretch min-h-[300px] overflow-hidden rounded-[3rem]">
+            <div class="flex lg:hidden  flex-col items-center py-8  overflow-hidden rounded-[3rem] relative">
+                
+                {{-- Decorative Glow Background --}}
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-500/20 blur-[100px] rounded-full pointer-events-none"></div>
 
-                {{-- Left phone --}}
-                <div class="w-[30%] self-end">
-                    <div class="h-56 rounded-tr-[2rem] border-4 border-b-0 border-r-0 border-[#1A1A31] overflow-hidden shadow-xl bg-[#C8C9E0] -mb-1">
-                        <img src="{{ asset('assets/images/iphone13 (2).png') }}"
-                             class="w-full h-full object-cover object-top" alt="App Preview 1">
-                    </div>
-                </div>
-
-                {{-- Center text --}}
-                <div class="flex-1 px-3 py-8 flex flex-col items-center justify-center text-center gap-4 z-10">
-                    <h2 class="text-lg font-black text-[#1A1A31] dark:text-white leading-snug">
+                {{-- Text Content --}}
+                <div class="px-6 text-center space-y-6 z-50 relative">
+                    <h2 class="text-3xl font-black text-[#1A1A31] dark:text-white leading-tight">
                         {{ __('One App to Book Fast and Reliable Home Services') }}
                     </h2>
-                    <p class="text-xs text-[#4A4A5C] dark:text-slate-400 leading-relaxed">
+                    <p class="text-base text-[#4A4A5C] dark:text-slate-400 leading-relaxed max-w-xs mx-auto font-medium">
                         {{ __('Find trusted technicians for cleaning, plumbing, electricity, and general repairs.') }}
                     </p>
-                    <div class="flex flex-col gap-2 items-center">
-                        <a href="#" class="opacity-80 hover:opacity-100 transition-opacity">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store" class="h-8">
+                    <div class="flex gap-4 justify-center pt-2">
+                        <a href="#" class="shadow-xl hover:scale-105 transition-transform active:scale-95">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store" class="h-10">
                         </a>
-                        <a href="#" class="opacity-80 hover:opacity-100 transition-opacity">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" class="h-8">
+                        <a href="#" class="shadow-xl hover:scale-105 transition-transform active:scale-95">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" class="h-10">
                         </a>
                     </div>
                 </div>
 
-                {{-- Right phone --}}
-                <div class="w-[30%] self-start">
-                    <div class="h-56 rounded-bl-[2rem] border-4 border-t-0 border-l-0 border-[#1A1A31] overflow-hidden shadow-xl bg-[#C8C9E0] -mt-1">
-                        <img src="{{ asset('assets/images/iphone13 (1).png') }}"
-                             class="w-full h-full object-cover object-top" alt="App Preview 2">
+                <!-- {{-- Modern Tilted Graphics Section --}}
+                <div class="relative w-full h-[380px] mt-16 flex justify-center">
+                    
+                    {{-- Secondary Phone (Back/Tilted) --}}
+                    <div class="absolute left-[5%] bottom-0 w-48 z-10 transform -rotate-[15deg] translate-y-20 opacity-60 blur-[1px]">
+                        <div class="h-80 rounded-[2.5rem] border-[10px] border-[#1A1A31] dark:border-slate-800 overflow-hidden shadow-2xl bg-[#C8C9E0]">
+                            <img src="{{ asset('assets/images/iphone13 (2).png') }}"
+                                 class="w-full h-full object-cover object-top" alt="App Preview Back">
+                        </div>
                     </div>
-                </div>
+
+                    {{-- Main Phone (Front/Straight) --}}
+                    <div class="absolute left-1/2 -translate-x-1/2 bottom-0 w-52 z-20 transform translate-y-4">
+                        <div class="h-80 rounded-[3rem] border-[12px] border-[#1A1A31] dark:border-slate-800 overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] bg-white">
+                            <img src="{{ asset('assets/images/iphone13 (1).png') }}"
+                                 class="w-full h-full object-cover object-top" alt="App Preview Front">
+                        </div>
+                    </div>
+
+                    {{-- Subtle Right Element (Optional Glow/Accent) --}}
+                    <div class="absolute right-[5%] bottom-1/2 translate-y-1/2 w-32 h-32 bg-indigo-400/10 rounded-full blur-3xl"></div>
+                </div> -->
 
             </div>
 
             {{-- ═══════════════════════════════════════════════════════ --}}
             {{-- DESKTOP LAYOUT: text left + staggered phones right     --}}
             {{-- ═══════════════════════════════════════════════════════ --}}
-            <div class="hidden overflow-hidden lg:flex flex-row items-center justify-between gap-12 px-8 min-h-[450px]">
+            <div class="hidden overflow-hidden lg:flex flex-row items-center justify-between px-8 min-h-[700px]"
+            style="height: 400px;">
 
                 {{-- Text side --}}
                 <div class="flex-1 text-right relative z-10 space-y-8 py-12">
@@ -398,18 +452,20 @@
                 </div>
 
                 {{-- Staggered phones --}}
-                <div class="flex-1" style="position: relative;">
+                <div class="flex-1 rtl:mr-4 justify-end" style="position: relative; ">
                     {{-- Phone 1: rises above the card (uses -translate-y so it pops above) --}}
-                    <div style="position: absolute; left: 0;  width: 224px; z-index: 10;">
-                        <div class="overflow-hidden h-full rounded-[2.5rem] border-8 border-[#1A1A31] shadow-2xl bg-[#C8C9E0]">
-                            <img src="{{ asset('assets/images/iphone13 (1).png') }}"
+                    <div style="position: absolute; left: 0;  width: 270px; z-index: 10;">
+                        <div class="overflow-hidden h-full rounded-[2.5rem]
+                         border-8 border-[#1A1A31] shadow-2xl bg-[#C8C9E0]">
+                            <img src="{{ asset('assets/images/iphone13 (2).png') }}"
                                  class="w-full h-full object-cover object-top" alt="App Preview Top">
                         </div>
                     </div>
                     {{-- Phone 2: sits at bottom edge --}}
-                    <div style="position: absolute; bottom: 0; right: 0; width: 224px; height: 320px; z-index: 20;">
+                    <div style="position: absolute; bottom: 0;
+                     right: 0; width: 270px; height: full; z-index: 20;">
                         <div class="overflow-hidden h-full rounded-[2.5rem] border-8 border-[#1A1A31] shadow-2xl bg-[#C8C9E0]">
-                            <img src="{{ asset('assets/images/iphone13 (2).png') }}"
+                            <img src="{{ asset('assets/images/iphone13 (1).png') }}"
                                  class="w-full h-full object-cover object-top" alt="App Preview Bottom">
                         </div>
                     </div>
@@ -440,8 +496,8 @@
                 </div>
             </div>
             
-            <div class="flex flex-row mt-4 justify-between items-center border-t border-white/10 
-             pt-12 gap-8 text-slate-400 font-bold text-sm tracking-wide">
+            <div class="flex md:flex-row flex-col mt-4 justify-between items-center border-t border-white/10 
+             md:pt-12 pt-4 gap-8 text-slate-400 font-bold text-sm tracking-wide">
                 {{-- Copyright - now on the right --}}
                 <div class="uppercase tracking-widest text-right">&copy; 2026 {{ __('MatraqaTec') }} - {{ __('All rights reserved.') }}</div>
                 
