@@ -175,40 +175,57 @@
            <div class="flex-1 relative w-full flex justify-center py-10 lg:pl-10">
     
                <!-- Main Wrapper for Graphic and Overlays -->
-               <div class="relative w-[280px]">
+               <div class="relative w-[240px] lg:w-[280px] mx-auto flex justify-center">
                    
                    <!-- Phone Mockup Frame -->
-                   <div class="relative w-full rounded-[3rem] border-[12px] border-[#1A1A31] dark:border-slate-800 overflow-hidden flex flex-col z-30 bg-white shadow-2xl h-[500px]">
+                   <div class="relative w-full rounded-[2.5rem] lg:rounded-[3rem] border-[10px] lg:border-[12px] border-[#1A1A31] dark:border-slate-800 overflow-hidden flex flex-col z-30 bg-white h-[450px] lg:h-[500px]">
              
                        <!-- Image -->
-                       <img src="{{ asset('assets/images/iphone13_4_283x570.png') }}" 
-                            class="w-[110%] max-w-none transform -translate-x-4 h-full object-cover object-bottom" 
+                       <img src="{{ asset('assets/images/Group 28.png') }}" 
+                            class="w-full h-full object-cover object-top" 
                             alt="App Preview">
                    </div>
 
                    <!-- Bottom Left Card (Happy Users) -->
-                   <div class="feature-card-happy-users absolute bg-white dark:bg-slate-800/95 px-5 py-4 rounded-3xl 
-                   shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] items-center
+                   <!-- @php
+                       $displayAvatars = [
+                           asset('assets/images/avatar_1.png'),
+                           asset('assets/images/avatar_2.png'),
+                           asset('assets/images/avatar_3.png'),
+                           asset('assets/images/avatar_4.png'),
+                       ];
+                   @endphp
+                   <div class="feature-card-happy-users absolute bg-white dark:bg-slate-800/95 px-4 py-4 rounded-3xl 
+                   shadow-[0_10px_40px_-10px_rgba(0,0,0,0.18)]
                    border border-slate-100 dark:border-slate-700 z-50 transform 
                    hover:scale-105 transition-all duration-300"
-                        style="bottom: 10%; right: auto; left: -45%; width: max-content;">
-                       <div class="flex -space-x-3 rtl:space-x-reverse">
-                           @foreach($sample_avatars->take(5) as $user)
-                               <img src="{{ asset($user->avatar) }}" class="w-10 h-10 rounded-full border-2 border-white dark:border-slate-800 object-cover shadow-sm">
+                        style="bottom: 10%; right: auto; left: -50%; width: max-content;">
+
+                       {{-- Avatars row with +count badge - all overlapping --}}
+                       <div class="flex rtl:space-x-reverse" style="align-items: center; justify-content: flex-start;">
+                           {{-- +N badge first (on top in Z-index) --}}
+                           <div class="w-10 h-10 lg:w-12 lg:h-12 rounded-full bg-white dark:bg-slate-700 border-2 border-white dark:border-slate-600 flex items-center justify-center shadow flex-shrink-0" style="z-index: 20;">
+                               <span class="text-[10px] lg:text-[11px] font-black text-[#1A1A31] dark:text-white">+{{ number_format($happy_customers_count / 1000, 0) }}K</span>
+                           </div>
+                           
+                           {{-- Avatar stack --}}
+                           @foreach($displayAvatars as $i => $avatarUrl)
+                               <img src="{{ $avatarUrl }}" class="w-10 h-10 lg:w-12 lg:h-12 rounded-full border-2 border-white dark:border-slate-800 object-cover shadow" style="margin-right: -14px; z-index: {{ 19 - $i }};">
                            @endforeach
                        </div>
-                       <div class="flex flex-col text-right mt-2">
-                           <div class="flex items-center justify-end gap-1 mb-0.5">
-                                                                                     <p class="text-[12px] font-bold text-slate-600 dark:text-slate-300 uppercase leading-none">{{ __('Happy Users') }}</p>   
-                           <span class="text-xs text-yellow-400">★</span>
-                               <span class="text-sm font-black text-[#1A1A31] dark:text-white">4.5</span>
 
+                       {{-- Label + rating --}}
+                       <div class="flex items-center justify-between gap-3 mt-2.5">
+                            <p class="text-xs font-bold text-slate-500 dark:text-slate-300">{{ __('Happy Users') }}</p>   
+                       <div class="flex items-center gap-1">
+                               <span class="text-base font-black text-[#1A1A31] dark:text-white">{{ $average_rating }}</span>
+                               <span class="text-base text-yellow-400">★</span>
                            </div>
                        </div>
-                   </div>
+                   </div> -->
 
                    <!-- Top Right Card (Services) -->
-                   <div class="feature-card-services flex absolute bg-white dark:bg-slate-800/95 rounded-3xl p-5 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.15)]
+                   <!-- <div class="feature-card-services flex absolute bg-white dark:bg-slate-800/95 rounded-3xl p-4 lg:p-5 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.15)]
                     border border-slate-100 dark:border-slate-700 z-50 transform 
                     hover:-translate-y-2 hover:scale-105 transition-all duration-300 overflow-hidden"
                         style="top: 25%; left: auto; right: -40%; width: max-content;">
@@ -228,7 +245,7 @@
                                </div>
                            @endforeach
                        </div>
-                   </div>
+                   </div> -->
 
                </div>
            </div>
@@ -258,6 +275,8 @@
                     (object)['user' => (object)['name' => __('Ahmed Ali'), 'avatar' => null], 'rating' => 4, 'comment' => __('Best experience ever in ordering home maintenance services! Clear and suitable prices.')],
                     (object)['user' => (object)['name' => __('Sami Mansour'), 'avatar' => null], 'rating' => 5, 'comment' => __('Best service I have found so far, the service is fast and the technician was professional.')],
                     (object)['user' => (object)['name' => __('Ahmed Mossad'), 'avatar' => null], 'rating' => 4, 'comment' => __('High-quality service and full commitment to appointments. I highly recommend it.')],
+                    (object)['user' => (object)['name' => __('Sara Mohamed'), 'avatar' => null], 'rating' => 5, 'comment' => __('Very easy to use and the technician arrived on time. Will definitely use again!')],
+                    (object)['user' => (object)['name' => __('Khalid Ibrahim'), 'avatar' => null], 'rating' => 4, 'comment' => __('Excellent customer support and very professional technicians.')],
                 ]);
             @endphp
 
@@ -278,18 +297,12 @@
                     }
                 },
                 next() {
-                    if (this.current < this.total - this.perPage) {
-                        this.current++;
-                    } else {
-                        this.current = 0;
-                    }
+                    const maxCurrent = Math.max(0, this.total - this.perPage);
+                    this.current = this.current < maxCurrent ? this.current + 1 : 0;
                 },
                 prev() {
-                    if (this.current > 0) {
-                        this.current--;
-                    } else {
-                        this.current = Math.max(0, this.total - this.perPage);
-                    }
+                    const maxCurrent = Math.max(0, this.total - this.perPage);
+                    this.current = this.current > 0 ? this.current - 1 : maxCurrent;
                 },
                 goTo(index) {
                     this.current = Math.min(index, this.total - this.perPage);
@@ -327,9 +340,8 @@
             class="relative group">
 
                 <!-- Navigation Arrow (Left) -->
-                <button x-show="total > perPage" 
-                        @click="prev()"
-                        class="absolute left-2 md:-left-4 lg:-left-6 top-1/2 -translate-y-1/2 w-10 h-10 lg:w-14 lg:h-14 bg-white text-[#1A1A31] border border-slate-100 dark:border-slate-700 rounded-full shadow-xl flex items-center justify-center transition-all z-20 hover:bg-[#1A1A31] hover:text-[#1A1A31] hover:scale-110 active:scale-95"
+                <button @click="prev()"
+                        class="absolute left-2 md:-left-4 lg:-left-6 top-1/2 -translate-y-1/2 w-10 h-10 lg:w-14 lg:h-14 bg-white text-[#1A1A31] border border-slate-100 dark:border-slate-700 rounded-full shadow-xl flex items-center justify-center transition-all z-20 hover:bg-[#1A1A31] hover:text-white hover:scale-110 active:scale-95"
                         style="left: 0.5rem; right: auto;">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -337,9 +349,8 @@
                 </button>
 
                 <!-- Navigation Arrow (Right) -->
-                <button x-show="total > perPage"
-                        @click="next()"
-                        class="absolute right-2 md:-right-4 lg:-right-6 top-1/2 -translate-y-1/2 w-10 h-10 lg:w-14 lg:h-14 bg-white text-[#1A1A31] border border-slate-100 dark:border-slate-700 rounded-full shadow-xl flex items-center justify-center transition-all z-20 hover:bg-[#1A1A31] hover:text-[#1A1A31] hover:scale-110 active:scale-95"
+                <button @click="next()"
+                        class="absolute right-2 md:-right-4 lg:-right-6 top-1/2 -translate-y-1/2 w-10 h-10 lg:w-14 lg:h-14 bg-white text-[#1A1A31] border border-slate-100 dark:border-slate-700 rounded-full shadow-xl flex items-center justify-center transition-all z-20 hover:bg-[#1A1A31] hover:text-white hover:scale-110 active:scale-95"
                         style="right: 0.5rem; left: auto;">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -356,8 +367,8 @@
                             <div class="flex-shrink-0 mx-2 bg-white dark:bg-slate-800/40 rounded-[2.5rem] p-8 lg:p-10 border border-slate-50 dark:border-slate-700/50 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500"
                                  :style="'width: calc((100% - (' + (perPage - 1) + ' * 2rem)) / ' + perPage + ')'">
                                 
-                                <!-- Top Info: Avatar + Name (RTL) -->
-                                <div class="flex items-center gap-5 mb-6 flex-row-reverse text-right">
+                                <!-- Top Info: Avatar + Name -->
+                                <div class="flex flex-col items-center text-center gap-5 mb-6 md:flex-row-reverse md:text-right">
                                     <!-- Avatar -->
                                     <div class="w-14 h-14 rounded-full bg-[#1A1A31] dark:bg-slate-700 text-white dark:text-slate-400 flex items-center justify-center font-black text-2xl flex-shrink-0 overflow-hidden shadow-lg border-2 border-white dark:border-slate-800">
                                         @if($review->user && $review->user->avatar)
@@ -370,8 +381,8 @@
                                     </div>
                                     <!-- Name + Stars -->
                                     <div class="flex-1 text-primary">
-                                        <h4 class="font-bold text-lg leading-tight mb-2" style="color: #1A1A31 !important;">{{ $review->user->name ?? __('User') }}</h4>
-                                        <div class="flex gap-0.5 justify-end">
+                                        <h4 class="font-bold text-lg leading-tight mb-2 text-center md:text-right" style="color: #1A1A31 !important;">{{ $review->user->name ?? __('User') }}</h4>
+                                        <div class="flex gap-0.5 justify-center md:justify-end">
                                             @for($i = 0; $i < 5; $i++)
                                                 <span class="text-2xl font-bold" style="color: {{ $i < (int)($review->rating ?? $review->stars ?? 5) ? '#FFD700' : '#E2E8F0' }}; line-height: 1;">★</span>
                                             @endfor
@@ -380,7 +391,7 @@
                                 </div>
 
                                 <!-- Comment -->
-                                <p class="text-slate-600 text-sm leading-[1.8] text-right" style="color: #1A1A31 !important;">
+                                <p class="text-slate-600 text-sm leading-[1.8] text-center md:text-right" style="color: #1A1A31 !important;">
                                     "{{ $review->comment }}"
                                 </p>
                             </div>

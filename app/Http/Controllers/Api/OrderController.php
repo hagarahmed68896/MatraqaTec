@@ -912,7 +912,7 @@ class OrderController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'message' => 'Validation Error',
+                'message' => $validator->errors()->first(),
                 'errors' => $validator->errors()
             ], 422);
         }
@@ -946,8 +946,21 @@ class OrderController extends Controller
         $order = Order::with(['service', 'user'])->find($id);
         if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
 
-        $base = $order->total_price / 1.15;
-        $tax = $order->total_price - $base;
+        $sparePartsTotal = 0;
+        if (is_array($order->spare_parts_metadata)) {
+            foreach ($order->spare_parts_metadata as $part) {
+                $sparePartsTotal += isset($part['total']) ? $part['total'] : ($part['qty'] * $part['price']);
+            }
+        }
+
+        $serviceBase = $order->service->price ?? ($order->total_price / 1.15); 
+        $serviceTax = $serviceBase * 0.15;
+        
+        $expectedTotal = $serviceBase + $serviceTax + $sparePartsTotal;
+        $grandTotal = max($order->total_price, $expectedTotal);
+
+        $base = $grandTotal / 1.15;
+        $tax = $grandTotal - $base;
 
         return response()->json([
             'status' => true,
@@ -955,10 +968,12 @@ class OrderController extends Controller
                 'invoice_number' => 'INV-' . $order->order_number,
                 'date' => $order->created_at->format('Y-m-d'),
                 'client' => $order->user->name,
-                'service' => $order->service->name_ar,
+                'service' => $order->service->name_ar ?? 'خدمة',
+                'service_amount' => number_format($serviceBase, 2),
+                'spare_parts_amount' => number_format($sparePartsTotal, 2),
                 'base_amount' => number_format($base, 2),
                 'tax' => number_format($tax, 2),
-                'total' => number_format($order->total_price, 2),
+                'total' => number_format($grandTotal, 2),
                 'spare_parts' => $order->spare_parts_metadata ?? [],
             ]
         ]);

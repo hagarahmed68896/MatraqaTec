@@ -282,81 +282,107 @@
                         </button>
 
                         <!-- Notification Popup -->
-                        <div x-show="dropdownOpen" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-2" class="absolute {{ app()->getLocale() == 'ar' ? 'left-0' : 'right-0' }} mt-3 w-72 md:w-80 bg-white dark:bg-[#1A1A31] rounded-2xl shadow-xl border border-slate-100 dark:border-white/10 overflow-hidden z-[60] py-2">
-                            <div class="p-4 border-b border-slate-50 dark:border-white/5 flex items-center justify-between">
+                        <div x-show="dropdownOpen" x-cloak 
+                             x-transition:enter="transition ease-out duration-200" 
+                             x-transition:enter-start="opacity-0 translate-y-2" 
+                             x-transition:enter-end="opacity-100 translate-y-0" 
+                             x-transition:leave="transition ease-in duration-150" 
+                             x-transition:leave-start="opacity-100 translate-y-0" 
+                             x-transition:leave-end="opacity-0 translate-y-2" 
+                             class="fixed inset-x-2 top-[5rem] md:absolute md:inset-x-auto md:top-auto md:{{ app()->getLocale() == 'ar' ? 'left-0' : 'right-0' }}
+                              md:mt-3 md:w-[28rem] bg-white dark:bg-[#1A1A31] rounded-2xl shadow-2xl border border-slate-100 dark:border-white/10 overflow-hidden z-[60] py-2">
+                            <div class="px-5 py-3 border-b border-slate-50 dark:border-white/5 flex items-center justify-between">
                                 <h3 class="font-bold text-sm text-slate-800 dark:text-white">{{ __('Notifications') }}</h3>
-                                <button x-show="count > 0" @click="markAllRead()" class="text-[10px] font-bold text-primary hover:text-primary-dark transition-colors">{{ __('Mark all as read') }}</button>
+                                <div class="flex items-center gap-3">
+                                    <button x-show="count > 0" @click="markAllRead()" class="text-[10px] font-bold text-primary hover:text-primary-dark transition-colors">{{ __('Mark all as read') }}</button>
+                                    <button @click="dropdownOpen = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors md:hidden">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="max-h-64 overflow-y-auto custom-scrollbar">
-                                @forelse(($adminNotifications ?? [])->take(4) as $notification)
-                                <div class="notification-item p-4 border-b border-slate-50 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer relative group {{ $notification->read_at ? 'opacity-50' : '' }}">
-                                    <div class="flex gap-3">
-                                        <div class="w-8 h-8 rounded-full bg-slate-900 dark:bg-white flex items-center justify-center text-white dark:text-slate-900 font-bold flex-shrink-0">
-                                            {{ strtoupper(substr($notification->data['title'] ?? 'N', 0, 1)) }}
+                            <div class="max-h-[70vh] md:max-h-96 overflow-y-auto custom-scrollbar">
+                                @forelse(($adminNotifications ?? [])->take(5) as $notification)
+                                @php
+                                    $locale = app()->getLocale();
+                                    $notifTitle = $locale === 'ar' ? ($notification->title_ar ?? $notification->title_en ?? __('Notification')) : ($notification->title_en ?? $notification->title_ar ?? __('Notification'));
+                                    $notifBody  = $locale === 'ar' ? ($notification->body_ar ?? $notification->body_en ?? '') : ($notification->body_en ?? $notification->body_ar ?? '');
+                                @endphp
+                                <div class="notification-item px-5 py-4 border-b border-slate-50 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all relative {{ $notification->is_read ? 'opacity-60' : '' }}">
+                                    <!-- Unread dot -->
+                                    @if(!$notification->is_read)
+                                    <span class="absolute top-4 {{ app()->getLocale() == 'ar' ? 'left-5' : 'right-5' }} w-2 h-2 rounded-full bg-primary"></span>
+                                    @endif
+                                    <div class="flex gap-3 {{ app()->getLocale() == 'ar' ? 'pl-4' : 'pr-4' }}">
+                                        <div class="w-10 h-10 rounded-full bg-[#1A1A31] dark:bg-white flex items-center justify-center text-white dark:text-slate-900 font-black flex-shrink-0 text-sm">
+                                            {{ mb_strtoupper(mb_substr($notifTitle, 0, 1)) }}
                                         </div>
-                                        <div class="flex-1">
-                                            <p class="text-xs font-bold text-slate-800 dark:text-white mb-1">{{ $notification->data['title'] ?? __('Notification') }}</p>
-                                            <p class="text-[10px] text-slate-500 dark:text-slate-300 leading-relaxed mb-2">{{ Str::limit($notification->data['body'] ?? $notification->data['message'] ?? '', 100) }}</p>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-xs font-bold text-slate-800 dark:text-white mb-1 leading-snug">{{ $notifTitle }}</p>
+                                            <p class="text-[11px] text-slate-500 dark:text-slate-300 leading-relaxed mb-2 break-words">{{ Str::limit($notifBody, 140) }}</p>
                                             
+                                            <!-- Type badge + time -->
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                @if($notification->type)
+                                                <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-300 uppercase tracking-wide">{{ __($notification->type) }}</span>
+                                                @endif
+                                                <span class="text-[10px] text-slate-400 dark:text-slate-500">{{ $notification->created_at->diffForHumans() }}</span>
+                                            </div>
+
                                             <!-- Actions for Technician Requests -->
-                                            @if(($notification->data['type'] ?? '') == 'technician_request' && isset($notification->data['request_id']))
-                                            <div class="flex items-center gap-2 mb-2">
+                                            @if(($notification->data['type'] ?? $notification->type) == 'technician_request' && isset($notification->data['request_id']))
+                                            <div class="flex items-center gap-2 mt-3">
                                                 <form action="{{ route('admin.technician-requests.accept', $notification->data['request_id']) }}" method="POST" class="flex-1">
                                                     @csrf
-                                                    <button type="submit" class="w-full py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-black transition-all">
-                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                                    <button type="submit" class="w-full py-1.5 bg-slate-900 dark:bg-[#1A1A31] text-white dark:text-slate-900 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-black transition-all">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                                         {{ __('Accept') }}
                                                     </button>
                                                 </form>
                                                 <form action="{{ route('admin.technician-requests.refuse', $notification->data['request_id']) }}" method="POST" class="flex-1">
                                                     @csrf
                                                     <button type="submit" class="w-full py-1.5 bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-white rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-slate-300 dark:hover:bg-white/20 transition-all">
-                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                                         {{ __('Refuse') }}
                                                     </button>
                                                 </form>
                                             </div>
                                             @endif
-
-                                            <span class="text-[9px] text-slate-400 dark:text-slate-400 block">{{ $notification->created_at->diffForHumans() }}</span>
                                         </div>
-                                        
-                                        <!-- Dropdown Menu (...) next to the notification -->
-                                        <div class="absolute top-4 {{ app()->getLocale() == 'ar' ? 'left-4' : 'right-4' }}">
-                                            <div x-data="{ openMenu: false }" class="relative">
-                                                <button @click="openMenu = !openMenu" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors p-1">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
+
+                                        <!-- ... menu -->
+                                        <div x-data="{ openMenu: false }" class="absolute top-3 {{ app()->getLocale() == 'ar' ? 'left-3' : 'right-3' }}">
+                                            <button @click="openMenu = !openMenu" class="text-slate-300 hover:text-slate-600 dark:hover:text-white transition-colors p-1">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"/></svg>
+                                            </button>
+                                            <div x-show="openMenu" @click.away="openMenu = false" class="absolute {{ app()->getLocale() == 'ar' ? 'left-0' : 'right-0' }} mt-1 w-40 bg-white dark:bg-[#1A1A31] rounded-xl shadow-xl border border-slate-100 dark:border-white/10 z-30 overflow-hidden" style="display:none;">
+                                                @if(!$notification->is_read)
+                                                <button @click="markRead('{{ $notification->id }}', $event)" class="w-full text-start px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                    {{ __('Mark as read') }}
                                                 </button>
-                                                <div x-show="openMenu" @click.away="openMenu = false" class="absolute {{ app()->getLocale() == 'ar' ? 'left-0' : 'right-0' }} mt-1 w-36 bg-white dark:bg-[#1A1A31] rounded-lg shadow-xl border border-slate-100 dark:border-white/10 z-20 overflow-hidden" style="display: none;">
-                                                    @if(!$notification->read_at)
-                                                    <button @click="markRead('{{ $notification->id }}', $event)" class="w-full text-start px-3 py-2 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2">
-                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                                        {{ __('Mark as read') }}
+                                                @endif
+                                                <form action="{{ route('admin.notifications.destroy', $notification->id) }}" method="POST">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="w-full text-start px-4 py-2.5 text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                        {{ __('Delete') }}
                                                     </button>
-                                                    @endif
-                                                    <form action="{{ route('admin.notifications.destroy', $notification->id) }}" method="POST">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="w-full text-start px-3 py-2 text-[10px] font-bold text-red-500 hover:bg-red-50 dark:hover:bg-white/5 transition-colors flex items-center gap-2">
-                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                                            {{ __('Delete Notification') }}
-                                                        </button>
-                                                    </form>
-                                                </div>
+                                                </form>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 @empty
-                                <div class="p-8 text-center text-slate-400 dark:text-slate-300 flex flex-col items-center">
-                                    <svg class="w-8 h-8 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                                <div class="p-10 text-center text-slate-400 dark:text-slate-500 flex flex-col items-center gap-3">
+                                    <svg class="w-10 h-10 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                                     <p class="text-xs font-bold">{{ __('No new notifications') }}</p>
                                 </div>
                                 @endforelse
                                 
-                                @if(($adminUnreadCount ?? 0) > 4)
-                                <div class="p-4 border-t border-slate-50 dark:border-white/5 bg-slate-50 dark:bg-white/5 text-center">
-                                    <a href="{{ route('admin.notifications.index') }}" class="text-xs font-black text-primary hover:underline">{{ __('Show More') }}</a>
+                                @if(($adminUnreadCount ?? 0) > 5)
+                                <div class="px-5 py-3 border-t border-slate-50 dark:border-white/5 text-center">
+                                    <a href="{{ route('admin.notifications.index') }}" class="text-xs font-black text-primary hover:underline">{{ __('Show More') }} ({{ $adminUnreadCount - 5 }}+)</a>
                                 </div>
                                 @endif
                             </div>
@@ -372,8 +398,9 @@
                     <!-- Language -->
                     <div x-data="{ langOpen: false }" @click.away="langOpen = false" class="relative">
                         <button @click="langOpen = !langOpen" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-white/70 text-xs font-bold hover:bg-slate-100 transition-all">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 002 2h.293m1.617 7.936l1.433-1.433a2 2 0 00-1.238-1.044l-2.505-.626a2 2 0 00-1.62.29l-1.012.675a2 2 0 00-.733 1.147l-.133.531m0 0a11.947 11.947 0 01-6.105-2.242"></path></svg>
-                            <span class="hidden sm:inline">{{ app()->getLocale() == 'ar' ? 'العربية' : 'English' }}</span>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-globe" viewBox="0 0 16 16">
+  <path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m7.5-6.923c-.67.204-1.335.82-1.887 1.855A8 8 0 0 0 5.145 4H7.5zM4.09 4a9.3 9.3 0 0 1 .64-1.539 7 7 0 0 1 .597-.933A7.03 7.03 0 0 0 2.255 4zm-.582 3.5c.03-.877.138-1.718.312-2.5H1.674a7 7 0 0 0-.656 2.5zM4.847 5a12.5 12.5 0 0 0-.338 2.5H7.5V5zM8.5 5v2.5h2.99a12.5 12.5 0 0 0-.337-2.5zM4.51 8.5a12.5 12.5 0 0 0 .337 2.5H7.5V8.5zm3.99 0V11h2.653c.187-.765.306-1.608.338-2.5zM5.145 12q.208.58.468 1.068c.552 1.035 1.218 1.65 1.887 1.855V12zm.182 2.472a7 7 0 0 1-.597-.933A9.3 9.3 0 0 1 4.09 12H2.255a7 7 0 0 0 3.072 2.472M3.82 11a13.7 13.7 0 0 1-.312-2.5h-2.49c.062.89.291 1.733.656 2.5zm6.853 3.472A7 7 0 0 0 13.745 12H11.91a9.3 9.3 0 0 1-.64 1.539 7 7 0 0 1-.597.933M8.5 12v2.923c.67-.204 1.335-.82 1.887-1.855q.26-.487.468-1.068zm3.68-1h2.146c.365-.767.594-1.61.656-2.5h-2.49a13.7 13.7 0 0 1-.312 2.5m2.802-3.5a7 7 0 0 0-.656-2.5H12.18c.174.782.282 1.623.312 2.5zM11.27 2.461c.247.464.462.98.64 1.539h1.835a7 7 0 0 0-3.072-2.472c.218.284.418.598.597.933M10.855 4a8 8 0 0 0-.468-1.068C9.835 1.897 9.17 1.282 8.5 1.077V4z"/>
+</svg>                            <span class="hidden sm:inline">{{ app()->getLocale() == 'ar' ? 'العربية' : 'English' }}</span>
                         </button>
                         <div x-show="langOpen" x-cloak class="absolute {{ app()->getLocale() == 'ar' ? 'left-0' : 'right-0' }} mt-2 w-32 bg-white dark:bg-[#1A1A31] rounded-xl shadow-2xl border border-slate-100 dark:border-white/10 z-50 overflow-hidden">
                             <a href="{{ route('admin.switch-language', 'ar') }}" class="block px-4 py-3 text-xs font-bold text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5">العربية</a>

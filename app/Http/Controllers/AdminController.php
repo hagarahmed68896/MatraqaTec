@@ -518,28 +518,36 @@ class AdminController extends Controller
 
     public function markNotificationRead($id)
     {
-        $notification = Auth::user()->notifications()->find($id);
+        $notification = \App\Models\Notification::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->first();
         if ($notification) {
-            $notification->markAsRead();
+            $notification->update(['is_read' => true]);
         }
         return response()->json(['success' => true]);
     }
 
     public function notifications()
     {
-        $notifications = Auth::user()->notifications()->latest()->paginate(10);
+        $notifications = \App\Models\Notification::where('user_id', Auth::id())
+            ->latest()
+            ->paginate(10);
         return view('admin.notifications.system', compact('notifications'));
     }
 
     public function markAllNotificationsRead()
     {
-        Auth::user()->unreadNotifications()->update(['is_read' => true]);
+        \App\Models\Notification::where('user_id', Auth::id())
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
         return response()->json(['success' => true]);
     }
 
     public function deleteNotification($id)
     {
-        $notification = Auth::user()->notifications()->find($id);
+        $notification = \App\Models\Notification::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->first();
         if ($notification) {
             $notification->delete();
         }
