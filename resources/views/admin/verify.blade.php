@@ -11,14 +11,48 @@
     <style>
         body { font-family: 'Cairo', sans-serif; }
         .otp-input {
-            @apply w-14 h-16 md:w-16 md:h-20 text-center text-3xl font-black rounded-2xl bg-white dark:bg-white/5 border-2 border-slate-200 dark:border-white/10 shadow-sm transition-all focus:outline-none focus:ring-0 focus:border-primary dark:focus:border-primary dark:text-white transform focus:scale-105;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            width: 3rem;
+            height: 3.5rem;
+            flex-shrink: 0;
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 900;
+            border-radius: 0.75rem;
+            background-color: #fff;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,.05), 0 2px 4px -1px rgba(0,0,0,.03);
+            transition: all .2s;
+            outline: none;
+            color: #1e293b;
         }
         .otp-input:focus {
-            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.2), 0 4px 6px -2px rgba(79, 70, 229, 0.1);
+            border-color: #1A1A31;
+            box-shadow: 0 10px 15px -3px rgba(79,70,229,.2), 0 4px 6px -2px rgba(79,70,229,.1);
+            transform: scale(1.05);
         }
         .otp-input:not(:placeholder-shown) {
-            @apply border-primary bg-primary/5 dark:bg-white/10;
+            border-color: #1A1A31;
+            background-color: rgba(26,26,49,.05);
+        }
+        .dark .otp-input {
+            background-color: #1e293b !important;
+            border-color: #475569 !important;
+            color: #ffffff !important;
+        }
+        .dark .otp-input:focus {
+            border-color: #6366f1 !important;
+        }
+        .dark .otp-input:not(:placeholder-shown) {
+            background-color: rgba(99,102,241,.15) !important;
+            border-color: #6366f1 !important;
+        }
+        @media (min-width: 768px) {
+            .otp-input {
+                width: 3.75rem;
+                height: 4.5rem;
+                font-size: 1.5rem;
+                border-radius: 1rem;
+            }
         }
         .bg-gradient-premium {
             background: radial-gradient(circle at top right, #1A1A31 0%, #0F0F1E 100%);
@@ -52,7 +86,7 @@
                             <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A10.003 10.003 0 0012 3c1.22 0 2.383.218 3.46.613m-3.46 7.387a4 4 0 11-8 0 4 4 0 018 0zM12 11c1.22 0 2.383-.218 3.46-.613M12 11V9c0-1.657 1.343-3 3-3m-3 5C10.78 11.26 9.31 11.74 8 12.5M12 11c1.33 0 2.66.41 3.84 1.25L21 17"></path></svg>
                         </div>
                         <h1 class="text-4xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">{{ __('Verification') }}</h1>
-                        <p class="text-slate-500 dark:text-slate-400 text-base font-medium leading-relaxed px-4">
+                        <p class="text-slate-500 dark:text-white text-base font-medium leading-relaxed px-4">
                             {{ __('Enter the verification code sent to your phone') }}
                         </p>
                     </div>
@@ -79,8 +113,8 @@
                             </button>
 
                             <div class="text-center">
-                                <button type="button" id="resendBtn" disabled class="text-slate-400 bg-slate-100 dark:bg-white/5 px-8 py-3 rounded-2xl text-sm font-bold cursor-not-allowed transition-all">
-                                    {{ __('Resend Code') }} <span id="timer" class="text-primary font-black ml-1">60s</span>
+                                <button type="button" id="resendBtn" disabled class="text-slate-400 dark:text-white/50 bg-slate-100 dark:bg-white/5 px-8 py-3 rounded-2xl text-sm font-bold cursor-not-allowed transition-all">
+                                    {{ __('Resend Code') }} <span id="timer" class="text-primary dark:text-white font-black ml-1">60s</span>
                                 </button>
                             </div>
                         </div>

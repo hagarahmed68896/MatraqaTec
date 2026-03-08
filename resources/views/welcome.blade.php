@@ -23,22 +23,24 @@
      :class=" scrolled ? 'bg-white dark:bg-[#1A1A31] shadow-lg' : 'bg-white dark:bg-[#1A1A31] border-b border-slate-100 dark:border-slate-800 shadow-sm'"
      class="w-full z-50 transition-all duration-500 ">
 
-<div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center flex-row-reverse">            <!-- Logo (Right in RTL) -->
+<div :class="darkMode ? 'h-28 md:h-32' : 'h-20'" class="max-w-7xl mx-auto px-6 flex justify-between items-center flex-row-reverse transition-all duration-300">            <!-- Logo (Right in RTL) -->
             <a href="#" class="flex items-center">
-                <img src="{{ asset('assets/images/41b68e035292ba7aa97a9bb8b16143cb90992358.png') }}" class="h-10 object-contain" alt="MatraqaTec">
+                <img :src="darkMode ? '{{ asset('assets/images/163cf4a33948b9671c182f9d0aa410eaab570a58.png') }}' : '{{ asset('assets/images/41b68e035292ba7aa97a9bb8b16143cb90992358.png') }}'" 
+                     :class="darkMode ? 'h-24 md:h-28' : 'h-10'" 
+                     class="object-contain transition-all duration-500" alt="MatraqaTec">
             </a>
             
             <!-- Actions (Left in RTL) -->
             <div class="flex items-center gap-4">
                 <!-- Theme Toggle -->
-                <button @click="darkMode = !darkMode" class="w-10 h-10 flex items-center justify-center border border-slate-200 dark:border-slate-700 rounded-xl bg-gray-700 dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-all hover:bg-slate-100 dark:hover:bg-slate-700">
+                <button @click="darkMode = !darkMode" class="w-10 h-10 flex items-center justify-center border border-slate-200 dark:border-slate-700 rounded-xl bg-gray-700 dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-all hover:bg-slate-100 ">
                     <svg x-show="!darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                     <svg x-show="darkMode" style="display: none;" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.727 12.727L12 12l8.485 8.485z"></path></svg>
                 </button>
 
                 <!-- Language Dropdown -->
          <div x-data="{ open: false }" class="relative">
-    <button @click="open = !open" class="h-10 w-30 flex items-center justify-center border border-slate-200 dark:border-slate-700 rounded-xl bg-gray-700 dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-all hover:bg-slate-100 dark:hover:bg-slate-700">
+    <button @click="open = !open" class="h-10 w-30 flex items-center justify-center border border-slate-200 dark:border-slate-700 rounded-xl bg-gray-700 dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-all hover:bg-slate-100">
         
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-globe mx-2" viewBox="0 0 16 16">
             <path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m7.5-6.923c-.67.204-1.335.82-1.887 1.855A8 8 0 0 0 5.145 4H7.5zM4.09 4a9.3 9.3 0 0 1 .64-1.539 7 7 0 0 1 .597-.933A7.03 7.03 0 0 0 2.255 4zm-.582 3.5c.03-.877.138-1.718.312-2.5H1.674a7 7 0 0 0-.656 2.5zM4.847 5a12.5 12.5 0 0 0-.338 2.5H7.5V5zM8.5 5v2.5h2.99a12.5 12.5 0 0 0-.337-2.5zM4.51 8.5a12.5 12.5 0 0 0 .337 2.5H7.5V8.5zm3.99 0V11h2.653c.187-.765.306-1.608.338-2.5zM5.145 12q.208.58.468 1.068c.552 1.035 1.218 1.65 1.887 1.855V12zm.182 2.472a7 7 0 0 1-.597-.933A9.3 9.3 0 0 1 4.09 12H2.255a7 7 0 0 0 3.072 2.472M3.82 11a13.7 13.7 0 0 1-.312-2.5h-2.49c.062.89.291 1.733.656 2.5zm6.853 3.472A7 7 0 0 0 13.745 12H11.91a9.3 9.3 0 0 1-.64 1.539 7 7 0 0 1-.597.933M8.5 12v2.923c.67-.204 1.335-.82 1.887-1.855q.26-.487.468-1.068zm3.68-1h2.146c.365-.767.594-1.61.656-2.5h-2.49a13.7 13.7 0 0 1-.312 2.5m2.802-3.5a7 7 0 0 0-.656-2.5H12.18c.174.782.282 1.623.312 2.5zM11.27 2.461c.247.464.462.98.64 1.539h1.835a7 7 0 0 0-3.072-2.472c.218.284.418.598.597.933M10.855 4a8 8 0 0 0-.468-1.068C9.835 1.897 9.17 1.282 8.5 1.077V4z"/>
@@ -61,7 +63,7 @@
 </div>
 
                 <!-- Download App (Hidden on Mobile) -->
-                <a href="#" class="hidden md:flex px-6 py-2.5 bg-[#1A1A31] dark:bg-indigo-600 text-white text-sm font-bold rounded-xl shadow-md hover:bg-black transition-all active:scale-95">
+                <a href="#" class="hidden md:flex px-6 py-2.5 bg-[#1A1A31] border border-slate-200 dark:border-slate-700 dark:bg-indigo-600 text-white text-sm font-bold rounded-xl shadow-md hover:bg-black transition-all active:scale-95">
                     {{ __('Download App') }}
                 </a>
             </div>
@@ -74,9 +76,9 @@
         <div class="max-w-7xl mx-auto px-6 relative z-10 flex flex-col lg:flex-row items-center justify-center gap-12 w-full">
            
             <!-- Hero Content (Right side) -->
-            <div class="flex-1 space-y-8 pb-20 lg:pb-32">
+            <div class="flex-1 space-y-8 pb-20 lg:pb-32 md:mt-4 mt-8">
                 <div class="flex">
-                    <div class="inline-flex gap-2 px-5 font-bold py-2 bg-white/10 backdrop-blur-md rounded-full text-xs text-black dark:text-white shadow-sm">
+                    <div class="inline-flex gap-2 px-5  font-bold py-2 bg-white/10 backdrop-blur-md rounded-full text-xs text-black dark:text-[#1A1A31] shadow-sm">
                     <span class="text-rose-500 text-sm">🛠️</span>    
                     {{ __('The right technician at the right time.') }}
                     </div>
@@ -264,6 +266,8 @@
                 total: {{ count($reviewItems) }},
                 perPage: 4,
                 autoplayInterval: null,
+                touchStartX: 0,
+                touchEndX: 0,
                 updatePerPage() {
                     if (window.innerWidth < 768) this.perPage = 1;
                     else if (window.innerWidth < 1024) this.perPage = 2;
@@ -290,6 +294,28 @@
                 goTo(index) {
                     this.current = Math.min(index, this.total - this.perPage);
                 },
+                handleTouchStart(e) {
+                    this.touchStartX = e.changedTouches[0].screenX;
+                },
+                handleTouchEnd(e) {
+                    this.touchEndX = e.changedTouches[0].screenX;
+                    this.handleSwipe();
+                },
+                handleSwipe() {
+                    const threshold = 50;
+                    const diff = this.touchStartX - this.touchEndX;
+                    const isRtl = document.documentElement.dir === 'rtl';
+                    
+                    if (Math.abs(diff) > threshold) {
+                        if (diff > 0) {
+                            // Swiped Left
+                            isRtl ? this.prev() : this.next();
+                        } else {
+                            // Swiped Right
+                            isRtl ? this.next() : this.prev();
+                        }
+                    }
+                },
                 startAutoplay() {
                     // Autoplay disabled per user request
                 },
@@ -303,7 +329,8 @@
                 <!-- Navigation Arrow (Left) -->
                 <button x-show="total > perPage" 
                         @click="prev()"
-                        class="absolute -left-4 lg:-left-6 top-1/2 -translate-y-1/2 w-10 h-10 lg:w-14 lg:h-14 bg-[#1A1A31] text-white rounded-full shadow-2xl flex items-center justify-center transition-all z-20 hover:scale-110 active:scale-95">
+                        class="absolute left-2 md:-left-4 lg:-left-6 top-1/2 -translate-y-1/2 w-10 h-10 lg:w-14 lg:h-14 bg-white text-[#1A1A31] border border-slate-100 dark:border-slate-700 rounded-full shadow-xl flex items-center justify-center transition-all z-20 hover:bg-[#1A1A31] hover:text-[#1A1A31] hover:scale-110 active:scale-95"
+                        style="left: 0.5rem; right: auto;">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
@@ -312,16 +339,19 @@
                 <!-- Navigation Arrow (Right) -->
                 <button x-show="total > perPage"
                         @click="next()"
-                        class="absolute -right-4 lg:-right-6 top-1/2 -translate-y-1/2 w-10 h-10 lg:w-14 lg:h-14 bg-white text-[#1A1A31] border border-slate-100 dark:border-slate-700 rounded-full shadow-xl flex items-center justify-center transition-all z-20 hover:scale-110 active:scale-95">
+                        class="absolute right-2 md:-right-4 lg:-right-6 top-1/2 -translate-y-1/2 w-10 h-10 lg:w-14 lg:h-14 bg-white text-[#1A1A31] border border-slate-100 dark:border-slate-700 rounded-full shadow-xl flex items-center justify-center transition-all z-20 hover:bg-[#1A1A31] hover:text-[#1A1A31] hover:scale-110 active:scale-95"
+                        style="right: 0.5rem; left: auto;">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                     </svg>
                 </button>
 
-                <!-- Cards Container -->
-                <div class="overflow-hidden px-1 pb-12">
+                <div class="overflow-hidden px-1 pb-12"
+                     @touchstart="handleTouchStart($event)"
+                     @touchend="handleTouchEnd($event)">
                     <div class="flex transition-transform duration-700 ease-in-out"
-                         :style="'gap: 2rem; transform: translateX(calc(' + (current * (document.documentElement.dir === \'rtl\' ? 1 : -1)) + ' * (100% + 2rem) / ' + perPage + '))'">
+                         :style="`gap: 2rem; transform: translateX(calc(${current * (document.documentElement.dir === 'rtl' ? 1 : -1)} * (100% + 2rem) / ${perPage}))`"
+                    >
                         @foreach($reviewItems as $review)
                             <div class="flex-shrink-0 mx-2 bg-white dark:bg-slate-800/40 rounded-[2.5rem] p-8 lg:p-10 border border-slate-50 dark:border-slate-700/50 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500"
                                  :style="'width: calc((100% - (' + (perPage - 1) + ' * 2rem)) / ' + perPage + ')'">
@@ -339,8 +369,8 @@
                                         @endif
                                     </div>
                                     <!-- Name + Stars -->
-                                    <div class="flex-1">
-                                        <h4 class="font-bold text-[#1A1A31] dark:text-white text-lg leading-tight mb-2">{{ $review->user->name ?? __('User') }}</h4>
+                                    <div class="flex-1 text-primary">
+                                        <h4 class="font-bold text-lg leading-tight mb-2" style="color: #1A1A31 !important;">{{ $review->user->name ?? __('User') }}</h4>
                                         <div class="flex gap-0.5 justify-end">
                                             @for($i = 0; $i < 5; $i++)
                                                 <span class="text-2xl font-bold" style="color: {{ $i < (int)($review->rating ?? $review->stars ?? 5) ? '#FFD700' : '#E2E8F0' }}; line-height: 1;">★</span>
@@ -350,7 +380,7 @@
                                 </div>
 
                                 <!-- Comment -->
-                                <p class="text-slate-600 dark:text-slate-300 text-sm leading-[1.8] text-right">
+                                <p class="text-slate-600 text-sm leading-[1.8] text-right" style="color: #1A1A31 !important;">
                                     "{{ $review->comment }}"
                                 </p>
                             </div>

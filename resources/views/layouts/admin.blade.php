@@ -38,8 +38,8 @@
              class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 lg:hidden"></div>
 
         <!-- Premium Sidebar -->
-        <aside :class="sidebarOpen ? 'translate-x-0' : ''"
-               class="fixed inset-y-0 {{ app()->getLocale() == 'ar' ? 'right-0 translate-x-full' : 'left-0 -translate-x-full' }} w-80 bg-white dark:bg-[#1A1A31] text-slate-600 dark:text-slate-300 flex-shrink-0 flex flex-col transition-all duration-300 shadow-xl z-50 border-{{ app()->getLocale() == 'ar' ? 'l' : 'r' }} border-slate-100 dark:border-white/5 lg:static lg:translate-x-0">
+        <aside :class="sidebarOpen ? 'translate-x-0' : '{{ app()->getLocale() == 'ar' ? 'translate-x-full' : '-translate-x-full' }}'"
+               class="fixed inset-y-0 {{ app()->getLocale() == 'ar' ? 'right-0' : 'left-0' }} w-80 bg-white dark:bg-[#1A1A31] text-slate-600 dark:text-slate-300 flex-shrink-0 flex flex-col transition-all duration-300 shadow-xl z-50 border-{{ app()->getLocale() == 'ar' ? 'l' : 'r' }} border-slate-100 dark:border-white/5 lg:static lg:translate-x-0">
             <div class="p-8 flex items-center justify-center border-b border-slate-100 dark:border-white/5">
                 <img src="{{ asset('assets/images/logo.png') }}" alt="Logo" class="h-12 brightness-0 dark:invert opacity-90">
             </div>
