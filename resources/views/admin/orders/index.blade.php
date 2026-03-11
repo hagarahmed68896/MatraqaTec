@@ -115,7 +115,7 @@
                     <div class="space-y-3">
                         @foreach(['newest' => __('Newest'), 'oldest' => __('Oldest'), 'name' => __('Name')] as $val => $label)
                         <label class="flex items-center justify-between cursor-pointer group">
-                             <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                             <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                              <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                   :class="sortBy == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200'">
                                  <input type="radio" name="sort_by" value="{{ $val }}" x-model="sortBy" class="hidden">
@@ -136,7 +136,7 @@
                     <div class="space-y-3">
                         @foreach(['' => __('All'), 'client' => __('Individual'), 'corporate' => __('Corporate')] as $val => $label)
                         <label class="flex items-center justify-between cursor-pointer group">
-                             <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                             <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                              <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                   :class="customerType == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200'">
                                  <input type="radio" name="customer_type" value="{{ $val }}" x-model="customerType" class="hidden">
@@ -157,7 +157,7 @@
                     <div class="space-y-3">
                         @foreach(['' => __('All'), 'platform' => __('Platform'), 'company' => __('Company')] as $val => $label)
                         <label class="flex items-center justify-between cursor-pointer group">
-                             <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                             <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                              <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                   :class="technicianType == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200'">
                                  <input type="radio" name="technician_type" value="{{ $val }}" x-model="technicianType" class="hidden">
@@ -178,7 +178,7 @@
                     <div class="space-y-3">
                         @foreach(['' => __('All'), 'assigned' => __('Assigned'), 'waiting' => __('Waiting')] as $val => $label)
                         <label class="flex items-center justify-between cursor-pointer group">
-                             <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                             <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                              <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                   :class="appointmentStatus == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200'">
                                  <input type="radio" name="appointment_status" value="{{ $val }}" x-model="appointmentStatus" class="hidden">
@@ -199,7 +199,7 @@
                     <div class="space-y-3">
                         @foreach(['' => __('All'), 'on_way' => __('On Way'), 'arrived' => __('Arrived'), 'work_started' => __('Work Started'), 'additional_visit' => __('Additional Visit'), 'completed' => __('Completed')] as $val => $label)
                         <label class="flex items-center justify-between cursor-pointer group">
-                                <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                 <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                     :class="subStatus == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200'">
                                     <input type="radio" name="sub_status" value="{{ $val }}" x-model="subStatus" class="hidden">
@@ -219,7 +219,7 @@
                         <h4 class="text-xs font-black text-[#1A1A31] opacity-60 uppercase tracking-widest">{{ __('Service Category:') }}</h4>
                         <div class="space-y-3">
                             <label class="flex items-center justify-between cursor-pointer group">
-                                 <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ __('All') }}</span>
+                                 <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ __('All') }}</span>
                                  <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                       :class="!selectedCategoryId ? 'border-primary bg-primary' : 'border-slate-200'">
                                      <input type="radio" name="service_category_id" value="" x-model="selectedCategoryId" class="hidden">
@@ -230,7 +230,7 @@
                             </label>
                             @foreach($categories as $cat)
                             <label class="flex items-center justify-between cursor-pointer group" @click="selectedServiceIds = []">
-                                 <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $cat->name_ar }}</span>
+                                 <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $cat->name_ar }}</span>
                                  <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                       :class="selectedCategoryId == {{ $cat->id }} ? 'border-primary bg-primary' : 'border-slate-200'">
                                      <input type="radio" name="service_category_id" value="{{ $cat->id }}" x-model="selectedCategoryId" class="hidden">
@@ -250,7 +250,7 @@
                         <div class="space-y-3 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
                             <template x-for="service in filteredServices" :key="service.id">
                                 <label class="flex items-center justify-between cursor-pointer group">
-                                     <span class="text-[11px] font-bold text-slate-500 group-hover:text-primary transition-colors" x-text="service.name_ar"></span>
+                                     <span class="text-[11px] font-bold text-slate-500 dark:text-white transition-colors" x-text="service.name_ar"></span>
                                      <div class="relative w-5 h-5 border-2 rounded-lg transition-all flex items-center justify-center"
                                           :class="selectedServiceIds.includes(String(service.id)) ? 'border-primary bg-primary' : 'border-slate-200'">
                                          <input type="checkbox" name="service_ids[]" :value="service.id" x-model="selectedServiceIds" class="hidden">
@@ -320,13 +320,13 @@
                             <span class="text-md font-bold text-[#1A1A31]">{{ $item->user->name }}</span>
                         </td>
                         <td class="py-6 px-4">
-                            <span class="px-4 py-1.5 rounded-xl bg-slate-50 text-[10px] font-bold text-slate-600">{{ $item->user->type == 'client' ? __('Individual') : __('Corporate') }}</span>
+                            <span class="px-4 py-1.5 rounded-xl bg-slate-50 text-[10px] font-bold text-slate-600 dark:text-white">{{ $item->user->type == 'client' ? __('Individual') : __('Corporate') }}</span>
                         </td>
                         <td class="py-6 px-4">
-                            <span class="text-md font-bold text-slate-500">{{ $item->service->name_ar }}</span>
+                            <span class="text-md font-bold text-slate-500 dark:text-white">{{ $item->service->name_ar }}</span>
                         </td>
                         <td class="py-6 px-4">
-                            <span class="text-md font-bold text-slate-500">{{ $item->service->parent->name_ar ?? '-' }}</span>
+                            <span class="text-md font-bold text-slate-500 dark:text-white">{{ $item->service->parent->name_ar ?? '-' }}</span>
                         </td>
                         @if($currentTab == 'scheduled')
                         <td class="py-6 px-4">
@@ -392,7 +392,7 @@
                      x-transition:enter-end="opacity-100 scale-100 translate-y-0">
                     
                     <!-- Close Button -->
-                    <button @click="showAcceptModal = false" class="absolute top-8 left-8 text-slate-300 hover:text-slate-500 transition-colors">
+                    <button @click="showAcceptModal = false" class="absolute top-8 left-8 text-slate-300 hover:text-slate-500 dark:text-white transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
 
@@ -457,7 +457,7 @@
                                                             <img :src="tech.avatar || '/assets/admin/images/avatar-placeholder.png'" class="w-full h-full object-cover">
                                                         </div>
                                                         <div class="space-y-1">
-                                                            <h4 class="font-black text-[#1A1A31] group-hover:text-primary transition-colors" x-text="tech.name"></h4>
+                                                            <h4 class="font-black text-[#1A1A31] transition-colors" x-text="tech.name"></h4>
                                                             <div class="flex items-center gap-4 text-[10px] font-bold text-slate-400">
                                                                 <span x-text="tech.service_name"></span>
                                                                 <span class="flex items-center gap-1">
@@ -487,7 +487,7 @@
                                                             <img :src="comp.avatar || '/assets/admin/images/avatar-placeholder.png'" class="w-full h-full object-cover">
                                                         </div>
                                                         <div class="space-y-1">
-                                                            <h4 class="font-black text-[#1A1A31] group-hover:text-primary transition-colors" x-text="comp.name"></h4>
+                                                            <h4 class="font-black text-[#1A1A31] transition-colors" x-text="comp.name"></h4>
                                                             <div class="flex items-center gap-4 text-[10px] font-bold text-slate-400">
                                                                 <span class="flex items-center gap-1">
                                                                     <svg class="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
@@ -524,10 +524,10 @@
                         <div x-show="viewMode === 'map'" class="relative" style="min-height: 500px;" x-effect="if(searchMap !== undefined) renderMarkers()">
                             <!-- Top Left Buttons (Close/Expand) -->
                             <div class="absolute top-6 right-6 z-[1000] flex gap-3 pointer-events-auto">
-                                <button @click="viewMode = 'list'" class="w-10 h-10 rounded-xl bg-white/90 backdrop-blur-md border border-slate-100 shadow-lg flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
+                                <button @click="viewMode = 'list'" class="w-10 h-10 rounded-xl bg-white/90 backdrop-blur-md border border-slate-100 shadow-lg flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-white transition-colors">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                                 </button>
-                                <button class="w-10 h-10 rounded-xl bg-white/90 backdrop-blur-md border border-slate-100 shadow-lg flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
+                                <button class="w-10 h-10 rounded-xl bg-white/90 backdrop-blur-md border border-slate-100 shadow-lg flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-white transition-colors">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
                                 </button>
                             </div>
@@ -665,7 +665,7 @@
                      x-transition:enter-start="opacity-0 scale-95 translate-y-4"
                      x-transition:enter-end="opacity-100 scale-100 translate-y-0">
                     
-                    <button @click="showRefuseModal = false" class="absolute top-8 left-8 text-slate-300 hover:text-slate-500 transition-colors">
+                    <button @click="showRefuseModal = false" class="absolute top-8 left-8 text-slate-300 hover:text-slate-500 dark:text-white transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
 

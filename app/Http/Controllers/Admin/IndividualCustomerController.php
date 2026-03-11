@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\IndividualCustomer;
+use App\Models\CorporateCustomer;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\Payment;
@@ -71,14 +72,10 @@ class IndividualCustomerController extends Controller
 
         // Stats
         $stats = [
-            'total' => IndividualCustomer::count(),
-            'active' => IndividualCustomer::whereHas('user', function ($q) {
-                $q->where('status', 'active');
-            })->count(),
-            'blocked' => IndividualCustomer::whereHas('user', function ($q) {
-                $q->where('status', 'blocked');
-            })->count(),
-            'new_this_week' => IndividualCustomer::where('created_at', '>=', Carbon::now()->subWeek())->count()
+            'total_all' => User::whereIn('type', ['individual', 'corporate_customer'])->count(),
+            'total_individual' => IndividualCustomer::count(),
+            'total_corporate' => CorporateCustomer::count(),
+            'total_inactive' => User::whereIn('type', ['individual', 'corporate_customer'])->whereIn('status', ['blocked', 'inactive'])->count(),
         ];
         
         return view('admin.customers.index', compact('items', 'stats'))->with('type', 'individual');

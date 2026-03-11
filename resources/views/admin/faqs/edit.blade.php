@@ -7,7 +7,7 @@
     <!-- Header -->
     <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
-            <a href="{{ route('admin.faqs.index') }}" class="w-12 h-12 bg-white dark:bg-white/5 rounded-2xl flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary/5 transition-all shadow-sm">
+            <a href="{{ route('admin.faqs.index') }}" class="w-12 h-12 bg-white dark:bg-white/5 rounded-2xl flex items-center justify-center text-slate-400 hover:text-primary dark:hover:text-white hover:bg-primary/5 transition-all shadow-sm">
                 <svg class="w-6 h-6 {{ app()->getLocale() == 'ar' ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
             </a>
             <h1 class="text-2xl font-black text-slate-800 dark:text-white">{{ __('Edit FAQ') }}</h1>
@@ -77,7 +77,7 @@
                     <div class="relative">
                         <button @click="open = !open" type="button" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl px-6 py-5 text-sm font-bold text-slate-700 dark:text-white flex items-center justify-between hover:bg-slate-100 dark:hover:bg-white/10 transition-all group">
                             <span x-text="selected == 'all' ? '{{ __('All Groups') }}' : (selected == 'clients' ? '{{ __('Clients') }}' : (selected == 'companies' ? '{{ __('Companies') }}' : '{{ __('Technicians') }}'))"></span>
-                            <svg class="w-5 h-5 text-slate-400 transition-transform group-hover:text-primary" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            <svg class="w-5 h-5 text-slate-400 transition-transform group-hover:text-primary dark:hover:text-white" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
                         <input type="hidden" name="target_group" x-model="selected">
                         
@@ -90,8 +90,8 @@
                              x-transition:enter-end="opacity-100 translate-y-0 scale-100"
                              class="absolute z-50 w-full mt-2 bg-white dark:bg-[#1A1A31] border border-slate-100 dark:border-white/10 rounded-[2rem] shadow-2xl p-3 space-y-1">
                             @foreach(['all' => 'All Groups', 'clients' => 'Clients', 'companies' => 'Companies', 'technicians' => 'Technicians'] as $val => $label)
-                            <label class="flex items-center justify-between p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-all group">
-                                <span class="text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __($label) }}</span>
+                            <label class="flex items-center justify-between p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white cursor-pointer transition-all group">
+                                <span class="text-sm font-bold text-slate-600 dark:text-slate-300 transition-colors">{{ __($label) }}</span>
                                 <div class="relative flex items-center">
                                     <input type="radio" value="{{ $val }}" x-model="selected" @change="open = false" class="peer appearance-none w-6 h-6 rounded-full border-2 border-slate-200 dark:border-white/10 checked:border-primary checked:bg-primary transition-all cursor-pointer">
                                     <svg class="w-3.5 h-3.5 text-white absolute inset-0 m-auto pointer-events-none opacity-0 peer-checked:opacity-100 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
@@ -125,7 +125,7 @@
                              x-transition:enter-end="opacity-100 translate-y-0 scale-100"
                              class="absolute z-50 w-full mt-2 bg-white dark:bg-[#1A1A31] border border-slate-100 dark:border-white/10 rounded-[2rem] shadow-2xl p-3 space-y-1">
                             @foreach(['active' => 'Active', 'inactive' => 'Inactive'] as $val => $label)
-                            <label class="flex items-center justify-between p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-all group">
+                            <label class="flex items-center justify-between p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white cursor-pointer transition-all group">
                                 <span class="text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:text-emerald-500 transition-colors">{{ __($label) }}</span>
                                 <div class="relative flex items-center">
                                     <input type="radio" value="{{ $val }}" x-model="selected" @change="open = false" class="peer appearance-none w-6 h-6 rounded-full border-2 border-slate-200 dark:border-white/10 checked:border-emerald-500 checked:bg-emerald-500 transition-all cursor-pointer">

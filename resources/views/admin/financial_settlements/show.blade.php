@@ -153,7 +153,7 @@
                         @foreach(['pending', 'transferred', 'suspended'] as $status)
                         <label class="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-transparent cursor-pointer hover:border-primary/30 transition-all group">
                             <div class="flex items-center gap-3">
-                                <span class="capitalize text-xs font-black text-slate-500 group-hover:text-[#1A1A31] dark:group-hover:text-white">{{ __($status) }}</span>
+                                <span class="capitalize text-xs font-black text-slate-500 dark:text-white group-hover:text-[#1A1A31] dark:group-hover:text-white">{{ __($status) }}</span>
                             </div>
                             <input type="radio" name="status" value="{{ $status }}" {{ $item->status == $status ? 'checked' : '' }} class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
                         </label>

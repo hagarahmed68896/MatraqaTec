@@ -503,7 +503,7 @@
                                     ? 'admin.individual-customers.show' 
                                     : 'admin.corporate-customers.show';
                             @endphp
-                            <a href="{{ route($route, $item->user_id) }}" class="px-8 py-3 rounded-2xl bg-white/10 text-black text-xs font-black shadow-xl shadow-white/5 hover:scale-105 transition-all uppercase tracking-widest">
+                            <a href="{{ route($route, $item->user_id) }}" class="px-8 py-3 rounded-2xl bg-white/10 text-black dark:text-white text-xs font-black shadow-xl shadow-white/5 hover:scale-105 transition-all uppercase tracking-widest">
                                 {{ __('View Customer Profile') }}
                             </a>
                         </div>

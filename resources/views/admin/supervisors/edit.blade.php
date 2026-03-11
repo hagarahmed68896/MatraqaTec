@@ -12,7 +12,7 @@
     <div class="flex items-center justify-between mb-8">
         <div class="flex items-center gap-4">
             <a href="{{ route('admin.supervisors.index') }}" 
-               class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white dark:bg-[#1A1A31] border border-slate-100 dark:border-white/5 text-slate-400 hover:text-primary transition-all shadow-sm">
+               class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white dark:bg-[#1A1A31] border border-slate-100 dark:border-white/5 text-slate-400 hover:text-primary dark:hover:text-white transition-all shadow-sm">
                 <svg class="w-6 h-6 {{ app()->getLocale() == 'ar' ? 'rotate-0' : 'rotate-180' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
                 </svg>
@@ -86,7 +86,7 @@
                             <input type="checkbox" name="roles[]" value="{{ $role->id }}" 
                                    {{ is_array(old('roles', $item->roles->pluck('id')->toArray())) && in_array($role->id, old('roles', $item->roles->pluck('id')->toArray())) ? 'checked' : '' }}
                                    class="w-5 h-5 rounded border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-white dark:bg-white/5">
-                            <span class="text-sm font-bold text-slate-600 dark:text-slate-400 group-hover:text-primary transition-colors">{{ $role->name_ar ?? $role->name }}</span>
+                            <span class="text-sm font-bold text-slate-600 dark:text-slate-400 transition-colors">{{ $role->name_ar ?? $role->name }}</span>
                         </label>
                         @endforeach
                     </div>
@@ -125,14 +125,14 @@
                             <button type="button" 
                                     @click="status = 'active'; statusLabel = '{{ __('Active') }}'; openStatus = false"
                                     class="w-full flex items-center gap-4 p-4 rounded-xl transition-all"
-                                    :class="status === 'active' ? 'bg-green-50 dark:bg-green-500/5' : 'hover:bg-slate-50 dark:hover:bg-white/5'">
+                                    :class="status === 'active' ? 'bg-green-50 dark:bg-green-500/5' : 'hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white'">
                                 <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-green-500/10 text-green-500">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
                                     </svg>
                                 </div>
                                 <div class="flex flex-col text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
-                                    <span class="text-sm font-black text-slate-800 dark:text-white">{{ __('Active') }}</span>
+                                    <span class="text-sm font-black text-slate-800 ">{{ __('Active') }}</span>
                                     <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{{ __('Active Account') }}</span>
                                 </div>
                             </button>
@@ -140,7 +140,7 @@
                             <button type="button" 
                                     @click="status = 'blocked'; statusLabel = '{{ __('Blocked') }}'; openStatus = false"
                                     class="w-full flex items-center gap-4 p-4 rounded-xl transition-all mt-1"
-                                    :class="status === 'blocked' ? 'bg-red-50 dark:bg-red-500/5' : 'hover:bg-slate-50 dark:hover:bg-white/5'">
+                                    :class="status === 'blocked' ? 'bg-red-50 dark:bg-red-500/5' : 'hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white'">
                                 <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-red-500/10 text-red-500">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
@@ -160,7 +160,10 @@
             <!-- Form Actions -->
             <div class="grid grid-cols-2 gap-4 mt-12 pt-8 border-t border-slate-100 dark:border-white/5">
                 <button type="submit" 
-                        class="py-4 bg-[#1A1A31] text-white rounded-2xl font-black shadow-xl shadow-primary/20 hover:bg-black transition-all uppercase tracking-widest text-sm">
+                        class="py-4 bg-[#1A1A31] text-white rounded-2xl 
+                        font-black shadow-xl dark:bg-white/5
+                         shadow-primary/20 hover:bg-black transition-all
+                          uppercase tracking-widest text-sm">
                     {{ __('Update Supervisor') }}
                 </button>
                 <a href="{{ route('admin.supervisors.index') }}" 

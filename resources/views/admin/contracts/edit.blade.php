@@ -9,7 +9,7 @@
     {{-- Header --}}
     <div class="flex items-center gap-4 mb-8">
         <a href="{{ route('admin.contracts.index') }}"
-           class="flex items-center gap-2 text-slate-500 hover:text-[#1A1A31] transition-colors font-bold group">
+           class="flex items-center gap-2 text-slate-500 dark:text-white hover:text-[#1A1A31] transition-colors font-bold group">
             <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center border border-slate-100 group-hover:bg-slate-50 shadow-sm">
                 <svg class="w-5 h-5 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -81,7 +81,7 @@
                     <div class="flex items-center gap-2">
                         @if($item->contract_file)
                         <a href="{{ asset('storage/' . $item->contract_file) }}" target="_blank"
-                           class="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-[#1A1A31] hover:border-slate-300 transition-all"
+                           class="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 dark:text-white hover:text-[#1A1A31] hover:border-slate-300 transition-all"
                            title="{{ __('View File') }}">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -123,10 +123,10 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-black text-slate-600">{{ __('Choose file or drag here') }}</p>
+                                    <p class="text-sm font-black text-slate-600 dark:text-white">{{ __('Choose file or drag here') }}</p>
                                     <p class="text-xs text-slate-400 font-bold mt-0.5">{{ __('PDF format up to 5MB') }}</p>
                                 </div>
-                                <span class="px-4 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-black text-slate-600 hover:bg-slate-50 transition-all shadow-sm">
+                                <span class="px-4 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-black text-slate-600 dark:text-white hover:bg-slate-50 transition-all shadow-sm">
                                     {{ __('Browse File') }}
                                 </span>
                             </div>
@@ -237,7 +237,7 @@
                                    placeholder="{{ __('Enter phone number') }}"
                                    class="w-full pl-5 pr-20 py-4 bg-slate-50 border border-transparent focus:border-[#1A1A31] focus:bg-white rounded-2xl text-sm font-bold transition-all outline-none text-right">
                             <div class="absolute right-0 top-0 bottom-0 px-4 flex items-center justify-center bg-slate-100 rounded-l-2xl border-l border-slate-200">
-                                <span class="text-xs font-black text-slate-500">+966</span>
+                                <span class="text-xs font-black text-slate-500 dark:text-white">+966</span>
                             </div>
                         </div>
                         <button type="button" x-show="index > 0" @click="phones.splice(index, 1)"
@@ -249,7 +249,7 @@
                     </div>
                 </template>
                 <button type="button" @click="phones.push('')"
-                        class="flex items-center gap-2 px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-600 hover:bg-slate-100 transition-all">
+                        class="flex items-center gap-2 px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black text-slate-600 dark:text-white hover:bg-slate-100 transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
                     </svg>
@@ -285,7 +285,7 @@
                 <div class="p-5 bg-slate-50 rounded-2xl space-y-3">
                     @foreach(['active' => __('active'), 'expired' => __('expired'), 'completed' => __('completed')] as $val => $label)
                     <label class="flex items-center justify-between cursor-pointer group">
-                        <span class="text-sm font-bold text-slate-600 group-hover:text-[#1A1A31] transition-colors">{{ $label }}</span>
+                        <span class="text-sm font-bold text-slate-600 dark:text-white group-hover:text-[#1A1A31] transition-colors">{{ $label }}</span>
                         <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center
                                     {{ old('status', $item->status) == $val ? 'border-[#1A1A31] bg-[#1A1A31]' : 'border-slate-300' }}">
                             <input type="radio" name="status" value="{{ $val }}"
@@ -314,7 +314,7 @@
                 {{ __('Save') }}
             </button>
             <a href="{{ route('admin.contracts.index') }}"
-               class="px-8 py-5 bg-white text-slate-500 rounded-[2rem] font-black text-sm border border-slate-200 hover:bg-slate-50 transition-all uppercase tracking-widest text-center">
+               class="px-8 py-5 bg-white text-slate-500 dark:text-white rounded-[2rem] font-black text-sm border border-slate-200 hover:bg-slate-50 transition-all uppercase tracking-widest text-center">
                 {{ __('Cancel') }}
             </a>
         </div>

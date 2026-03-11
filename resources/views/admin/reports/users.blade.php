@@ -6,7 +6,7 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         @foreach($distribution as $item)
         <div class="bg-white dark:bg-[#1A1A31] p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5">
-            <p class="text-sm text-slate-500 font-bold uppercase">{{ $item->type }}</p>
+            <p class="text-sm text-slate-500 dark:text-white font-bold uppercase">{{ $item->type }}</p>
             <h3 class="text-2xl font-black mt-1">{{ $item->count }}</h3>
         </div>
         @endforeach

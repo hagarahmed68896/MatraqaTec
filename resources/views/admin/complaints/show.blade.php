@@ -22,7 +22,7 @@
     {{-- ─── Header ─── --}}
     <div class="flex items-center gap-4">
         <a href="{{ route('admin.complaints.index') }}"
-           class="w-12 h-12 bg-white dark:bg-white/5 rounded-2xl flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary/5 transition-all shadow-sm border border-slate-100 dark:border-white/10 flex-shrink-0">
+           class="w-12 h-12 bg-white dark:bg-white/5 rounded-2xl flex items-center justify-center text-slate-400 hover:text-primary dark:hover:text-white hover:bg-primary/5 transition-all shadow-sm border border-slate-100 dark:border-white/10 flex-shrink-0">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
             </svg>
@@ -346,7 +346,7 @@
                               class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl px-5 py-4 text-sm font-bold text-[#1A1A31] dark:text-white placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none text-right"></textarea>
                     <div class="flex gap-3">
                         <button type="button" @click="actionModal = false"
-                                class="flex-1 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 text-slate-500 font-black text-sm hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
+                                class="flex-1 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white font-black text-sm hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
                             {{ __('Cancel') }}
                         </button>
                         <button type="submit"
@@ -374,7 +374,7 @@
                 {{-- Header --}}
                 <div class="flex items-center justify-between px-8 py-5 border-b border-slate-100 dark:border-white/5">
                     <button type="button" @click="rejectModal = false"
-                            class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
+                            class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-white transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
@@ -396,7 +396,7 @@
                     <input type="hidden" name="action_type" value="rejection">
                     <div class="flex gap-3 px-8 pb-8">
                         <button type="button" @click="rejectModal = false"
-                                class="flex-1 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 text-slate-500 font-black text-sm hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
+                                class="flex-1 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white font-black text-sm hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
                             {{ __('Cancel') }}
                         </button>
                         <button type="submit"

@@ -171,9 +171,9 @@
             </div>
             <div class="flex items-center justify-between mb-8">
                 <div>
-                    <h3 class="text-lg font-black text-slate-800 dark:text-gray">{{ __('Total Users') }}</h3>
+                    <h3 class="text-lg font-black text-slate-800 dark:text-white">{{ __('Total Users') }}</h3>
                     <div class="flex items-center gap-2 mt-1">
-                        <span class="text-2xl font-black text-slate-800 dark:text-gray">{{ \App\Models\User::count() }}</span>
+                        <span class="text-2xl font-black text-slate-800 dark:text-white">{{ \App\Models\User::count() }}</span>
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
@@ -223,7 +223,9 @@
         <div class="bg-white dark:bg-[#1A1A31] p-8 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-sm h-fit">
             <div class="flex items-center justify-between mb-8">
                 <h3 class="text-lg font-black text-slate-800 dark:text-white">{{ __('Top Technicians') }}</h3>
+                @can('view technicians')
                 <a href="{{ route('admin.technicians.top') }}" class="px-3 py-1.5 bg-slate-100 dark:bg-white/10 text-[10px] font-black text-slate-600 dark:text-slate-300 rounded-lg hover:bg-primary hover:text-white transition-all">{{ __('Show All') }}</a>
+                @endcan
             </div>
             
             <div class="space-y-4">
@@ -248,7 +250,7 @@
                             <div class="flex items-center gap-4">
                                 <div class="flex items-center gap-1.5">
                                     <svg class="w-3.5 h-3.5 text-secondary" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
-                                    <span class="text-xs font-black text-slate-700 dark:text-white/80">{{ number_format($tech->reviews()->avg('rating') ?? 0, 1) }}</span>
+                                    <span class="text-xs font-black text-slate-700 dark:text-white">{{ number_format($tech->reviews()->avg('rating') ?? 0, 1) }}</span>
                                 </div>
                                 <div class="flex items-center gap-1.5">
                                     <div class="w-1 h-1 rounded-full bg-slate-300 dark:bg-white/20"></div>
@@ -257,9 +259,11 @@
                             </div>
                         </div>
                     </div>
+                    @can('view technicians')
                     <a href="{{ route('admin.technicians.show', $tech->id) }}" class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 flex items-center justify-center hover:bg-primary hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white transition-all shadow-sm group/btn" title="{{ __('Show Details') }}">
                         <svg class="w-6 h-6 transition-transform group-hover/btn:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </a>
+                    @endcan
                 </div>
                 @empty
                 <div class="py-12 text-center text-slate-400">{{ __('No technicians found') }}</div>
@@ -365,17 +369,23 @@
                 });
         }
     }" class="bg-white dark:bg-[#1A1A31] p-8 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-sm mt-8">
-        <div class="flex items-center justify-between mb-8">
-            <a href="{{ route('admin.orders.index') }}" class="px-6 py-3 bg-[#1A1A31] text-white text-xs font-black rounded-xl hover:opacity-90 transition-all shadow-lg shadow-secondary/20">
+                    <h3 class="text-lg mb-2 sm:text-xl font-black text-slate-800 dark:text-white whitespace-nowrap">{{ __('Orders') }}</h3>
+
+        <div class="flex items-center justify-between mb-8 gap-4 flex-wrap sm:flex-nowrap">
+            @can('view orders')
+            <a href="{{ route('admin.orders.index') }}" 
+            class="px-6 py-3 bg-[#1A1A31] text-white text-xs font-black
+             rounded-xl hover:opacity-90 dark:border dark:border-4 dark:border-white/10
+             transition-all shadow-lg shadow-secondary/20 whitespace-nowrap">
                 {{ __('Show More') }}
             </a>
-            <div class="flex items-center gap-6">
-                <h3 class="text-xl font-black text-slate-800 dark:text-white">{{ __('Orders') }}</h3>
-                <div class="flex items-center p-1 bg-slate-50 dark:bg-white/5 rounded-2xl">
-                    <button @click="filterOrders('new')" :class="status == 'new' ? 'bg-white dark:bg-white/10 shadow-sm text-slate-900 dark:text-white' : 'text-slate-400 font-bold'" class="px-5 py-2 rounded-xl text-xs transition-all">{{ __('New') }}</button>
-                    <button @click="filterOrders('scheduled')" :class="status == 'scheduled' ? 'bg-white dark:bg-white/10 shadow-sm text-slate-900 dark:text-white' : 'text-slate-400 font-bold'" class="px-5 py-2 rounded-xl text-xs transition-all">{{ __('Scheduled') }}</button>
-                    <button @click="filterOrders('in_progress')" :class="status == 'in_progress' ? 'bg-white dark:bg-white/10 shadow-sm text-slate-900 dark:text-white' : 'text-slate-400 font-bold'" class="px-5 py-2 rounded-xl text-xs transition-all">{{ __('In Progress') }}</button>
-                    <button @click="filterOrders('completed')" :class="status == 'completed' ? 'bg-white dark:bg-white/10 shadow-sm text-slate-900 dark:text-white' : 'text-slate-400 font-bold'" class="px-5 py-2 rounded-xl text-xs transition-all">{{ __('Completed') }}</button>
+            @endcan
+            <div class="flex items-center gap-4 sm:gap-6 flex-1 justify-end">
+                <div class="flex items-center p-1 bg-slate-50 dark:bg-white/5 rounded-2xl overflow-x-auto no-scrollbar max-w-[180px] xs:max-w-none">
+                    <button @click="filterOrders('new')" :class="status == 'new' ? 'bg-white dark:bg-white/10 shadow-sm text-slate-900 dark:text-white' : 'text-slate-400 font-bold'" class="px-4 sm:px-5 py-2 rounded-xl text-[11px] sm:text-xs transition-all whitespace-nowrap">{{ __('New') }}</button>
+                    <button @click="filterOrders('scheduled')" :class="status == 'scheduled' ? 'bg-white dark:bg-white/10 shadow-sm text-slate-900 dark:text-white' : 'text-slate-400 font-bold'" class="px-4 sm:px-5 py-2 rounded-xl text-[11px] sm:text-xs transition-all whitespace-nowrap">{{ __('Scheduled') }}</button>
+                    <button @click="filterOrders('in_progress')" :class="status == 'in_progress' ? 'bg-white dark:bg-white/10 shadow-sm text-slate-900 dark:text-white' : 'text-slate-400 font-bold'" class="px-4 sm:px-5 py-2 rounded-xl text-[11px] sm:text-xs transition-all whitespace-nowrap">{{ __('In Progress') }}</button>
+                    <button @click="filterOrders('completed')" :class="status == 'completed' ? 'bg-white dark:bg-white/10 shadow-sm text-slate-900 dark:text-white' : 'text-slate-400 font-bold'" class="px-4 sm:px-5 py-2 rounded-xl text-[11px] sm:text-xs transition-all whitespace-nowrap">{{ __('Completed') }}</button>
                 </div>
             </div>
         </div>

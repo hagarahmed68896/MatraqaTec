@@ -87,7 +87,7 @@
                                     <div class="space-y-3">
                                         @foreach(['newest' => __('All'), 'name' => __('Name'), 'newest_date' => __('Newest'), 'oldest' => __('Oldest')] as $val => $label)
                                         <label class="flex items-center justify-between cursor-pointer group">
-                                             <span class="text-sm font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                             <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                              <div class="relative w-6 h-6 border-2 rounded-full transition-all flex items-center justify-center"
                                                   :class="sortBy == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200 dark:border-white/10'">
                                                  <input type="radio" name="sort_by" value="{{ $val }}" x-model="sortBy" class="hidden">
@@ -108,7 +108,7 @@
                                     <div class="space-y-3">
                                         @foreach(['' => __('All'), 'alert' => __('Alert'), 'reminder' => __('Reminder'), 'notification' => __('Notification')] as $val => $label)
                                         <label class="flex items-center justify-between cursor-pointer group">
-                                             <span class="text-sm font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                             <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                              <div class="relative w-6 h-6 border-2 rounded-full transition-all flex items-center justify-center"
                                                   :class="type == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200 dark:border-white/10'">
                                                  <input type="radio" name="type" value="{{ $val }}" x-model="type" class="hidden">
@@ -129,7 +129,7 @@
                                     <div class="space-y-3">
                                         @foreach(['' => __('All'), 'client' => __('Clients'), 'company' => __('Companies'), 'technician' => __('Technicians')] as $val => $label)
                                         <label class="flex items-center justify-between cursor-pointer group">
-                                             <span class="text-sm font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                             <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                              <div class="relative w-6 h-6 border-2 rounded-full transition-all flex items-center justify-center"
                                                   :class="targetAudience == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200 dark:border-white/10'">
                                                  <input type="radio" name="target_audience" value="{{ $val }}" x-model="targetAudience" class="hidden">
@@ -150,7 +150,7 @@
                                     <div class="space-y-3">
                                         @foreach(['' => __('All'), 'sent' => __('Sent'), 'scheduled' => __('Scheduled'), 'unsent' => __('Unsent')] as $val => $label)
                                         <label class="flex items-center justify-between cursor-pointer group">
-                                             <span class="text-sm font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                             <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                              <div class="relative w-6 h-6 border-2 rounded-full transition-all flex items-center justify-center"
                                                   :class="status == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200 dark:border-white/10'">
                                                  <input type="radio" name="status" value="{{ $val }}" x-model="status" class="hidden">
@@ -209,7 +209,7 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         <span>{{ __('Delete Selected') }}</span>
                     </button>
-                    <button @click="selectedRows = []; selectAll = false" class="text-xs font-bold text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+                    <button @click="selectedRows = []; selectAll = false" class="text-xs font-bold text-slate-400 hover:text-slate-600 dark:text-white dark:hover:text-white transition-colors">
                         {{ __('Cancel') }}
                     </button>
                 </div>
@@ -273,7 +273,7 @@
                                     'unsent' => 'غير مرسل',
                                 ];
                             @endphp
-                            <span class="px-3 py-1 rounded-full border {{ $statusClasses[$item->status] ?? 'bg-slate-100 text-slate-500' }} text-[10px] font-black">
+                            <span class="px-3 py-1 rounded-full border {{ $statusClasses[$item->status] ?? 'bg-slate-100 text-slate-500 dark:text-white' }} text-[10px] font-black">
                                 {{ $statusLabels[$item->status] ?? $item->status }}
                             </span>
                         </td>

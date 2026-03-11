@@ -30,7 +30,7 @@
                 <div class="text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Total Customers') }}</p>
                     <div class="flex items-baseline gap-2">
-                        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total'] ?? 0) }}</h3>
+                        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total_all'] ?? 0) }}</h3>
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 font-bold border border-green-500/20">0.43%+</span>
                     </div>
                     <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium mt-1">{{ __('Compared to last week') }}</p>
@@ -47,7 +47,7 @@
                 <div class="text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Individual Customers') }}</p>
                     <div class="flex items-baseline gap-2">
-                        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total'] ?? 0) }}</h3>
+                        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total_individual'] ?? 0) }}</h3>
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-500 font-bold border border-indigo-500/20">0.43%+</span>
                     </div>
                     <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium mt-1">{{ __('Compared to last week') }}</p>
@@ -64,7 +64,7 @@
                 <div class="text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Inactive Accounts') }}</p>
                     <div class="flex items-baseline gap-2">
-                        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['blocked'] ?? 0) }}</h3>
+                        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total_inactive'] ?? 0) }}</h3>
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-red-500/10 text-red-500 font-bold border border-red-500/20">0.43%+</span>
                     </div>
                     <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium mt-1">{{ __('Compared to last week') }}</p>
@@ -81,7 +81,7 @@
                 <div class="text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Corporate Customers') }}</p>
                     <div class="flex items-baseline gap-2">
-                        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total'] ?? 0) }}</h3>
+                        <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total_corporate'] ?? 0) }}</h3>
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 font-bold border border-green-500/20">0.43%+</span>
                     </div>
                     <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium mt-1">{{ __('Compared to last week') }}</p>
@@ -152,12 +152,12 @@
         </div>
 
         <!-- RIGHT SECTION (Filter + Search - Visible when no rows selected) -->
-        <div x-show="selectedIds.length === 0" class="flex items-center gap-3 shrink-0">
+        <div x-show="selectedIds.length === 0" class="flex items-center gap-3 flex-1 min-w-0 justify-end">
 
             <!-- Filter Button -->
             <div class="relative">
                 <button @click="showFilters = !showFilters"
-                    class="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-slate-400 hover:text-primary transition shadow-sm">
+                    class="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-slate-400 hover:text-primary dark:hover:text-white transition shadow-sm">
                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-sliders" viewBox="0 0 16 16">
                         <path fill-rule="evenodd" d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z"/>
                     </svg>
@@ -182,15 +182,15 @@
                             <div class="space-y-3">
                                 <label class="flex items-center gap-3 cursor-pointer group">
                                     <input type="radio" name="sort_by" value="all" x-model="selectedSort" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('All') }}</span>
+                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('All') }}</span>
                                 </label>
                                 <label class="flex items-center gap-3 cursor-pointer group">
                                     <input type="radio" name="sort_by" value="name" x-model="selectedSort" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('Name') }}</span>
+                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('Name') }}</span>
                                 </label>
                                 <label class="flex items-center gap-3 cursor-pointer group">
                                     <input type="radio" name="sort_by" value="newest" x-model="selectedSort" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('Newest') }}</span>
+                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('Newest') }}</span>
                                 </label>
                             </div>
                         </div>
@@ -203,15 +203,15 @@
                             <div class="space-y-3">
                                 <label class="flex items-center gap-3 cursor-pointer group">
                                     <input type="radio" name="status" value="" x-model="selectedStatus" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('All') }}</span>
+                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('All') }}</span>
                                 </label>
                                 <label class="flex items-center gap-3 cursor-pointer group">
                                     <input type="radio" name="status" value="active" x-model="selectedStatus" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('نشط') }}</span>
+                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('نشط') }}</span>
                                 </label>
                                 <label class="flex items-center gap-3 cursor-pointer group">
                                     <input type="radio" name="status" value="inactive" x-model="selectedStatus" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('غير نشط') }}</span>
+                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('غير نشط') }}</span>
                                 </label>
                             </div>
                         </div>
@@ -225,7 +225,7 @@
             </div>
 
             <!-- Search -->
-            <form action="{{ url()->current() }}" method="GET" class="relative w-72">
+            <form action="{{ url()->current() }}" method="GET" class="relative w-full max-w-[18rem] flex-1">
                 @foreach(request()->except('search','page') as $key => $value)
                     <input type="hidden" name="{{ $key }}" value="{{ $value }}">
                 @endforeach
@@ -236,7 +236,7 @@
                        class="w-full pr-10 pl-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl text-sm font-bold text-slate-800 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-primary/20 transition-all">
 
                 <button type="submit"
-class="absolute {{ app()->getLocale() == 'ar' ? 'right-4' : 'left-4' }} top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors">                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+class="absolute {{ app()->getLocale() == 'ar' ? 'right-4' : 'left-4' }} top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary dark:hover:text-white transition-colors">                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
                 </button>
@@ -245,10 +245,11 @@ class="absolute {{ app()->getLocale() == 'ar' ? 'right-4' : 'left-4' }} top-1/2 
         </div>
 
         <!-- LEFT SECTION (Add + Download - Visible when no rows selected) -->
-        <div x-show="selectedIds.length === 0" class="flex items-center gap-3 shrink-0">
+        <div x-show="selectedIds.length === 0" class="flex items-center gap-3 flex-wrap">
 
             <a href="{{ $type == 'individual' ? route('admin.individual-customers.create') : route('admin.corporate-customers.create') }}"
-               class="flex items-center gap-2 px-5 py-3 bg-[#1A1A31] text-white text-sm font-bold rounded-xl hover:bg-black transition">
+               class="flex items-center gap-2 px-5 py-3 bg-[#1A1A31] border border-slate-200 dark:border-white/10
+                text-white text-sm font-bold rounded-xl hover:bg-black transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"/>
                 </svg>
@@ -256,7 +257,7 @@ class="absolute {{ app()->getLocale() == 'ar' ? 'right-4' : 'left-4' }} top-1/2 
             </a>
 
             <a href="{{ ($type == 'individual' ? route('admin.individual-customers.download') : route('admin.corporate-customers.download')) . '?' . http_build_query(request()->all()) }}"
-               class="flex items-center gap-2 px-5 py-3 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white text-sm font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition">
+               class="flex items-center gap-2 px-5 py-3 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white text-sm font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M7 10l5 5m0 0l5-5m-5 5V3"/>
@@ -296,7 +297,7 @@ class="absolute {{ app()->getLocale() == 'ar' ? 'right-4' : 'left-4' }} top-1/2 
                 <tbody class="divide-y divide-slate-50 dark:divide-white/5">
                     @forelse($items as $item)
                     <tr @click="window.location.href = '{{ route('admin.' . ($type == 'individual' ? 'individual-customers' : 'corporate-customers') . '.show', $item->id) }}'" 
-                        class="hover:bg-slate-50 dark:hover:bg-white/5 transition-all group cursor-pointer" 
+                        class="hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all group cursor-pointer" 
                         :class="selectedIds.includes({{ $item->id }}) ? 'bg-primary/5' : ''">
                         <td class="px-6 py-4" @click.stop>
                             <input type="checkbox" value="{{ $item->id }}" x-model="selectedIds"
@@ -311,7 +312,7 @@ class="absolute {{ app()->getLocale() == 'ar' ? 'right-4' : 'left-4' }} top-1/2 
                         <td class="px-6 py-4 text-sm font-bold text-slate-600 dark:text-slate-400 dir-ltr text-start">
                             {{ $item->user->phone ?? '-' }}
                         </td>
-                        <td class="px-6 py-4 text-sm font-bold text-slate-500 underline decoration-slate-200 dark:decoration-white/10">
+                        <td class="px-6 py-4 text-sm font-bold text-slate-500 dark:text-white underline decoration-slate-200 dark:decoration-white/10">
                             {{ $item->user->email ?? '-' }}
                         </td>
                         <td class="px-6 py-4">
@@ -405,7 +406,7 @@ class="absolute {{ app()->getLocale() == 'ar' ? 'right-4' : 'left-4' }} top-1/2 
                 @endif
 
                 <div class="flex items-center px-4 py-2 rounded-xl bg-[#1A1A31] text-white text-xs font-black shadow-lg">
-                    {{ $items->currentPage() }} <span class="mx-1 text-slate-500 font-bold">/</span> {{ $items->lastPage() }}
+                    {{ $items->currentPage() }} <span class="mx-1 text-slate-500 dark:text-white font-bold">/</span> {{ $items->lastPage() }}
                 </div>
 
                 @if($items->hasMorePages())

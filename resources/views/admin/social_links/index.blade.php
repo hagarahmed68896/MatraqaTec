@@ -95,12 +95,12 @@
                         <div x-show="open" x-transition class="absolute bottom-full mb-2 w-full bg-white dark:bg-[#1A1A31] border border-slate-100 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50">
                             <div class="p-2 space-y-1">
                                 <template x-for="p in platforms" :key="p.id">
-                                    <button type="button" @click="newPlatform = p.id; open = false" class="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition-all group">
+                                    <button type="button" @click="newPlatform = p.id; open = false" class="w-full flex items-center justify-between px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all group">
                                         <div class="flex items-center gap-3">
                                             <div class="w-4 h-4 rounded-full border-2 border-slate-200 dark:border-white/10 flex items-center justify-center group-hover:border-primary transition-all">
                                                 <div x-show="newPlatform === p.id" class="w-2 h-2 rounded-full bg-primary"></div>
                                             </div>
-                                            <span class="text-xs font-black text-slate-600 dark:text-slate-300 group-hover:text-primary transition-all" x-text="p.name"></span>
+                                            <span class="text-xs font-black text-slate-600 dark:text-slate-300 transition-all" x-text="p.name"></span>
                                         </div>
                                     </button>
                                 </template>

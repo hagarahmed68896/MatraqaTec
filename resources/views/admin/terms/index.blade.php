@@ -31,10 +31,10 @@
         
         <!-- Tab Switcher (Design Match) -->
         <div class="bg-white dark:bg-[#1A1A31] p-1 rounded-2xl flex items-center shadow-sm border border-slate-100 dark:border-white/5">
-            <a href="{{ route('admin.terms.index') }}" class="px-8 py-2.5 rounded-xl text-sm font-black transition-all {{ request()->routeIs('admin.terms.*') ? 'bg-[#1A1A31] dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-white' }}">
+            <a href="{{ route('admin.terms.index') }}" class="px-8 py-2.5 rounded-xl text-sm font-black transition-all {{ request()->routeIs('admin.terms.*') ? 'bg-[#1A1A31] dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:text-white dark:hover:text-white' }}">
                 {{ __('Terms and Conditions') }}
             </a>
-            <a href="{{ route('admin.privacy-policies.index') }}" class="px-8 py-2.5 rounded-xl text-sm font-black transition-all {{ request()->routeIs('admin.privacy-policies.*') ? 'bg-[#1A1A31] dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-white' }}">
+            <a href="{{ route('admin.privacy-policies.index') }}" class="px-8 py-2.5 rounded-xl text-sm font-black transition-all {{ request()->routeIs('admin.privacy-policies.*') ? 'bg-[#1A1A31] dark:bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:text-white dark:hover:text-white' }}">
                 {{ __('Privacy Policy') }}
             </a>
         </div>
@@ -100,7 +100,7 @@
                                     <div class="space-y-3">
                                         @foreach(['all' => 'All', 'name' => 'Name', 'newest' => 'Newest', 'oldest' => 'Oldest'] as $val => $label)
                                         <label class="flex items-center justify-between cursor-pointer group">
-                                            <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ __($label) }}</span>
+                                            <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ __($label) }}</span>
                                             <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center p-0.5"
                                                  :class="sort == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-300 dark:border-white/10'">
                                                  <input type="radio" name="sort" value="{{ $val }}" x-model="sort" class="absolute opacity-0 w-full h-full cursor-pointer appearance-none z-10">
@@ -120,7 +120,7 @@
                                     <div class="space-y-3">
                                         @foreach(['all' => 'All', 'clients' => 'Clients', 'companies' => 'Companies'] as $val => $label)
                                         <label class="flex items-center justify-between cursor-pointer group">
-                                            <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ __($label) }}</span>
+                                            <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ __($label) }}</span>
                                             <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center p-0.5"
                                                  :class="target == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-300 dark:border-white/10'">
                                                  <input type="radio" name="target" value="{{ $val }}" x-model="target" class="absolute opacity-0 w-full h-full cursor-pointer appearance-none z-10">
@@ -140,7 +140,7 @@
                                     <div class="space-y-3">
                                         @foreach(['all' => 'All', 'active' => 'Active', 'inactive' => 'Inactive'] as $val => $label)
                                         <label class="flex items-center justify-between cursor-pointer group">
-                                            <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ __($label) }}</span>
+                                            <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ __($label) }}</span>
                                             <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center p-0.5"
                                                  :class="status == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-300 dark:border-white/10'">
                                                  <input type="radio" name="status" value="{{ $val }}" x-model="status" class="absolute opacity-0 w-full h-full cursor-pointer appearance-none z-10">
@@ -168,7 +168,7 @@
                                 <input type="hidden" name="{{ $key }}" value="{{ $value }}">
                             @endforeach
                             <input type="text" name="search" value="{{ request('search') }}" placeholder="{{ __('Search...') }}" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl px-6 py-4 text-sm font-bold text-slate-700 dark:text-white placeholder-slate-300 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
-                            <button type="submit" class="absolute {{ app()->getLocale() == 'ar' ? 'left-4' : 'right-4' }} top-1/2 -translate-y-1/2 text-slate-300 hover:text-primary transition-colors">
+                            <button type="submit" class="absolute {{ app()->getLocale() == 'ar' ? 'left-4' : 'right-4' }} top-1/2 -translate-y-1/2 text-slate-300 hover:text-primary dark:hover:text-white transition-colors">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                             </button>
                         </form>
@@ -198,7 +198,7 @@
                     
                     <div class="h-6 w-px bg-primary/20"></div>
 
-                    <button @click="selectedItems = []" class="text-xs font-black text-slate-400 hover:text-primary transition-all uppercase tracking-widest">
+                    <button @click="selectedItems = []" class="text-xs font-black text-slate-400 hover:text-primary dark:hover:text-white transition-all uppercase tracking-widest">
                         {{ __('Deselect All') }}
                     </button>
                 </div>
@@ -275,10 +275,10 @@
                         </td>
                         <td class="py-6 px-8">
                             <div class="flex items-center justify-center gap-2">
-                                <a href="{{ request()->routeIs('admin.terms.*') ? route('admin.terms.show', $item->id) : route('admin.privacy-policies.show', $item->id) }}" class="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-primary hover:bg-primary/5 transition-all" title="{{ __('View') }}">
+                                <a href="{{ request()->routeIs('admin.terms.*') ? route('admin.terms.show', $item->id) : route('admin.privacy-policies.show', $item->id) }}" class="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-primary dark:hover:text-white hover:bg-primary/5 transition-all" title="{{ __('View') }}">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                 </a>
-                                <a href="{{ request()->routeIs('admin.terms.*') ? route('admin.terms.edit', $item->id) : route('admin.privacy-policies.edit', $item->id) }}" class="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-primary hover:bg-primary/5 transition-all" title="{{ __('Edit') }}">
+                                <a href="{{ request()->routeIs('admin.terms.*') ? route('admin.terms.edit', $item->id) : route('admin.privacy-policies.edit', $item->id) }}" class="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-primary dark:hover:text-white hover:bg-primary/5 transition-all" title="{{ __('Edit') }}">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                 </a>
                                 <button type="button" @click="confirmDelete('{{ request()->routeIs('admin.terms.*') ? route('admin.terms.destroy', $item->id) : route('admin.privacy-policies.destroy', $item->id) }}')" class="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all" title="{{ __('Delete') }}">
@@ -320,13 +320,13 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                     </button>
                     @else
-                    <a href="{{ $items->previousPageUrl() }}" class="p-3 bg-slate-50 dark:bg-white/5 text-slate-400 hover:bg-primary/5 hover:text-primary rounded-xl transition-all">
+                    <a href="{{ $items->previousPageUrl() }}" class="p-3 bg-slate-50 dark:bg-white/5 text-slate-400 hover:bg-primary/5 hover:text-primary dark:hover:text-white rounded-xl transition-all">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                     </a>
                     @endif
 
                     @if($items->hasMorePages())
-                    <a href="{{ $items->nextPageUrl() }}" class="p-3 bg-slate-50 dark:bg-white/5 text-slate-400 hover:bg-primary/5 hover:text-primary rounded-xl transition-all">
+                    <a href="{{ $items->nextPageUrl() }}" class="p-3 bg-slate-50 dark:bg-white/5 text-slate-400 hover:bg-primary/5 hover:text-primary dark:hover:text-white rounded-xl transition-all">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </a>
                     @else

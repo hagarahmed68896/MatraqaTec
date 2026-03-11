@@ -5,7 +5,7 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-8">
         <div class="flex items-center gap-4">
-            <a href="{{ route('admin.reviews.index') }}" class="w-10 h-10 flex items-center justify-center bg-white rounded-xl shadow-sm border border-slate-100 text-slate-400 hover:text-primary transition-all">
+            <a href="{{ route('admin.reviews.index') }}" class="w-10 h-10 flex items-center justify-center bg-white rounded-xl shadow-sm border border-slate-100 text-slate-400 hover:text-primary dark:hover:text-white transition-all">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 12H5m7 7l-7-7 7-7"></path></svg>
             </a>
             <h1 class="text-2xl font-black text-[#1A1A31]">{{ __('Evaluation Data') }}</h1>
@@ -143,7 +143,7 @@
                         <span class="text-[11px] font-bold text-slate-400">{{ $item->created_at->diffForHumans() }}</span>
                     </div>
                     <!-- Comment content -->
-                    <p class="text-xs font-bold text-slate-500 leading-relaxed pr-18">
+                    <p class="text-xs font-bold text-slate-500 dark:text-white leading-relaxed pr-18">
                         {{ $item->comment ?: __('No remarks left by customer.') }}
                     </p>
                 </div>

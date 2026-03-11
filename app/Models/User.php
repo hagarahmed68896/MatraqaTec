@@ -130,6 +130,10 @@ class User extends Authenticatable
 
     public function hasPermission($permission)
     {
+        if ($this->type === 'admin') {
+            return true;
+        }
+
         return $this->permissions->contains('name', $permission) || 
                $this->roles->flatMap->permissions->contains('name', $permission);
     }

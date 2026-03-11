@@ -49,12 +49,12 @@
                 </thead>
                 <tbody class="text-xs font-bold text-slate-600 dark:text-white/70">
                     @forelse($items as $item)
-                    <tr class="border-b border-slate-50 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
+                    <tr class="border-b border-slate-50 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all">
                         <td class="py-4 px-6">#{{ $item->id }}</td>
                         <td class="py-4 px-6">
                             <span class="text-slate-900 dark:text-white font-black">{{ $item->name_ar }}</span>
                         </td>
-                        <td class="py-4 px-6 text-slate-500">{{ $item->name_en }}</td>
+                        <td class="py-4 px-6 text-slate-500 dark:text-white">{{ $item->name_en }}</td>
                         <td class="py-4 px-6">
                             <span class="text-primary">{{ $item->city->name_ar ?? '-' }}</span>
                         </td>

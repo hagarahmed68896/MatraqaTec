@@ -48,7 +48,7 @@
                 </thead>
                 <tbody class="text-xs font-bold text-slate-600 dark:text-white/70">
                     @forelse($items as $item)
-                    <tr class="border-b border-slate-50 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
+                    <tr class="border-b border-slate-50 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all">
                         <td class="py-4 px-6 opacity-70">{{ $item->created_at->format('Y-m-d H:i') }}</td>
                         <td class="py-4 px-6 text-slate-900 dark:text-white">
                             @if($item->user)

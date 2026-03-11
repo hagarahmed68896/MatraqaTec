@@ -13,10 +13,21 @@
     blockTargetId: null,
     blockAction: '',
     
+    // Delete Modal State
+    showDeleteModal: false,
+    deleteTargetId: null,
+    isBulkDelete: false,
+    
     confirmBlock(id, currentStatus) {
         this.blockTargetId = id;
         this.blockAction = (currentStatus === 'active') ? '{{ __('Block') }}' : '{{ __('Unblock') }}';
         this.showBlockModal = true;
+    },
+
+    confirmDelete(id = null) {
+        this.deleteTargetId = id;
+        this.isBulkDelete = id === null;
+        this.showDeleteModal = true;
     },
 
     toggleAll(e) {
@@ -27,9 +38,15 @@
         }
     },
 
-    async deleteSelected() {
-        if (!confirm('{{ __('Are you sure you want to delete the selected technicians?') }}')) return;
+    async executeDelete() {
+        if (this.isBulkDelete) {
+            await this.performBulkDelete();
+        } else {
+            document.getElementById('delete-form-' + this.deleteTargetId).submit();
+        }
+    },
 
+    async performBulkDelete() {
         try {
             const response = await fetch('{{ route('admin.technicians.bulk-destroy') }}', {
                 method: 'POST',
@@ -61,11 +78,13 @@
         <!-- Tech Type Tabs -->
         <div class="flex bg-slate-100 dark:bg-white/5 p-1 rounded-2xl w-fit">
             <a href="{{ request()->fullUrlWithQuery(['type' => 'platform']) }}" 
-               class="px-6 py-2.5 rounded-xl text-md font-black transition-all {{ request('type', 'platform') === 'platform' ? 'bg-white dark:bg-[#1A1A31] text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700' }}">
+               class="px-6 py-2.5 rounded-xl text-md font-black transition-all
+                {{ request('type', 'platform') === 'platform' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-white' }}">
                 {{ __('Platform Technician') }}
             </a>
             <a href="{{ request()->fullUrlWithQuery(['type' => 'company']) }}" 
-               class="px-6 py-2.5 rounded-xl text-md font-black transition-all {{ request('type') === 'company' ? 'bg-white dark:bg-[#1A1A31] text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700' }}">
+               class="px-6 py-2.5 rounded-xl text-md font-black transition-all 
+               {{ request('type') === 'company' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-white' }}">
                 {{ __('Company Technician') }}
             </a>
         </div>
@@ -75,7 +94,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Total Technicians -->
         <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
-            <div class="flex items-center justify-between relative z-10 text-right">
+            <div class="flex items-center justify-between text-right">
                 <div>
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Total Technicians') }}</p>
                     <div class="flex items-baseline gap-2">
@@ -92,7 +111,7 @@
 
         <!-- Active Technicians -->
         <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
-            <div class="flex items-center justify-between relative z-10 text-right">
+            <div class="flex items-center justify-between text-right">
                 <div>
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Active Technicians') }}</p>
                     <div class="flex items-baseline gap-2">
@@ -109,7 +128,7 @@
 
         <!-- Completed Orders -->
         <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
-            <div class="flex items-center justify-between relative z-10 text-right">
+            <div class="flex items-center justify-between text-right">
                 <div>
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Completed Orders') }}</p>
                     <div class="flex items-baseline gap-2">
@@ -126,7 +145,7 @@
 
         <!-- Average Rating -->
         <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
-            <div class="flex items-center justify-between relative z-10 text-right">
+            <div class="flex items-center justify-between text-right">
                 <div>
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Average Rating') }}</p>
                     <div class="flex items-baseline gap-2">
@@ -151,7 +170,7 @@
                 <!-- Filter Button -->
                 <div class="relative">
                     <button @click="showFilters = !showFilters"
-                        class="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-slate-400 hover:text-primary transition shadow-sm">
+                        class="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-slate-400 hover:text-primary dark:hover:text-white transition shadow-sm">
                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-sliders" viewBox="0 0 16 16">
                             <path fill-rule="evenodd" d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z"/>
                         </svg>
@@ -184,7 +203,7 @@
                                 <div class="grid grid-cols-1 gap-3">
                                     @foreach(['all' => 'All', 'name' => 'Name', 'latest' => 'Newest', 'oldest' => 'Oldest'] as $val => $key)
                                     <label class="flex items-center justify-between cursor-pointer group">
-                                        <span class="text-sm font-bold text-slate-500 group-hover:text-primary transition-colors">{{ __($key) }}</span>
+                                        <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ __($key) }}</span>
                                         <div class="relative flex items-center">
                                             <input type="radio" name="sort_by" value="{{ $val }}" {{ request('sort_by', 'latest') == $val ? 'checked' : '' }}
                                                    class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
@@ -203,13 +222,13 @@
                                 </label>
                                 <div class="grid grid-cols-1 gap-3">
                                     <label class="flex items-center justify-between cursor-pointer group">
-                                        <span class="text-sm font-bold text-slate-500 group-hover:text-primary transition-colors">{{ __('All') }}</span>
+                                        <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ __('All') }}</span>
                                         <input type="radio" name="category_id" value="" {{ !request('category_id') ? 'checked' : '' }}
                                                class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
                                     </label>
                                     @foreach($categories as $cat)
                                     <label class="flex items-center justify-between cursor-pointer group">
-                                        <span class="text-sm font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $cat->name_ar }}</span>
+                                        <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ $cat->name_ar }}</span>
                                         <input type="radio" name="category_id" value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'checked' : '' }}
                                                class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
                                     </label>
@@ -227,7 +246,7 @@
                                 <div class="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                                     @foreach($services as $service)
                                     <label class="flex items-center justify-between cursor-pointer group">
-                                        <span class="text-sm font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $service->name_ar }}</span>
+                                        <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ $service->name_ar }}</span>
                                         <input type="checkbox" name="service_id[]" value="{{ $service->id }}" {{ is_array(request('service_id')) && in_array($service->id, request('service_id')) ? 'checked' : '' }}
                                                class="w-5 h-5 border-2 border-slate-200 rounded-lg text-primary focus:ring-primary transition-all cursor-pointer">
                                     </label>
@@ -243,7 +262,7 @@
                                 <div class="grid grid-cols-1 gap-3">
                                     @foreach(['all' => 'All', 'available' => 'Available', 'busy' => 'Busy', 'offline' => 'Offline'] as $val => $key)
                                     <label class="flex items-center justify-between cursor-pointer group">
-                                        <span class="text-sm font-bold text-slate-500 group-hover:text-primary transition-colors">{{ __($key) }}</span>
+                                        <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ __($key) }}</span>
                                         <input type="radio" name="tech_status" value="{{ $val === 'all' ? '' : $val }}" {{ request('tech_status', 'all') == ($val === 'all' ? '' : $val) ? 'checked' : '' }}
                                                class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
                                     </label>
@@ -276,7 +295,7 @@
                         class="w-full pr-10 pl-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl text-md font-bold text-slate-800 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-primary/20 transition-all">
 
                     <button type="submit"
-                        class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors">
+                        class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary dark:hover:text-white transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
@@ -296,7 +315,7 @@
                     <span class="text-sm font-black text-primary">{{ __('Selected Items') }}</span>
                 </div>
                 <div class="h-8 w-px bg-primary/10"></div>
-                <button @click="deleteSelected()" 
+                <button @click="confirmDelete()" 
                         class="flex items-center gap-2 px-4 py-2 bg-red-500 text-white text-xs font-black rounded-lg hover:bg-red-600 transition-all shadow-md shadow-red-500/20">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -309,7 +328,9 @@
             <div class="flex items-center gap-3 shrink-0" x-show="selectedIds.length === 0">
                  @if(request('type', 'platform') === 'platform')
                  <a href="{{ route('admin.technicians.create') }}"
-                   class="flex items-center gap-2 px-5 py-3 bg-[#1A1A31] text-white text-md font-bold rounded-xl hover:bg-black transition">
+                   class="flex items-center gap-2 px-5 py-3 bg-[#1A1A31] 
+                   text-white text-md font-bold rounded-xl hover:bg-black 
+                   border-2 dark:border-white/10 transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"/>
                     </svg>
@@ -318,7 +339,7 @@
                 @endif
 
                 <a href="{{ route('admin.technicians.download') . '?' . http_build_query(request()->all()) }}" 
-                   class="flex items-center gap-2 px-5 py-3 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white text-md font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition">
+                   class="flex items-center gap-2 px-5 py-3 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white text-md font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M7 10l5 5m0 0l5-5m-5 5V3"/>
@@ -342,7 +363,8 @@
                         <th class="py-4 px-6">{{ __('Company') }}</th>
                     @endif
                     <th class="py-4 px-6">{{ __('Email') }}</th>
-                    <th class="py-4 px-6">{{ __('Service Name') }}</th>
+                    <th class="py-4 px-6">{{ __('Primary Service') }}</th>
+                    <th class="py-4 px-6">{{ __('Service Type') }}</th>
                     <th class="py-4 px-6 text-center">{{ __('Orders') }}</th>
                     <th class="py-4 px-6 text-center">{{ __('Tech Status') }}</th>
                     <th class="py-4 px-6 text-center">{{ __('Account Status') }}</th>
@@ -352,7 +374,7 @@
                 </thead>
                 <tbody class="text-xs font-bold text-slate-600 dark:text-white/70">
                     @forelse($items as $item)
-                    <tr @click="window.location.href = '{{ route('admin.technicians.show', $item->id) }}'" class="border-b border-slate-50 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all group cursor-pointer">
+                    <tr @click="window.location.href = '{{ route('admin.technicians.show', $item->id) }}'" class="border-b border-slate-50 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all group cursor-pointer">
                         <td class="py-4 px-6 text-center" @click.stop>
                             <input type="checkbox" x-model="selectedIds" value="{{ $item->id }}" class="row-checkbox w-5 h-5 border-2 border-slate-200 rounded-lg text-primary focus:ring-primary transition-all cursor-pointer">
                         </td>
@@ -365,7 +387,7 @@
                                         <span class="text-md">{{ mb_substr($item->name ?? $item->name_ar, 0, 1) }}</span>
                                     @endif
                                 </div>
-                                <span class="text-slate-900 dark:text-white font-black group-hover:text-primary transition-colors">{{ $item->name ?? $item->name_ar }}</span>
+                                <span class="text-slate-900 dark:text-white font-black group-hover:text-primary dark:hover:text-white transition-colors">{{ $item->name ?? $item->name_ar }}</span>
                             </div>
                         </td>
                         <td class="py-4 px-6 font-mono opacity-80 text-[12px] text-right">{{ $item->user->phone ?? '' }}</td>
@@ -379,6 +401,11 @@
                         </td>
                         @endif
                         <td class="py-4 px-6 opacity-70">{{ $item->user->email ?? '-' }}</td>
+                        <td class="py-4 px-6">
+                            <span class="px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[9px] font-black">
+                                {{ $item->category->name_ar ?? '-' }}
+                            </span>
+                        </td>
                         <td class="py-4 px-6">
                             <span class="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9px] font-black">
                                 {{ $item->service->name_ar ?? '-' }}
@@ -439,16 +466,18 @@
                                     </svg>
                                 </a>
 
-                                <form action="{{ route('admin.technicians.destroy', $item->id) }}" method="POST" onsubmit="return confirm('{{ __('Are you sure?') }}')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="w-10 h-10 rounded-xl flex items-center justify-center text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
+                                 <div @click.stop>
+                                    <form id="delete-form-{{ $item->id }}" action="{{ route('admin.technicians.destroy', $item->id) }}" method="POST" class="hidden">
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
+                                    <button type="button" @click="confirmDelete({{ $item->id }})" class="w-10 h-10 rounded-xl flex items-center justify-center text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
                                             title="{{ __('Delete') }}">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                         </svg>
                                     </button>
-                                </form>
+                                </div>
                                 @endif
                             </div>
                         </td>
@@ -475,50 +504,102 @@
     </div>
 
     <!-- Block Confirmation Modal -->
-    <div x-show="showBlockModal" 
-         x-cloak
-         class="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0">
-        
-        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showBlockModal = false"></div>
-
-        <div @click.away="showBlockModal = false"
-             class="bg-white dark:bg-[#1A1A31] w-full max-w-md rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-100 dark:border-white/10 relative z-10"
+    <template x-teleport="body">
+        <div x-show="showBlockModal" 
+             x-cloak
+             class="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
              x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0 translate-y-8 scale-95"
-             x-transition:enter-end="opacity-100 translate-y-0 scale-100">
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0">
             
-            <div class="p-8 text-center">
-                <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-500/10 text-red-500 mb-6">
-                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                </div>
+            <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showBlockModal = false"></div>
+
+            <div @click.away="showBlockModal = false"
+                 class="bg-white dark:bg-[#1A1A31] w-full max-w-md rounded-[2.5rem] overflow-hidden
+                  shadow-2xl border border-slate-200 dark:border-white/10 relative z-10 opacity-100
+                  "
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-8 scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 scale-100">
                 
-                <h3 class="text-2xl font-black text-slate-800 dark:text-white mb-2" x-text="blockAction + ' {{ __('Technician') }}'"></h3>
-                <p class="text-slate-500 dark:text-slate-400 font-bold mb-8">
-                    {{ __('Are you sure you want to change the status of this technician?') }}
-                </p>
-                
-                <div class="flex flex-col gap-3">
-                    <form :action="'{{ url('admin/technicians') }}/' + blockTargetId + '/toggle-block'" method="POST">
-                        @csrf
-                        <button type="submit" 
-                                class="w-full py-4 bg-red-500 text-white rounded-2xl font-black hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 uppercase tracking-widest text-md">
-                            <span x-text="'{{ __('Confirm') }} ' + blockAction"></span>
+                <div class="p-8 text-center">
+                    <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-500/10 text-red-500 mb-6">
+                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    </div>
+                    
+                    <h3 class="text-2xl font-black text-slate-800 dark:text-white mb-2" x-text="blockAction + ' {{ __('Technician') }}'"></h3>
+                    <p class="text-slate-500 dark:text-slate-400 font-bold mb-8">
+                        {{ __('Are you sure you want to change the status of this technician?') }}
+                    </p>
+                    
+                    <div class="flex flex-col gap-3">
+                        <form :action="'{{ url('admin/technicians') }}/' + blockTargetId + '/toggle-block'" method="POST">
+                            @csrf
+                            <button type="submit" 
+                                    class="w-full py-4 bg-red-500 text-white rounded-2xl font-black hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 uppercase tracking-widest text-md">
+                                <span x-text="'{{ __('Confirm') }} ' + blockAction"></span>
+                            </button>
+                        </form>
+                        <button type="button" @click="showBlockModal = false" 
+                                class="w-full py-4 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-2xl font-black hover:bg-slate-200 dark:hover:bg-white/10 transition-all uppercase tracking-widest text-md">
+                            {{ __('Cancel') }}
                         </button>
-                    </form>
-                    <button type="button" @click="showBlockModal = false" 
-                            class="w-full py-4 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-2xl font-black hover:bg-slate-200 dark:hover:bg-white/10 transition-all uppercase tracking-widest text-md">
-                        {{ __('Cancel') }}
-                    </button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </template>
+
+    <!-- Delete Confirmation Modal -->
+    <template x-teleport="body">
+        <div x-show="showDeleteModal" 
+             x-cloak
+             class="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0">
+            
+            <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showDeleteModal = false"></div>
+
+            <div @click.away="showDeleteModal = false"
+                 class="bg-white dark:bg-[#1A1A31] w-full max-w-md rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10 relative z-10 opacity-100"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-8 scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 scale-100">
+                
+                <div class="p-8 text-center">
+                    <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-rose-500/10 text-rose-500 mb-6">
+                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </div>
+                    
+                    <h3 class="text-2xl font-black text-slate-800 dark:text-white mb-2">{{ __('Confirm Delete') }}</h3>
+                    <p class="text-slate-500 dark:text-slate-400 font-bold mb-8">
+                        <span x-show="isBulkDelete">{{ __('Are you sure you want to delete the selected technicians?') }}</span>
+                        <span x-show="!isBulkDelete">{{ __('Are you sure you want to delete this technician?') }}</span>
+                    </p>
+                    
+                    <div class="flex flex-col gap-3">
+                        <button @click="executeDelete()" 
+                                class="w-full py-4 bg-rose-500 text-white rounded-2xl font-black hover:bg-rose-600 transition-all shadow-lg shadow-rose-500/20 uppercase tracking-widest text-md">
+                            {{ __('Confirm Delete') }}
+                        </button>
+                        <button type="button" @click="showDeleteModal = false" 
+                                class="w-full py-4 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-2xl font-black hover:bg-slate-200 dark:hover:bg-white/10 transition-all uppercase tracking-widest text-md">
+                            {{ __('Cancel') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
 </div>
 
 @section('scripts')

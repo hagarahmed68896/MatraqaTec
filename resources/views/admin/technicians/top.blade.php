@@ -16,7 +16,11 @@
                 <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
                 </div>
             </div>
-            <button type="submit" class="px-5 py-2.5 bg-slate-900 dark:bg-primary text-gray rounded-xl font-bold hover:opacity-90 transition-all shadow-sm text-sm whitespace-nowrap">
+            <button type="submit" class="px-5 py-2.5 bg-slate-900
+             dark:bg-primary text-gray rounded-xl font-bold 
+             border border-slate-100 dark:border-white/10
+             hover:opacity-90 transition-all shadow-sm text-sm 
+             whitespace-nowrap">
                 {{ __('Search') }}
             </button>
         </form>
@@ -111,7 +115,10 @@
         </div>
 
     <a href="{{ route('admin.technicians.show', $item->id) }}" 
-   class="w-full flex items-center justify-center py-3 bg-[#1A1A31] dark:bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-slate-800 dark:hover:bg-indigo-700 shadow-sm hover:shadow-lg transition-all duration-200">
+   class="w-full flex items-center justify-center py-3 bg-[#1A1A31]
+    dark:bg-indigo-600 text-white rounded-xl font-bold text-sm
+     hover:bg-slate-800 dark:hover:bg-indigo-700 shadow-sm  border border-2 dark:border-white/10
+     hover:shadow-lg transition-all duration-200">
     {{ __('View Details') }}
 </a>
     </div>
@@ -139,7 +146,7 @@
                 </thead>
                 <tbody class="text-sm font-bold text-slate-700 dark:text-white/80">
                     @forelse($items as $item)
-                    <tr class="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all group">
+                    <tr class="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all group">
                         <td class="py-5 px-6 text-slate-500 dark:text-slate-400">#{{ $item->id }}</td>
                         <td class="py-5 px-6">
                             <div class="flex items-center gap-3">
@@ -151,7 +158,7 @@
                                     @endif
                                 </div>
                                 <div class="flex flex-col">
-                                    <span class="text-slate-900 dark:text-white font-black group-hover:text-primary transition-colors text-base">{{ app()->getLocale() == 'ar' ? $item->name_ar : $item->name_en }}</span>
+                                    <span class="text-slate-900 dark:text-white font-black group-hover:text-primary dark:hover:text-white transition-colors text-base">{{ app()->getLocale() == 'ar' ? $item->name_ar : $item->name_en }}</span>
                                     <span class="text-xs text-slate-500 dark:text-slate-400 font-mono">{{ $item->user->phone ?? '' }}</span>
                                 </div>
                             </div>
@@ -161,16 +168,16 @@
                                 {{ app()->getLocale() == 'ar' ? ($item->service->name_ar ?? '-') : ($item->service->name_en ?? '-') }}
                             </span>
                         </td>
-                        <td class="py-5 px-6 text-center text-base">{{ $item->orders_count ?? 0 }}</td>
+                        <td class="py-5 px-6 text-center text-base dark:text-white">{{ $item->orders_count ?? 0 }}</td>
                         <td class="py-5 px-6">
                             <div class="flex items-center gap-2">
-                                <span class="text-yellow-400 flex gap-0.5">
-                                    @php $rating = round($item->reviews()->avg('rating') ?? 0); @endphp
+                                <span class="text-yellow-500 flex gap-0.5 ">
+                                    @php $rating = round($item->reviews_avg_rating ?? 0); @endphp
                                     @for($i = 1; $i <= 5; $i++)
                                         <svg class="w-4 h-4 {{ $i <= $rating ? 'fill-current' : 'text-slate-200 dark:text-white/10 fill-none' }}" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
                                     @endfor
                                 </span>
-                                <span class="text-sm font-black">{{ number_format($item->reviews()->avg('rating') ?? 0, 1) }}</span>
+                                <span class="text-sm font-black dark:text-white">{{ number_format($item->reviews_avg_rating ?? 0, 1) }}</span>
                             </div>
                         </td>
                         <td class="py-5 px-6">

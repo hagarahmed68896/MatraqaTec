@@ -148,7 +148,7 @@
                 @csrf
                 <div class="flex items-center justify-between">
                     <h3 class="text-xl font-black text-[#1A1A31] dark:text-white">{{ __('Add New City') }}</h3>
-                    <button type="button" @click="addModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+                    <button type="button" @click="addModal = false" class="text-slate-400 hover:text-slate-600 dark:text-white dark:hover:text-white transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
@@ -212,7 +212,7 @@
                 @method('PUT')
                 <div class="flex items-center justify-between">
                     <h3 class="text-xl font-black text-[#1A1A31] dark:text-white">{{ __('Update City Data') }}</h3>
-                    <button type="button" @click="editModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+                    <button type="button" @click="editModal = false" class="text-slate-400 hover:text-slate-600 dark:text-white dark:hover:text-white transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>

@@ -42,7 +42,7 @@
                                     <div class="space-y-2">
                                         @foreach(['' => __('All'), 'name' => __('Name'), 'newest' => __('Newest'), 'oldest' => __('Oldest')] as $val => $label)
                                         <label class="flex items-center justify-between cursor-pointer group">
-                                             <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                             <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                              <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                                   :class="sortBy == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200 dark:border-white/10'">
                                                  <input type="radio" name="sort_by" value="{{ $val }}" x-model="sortBy" class="hidden">
@@ -63,7 +63,7 @@
                                     <div class="space-y-2">
                                         @foreach(['' => __('All'), 'individual' => __('Individual'), 'company' => __('Corporate')] as $val => $label)
                                         <label class="flex items-center justify-between cursor-pointer group">
-                                             <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                             <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                              <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                                   :class="clientType == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200 dark:border-white/10'">
                                                  <input type="radio" name="client_type" value="{{ $val }}" x-model="clientType" class="hidden">
@@ -84,7 +84,7 @@
                                     <div class="space-y-2">
                                         @foreach(['' => __('All'), 'service' => __('Service'), 'spare_parts' => __('Spare Parts')] as $val => $label)
                                         <label class="flex items-center justify-between cursor-pointer group">
-                                             <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                             <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                              <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                                   :class="operationType == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200 dark:border-white/10'">
                                                  <input type="radio" name="operation_type" value="{{ $val }}" x-model="operationType" class="hidden">
@@ -105,7 +105,7 @@
                                     <div class="space-y-2">
                                         @foreach(['' => __('All'), 'sent' => __('Sent'), 'not_sent' => __('Not Sent')] as $val => $label)
                                         <label class="flex items-center justify-between cursor-pointer group">
-                                             <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                             <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                              <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                                   :class="status == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200 dark:border-white/10'">
                                                  <input type="radio" name="status" value="{{ $val }}" x-model="status" class="hidden">
@@ -212,7 +212,7 @@
                                     <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
                                 </template>
                             </div>
-                            <span class="text-sm font-bold text-slate-500">{{ $items->firstItem() + $index }}</span>
+                            <span class="text-sm font-bold text-slate-500 dark:text-white">{{ $items->firstItem() + $index }}</span>
                         </td>
                         <td class="py-6 px-4">
                             <span class="text-primary font-black text-sm">{{ __('Operation') }} - #{{ $item->order->order_number ?? $item->order_id }}</span>
@@ -247,7 +247,7 @@
                         </td>
                         <td class="py-6 px-8">
                             <div class="flex items-center gap-2">
-                                <a href="{{ route('admin.invoices.show', $item->id) }}" class="w-8 h-8 flex items-center justify-center bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-primary rounded-lg transition-all">
+                                <a href="{{ route('admin.invoices.show', $item->id) }}" class="w-8 h-8 flex items-center justify-center bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-primary dark:hover:text-white rounded-lg transition-all">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                 </a>
                             </div>

@@ -21,9 +21,9 @@
                 </button>
                 <input type="hidden" name="category_id" x-ref="categoryId" value="{{ $data['filters']['category_id'] }}">
                 <div x-show="open" @click.away="open = false" x-cloak class="absolute left-0 mt-2 w-48 bg-white dark:bg-[#1A1A31] rounded-2xl border border-slate-100 dark:border-white/10 shadow-xl overflow-hidden z-30">
-                    <button type="button" @click="selected = '{{ __('All Categories') }}'; $refs.categoryId.value = ''; $el.closest('form').submit(); open = false" class="w-full px-5 py-3 text-right text-xs font-bold hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">{{ __('All Categories') }}</button>
+                    <button type="button" @click="selected = '{{ __('All Categories') }}'; $refs.categoryId.value = ''; $el.closest('form').submit(); open = false" class="w-full px-5 py-3 text-right text-xs font-bold hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-colors">{{ __('All Categories') }}</button>
                     @foreach($data['filters']['all_categories'] as $category)
-                    <button type="button" @click="selected = '{{ $category->{'name_'.app()->getLocale()} }}'; $refs.categoryId.value = '{{ $category->id }}'; $el.closest('form').submit(); open = false" class="w-full px-5 py-3 text-right text-xs font-bold hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">{{ $category->{'name_'.app()->getLocale()} }}</button>
+                    <button type="button" @click="selected = '{{ $category->{'name_'.app()->getLocale()} }}'; $refs.categoryId.value = '{{ $category->id }}'; $el.closest('form').submit(); open = false" class="w-full px-5 py-3 text-right text-xs font-bold hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-colors">{{ $category->{'name_'.app()->getLocale()} }}</button>
                     @endforeach
                 </div>
             </div>

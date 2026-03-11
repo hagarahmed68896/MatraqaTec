@@ -52,11 +52,11 @@
         <!-- Tabs -->
         <div class="bg-white dark:bg-[#1A1A31] p-1.5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm flex items-center gap-2">
             <a href="{{ route('admin.blocked.customers', ['type' => 'individual']) }}" 
-               class="px-6 py-2.5 rounded-xl text-sm font-black transition-all duration-300 {{ $type === 'individual' ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-105' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5' }}">
+               class="px-6 py-2.5 rounded-xl text-sm font-black transition-all duration-300 {{ $type === 'individual' ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-105' : 'text-slate-400 hover:text-slate-600 dark:text-white dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white' }}">
                 {{ __('Individual Customers') }}
             </a>
             <a href="{{ route('admin.blocked.customers', ['type' => 'corporate']) }}" 
-               class="px-6 py-2.5 rounded-xl text-sm font-black transition-all duration-300 {{ $type === 'corporate' ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-105' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5' }}">
+               class="px-6 py-2.5 rounded-xl text-sm font-black transition-all duration-300 {{ $type === 'corporate' ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-105' : 'text-slate-400 hover:text-slate-600 dark:text-white dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white' }}">
                 {{ __('Corporate Customers') }}
             </a>
         </div>
@@ -76,7 +76,7 @@
                         class="w-80 pr-12 pl-4 py-3.5 bg-white dark:bg-[#0F0F1E] border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-bold text-slate-800 dark:text-white placeholder-slate-400 outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all duration-300">
 
                     <button type="submit"
-                        class="absolute {{ app()->getLocale() == 'ar' ? 'right-4' : 'left-auto right-4' }} top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-primary transition-colors duration-300">
+                        class="absolute {{ app()->getLocale() == 'ar' ? 'right-4' : 'left-auto right-4' }} top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-primary dark:hover:text-white transition-colors duration-300">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
@@ -112,7 +112,7 @@
             <div class="flex items-center gap-3 shrink-0" x-show="selectedIds.length === 0">
                 <a href="{{ route('admin.blocked.download', ['target' => 'customers', 'type' => $type]) }}" 
                    class="flex items-center gap-3 px-6 py-3.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-black rounded-2xl hover:bg-slate-50 dark:hover:bg-white/10 hover:border-primary/30 transition-all duration-300 group">
-                    <svg class="w-5 h-5 text-slate-400 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 text-slate-400 group-hover:text-primary dark:hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M7 10l5 5m0 0l5-5m-5 5V3"/>
                     </svg>

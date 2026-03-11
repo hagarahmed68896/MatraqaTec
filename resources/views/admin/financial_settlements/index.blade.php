@@ -84,9 +84,9 @@
                     </button>
                     <div x-show="open" @click.away="open = false" x-cloak
                          class="absolute top-full mt-2 w-48 bg-white dark:bg-[#1A1A31] rounded-xl shadow-xl border border-slate-100 dark:border-white/10 z-[110] py-2 overflow-hidden">
-                        <a href="{{ route('admin.financial-settlements.index') }}" class="block px-6 py-3 text-xs font-bold text-[#1A1A31] dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">{{ __('All Settlements') }}</a>
-                        <a href="{{ route('admin.financial-settlements.index', ['status' => 'pending']) }}" class="block px-6 py-3 text-xs font-bold text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">{{ __('Pending') }}</a>
-                        <a href="{{ route('admin.financial-settlements.index', ['status' => 'transferred']) }}" class="block px-6 py-3 text-xs font-bold text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">{{ __('Transferred') }}</a>
+                        <a href="{{ route('admin.financial-settlements.index') }}" class="block px-6 py-3 text-xs font-bold text-[#1A1A31] dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-colors">{{ __('All Settlements') }}</a>
+                        <a href="{{ route('admin.financial-settlements.index', ['status' => 'pending']) }}" class="block px-6 py-3 text-xs font-bold text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-colors">{{ __('Pending') }}</a>
+                        <a href="{{ route('admin.financial-settlements.index', ['status' => 'transferred']) }}" class="block px-6 py-3 text-xs font-bold text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-colors">{{ __('Transferred') }}</a>
                     </div>
                 </div>
 
@@ -126,7 +126,7 @@
                                 <div class="space-y-2">
                                     @foreach(['' => __('All'), 'name' => __('Name'), 'newest' => __('Newest'), 'oldest' => __('Oldest')] as $val => $label)
                                     <label class="flex items-center justify-between cursor-pointer group py-1">
-                                        <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                        <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                         <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                              :class="sortBy === '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200 dark:border-white/10'">
                                             <input type="radio" name="sort_by" value="{{ $val }}" x-model="sortBy" class="hidden">
@@ -147,7 +147,7 @@
                                 <div class="space-y-2">
                                     @foreach(['' => __('All'), 'company' => __('Company'), 'technician' => __('Technician')] as $val => $label)
                                     <label class="flex items-center justify-between cursor-pointer group py-1">
-                                        <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                        <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                         <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                              :class="accountType === '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200 dark:border-white/10'">
                                             <input type="radio" name="account_type" value="{{ $val }}" x-model="accountType" class="hidden">
@@ -168,7 +168,7 @@
                                 <div class="space-y-2">
                                     @foreach(['' => __('All'), 'Credit Card' => __('Credit Card'), 'Apple pay' => 'Apple Pay', 'Wallet' => __('Wallet')] as $val => $label)
                                     <label class="flex items-center justify-between cursor-pointer group py-1">
-                                        <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                        <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                         <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                              :class="paymentMethod === '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200 dark:border-white/10'">
                                             <input type="radio" name="payment_method" value="{{ $val }}" x-model="paymentMethod" class="hidden">
@@ -272,7 +272,7 @@
                                    :checked="selectedRows.includes({{ $item->id }})"
                                    class="w-4 h-4 rounded border-slate-200 text-primary focus:ring-primary bg-transparent cursor-pointer">
                         </td>
-                        <td class="py-8 px-4 text-xs font-black text-slate-400 group-hover:text-primary transition-colors">
+                        <td class="py-8 px-4 text-xs font-black text-slate-400 group-hover:text-primary dark:hover:text-white transition-colors">
                             {{ ($items->currentPage() - 1) * $items->perPage() + $index + 1 }}
                         </td>
                         <td class="py-8 px-4">
@@ -297,7 +297,7 @@
                                 <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-3.5 h-3.5 opacity-40">
                             </div>
                         </td>
-                        <td class="py-8 px-4 text-xs font-bold text-slate-500">{{ __($item->payment_method ?? 'Credit Card') }}</td>
+                        <td class="py-8 px-4 text-xs font-bold text-slate-500 dark:text-white">{{ __($item->payment_method ?? 'Credit Card') }}</td>
                         <td class="py-8 px-4">
                             @if($item->status == 'transferred')
                                 <span class="px-4 py-1.5 rounded-xl bg-green-50 text-green-500 dark:bg-green-500/10 dark:text-green-400 text-[9px] font-black uppercase tracking-wider">{{ __('Transferred') }}</span>
@@ -310,7 +310,7 @@
                             <div class="flex items-center justify-center">
                                 <a href="{{ route('admin.financial-settlements.show', $item->id) }}" 
                                    title="{{ __('View') }}"
-                                   class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-primary hover:bg-white dark:hover:bg-primary/20 hover:shadow-sm transition-all group/btn">
+                                   class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-primary dark:hover:text-white hover:bg-white dark:hover:bg-primary/20 hover:shadow-sm transition-all group/btn">
                                     <svg class="w-4 h-4 transition-transform group-hover/btn:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                 </a>
                             </div>
@@ -345,7 +345,7 @@
                         </button>
                         <div x-show="open" @click.away="open = false" x-cloak class="absolute bottom-full mb-2 left-0 w-20 bg-white dark:bg-[#1A1A31] rounded-xl shadow-xl border border-slate-100 dark:border-white/10 z-[120] py-2">
                             @foreach([10, 25, 50, 100] as $l)
-                            <a href="{{ request()->fullUrlWithQuery(['limit' => $l]) }}" class="block px-4 py-2 text-xs font-black hover:bg-slate-50 dark:hover:bg-white/5 {{ request('limit', 10) == $l ? 'text-primary' : 'text-slate-400' }}">{{ $l }}</a>
+                            <a href="{{ request()->fullUrlWithQuery(['limit' => $l]) }}" class="block px-4 py-2 text-xs font-black hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white {{ request('limit', 10) == $l ? 'text-primary' : 'text-slate-400' }}">{{ $l }}</a>
                             @endforeach
                         </div>
                     </div>
@@ -361,7 +361,7 @@
                         <svg class="w-4 h-4 {{ app()->getLocale() == 'ar' ? '' : 'rotate-180' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
                     </button>
                 @else
-                    <a href="{{ $items->previousPageUrl() }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-400 hover:text-primary hover:border-primary transition-all shadow-sm">
+                    <a href="{{ $items->previousPageUrl() }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-400 hover:text-primary dark:hover:text-white hover:border-primary transition-all shadow-sm">
                         <svg class="w-4 h-4 {{ app()->getLocale() == 'ar' ? '' : 'rotate-180' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
                     </a>
                 @endif
@@ -370,12 +370,12 @@
                     @if($page == $items->currentPage())
                         <span class="w-10 h-10 flex items-center justify-center rounded-xl bg-[#1A1A31] text-white text-xs font-black shadow-lg">{{ $page }}</span>
                     @else
-                        <a href="{{ $url }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-400 hover:text-primary hover:border-primary transition-all shadow-sm text-xs font-black">{{ $page }}</a>
+                        <a href="{{ $url }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-400 hover:text-primary dark:hover:text-white hover:border-primary transition-all shadow-sm text-xs font-black">{{ $page }}</a>
                     @endif
                 @endforeach
 
                 @if($items->hasMorePages())
-                    <a href="{{ $items->nextPageUrl() }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-400 hover:text-primary hover:border-primary transition-all shadow-sm">
+                    <a href="{{ $items->nextPageUrl() }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-400 hover:text-primary dark:hover:text-white hover:border-primary transition-all shadow-sm">
                         <svg class="w-4 h-4 {{ app()->getLocale() == 'ar' ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
                     </a>
                 @else

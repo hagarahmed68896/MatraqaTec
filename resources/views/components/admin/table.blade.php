@@ -37,7 +37,7 @@
                     
                     @foreach($columns as $key => $label)
                     <th class="pb-4 px-4">
-                        <a href="?sort_by={{ $key }}&sort_order={{ $sortBy === $key && $sortOrder === 'asc' ? 'desc' : 'asc' }}" class="flex items-center gap-2 hover:text-primary transition-colors">
+                        <a href="?sort_by={{ $key }}&sort_order={{ $sortBy === $key && $sortOrder === 'asc' ? 'desc' : 'asc' }}" class="flex items-center gap-2 hover:text-primary dark:hover:text-white transition-colors">
                             {{ $label }}
                             @if($sortBy === $key)
                                 <svg class="w-3 h-3 {{ $sortOrder === 'desc' ? 'rotate-180' : '' }}" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"></path></svg>

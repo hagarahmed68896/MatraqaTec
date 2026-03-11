@@ -17,7 +17,7 @@ class TechnicianRequestController extends Controller
         $query = TechnicianRequest::with(['maintenanceCompany.user', 'service', 'category']);
 
         // 1. Status Filter (Tabs)
-        $status = $request->get('status');
+        $status = $request->get('status', 'pending');
         if ($status && $status !== 'all') {
             $query->where('status', $status);
         }

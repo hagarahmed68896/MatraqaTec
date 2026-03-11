@@ -7,7 +7,7 @@
     <!-- Header -->
     <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
-            <a href="{{ route('admin.privacy-policies.index') }}" class="w-12 h-12 bg-white dark:bg-white/5 rounded-2xl flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary/5 transition-all shadow-sm">
+            <a href="{{ route('admin.privacy-policies.index') }}" class="w-12 h-12 bg-white dark:bg-white/5 rounded-2xl flex items-center justify-center text-slate-400 hover:text-primary dark:hover:text-white hover:bg-primary/5 transition-all shadow-sm">
                 <svg class="w-6 h-6 {{ app()->getLocale() == 'ar' ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
             </a>
             <h1 class="text-2xl font-black text-slate-800 dark:text-white">{{ __('Add New Policy') }}</h1>
@@ -76,8 +76,8 @@
                             
                             <div x-show="open" @click.away="open = false" x-cloak class="absolute z-10 w-full mt-2 bg-white dark:bg-[#1A1A31] border border-slate-100 dark:border-white/10 rounded-[1.5rem] shadow-xl p-2 space-y-1">
                                 @foreach(['all' => 'All', 'clients' => 'Clients', 'companies' => 'Companies', 'technicians' => 'Technicians'] as $val => $label)
-                                <label class="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-all group">
-                                    <span class="text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __($label) }}</span>
+                                <label class="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white cursor-pointer transition-all group">
+                                    <span class="text-sm font-bold text-slate-600 dark:text-slate-300 transition-colors">{{ __($label) }}</span>
                                     <div class="relative flex items-center">
                                         <input type="radio" value="{{ $val }}" x-model="selected" @change="open = false" class="peer appearance-none w-6 h-6 rounded-full border-2 border-slate-200 dark:border-white/10 checked:border-primary checked:bg-primary transition-all cursor-pointer">
                                         <svg class="w-3.5 h-3.5 text-white absolute inset-0 m-auto pointer-events-none opacity-0 peer-checked:opacity-100 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
@@ -103,8 +103,8 @@
                             
                             <div x-show="open" @click.away="open = false" x-cloak class="absolute z-10 w-full mt-2 bg-white dark:bg-[#1A1A31] border border-slate-100 dark:border-white/10 rounded-[1.5rem] shadow-xl p-2 space-y-1">
                                 @foreach(['active' => 'Active', 'inactive' => 'Inactive'] as $val => $label)
-                                <label class="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-all group">
-                                    <span class="text-sm font-bold text-slate-600 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __($label) }}</span>
+                                <label class="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white cursor-pointer transition-all group">
+                                    <span class="text-sm font-bold text-slate-600 dark:text-slate-300 transition-colors">{{ __($label) }}</span>
                                     <div class="relative flex items-center">
                                         <input type="radio" value="{{ $val }}" x-model="selected" @change="open = false" class="peer appearance-none w-6 h-6 rounded-full border-2 border-slate-200 dark:border-white/10 checked:border-emerald-500 checked:bg-emerald-500 transition-all cursor-pointer">
                                         <svg class="w-3.5 h-3.5 text-white absolute inset-0 m-auto pointer-events-none opacity-0 peer-checked:opacity-100 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>

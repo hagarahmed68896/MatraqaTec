@@ -11,7 +11,7 @@
 }">
     <!-- Header -->
     <div class="flex items-center justify-between mb-8">
-        <a href="{{ route('admin.broadcast-notifications.index') }}" class="flex items-center gap-2 text-slate-500 hover:text-primary transition-colors font-bold group">
+        <a href="{{ route('admin.broadcast-notifications.index') }}" class="flex items-center gap-2 text-slate-500 dark:text-white hover:text-primary dark:hover:text-white transition-colors font-bold group">
             <div class="w-10 h-10 rounded-xl bg-white dark:bg-white/5 flex items-center justify-center border border-slate-100 dark:border-white/5 group-hover:bg-primary/10">
                 <svg class="w-5 h-5 {{ app()->getLocale() == 'ar' ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
             </div>
@@ -102,7 +102,7 @@
                 <button type="submit" class="flex-1 py-5 bg-[#1A1A31] text-white rounded-[2rem] font-black hover:bg-black transition-all shadow-xl shadow-black/20 uppercase tracking-widest text-sm">
                     {{ __('Save') }}
                 </button>
-                <a href="{{ route('admin.broadcast-notifications.index') }}" class="px-12 py-5 bg-slate-100 dark:bg-white/5 text-slate-500 rounded-[2rem] font-black hover:bg-slate-200 transition-all uppercase tracking-widest text-sm text-center">
+                <a href="{{ route('admin.broadcast-notifications.index') }}" class="px-12 py-5 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white rounded-[2rem] font-black hover:bg-slate-200 transition-all uppercase tracking-widest text-sm text-center">
                     {{ __('Cancel') }}
                 </a>
             </div>

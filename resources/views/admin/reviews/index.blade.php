@@ -92,7 +92,7 @@
                                         <label class="flex items-center justify-between cursor-pointer group px-4 py-3 rounded-2xl transition-all"
                                                :class="sortBy == '{{ $val }}' ? 'bg-blue-50/60' : 'hover:bg-slate-50/50'">
                                              <span class="text-xs font-bold transition-colors"
-                                                   :class="sortBy == '{{ $val }}' ? 'text-blue-700' : 'text-slate-500 group-hover:text-primary'">{{ $label }}</span>
+                                                   :class="sortBy == '{{ $val }}' ? 'text-blue-700' : 'text-slate-500 dark:text-white'">{{ $label }}</span>
                                              <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center shrink-0"
                                                   :class="sortBy == '{{ $val }}' ? 'border-blue-500 bg-blue-500' : 'border-slate-200'">
                                                  <input type="radio" name="sort_by" value="{{ $val }}" x-model="sortBy" class="hidden">
@@ -115,7 +115,7 @@
                                         <label class="flex items-center justify-between cursor-pointer group px-4 py-3 rounded-2xl transition-all"
                                                :class="clientType == '{{ $val }}' ? 'bg-blue-50/60' : 'hover:bg-slate-50/50'">
                                              <span class="text-xs font-bold transition-colors"
-                                                   :class="clientType == '{{ $val }}' ? 'text-blue-700' : 'text-slate-500 group-hover:text-primary'">{{ $label }}</span>
+                                                   :class="clientType == '{{ $val }}' ? 'text-blue-700' : 'text-slate-500 dark:text-white'">{{ $label }}</span>
                                              <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center shrink-0"
                                                   :class="clientType == '{{ $val }}' ? 'border-blue-500 bg-blue-500' : 'border-slate-200'">
                                                  <input type="radio" name="client_type" value="{{ $val }}" x-model="clientType" class="hidden">
@@ -138,7 +138,7 @@
                                                @click="selectedServiceIds = []"
                                                :class="!selectedCategoryId ? 'bg-blue-50/60' : 'hover:bg-slate-50/50'">
                                              <span class="text-xs font-bold transition-colors"
-                                                   :class="!selectedCategoryId ? 'text-blue-700' : 'text-slate-500 group-hover:text-primary'">{{ __('All') }}</span>
+                                                   :class="!selectedCategoryId ? 'text-blue-700' : 'text-slate-500 dark:text-white'">{{ __('All') }}</span>
                                              <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center shrink-0"
                                                   :class="!selectedCategoryId ? 'border-blue-500 bg-blue-500' : 'border-slate-200'">
                                                  <input type="radio" name="service_category_id" value="" x-model="selectedCategoryId" class="hidden">
@@ -152,7 +152,7 @@
                                                @click="selectedServiceIds = []"
                                                :class="selectedCategoryId == {{ $cat->id }} ? 'bg-blue-50/60' : 'hover:bg-slate-50/50'">
                                              <span class="text-xs font-bold transition-colors"
-                                                   :class="selectedCategoryId == {{ $cat->id }} ? 'text-blue-700' : 'text-slate-500 group-hover:text-primary'">{{ app()->getLocale() == 'ar' ? $cat->name_ar : $cat->name_en }}</span>
+                                                   :class="selectedCategoryId == {{ $cat->id }} ? 'text-blue-700' : 'text-slate-500 dark:text-white'">{{ app()->getLocale() == 'ar' ? $cat->name_ar : $cat->name_en }}</span>
                                              <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center shrink-0"
                                                   :class="selectedCategoryId == {{ $cat->id }} ? 'border-blue-500 bg-blue-500' : 'border-slate-200'">
                                                  <input type="radio" name="service_category_id" value="{{ $cat->id }}" x-model="selectedCategoryId" class="hidden">
@@ -174,7 +174,7 @@
                                             <label class="flex items-center justify-between cursor-pointer group px-4 py-3 rounded-2xl transition-all"
                                                     :class="selectedServiceIds.includes(String(service.id)) ? 'bg-blue-50/60' : 'hover:bg-slate-50/50'">
                                                  <span class="text-[11px] font-bold transition-colors" 
-                                                       :class="selectedServiceIds.includes(String(service.id)) ? 'text-blue-700' : 'text-slate-500 group-hover:text-primary'"
+                                                       :class="selectedServiceIds.includes(String(service.id)) ? 'text-blue-700' : 'text-slate-500 dark:text-white'"
                                                        x-text="service.name_{{ app()->getLocale() }}"></span>
                                                  <div class="relative w-5 h-5 border-2 rounded-lg transition-all flex items-center justify-center shrink-0"
                                                       :class="selectedServiceIds.includes(String(service.id)) ? 'border-blue-500 bg-blue-500' : 'border-slate-200'">
@@ -198,7 +198,7 @@
                                         <label class="flex items-center justify-between cursor-pointer group px-4 py-3 rounded-2xl transition-all"
                                                :class="technicianType == '{{ $val }}' ? 'bg-blue-50/60' : 'hover:bg-slate-50/50'">
                                              <span class="text-xs font-bold transition-colors"
-                                                   :class="technicianType == '{{ $val }}' ? 'text-blue-700' : 'text-slate-500 group-hover:text-primary'">{{ $label }}</span>
+                                                   :class="technicianType == '{{ $val }}' ? 'text-blue-700' : 'text-slate-500 dark:text-white'">{{ $label }}</span>
                                              <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center shrink-0"
                                                   :class="technicianType == '{{ $val }}' ? 'border-blue-500 bg-blue-500' : 'border-slate-200'">
                                                  <input type="radio" name="technician_type" value="{{ $val }}" x-model="technicianType" class="hidden">
@@ -254,9 +254,9 @@
                              x-transition:enter-start="opacity-0 scale-95"
                              x-transition:enter-end="opacity-100 scale-100"
                              class="absolute top-16 left-0 w-48 bg-white rounded-2xl shadow-xl border border-slate-50 z-50 overflow-hidden py-2">
-                            <a href="{{ route('admin.reviews.index') }}" class="block px-4 py-3 text-xs font-bold text-slate-600 hover:bg-slate-50">{{ __('All') }}</a>
-                            <a href="{{ route('admin.reviews.index', ['status' => 'positive']) }}" class="block px-4 py-3 text-xs font-bold text-slate-600 hover:bg-slate-50">{{ __('Positive') }}</a>
-                            <a href="{{ route('admin.reviews.index', ['status' => 'negative']) }}" class="block px-4 py-3 text-xs font-bold text-slate-600 hover:bg-slate-50">{{ __('Negative') }}</a>
+                            <a href="{{ route('admin.reviews.index') }}" class="block px-4 py-3 text-xs font-bold text-slate-600 dark:text-white hover:bg-slate-50">{{ __('All') }}</a>
+                            <a href="{{ route('admin.reviews.index', ['status' => 'positive']) }}" class="block px-4 py-3 text-xs font-bold text-slate-600 dark:text-white hover:bg-slate-50">{{ __('Positive') }}</a>
+                            <a href="{{ route('admin.reviews.index', ['status' => 'negative']) }}" class="block px-4 py-3 text-xs font-bold text-slate-600 dark:text-white hover:bg-slate-50">{{ __('Negative') }}</a>
                         </div>
                     </div>
                 </div>
@@ -334,11 +334,11 @@
                                         </div>
                                     @endif
                                 </div>
-                                <span class="text-xs font-bold text-[#1A1A31] group-hover:text-primary transition-colors text-right">{{ $item->user->name ?? '-' }}</span>
+                                <span class="text-xs font-bold text-[#1A1A31] transition-colors text-right">{{ $item->user->name ?? '-' }}</span>
                             </div>
                         </td>
                         <td class="py-6 px-4">
-                            <span class="px-3 py-1 rounded-lg bg-slate-50 text-slate-500 text-[10px] font-bold border border-slate-100">
+                            <span class="px-3 py-1 rounded-lg bg-slate-50 text-slate-500 dark:text-white text-[10px] font-bold border border-slate-100">
                                 {{ $item->user && $item->user->type == 'individual' ? __('Individual') : __('Corporate') }}
                             </span>
                         </td>

@@ -56,7 +56,7 @@
         <div class="flex items-center gap-3 w-full md:max-w-xl ">
             <!-- Filter Button & Dropdown -->
             <div class="relative" x-data="{ localSortBy: '{{ request('sort_by', 'newest') }}', localTargetGroup: '{{ request('target_group', 'all') }}', localStatus: '{{ request('status', 'all') }}' }">
-                <button @click="showFilters = !showFilters" class="w-12 h-12 flex items-center justify-center bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-400 hover:text-primary transition-all relative">
+                <button @click="showFilters = !showFilters" class="w-12 h-12 flex items-center justify-center bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-400 hover:text-primary dark:hover:text-white transition-all relative">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
                     @if(request('target_group') || request('status') || request('sort_by'))
                     <div class="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></div>
@@ -81,7 +81,7 @@
                             <div class="space-y-3">
                                 @foreach(['newest' => __('Newest'), 'oldest' => __('Oldest'), 'name' => __('Question (AR)')] as $val => $label)
                                 <label class="flex items-center justify-between cursor-pointer group">
-                                    <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                    <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                     <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                          :class="localSortBy == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-300 dark:border-white/10'">
                                         <input type="radio" name="sort_by" value="{{ $val }}" x-model="localSortBy" class="hidden">
@@ -100,7 +100,7 @@
                             <div class="space-y-3">
                                 @foreach(['all' => __('All Groups'), 'clients' => __('Clients'), 'companies' => __('Companies'), 'technicians' => __('Technicians')] as $val => $label)
                                 <label class="flex items-center justify-between cursor-pointer group">
-                                    <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                    <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                     <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                          :class="localTargetGroup == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-300 dark:border-white/10'">
                                         <input type="radio" name="target_group" value="{{ $val }}" x-model="localTargetGroup" class="hidden">
@@ -119,7 +119,7 @@
                             <div class="space-y-3">
                                 @foreach(['all' => __('All Status'), 'active' => __('Active'), 'inactive' => __('Inactive')] as $val => $label)
                                 <label class="flex items-center justify-between cursor-pointer group">
-                                    <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                    <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                     <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                          :class="localStatus == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-300 dark:border-white/10'">
                                         <input type="radio" name="status" value="{{ $val }}" x-model="localStatus" class="hidden">
@@ -209,7 +209,7 @@
                 </thead>
                 <tbody class="text-xs font-bold text-slate-600 dark:text-white/70">
                     @forelse($items as $item)
-                    <tr class="group hover:bg-slate-50 dark:hover:bg-white/5 transition-all border-b border-slate-50 dark:border-white/5 last:border-0" :class="selectedItems.includes({{ $item->id }}) ? 'bg-primary/5' : ''">
+                    <tr class="group hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all border-b border-slate-50 dark:border-white/5 last:border-0" :class="selectedItems.includes({{ $item->id }}) ? 'bg-primary/5' : ''">
                         <td class="py-5 px-8">
                             <label class="relative flex items-center cursor-pointer">
                                 <input type="checkbox" @change="toggleItem({{ $item->id }})" :checked="selectedItems.includes({{ $item->id }})" class="sr-only peer">
@@ -242,7 +242,7 @@
                         </td>
                         <td class="py-5 px-6">
                             <div class="flex items-center justify-center gap-2">
-                                <a href="{{ route('admin.faqs.edit', $item->id) }}" class="p-2 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-400 hover:bg-primary/10 hover:text-primary transition-all group active:scale-90">
+                                <a href="{{ route('admin.faqs.edit', $item->id) }}" class="p-2 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-400 hover:bg-primary/10 hover:text-primary dark:hover:text-white transition-all group active:scale-90">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                 </a>
                                 <a href="{{ route('admin.faqs.show', $item->id) }}" class="p-2 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-500 transition-all active:scale-90">
@@ -281,7 +281,7 @@
                     </button>
                     <div x-show="open" @click.away="open = false" class="absolute bottom-full mb-2 left-0 w-20 bg-white dark:bg-[#1A1A31] border border-slate-100 dark:border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
                         @foreach([10, 25, 50, 100] as $val)
-                        <a href="{{ request()->fullUrlWithQuery(['per_page' => $val]) }}" class="block px-4 py-2 text-[10px] font-black text-slate-600 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-all {{ $items->perPage() == $val ? 'bg-primary/10 text-primary' : '' }}">
+                        <a href="{{ request()->fullUrlWithQuery(['per_page' => $val]) }}" class="block px-4 py-2 text-[10px] font-black text-slate-600 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all {{ $items->perPage() == $val ? 'bg-primary/10 text-primary' : '' }}">
                             {{ $val }}
                         </a>
                         @endforeach

@@ -107,7 +107,7 @@
     <!-- Header -->
     <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
-            <a href="{{ route('admin.corporate-customers.index') }}" class="w-10 h-10 rounded-xl bg-white dark:bg-white/5 flex items-center justify-center text-slate-400 hover:text-primary transition-all shadow-sm">
+            <a href="{{ route('admin.corporate-customers.index') }}" class="w-10 h-10 rounded-xl bg-white dark:bg-white/5 flex items-center justify-center text-slate-400 hover:text-primary dark:hover:text-white transition-all shadow-sm">
                 <svg class="w-5 h-5 {{ app()->getLocale() == 'ar' ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
@@ -627,7 +627,7 @@
                             @endfor
                         </div>
                     </div>
-                    <p class="text-xs text-slate-500 italic">"{{ $review->comment ?? __('No comment provided.') }}"</p>
+                    <p class="text-xs text-slate-500 dark:text-white italic">"{{ $review->comment ?? __('No comment provided.') }}"</p>
                     <div class="pt-4 border-t border-slate-50 dark:border-white/5 flex items-center justify-between">
                         <span class="text-[10px] font-bold text-slate-400">{{ $review->created_at->format('d/m/Y') }}</span>
                         <span class="text-[10px] font-black text-primary uppercase">{{ optional($review->service)->{'name_'.app()->getLocale()} ?? '-' }}</span>

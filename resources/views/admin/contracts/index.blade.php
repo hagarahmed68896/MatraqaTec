@@ -64,7 +64,7 @@
       
          <!-- Bulk Download Button (Visible only when rows selected) -->
         <div x-show="selectedRows.length > 0" x-cloak class="flex items-center gap-4 animate-fade-in-up">
-            <span class="text-sm font-bold text-slate-500 bg-slate-100 px-4 py-3 rounded-2xl">
+            <span class="text-sm font-bold text-slate-500 dark:text-white bg-slate-100 px-4 py-3 rounded-2xl">
                 <span x-text="selectedRows.length"></span> {{ __('Selected') }}
             </span>
             <button @click="bulkDownload()" class="px-6 py-4 bg-[#1A1A31] text-white rounded-2xl font-black text-xs shadow-lg shadow-[#1A1A31]/20 hover:scale-[1.02] transition-all flex items-center gap-2 uppercase tracking-widest">
@@ -110,7 +110,7 @@
                             <div class="space-y-3">
                                 @foreach(['' => __('All'), 'name' => __('Name'), 'newest' => __('Newest'), 'oldest' => __('Oldest')] as $val => $label)
                                 <label class="flex items-center justify-between cursor-pointer group">
-                                     <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                     <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                      <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                           :class="sortBy == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-300'">
                                          <input type="radio" name="sort_by" value="{{ $val }}" x-model="sortBy" class="hidden">
@@ -129,7 +129,7 @@
                             <div class="space-y-3">
                                 @foreach(['' => __('All'), 'active' => __('Active'), 'expired' => __('Expired')] as $val => $label)
                                 <label class="flex items-center justify-between cursor-pointer group">
-                                        <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                        <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                         <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                              :class="status == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-300'">
                                             <input type="radio" name="status" value="{{ $val }}" x-model="status" class="hidden">
@@ -143,7 +143,7 @@
                         </div>
 
                         <div class="flex items-center gap-3 pt-4 border-t border-slate-200">
-                            <a href="{{ route('admin.contracts.index') }}" class="flex-1 py-3 bg-gray-200 text-slate-500 rounded-xl font-bold text-xs text-center hover:bg-slate-300 transition-all">
+                            <a href="{{ route('admin.contracts.index') }}" class="flex-1 py-3 bg-gray-200 text-slate-500 dark:text-white rounded-xl font-bold text-xs text-center hover:bg-slate-300 transition-all">
                                 {{ __('Reset') }}
                             </a>
                             <button type="submit" class="flex-[2] p-3 bg-[#1A1A31] text-white rounded-xl font-black text-xs shadow-lg hover:scale-[1.02] transition-all">
@@ -226,7 +226,7 @@
                             </div>
                         </td>
                          <td class="py-6 px-4">
-                             <a href="{{ route('admin.contracts.show', $item->id) }}" onclick="event.stopPropagation()" class="text-primary hover:text-primary-dark font-black text-md decoration-slice decoration-2 underline-offset-4 hover:underline">
+                             <a href="{{ route('admin.contracts.show', $item->id) }}" onclick="event.stopPropagation()" class="text-primary hover:text-primary dark:hover:text-white-dark font-black text-md decoration-slice decoration-2 underline-offset-4 hover:underline">
                                  {{ __('The Contract') }}
                              </a>
                         </td>
@@ -249,10 +249,10 @@
                             </div>
                         </td>
                         <td class="py-6 px-4">
-                             <span class="text-xs font-bold text-slate-500">{{ $item->contact_numbers ?? '-' }}</span>
+                             <span class="text-xs font-bold text-slate-500 dark:text-white">{{ $item->contact_numbers ?? '-' }}</span>
                         </td>
                         <td class="py-6 px-4 text-center">
-                            <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-black">{{ $item->paymentReceipts->count() }}</span>
+                            <span class="px-3 py-1 bg-slate-100 text-slate-600 dark:text-white rounded-lg text-xs font-black">{{ $item->paymentReceipts->count() }}</span>
                         </td>
                         <td class="py-6 px-4">
                             <span class="px-3 py-1 rounded-lg text-[10px] font-bold uppercase
@@ -264,7 +264,7 @@
                             <span class="text-[11px] font-bold text-slate-400">{{ $item->created_at->format('Y/m/d') }}</span>
                         </td>
                         <td class="py-6 px-8 text-center" onclick="event.stopPropagation()">
-                            <a href="{{ route('admin.contracts.edit', $item->id) }}" class="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all">
+                            <a href="{{ route('admin.contracts.edit', $item->id) }}" class="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-white transition-all">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </a>
                         </td>

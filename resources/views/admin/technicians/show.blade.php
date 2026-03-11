@@ -78,7 +78,7 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-8">
         <div class="flex items-center gap-6">
-            <a href="{{ route('admin.technicians.index') }}" class="w-12 h-12 rounded-2xl bg-white dark:bg-white/5 flex items-center justify-center text-slate-400 hover:text-primary transition-all shadow-sm border border-slate-100 dark:border-white/5">
+            <a href="{{ route('admin.technicians.index') }}" class="w-12 h-12 rounded-2xl bg-white dark:bg-white/5 flex items-center justify-center text-slate-400 hover:text-primary dark:hover:text-white transition-all shadow-sm border border-slate-100 dark:border-white/5">
                 <svg class="w-6 h-6 {{ app()->getLocale() == 'ar' ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             </a>
             <h2 class="text-3xl font-black text-slate-800 dark:text-white">{{ $item->{'name_'.app()->getLocale()} }}</h2>
@@ -86,11 +86,13 @@
     </div>
 
     <!-- Navigation Tabs -->
-    <div class="flex items-center gap-2 p-1.5 bg-white dark:bg-white/5 rounded-[2rem] w-fit shadow-sm border border-slate-100 dark:border-white/5 overflow-x-auto no-scrollbar max-w-full">
-        <button @click="activeTab = 'overview'" :class="activeTab === 'overview' ? 'bg-[#1A1A31] text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/10'" class="px-8 py-3 rounded-[1.5rem] text-sm font-black transition-all uppercase tracking-wider whitespace-nowrap">{{ __('Overview') }}</button>
-        <button @click="activeTab = 'tasks'" :class="activeTab === 'tasks' ? 'bg-[#1A1A31] text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/10'" class="px-8 py-3 rounded-[1.5rem] text-sm font-black transition-all uppercase tracking-wider whitespace-nowrap">{{ __('Tasks') }}</button>
-        <button @click="activeTab = 'settlements'" :class="activeTab === 'settlements' ? 'bg-[#1A1A31] text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/10'" class="px-8 py-3 rounded-[1.5rem] text-sm font-black transition-all uppercase tracking-wider whitespace-nowrap">{{ __('Financial Settlements') }}</button>
-        <button @click="activeTab = 'reviews'" :class="activeTab === 'reviews' ? 'bg-[#1A1A31] text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/10'" class="px-8 py-3 rounded-[1.5rem] text-sm font-black transition-all uppercase tracking-wider whitespace-nowrap">{{ __('Reviews') }}</button>
+    <div class="flex items-center gap-2 p-1.5 bg-white dark:bg-white/5
+     rounded-[2rem] w-fit shadow-sm border border-slate-100  
+     dark:border-white/5 overflow-x-auto no-scrollbar max-w-full">
+        <button @click="activeTab = 'overview'" :class="activeTab === 'overview' ? 'bg-[#1A1A31] text-white shadow-lg dark:bg-white/10'  : 'text-slate-500 dark:text-white hover:bg-slate-50 dark:hover:bg-white/10'" class="px-8 py-3 rounded-[1.5rem] text-sm font-black transition-all uppercase tracking-wider whitespace-nowrap">{{ __('Overview') }}</button>
+        <button @click="activeTab = 'tasks'" :class="activeTab === 'tasks' ? 'bg-[#1A1A31] text-white shadow-lg dark:bg-white/10' : 'text-slate-500 dark:text-white hover:bg-slate-50 dark:hover:bg-white/10'" class="px-8 py-3 rounded-[1.5rem] text-sm font-black transition-all uppercase tracking-wider whitespace-nowrap">{{ __('Tasks') }}</button>
+        <button @click="activeTab = 'settlements'" :class="activeTab === 'settlements' ? 'bg-[#1A1A31] text-white shadow-lg dark:bg-white/10' : 'text-slate-500 dark:text-white hover:bg-slate-50 dark:hover:bg-white/10'" class="px-8 py-3 rounded-[1.5rem] text-sm font-black transition-all uppercase tracking-wider whitespace-nowrap">{{ __('Financial Settlements') }}</button>
+        <button @click="activeTab = 'reviews'" :class="activeTab === 'reviews' ? 'bg-[#1A1A31] text-white shadow-lg dark:bg-white/10' : 'text-slate-500 dark:text-white hover:bg-slate-50 dark:hover:bg-white/10'" class="px-8 py-3 rounded-[1.5rem] text-sm font-black transition-all uppercase tracking-wider whitespace-nowrap">{{ __('Reviews') }}</button>
     </div>
 
     <!-- Tab Content -->
@@ -101,8 +103,11 @@
             <!-- Sidebar Info (Now inside Overview) -->
             <div class="space-y-8">
                 <!-- Technician Main Card -->
-                <div class="bg-white dark:bg-[#1A1A31] p-10 rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-sm text-center relative overflow-hidden group">
-                    <div class="absolute top-0 left-0 w-full h-32 bg-primary/5 transition-all group-hover:h-36"></div>
+                <div class="bg-white dark:bg-[#1A1A31] p-10 rounded-[2.5rem] border border-slate-100
+                 dark:border-white/5 shadow-sm text-center relative overflow-hidden group 
+                 hover:bg-[#1A1A31] transition-all duration-300">
+                    <div class="absolute top-0 left-0 w-full h-32 bg-primary/5
+                     transition-all group-hover:h-36"></div>
                     
                     <div class="relative mt-8">
                         <!-- Profile Photo -->
@@ -115,61 +120,69 @@
                         </div>
                         
                         <div class="mt-8 space-y-2 text-center">
-                            <h3 class="text-xl font-black text-slate-800 dark:text-white">{{ $item->{'name_'.app()->getLocale()} }}</h3>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ $item->maintenanceCompany ? __('Company Technician') : __('Platform Technician') }}</p>
+                            <h3 class="text-xl font-black text-slate-800 dark:text-white transition-colors group-hover:text-white">{{ $item->{'name_'.app()->getLocale()} }}</h3>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest transition-colors group-hover:text-white/60">{{ $item->maintenanceCompany ? __('Company Technician') : __('Platform Technician') }}</p>
                         </div>
 
                         <!-- Detailed Info List -->
                         <div class="mt-10 space-y-5 text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
                             
                             <!-- Phone -->
-                            <div class="flex items-center gap-4 group mb-1">
-                                <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-all shadow-sm shrink-0">
+                            <div class="flex items-center gap-4 group/item mb-1">
+                                <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-all shadow-sm shrink-0 group-hover:bg-white/10 group-hover:border-white/20">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{{ __('Phone Number') }}</p>
-                                    <p class="text-sm font-black text-slate-700 dark:text-white/80 transition-colors group-hover:text-primary leading-tight overflow-hidden text-ellipsis whitespace-nowrap" dir="ltr">{{ $item->user->phone ?? '-' }}</p>
+                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5 transition-colors dark:text-white/60">{{ __('Phone Number') }}</p>
+                                    <p class="text-sm font-black text-slate-700 dark:text-white
+                                     transition-colors group-hover:text-white 
+                                    leading-tight overflow-hidden text-ellipsis whitespace-nowrap" dir="ltr">{{ $item->user->phone ?? '-' }}</p>
                                 </div>
                             </div>
 
                             <!-- Email -->
-                            <div class="flex items-center gap-4 group mb-1">
-                                <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-all shadow-sm shrink-0">
+                            <div class="flex items-center gap-4 group/item mb-1">
+                                <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-all shadow-sm shrink-0 group-hover:bg-white/10 group-hover:border-white/20">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{{ __('Email Address') }}</p>
-                                    <p class="text-sm font-black text-slate-700 dark:text-white/80 transition-colors group-hover:text-primary leading-tight overflow-hidden text-ellipsis whitespace-nowrap">{{ $item->user->email ?? '-' }}</p>
+                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5 transition-colors group-hover:text-white/60 dark:text-white/60">{{ __('Email Address') }}</p>
+                                    <p class="text-sm font-black text-slate-700 dark:text-white transition-colors group-hover:text-white leading-tight overflow-hidden
+                                     text-ellipsis whitespace-nowrap ">{{ $item->user->email ?? '-' }}</p>
                                 </div>
                             </div>
 
                             <!-- Regions -->
-                            <div class="flex items-center gap-4 group mb-1">
-                                <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-all shadow-sm shrink-0">
+                            <div class="flex items-center gap-4 group/item mb-1">
+                                <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-all shadow-sm shrink-0 group-hover:bg-white/10 group-hover:border-white/20">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{{ __('Working Regions') }}</p>
-                                    <p class="text-sm font-black text-slate-700 dark:text-white/80 transition-colors group-hover:text-primary leading-tight">{{ __('All Regions') }}</p>
+                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest 
+                                    mb-0.5 transition-colors dark:text-white/60">{{ __('Working Regions') }}</p>
+                                    <p class="text-sm font-black text-slate-700
+                                    dark:text-white/80 transition-colors dark:text-white leading-tight">{{ __('All Regions') }}</p>
                                 </div>
                             </div>
 
                             <!-- Join Date -->
-                            <div class="flex items-center gap-4 group mb-1">
-                                <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-all shadow-sm shrink-0">
+                            <div class="flex items-center gap-4 group/item mb-1">
+                                <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-all shadow-sm shrink-0 group-hover:bg-white/10 group-hover:border-white/20">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{{ __('Registration Date') }}</p>
-                                    <p class="text-sm font-black text-slate-700 dark:text-white/80 transition-colors group-hover:text-primary leading-tight">{{ $item->created_at->format('d M Y') }}</p>
+                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5 transition-colors dark:text-white/60">{{ __('Registration Date') }}</p>
+                                    <p class="text-sm font-black text-slate-700 dark:text-white/80 transition-colors dark:text-white leading-tight">{{ $item->created_at->format('d M Y') }}</p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Action Buttons -->
                         <div class="mt-10 flex flex-col gap-3">
-                            <a href="{{ route('admin.technicians.edit', $item->id) }}" class="w-full py-4 bg-primary text-white rounded-2xl font-black text-xs shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+                            <a href="{{ route('admin.technicians.edit', $item->id) }}"
+                             class="w-full py-4 bg-primary text-white rounded-2xl font-black
+                              text-xs shadow-lg shadow-primary/20 hover:scale-[1.02] border-2 dark:border-primary
+                               transition-all flex items-center justify-center gap-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                 {{ __('Edit Profile') }}
                             </a>
@@ -260,9 +273,9 @@
                             <div class="h-1.5 w-12 bg-primary mt-2 rounded-full"></div>
                         </div>
                         <div class="flex bg-slate-100 dark:bg-white/5 p-1 rounded-2xl border border-slate-200/50 dark:border-white/5">
-                            <button @click="updateChart('weekly')" :class="chartType === 'weekly' ? 'bg-white dark:bg-[#1A1A31] shadow-md text-primary' : 'text-slate-400 hover:text-slate-600'" class="px-5 py-2 rounded-[1rem] text-[10px] font-black uppercase tracking-widest transition-all">{{ __('Weekly') }}</button>
-                            <button @click="updateChart('monthly')" :class="chartType === 'monthly' ? 'bg-white dark:bg-[#1A1A31] shadow-md text-primary' : 'text-slate-400 hover:text-slate-600'" class="px-5 py-2 rounded-[1rem] text-[10px] font-black uppercase tracking-widest transition-all">{{ __('Monthly') }}</button>
-                            <button @click="updateChart('yearly')" :class="chartType === 'yearly' ? 'bg-white dark:bg-[#1A1A31] shadow-md text-primary' : 'text-slate-400 hover:text-slate-600'" class="px-5 py-2 rounded-[1rem] text-[10px] font-black uppercase tracking-widest transition-all">{{ __('Yearly') }}</button>
+                            <button @click="updateChart('weekly')" :class="chartType === 'weekly' ? 'bg-white dark:text-[#1A1A31] shadow-md text-primary' : 'text-slate-400 hover:text-slate-600 dark:text-white'" class="px-5 py-2 rounded-[1rem] text-[10px] font-black uppercase tracking-widest transition-all">{{ __('Weekly') }}</button>
+                            <button @click="updateChart('monthly')" :class="chartType === 'monthly' ? 'bg-white dark:text-[#1A1A31] shadow-md text-primary' : 'text-slate-400 hover:text-slate-600 dark:text-white'" class="px-5 py-2 rounded-[1rem] text-[10px] font-black uppercase tracking-widest transition-all">{{ __('Monthly') }}</button>
+                            <button @click="updateChart('yearly')" :class="chartType === 'yearly' ? 'bg-white dark:text-[#1A1A31] shadow-md text-primary' : 'text-slate-400 hover:text-slate-600 dark:text-white'" class="px-5 py-2 rounded-[1rem] text-[10px] font-black uppercase tracking-widest transition-all">{{ __('Yearly') }}</button>
                         </div>
                     </div>
                     <div class="h-[350px] w-full relative">
@@ -357,7 +370,7 @@
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-white/5">
                             @foreach($orders as $index => $order)
-                            <tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-all group">
+                            <tr class="hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all group">
                                 <td class="py-6 px-8 text-xs font-black text-slate-400">{{ $index + 1 }}</td>
                                 <td class="py-6 px-8 text-sm font-black text-slate-800 dark:text-white">#{{ $order->order_number }}</td>
                                 <td class="py-6 px-8">
@@ -368,11 +381,11 @@
                                         <span class="text-sm font-bold text-slate-700 dark:text-slate-300">{{ $order->user->name ?? '-' }}</span>
                                     </div>
                                 </td>
-                                <td class="py-6 px-8 text-sm font-black text-slate-500 uppercase">{{ __($order->user->type ?? 'Individual') }}</td>
+                                <td class="py-6 px-8 text-sm font-black text-slate-500 dark:text-white uppercase">{{ __($order->user->type ?? 'Individual') }}</td>
                                 <td class="py-6 px-8 text-sm font-bold text-slate-700 dark:text-slate-300">{{ $order->service->{'name_'.app()->getLocale()} ?? '-' }}</td>
-                                <td class="py-6 px-8 text-sm font-bold text-slate-500 italic">{{ $order->service->parent->{'name_'.app()->getLocale()} ?? '-' }}</td>
-                                <td class="py-6 px-8 text-sm font-bold text-slate-500 max-w-[150px] truncate">{{ $order->address ?? '-' }}</td>
-                                <td class="py-6 px-8 text-sm font-black text-slate-500">
+                                <td class="py-6 px-8 text-sm font-bold text-slate-500 dark:text-white italic">{{ $order->service->parent->{'name_'.app()->getLocale()} ?? '-' }}</td>
+                                <td class="py-6 px-8 text-sm font-bold text-slate-500 dark:text-white max-w-[150px] truncate">{{ $order->address ?? '-' }}</td>
+                                <td class="py-6 px-8 text-sm font-black text-slate-500 dark:text-white">
                                     {{ $order->technician->maintenanceCompany ? __('Corporate') : __('Independent') }}
                                 </td>
                                 <td class="py-6 px-8 text-center">
@@ -418,17 +431,17 @@
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-white/5">
                             @foreach($settlements as $index => $s)
-                            <tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
+                            <tr class="hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all">
                                 <td class="py-6 px-8 text-xs font-black text-slate-400">{{ $index + 1 }}</td>
                                 <td class="py-6 px-8 text-sm font-black text-slate-800 dark:text-white">SET-{{ str_pad($s->id, 5, '0', STR_PAD_LEFT) }}</td>
-                                <td class="py-6 px-8 text-sm font-bold text-slate-500">#{{ $s->order->order_number ?? '-' }}</td>
+                                <td class="py-6 px-8 text-sm font-bold text-slate-500 dark:text-white">#{{ $s->order->order_number ?? '-' }}</td>
                                 <td class="py-6 px-8">
                                     <div class="flex items-center gap-2">
                                         <span class="text-sm font-black text-slate-800 dark:text-white">{{ number_format($s->amount, 2) }}</span>
                                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"><img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></span>
                                     </div>
                                 </td>
-                                <td class="py-6 px-8 text-sm font-bold text-slate-500">{{ __($s->payment_method) }}</td>
+                                <td class="py-6 px-8 text-sm font-bold text-slate-500 dark:text-white">{{ __($s->payment_method) }}</td>
                                 <td class="py-6 px-8 text-center">
                                     <span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest {{ $s->status === 'completed' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500' }}">
                                         {{ __($s->status) }}

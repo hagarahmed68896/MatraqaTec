@@ -123,7 +123,7 @@
                     </form>
 
                     <div class="mt-12 text-center">
-                        <a href="{{ route('admin.login') }}" class="text-slate-400 hover:text-primary transition-colors font-black text-sm uppercase tracking-widest">{{ __('Back to Login') }}</a>
+                        <a href="{{ route('admin.login') }}" class="text-slate-400 hover:text-primary dark:hover:text-white transition-colors font-black text-sm uppercase tracking-widest">{{ __('Back to Login') }}</a>
                     </div>
                 </div>
 

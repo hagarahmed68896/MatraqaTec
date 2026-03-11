@@ -81,7 +81,7 @@
                                     <div class="space-y-2">
                                         @foreach(['' => __('All'), 'name' => __('Name'), 'newest' => __('Newest'), 'oldest' => __('Oldest')] as $val => $label)
                                         <label class="flex items-center justify-between cursor-pointer group">
-                                             <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                             <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                              <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                                   :class="sortBy == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200 dark:border-white/10'">
                                                  <input type="radio" name="sort_by" value="{{ $val }}" x-model="sortBy" class="hidden">
@@ -102,7 +102,7 @@
                                     <div class="space-y-2">
                                         @foreach(['' => __('All'), 'individual' => __('Individual'), 'company' => __('Corporate')] as $val => $label)
                                         <label class="flex items-center justify-between cursor-pointer group">
-                                             <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                             <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                              <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                                   :class="clientType == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200 dark:border-white/10'">
                                                  <input type="radio" name="client_type" value="{{ $val }}" x-model="clientType" class="hidden">
@@ -123,7 +123,7 @@
                                     <div class="space-y-2">
                                         @foreach(['' => __('All'), 'service' => __('Service'), 'spare_parts' => __('Spare Parts')] as $val => $label)
                                         <label class="flex items-center justify-between cursor-pointer group">
-                                             <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                             <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                              <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                                   :class="transactionType == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200 dark:border-white/10'">
                                                  <input type="radio" name="transaction_type" value="{{ $val }}" x-model="transactionType" class="hidden">
@@ -144,7 +144,7 @@
                                     <div class="space-y-2">
                                         @foreach(['' => __('All'), 'card' => __('Credit Card'), 'apple_pay' => __('Apple pay'), 'wallet' => __('Wallet')] as $val => $label)
                                         <label class="flex items-center justify-between cursor-pointer group">
-                                             <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                             <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                              <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                                   :class="paymentMethod == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200 dark:border-white/10'">
                                                  <input type="radio" name="payment_method" value="{{ $val }}" x-model="paymentMethod" class="hidden">
@@ -211,19 +211,19 @@
                         <div x-show="open" @click.away="open = false" x-cloak
                              class="absolute top-full {{ app()->getLocale() == 'ar' ? 'right-0' : 'left-0' }} mt-2 w-64 bg-white dark:bg-[#1A1A31] rounded-2xl shadow-2xl border border-slate-100 dark:border-white/10 z-[110] p-2 overflow-hidden">
                             <a href="{{ route('admin.payments.index', array_merge(request()->query(), ['status' => ''])) }}" 
-                               class="block px-6 py-3 text-sm font-bold rounded-xl transition-all {{ !request('status') ? 'bg-primary/10 text-primary' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5' }}">
+                               class="block px-6 py-3 text-sm font-bold rounded-xl transition-all {{ !request('status') ? 'bg-primary/10 text-primary' : 'text-slate-500 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white' }}">
                                 {{ __('All Payments') }}
                             </a>
                             <a href="{{ route('admin.payments.index', array_merge(request()->query(), ['status' => 'completed'])) }}" 
-                               class="block px-6 py-3 text-sm font-bold rounded-xl transition-all {{ request('status') == 'completed' ? 'bg-primary/10 text-primary' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5' }}">
+                               class="block px-6 py-3 text-sm font-bold rounded-xl transition-all {{ request('status') == 'completed' ? 'bg-primary/10 text-primary' : 'text-slate-500 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white' }}">
                                 {{ __('Completed Payments') }}
                             </a>
                             <a href="{{ route('admin.payments.index', array_merge(request()->query(), ['status' => 'pending'])) }}" 
-                               class="block px-6 py-3 text-sm font-bold rounded-xl transition-all {{ request('status') == 'pending' ? 'bg-primary/10 text-primary' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5' }}">
+                               class="block px-6 py-3 text-sm font-bold rounded-xl transition-all {{ request('status') == 'pending' ? 'bg-primary/10 text-primary' : 'text-slate-500 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white' }}">
                                 {{ __('Payments Under Review') }}
                             </a>
                             <a href="{{ route('admin.payments.index', array_merge(request()->query(), ['status' => 'failed'])) }}" 
-                               class="block px-6 py-3 text-sm font-bold rounded-xl transition-all {{ request('status') == 'failed' ? 'bg-primary/10 text-primary' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5' }}">
+                               class="block px-6 py-3 text-sm font-bold rounded-xl transition-all {{ request('status') == 'failed' ? 'bg-primary/10 text-primary' : 'text-slate-500 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white' }}">
                                 {{ __('Incomplete Payments') }}
                             </a>
                         </div>
@@ -310,7 +310,7 @@
                         </td>
                         <td class="py-6 px-4" onclick="window.location.href='{{ route('admin.payments.show', $item->id) }}'">
                             <span class="px-4 py-1.5 rounded-xl text-[10px] font-black uppercase
-                                {{ $item->status == 'completed' ? 'bg-green-50 text-green-500' : ($item->status == 'pending' ? 'bg-slate-100 text-slate-500' : 'bg-red-50 text-red-500') }}">
+                                {{ $item->status == 'completed' ? 'bg-green-50 text-green-500' : ($item->status == 'pending' ? 'bg-slate-100 text-slate-500 dark:text-white' : 'bg-red-50 text-red-500') }}">
                                 {{ $item->status == 'pending' ? __('Under Review') : __($item->status == 'completed' ? 'Success' : 'Failed') }}
                             </span>
                         </td>

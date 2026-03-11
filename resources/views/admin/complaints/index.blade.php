@@ -90,7 +90,7 @@
                              class="absolute left-0 mt-4 w-48 bg-white dark:bg-[#1A1A31] rounded-2xl shadow-2xl border border-slate-100 dark:border-white/10 z-[110] p-2 overflow-hidden">
                             @foreach(['all' => __('All'),  'in_progress' => __('Under Review'), 'resolved' => __('Solved'), 'rejected' => __('Rejected')] as $val => $label)
                             <button @click="status = '{{ $val }}'; open = false; $nextTick(() => $refs.filterForm.submit())"
-                                    class="w-full px-6 py-3 text-right hover:bg-[#F3F4FF] dark:hover:bg-white/5 transition-colors font-bold text-[13px] rounded-xl {{ request('status') == $val || ($val == 'all' && !request('status')) ? 'bg-[#F3F4FF] text-[#1A1A31]' : 'text-slate-500' }}">
+                                    class="w-full px-6 py-3 text-right hover:bg-[#F3F4FF] dark:hover:bg-white/5 transition-colors font-bold text-[13px] rounded-xl {{ request('status') == $val || ($val == 'all' && !request('status')) ? 'bg-[#F3F4FF] text-[#1A1A31]' : 'text-slate-500 dark:text-white' }}">
                                 {{ $label }}
                             </button>
                             @endforeach
@@ -99,7 +99,7 @@
 
                     <!-- Download Button -->
                     <a href="{{ route('admin.complaints.download') }}" 
-                       class="h-12 px-6 bg-white dark:bg-transparent border border-[#1A1A31]/10 dark:border-white/10 rounded-2xl flex items-center gap-3 text-[#1A1A31] dark:text-white font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
+                       class="h-12 px-6 bg-white dark:bg-transparent border border-[#1A1A31]/10 dark:border-white/10 rounded-2xl flex items-center gap-3 text-[#1A1A31] dark:text-white font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                         </svg>
@@ -192,7 +192,7 @@
             <!-- Action Buttons -->
             <div class="p-4 border-t border-slate-50 dark:border-white/5 flex items-center gap-3">
                 <button @click="sort_by = 'all'; account_type = 'all'; type = 'all'; status = 'all'; $nextTick(() => $refs.filterForm.submit())"
-                        class="flex-1 h-11 rounded-2xl border border-slate-100 dark:border-white/10 text-slate-400 font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
+                        class="flex-1 h-11 rounded-2xl border border-slate-100 dark:border-white/10 text-slate-400 font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all">
                     {{ __('Reset') }}
                 </button>
                 <button @click="showFilters = false; $nextTick(() => $refs.filterForm.submit())"

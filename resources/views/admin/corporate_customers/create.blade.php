@@ -8,7 +8,7 @@
     <div class="flex items-center justify-between mb-8">
         <div class="flex items-center gap-4">
             <a href="{{ route('admin.corporate-customers.index') }}" 
-               class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white dark:bg-[#1A1A31] border border-slate-100 dark:border-white/5 text-slate-400 hover:text-primary transition-all shadow-sm">
+               class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white dark:bg-[#1A1A31] border border-slate-100 dark:border-white/5 text-slate-400 hover:text-primary dark:hover:text-white transition-all shadow-sm">
                 <svg class="w-6 h-6 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
                 </svg>
@@ -149,7 +149,7 @@
                             <button type="button" 
                                     @click="status = 'active'; statusLabel = '{{ __('نشط') }}'; open = false"
                                     class="w-full flex items-center gap-4 p-4 rounded-xl transition-all"
-                                    :class="status === 'active' ? 'bg-green-50 dark:bg-green-500/5' : 'hover:bg-slate-50 dark:hover:bg-white/5'">
+                                    :class="status === 'active' ? 'bg-green-50 dark:bg-green-500/5' : 'hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white'">
                                 <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-green-500/10 text-green-500">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
@@ -164,7 +164,7 @@
                             <button type="button" 
                                     @click="status = 'inactive'; statusLabel = '{{ __('غير نشط') }}'; open = false"
                                     class="w-full flex items-center gap-4 p-4 rounded-xl transition-all mt-1"
-                                    :class="status === 'inactive' ? 'bg-red-50 dark:bg-red-500/5' : 'hover:bg-slate-50 dark:hover:bg-white/5'">
+                                    :class="status === 'inactive' ? 'bg-red-50 dark:bg-red-500/5' : 'hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white'">
                                 <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-red-500/10 text-red-500">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>

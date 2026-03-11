@@ -13,11 +13,11 @@
 
         <div class="flex bg-white dark:bg-[#1A1A31] p-1.5 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5">
             <a href="{{ route('admin.refunds.index', ['status' => 'pending']) }}" 
-               class="px-8 py-3 rounded-xl text-xs font-black transition-all {{ request('status', 'pending') == 'pending' ? 'bg-[#1A1A31] text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-white' }}">
+               class="px-8 py-3 rounded-xl text-xs font-black transition-all {{ request('status', 'pending') == 'pending' ? 'bg-[#1A1A31] text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:text-white dark:hover:text-white' }}">
                 {{ __('Return Requests') }}
             </a>
             <a href="{{ route('admin.refunds.index', ['status' => 'history']) }}" 
-               class="px-8 py-3 rounded-xl text-xs font-black transition-all {{ request('status') == 'history' ? 'bg-[#1A1A31] text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-white' }}">
+               class="px-8 py-3 rounded-xl text-xs font-black transition-all {{ request('status') == 'history' ? 'bg-[#1A1A31] text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:text-white dark:hover:text-white' }}">
                 {{ __('Return History') }}
             </a>
         </div>
@@ -186,7 +186,7 @@
                                    :checked="selectedRows.includes({{ $item->id }})"
                                    class="w-4 h-4 rounded border-slate-200 text-primary focus:ring-primary bg-transparent cursor-pointer">
                         </td>
-                        <td class="py-8 px-4 text-xs font-black text-slate-400 group-hover:text-primary transition-colors">
+                        <td class="py-8 px-4 text-xs font-black text-slate-400 transition-colors">
                             {{ ($items->currentPage() - 1) * $items->perPage() + $index + 1 }}
                         </td>
                         <td class="py-8 px-4">
@@ -299,7 +299,7 @@
                         </button>
                         <div x-show="open" @click.away="open = false" x-cloak class="absolute bottom-full mb-2 left-0 w-20 bg-white dark:bg-[#1A1A31] rounded-xl shadow-xl border border-slate-100 dark:border-white/10 z-[120] py-2">
                             @foreach([10, 25, 50, 100] as $l)
-                            <a href="{{ request()->fullUrlWithQuery(['limit' => $l]) }}" class="block px-4 py-2 text-xs font-black hover:bg-slate-50 dark:hover:bg-white/5 {{ request('limit', 10) == $l ? 'text-primary' : 'text-slate-400' }}">{{ $l }}</a>
+                            <a href="{{ request()->fullUrlWithQuery(['limit' => $l]) }}" class="block px-4 py-2 text-xs font-black hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white {{ request('limit', 10) == $l ? 'text-primary' : 'text-slate-400' }}">{{ $l }}</a>
                             @endforeach
                         </div>
                     </div>
@@ -315,7 +315,7 @@
                         <svg class="w-4 h-4 {{ app()->getLocale() == 'ar' ? '' : 'rotate-180' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
                     </button>
                 @else
-                    <a href="{{ $items->previousPageUrl() }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-400 hover:text-primary hover:border-primary transition-all shadow-sm">
+                    <a href="{{ $items->previousPageUrl() }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-400 hover:text-primary dark:hover:text-white hover:border-primary transition-all shadow-sm">
                         <svg class="w-4 h-4 {{ app()->getLocale() == 'ar' ? '' : 'rotate-180' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
                     </a>
                 @endif
@@ -324,12 +324,12 @@
                     @if($page == $items->currentPage())
                         <span class="w-10 h-10 flex items-center justify-center rounded-xl bg-[#1A1A31] text-white text-xs font-black shadow-lg">{{ $page }}</span>
                     @else
-                        <a href="{{ $url }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-400 hover:text-primary hover:border-primary transition-all shadow-sm text-xs font-black">{{ $page }}</a>
+                        <a href="{{ $url }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-400 hover:text-primary dark:hover:text-white hover:border-primary transition-all shadow-sm text-xs font-black">{{ $page }}</a>
                     @endif
                 @endforeach
 
                 @if($items->hasMorePages())
-                    <a href="{{ $items->nextPageUrl() }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-400 hover:text-primary hover:border-primary transition-all shadow-sm">
+                    <a href="{{ $items->nextPageUrl() }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-400 hover:text-primary dark:hover:text-white hover:border-primary transition-all shadow-sm">
                         <svg class="w-4 h-4 {{ app()->getLocale() == 'ar' ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
                     </a>
                 @else

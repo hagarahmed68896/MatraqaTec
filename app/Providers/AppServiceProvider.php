@@ -19,6 +19,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Define Gates for permissions
+        \Illuminate\Support\Facades\Gate::before(function ($user, $ability) {
+            return $user->hasPermission($ability) ?: null;
+        });
+
         // Share notifications with admin layout
         \Illuminate\Support\Facades\View::composer('layouts.admin', function ($view) {
             if (\Illuminate\Support\Facades\Auth::check()) {

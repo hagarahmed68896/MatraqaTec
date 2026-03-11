@@ -68,7 +68,7 @@ Route::prefix('admin')->group(function () {
     Route::get('/switch-language/{lang}', [AdminController::class, 'switchLanguage'])->name('admin.switch-language');
 
     // Protected Routes
-    Route::middleware('admin.auth')->group(function () {
+    Route::middleware(['admin.auth', 'permission'])->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/dashboard/orders', [App\Http\Controllers\AdminController::class, 'dashboardOrders'])->name('admin.dashboard.orders');
     Route::get('/dashboard/categories', [App\Http\Controllers\AdminController::class, 'dashboardCategories'])->name('admin.dashboard.categories');

@@ -75,8 +75,7 @@ class RoleAndPermissionSeeder extends Seeder
         $clientManager->permissions()->sync(
             Permission::where(function($q) {
                 $q->where('name', 'like', '%individual customers')
-                  ->orWhere('name', 'like', '%corporate customers')
-                  ->orWhere('name', 'like', '%orders');
+                  ->orWhere('name', 'like', '%corporate customers');
             })->get()
         );
 

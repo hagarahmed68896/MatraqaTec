@@ -47,8 +47,8 @@
                                 <svg class="w-3 h-3 transform group-hover:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
                             <div class="absolute {{ app()->getLocale() == 'ar' ? 'right-0' : 'left-0' }} mt-2 w-40 bg-white dark:bg-[#1A1A31] rounded-xl shadow-2xl border border-slate-100 dark:border-white/10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
-                                <a href="{{ route('admin.switch-language', 'ar') }}" class="block px-5 py-3 text-xs font-bold text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-colors {{ app()->getLocale() == 'ar' ? 'bg-primary/5 dark:bg-white/10' : '' }}">العربية</a>
-                                <a href="{{ route('admin.switch-language', 'en') }}" class="block px-5 py-3 text-xs font-bold text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-colors {{ app()->getLocale() == 'en' ? 'bg-primary/5 dark:bg-white/10' : '' }}">English</a>
+                                <a href="{{ route('admin.switch-language', 'ar') }}" class="block px-5 py-3 text-xs font-bold text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-colors {{ app()->getLocale() == 'ar' ? 'bg-primary/5 dark:bg-white/10' : '' }}">العربية</a>
+                                <a href="{{ route('admin.switch-language', 'en') }}" class="block px-5 py-3 text-xs font-bold text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-colors {{ app()->getLocale() == 'en' ? 'bg-primary/5 dark:bg-white/10' : '' }}">English</a>
                             </div>
                         </div>
                     </div>
@@ -93,9 +93,9 @@
                                     <div class="w-6 h-6 border-2 border-slate-300 dark:border-white/20 rounded-lg peer-checked:bg-secondary peer-checked:border-secondary transition-all"></div>
                                     <svg class="absolute inset-0 w-6 h-6 p-1 text-white opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                                 </div>
-                                <span class="mx-2 text-sm text-slate-600 dark:text-slate-400 font-bold group-hover:text-primary transition-colors">{{ __('Remember Me') }}</span>
+                                <span class="mx-2 text-sm text-slate-600 dark:text-slate-400 font-bold group-hover:text-primary dark:hover:text-white transition-colors">{{ __('Remember Me') }}</span>
                             </label>
-                            <a href="{{ route('admin.forgot-password') }}" class="text-sm text-slate-400 hover:text-primary transition-colors font-black underline underline-offset-4 decoration-slate-200 dark:decoration-white/10">{{ __('Forgot Password?') }}</a>
+                            <a href="{{ route('admin.forgot-password') }}" class="text-sm text-slate-400 hover:text-primary dark:hover:text-white transition-colors font-black underline underline-offset-4 decoration-slate-200 dark:decoration-white/10">{{ __('Forgot Password?') }}</a>
                         </div>
 
                         <button type="submit" class="w-full py-5 bg-primary text-white rounded-3xl text-xl font-black hover:bg-primary-light transform active:scale-[0.98] transition-all shadow-xl shadow-primary/20">

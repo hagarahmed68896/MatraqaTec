@@ -7,7 +7,7 @@
 <div class="max-w-4xl">
     <!-- Back Button -->
     <div class="mb-6">
-        <a href="{{ route('admin.users.index') }}" class="inline-flex items-center gap-2 text-slate-600 dark:text-white/70 hover:text-primary transition-all">
+        <a href="{{ route('admin.users.index') }}" class="inline-flex items-center gap-2 text-slate-600 dark:text-white/70 hover:text-primary dark:hover:text-white transition-all">
             <svg class="w-5 h-5 {{ app()->getLocale() == 'ar' ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             {{ __('Back to Users') }}
         </a>

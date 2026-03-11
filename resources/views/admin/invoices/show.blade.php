@@ -8,7 +8,7 @@
     <!-- PAGE HEADER -->
     <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
-            <a href="{{ route('admin.invoices.index') }}" class="w-10 h-10 flex items-center justify-center bg-white dark:bg-[#1A1A31] border border-slate-100 dark:border-white/10 rounded-xl text-slate-400 hover:text-primary transition-all shadow-sm">
+            <a href="{{ route('admin.invoices.index') }}" class="w-10 h-10 flex items-center justify-center bg-white dark:bg-[#1A1A31] border border-slate-100 dark:border-white/10 rounded-xl text-slate-400 hover:text-primary dark:hover:text-white transition-all shadow-sm">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="{{ app()->getLocale() == 'ar' ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7' }}"></path></svg>
             </a>
             <h1 class="text-2xl font-black text-[#1A1A31] dark:text-white">{{ __('Operation - #') }}{{ $item->order->order_number ?? $item->order_id }}</h1>
@@ -56,16 +56,16 @@
                         <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{{ __('From') }}</h4>
                         <div class="space-y-1">
                             <p class="text-sm font-black text-[#1A1A31] dark:text-white">{{ __('Matraqa Tec Company') }}</p>
-                            <p class="text-[11px] font-bold text-slate-500 tracking-wide">example@gmail.com</p>
-                            <p class="text-[11px] font-bold text-slate-500 tracking-wide">+966 123 1234 123</p>
+                            <p class="text-[11px] font-bold text-slate-500 dark:text-white tracking-wide">example@gmail.com</p>
+                            <p class="text-[11px] font-bold text-slate-500 dark:text-white tracking-wide">+966 123 1234 123</p>
                         </div>
                     </div>
                     <div class="space-y-4">
                         <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{{ __('To') }}</h4>
                         <div class="space-y-1">
                             <p class="text-sm font-black text-[#1A1A31] dark:text-white">{{ $item->order->user->name ?? '-' }}</p>
-                            <p class="text-[11px] font-bold text-slate-500 tracking-wide">{{ $item->order->user->email ?? 'no-email@example.com' }}</p>
-                            <p class="text-[11px] font-bold text-slate-500 tracking-wide">{{ $item->order->user->phone ?? '-' }}</p>
+                            <p class="text-[11px] font-bold text-slate-500 dark:text-white tracking-wide">{{ $item->order->user->email ?? 'no-email@example.com' }}</p>
+                            <p class="text-[11px] font-bold text-slate-500 dark:text-white tracking-wide">{{ $item->order->user->phone ?? '-' }}</p>
                         </div>
                     </div>
                 </div>

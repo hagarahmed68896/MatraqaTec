@@ -22,7 +22,7 @@
 }">
     <!-- Header -->
     <div class="flex items-center justify-between mb-8">
-        <a href="{{ route('admin.technicians.index') }}" class="flex items-center gap-2 text-slate-500 hover:text-primary transition-colors font-bold group">
+        <a href="{{ route('admin.technicians.index') }}" class="flex items-center gap-2 text-slate-500 dark:text-white hover:text-primary dark:hover:text-white transition-colors font-bold group">
             <div class="w-10 h-10 rounded-xl bg-white dark:bg-white/5 flex items-center justify-center border border-slate-100 dark:border-white/5 group-hover:bg-primary/10">
                 <svg class="w-5 h-5 {{ app()->getLocale() == 'ar' ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
             </div>
@@ -138,7 +138,7 @@
                                     @foreach($cat->children as $child)
                                         <label class="flex items-center gap-3 p-3 bg-white dark:bg-[#1A1A31] rounded-xl border border-slate-100 dark:border-white/5 transition-all hover:border-primary group cursor-pointer">
                                             <input type="radio" name="service_id" value="{{ $child->id }}" class="w-5 h-5 border-2 border-slate-200 dark:border-white/10 text-primary focus:ring-primary rounded-lg">
-                                            <span class="text-sm font-bold text-slate-600 dark:text-slate-400 group-hover:text-primary transition-colors">{{ $child->name_ar }}</span>
+                                            <span class="text-sm font-bold text-slate-600 dark:text-slate-400 group-hover:text-primary dark:hover:text-white transition-colors">{{ $child->name_ar }}</span>
                                         </label>
                                     @endforeach
                                 </div>
@@ -163,7 +163,7 @@
                                 <div x-show="selectedCity == {{ $city->id }}" class="space-y-3">
                                     @foreach($city->districts as $district)
                                         <label class="flex items-center justify-between p-3 bg-white dark:bg-[#1A1A31] rounded-xl border border-slate-100 dark:border-white/5 transition-all hover:border-primary group cursor-pointer">
-                                            <span class="text-sm font-bold text-slate-600 dark:text-slate-400 group-hover:text-primary transition-colors">{{ $district->name_ar }}</span>
+                                            <span class="text-sm font-bold text-slate-600 dark:text-slate-400 transition-colors">{{ $district->name_ar }}</span>
                                             <input type="checkbox" name="districts[]" value="{{ $district->id }}" class="w-5 h-5 border-2 border-slate-200 dark:border-white/10 text-primary focus:ring-primary rounded-lg transition-all">
                                         </label>
                                     @endforeach
@@ -194,7 +194,7 @@
                 <div class="pt-8">
                     <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2 mb-6">{{ __('Account Status') }}</label>
                     <div class="grid grid-cols-2 gap-4">
-                        <label class="relative flex items-center gap-4 p-5 rounded-3xl border-2 cursor-pointer transition-all hover:bg-slate-50 dark:hover:bg-white/5 border-transparent bg-slate-50 dark:bg-white/5"
+                        <label class="relative flex items-center gap-4 p-5 rounded-3xl border-2 cursor-pointer transition-all hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white border-transparent bg-slate-50 dark:bg-white/5"
                                :class="status === 'active' ? 'border-primary ring-4 ring-primary/10' : ''"
                                x-data="{ status: 'active' }" @click="status = 'active'">
                             <input type="radio" name="status" value="active" class="hidden" checked>
@@ -203,7 +203,7 @@
                             </div>
                             <span class="text-sm font-black text-slate-800 dark:text-white">{{ __('Active') }}</span>
                         </label>
-                        <label class="relative flex items-center gap-4 p-5 rounded-3xl border-2 cursor-pointer transition-all hover:bg-slate-50 dark:hover:bg-white/5 border-transparent bg-slate-50 dark:bg-white/5"
+                        <label class="relative flex items-center gap-4 p-5 rounded-3xl border-2 cursor-pointer transition-all hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white border-transparent bg-slate-50 dark:bg-white/5"
                                :class="status === 'inactive' ? 'border-red-500 ring-4 ring-red-500/10' : ''"
                                x-data="{ status: 'active' }" @click="status = 'inactive'">
                             <input type="radio" name="status" value="inactive" class="hidden">
@@ -221,7 +221,7 @@
                 <button type="submit" class="flex-1 py-5 bg-[#1A1A31] text-white rounded-[2rem] font-black hover:bg-black transition-all shadow-xl shadow-black/20 uppercase tracking-widest text-sm">
                     {{ __('Save Changes') }}
                 </button>
-                <button type="reset" class="px-12 py-5 bg-slate-100 dark:bg-white/5 text-slate-500 rounded-[2rem] font-black hover:bg-slate-200 transition-all uppercase tracking-widest text-sm">
+                <button type="reset" class="px-12 py-5 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-white rounded-[2rem] font-black hover:bg-slate-200 transition-all uppercase tracking-widest text-sm">
                     {{ __('Clear') }}
                 </button>
             </div>

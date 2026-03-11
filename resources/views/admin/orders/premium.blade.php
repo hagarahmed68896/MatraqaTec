@@ -96,7 +96,7 @@
                         <div class="space-y-3">
                             @foreach(['newest' => __('Newest'), 'oldest' => __('Oldest'), 'name' => __('Name')] as $val => $label)
                             <label class="flex items-center justify-between cursor-pointer group">
-                                 <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                 <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                  <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                       :class="sortBy == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200'">
                                      <input type="radio" name="sort_by" value="{{ $val }}" x-model="sortBy" class="hidden">
@@ -117,7 +117,7 @@
                         <div class="space-y-3">
                             @foreach(['' => __('All'), 'client' => __('Individual'), 'corporate' => __('Corporate')] as $val => $label)
                             <label class="flex items-center justify-between cursor-pointer group">
-                                 <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                 <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                  <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                       :class="customerType == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200'">
                                      <input type="radio" name="customer_type" value="{{ $val }}" x-model="customerType" class="hidden">
@@ -138,7 +138,7 @@
                         <div class="space-y-3">
                             @foreach(['' => __('All'), 'platform' => __('Platform'), 'company' => __('Company')] as $val => $label)
                             <label class="flex items-center justify-between cursor-pointer group">
-                                 <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                 <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                  <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                       :class="technicianType == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200'">
                                      <input type="radio" name="technician_type" value="{{ $val }}" x-model="technicianType" class="hidden">
@@ -159,7 +159,7 @@
                         <div class="space-y-3">
                             @foreach(['' => __('All'), 'assigned' => __('Assigned'), 'waiting' => __('Waiting')] as $val => $label)
                             <label class="flex items-center justify-between cursor-pointer group">
-                                 <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                 <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                  <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                       :class="appointmentStatus == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200'">
                                      <input type="radio" name="appointment_status" value="{{ $val }}" x-model="appointmentStatus" class="hidden">
@@ -180,7 +180,7 @@
                         <div class="space-y-3">
                             @foreach(['' => __('All'), 'on_way' => __('On Way'), 'arrived' => __('Arrived'), 'work_started' => __('Work Started'), 'additional_visit' => __('Additional Visit'), 'completed' => __('Completed')] as $val => $label)
                             <label class="flex items-center justify-between cursor-pointer group">
-                                    <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $label }}</span>
+                                    <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
                                     <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                         :class="subStatus == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200'">
                                         <input type="radio" name="sub_status" value="{{ $val }}" x-model="subStatus" class="hidden">
@@ -200,7 +200,7 @@
                         <h4 class="text-xs font-black text-[#1A1A31] opacity-60 uppercase tracking-widest">{{ __('Service Category:') }}</h4>
                         <div class="space-y-3">
                             <label class="flex items-center justify-between cursor-pointer group">
-                                 <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ __('All') }}</span>
+                                 <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ __('All') }}</span>
                                  <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                       :class="!selectedCategoryId ? 'border-primary bg-primary' : 'border-slate-200'">
                                      <input type="radio" name="service_category_id" value="" x-model="selectedCategoryId" class="hidden">
@@ -211,7 +211,7 @@
                             </label>
                             @foreach($categories ?? [] as $cat)
                             <label class="flex items-center justify-between cursor-pointer group" @click="selectedServiceIds = []">
-                                 <span class="text-xs font-bold text-slate-500 group-hover:text-primary transition-colors">{{ $cat->name_ar }}</span>
+                                 <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $cat->name_ar }}</span>
                                  <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
                                       :class="selectedCategoryId == {{ $cat->id }} ? 'border-primary bg-primary' : 'border-slate-200'">
                                      <input type="radio" name="service_category_id" value="{{ $cat->id }}" x-model="selectedCategoryId" class="hidden">
@@ -231,7 +231,7 @@
                         <div class="space-y-3 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
                             <template x-for="service in filteredServices" :key="service.id">
                                 <label class="flex items-center justify-between cursor-pointer group">
-                                     <span class="text-[11px] font-bold text-slate-500 group-hover:text-primary transition-colors" x-text="service.name_ar"></span>
+                                     <span class="text-[11px] font-bold text-slate-500 dark:text-white transition-colors" x-text="service.name_ar"></span>
                                      <div class="relative w-5 h-5 border-2 rounded-lg transition-all flex items-center justify-center"
                                           :class="selectedServiceIds.includes(String(service.id)) ? 'border-primary bg-primary' : 'border-slate-200'">
                                          <input type="checkbox" name="service_ids[]" :value="service.id" x-model="selectedServiceIds" class="hidden">
@@ -333,7 +333,7 @@
                             </div>
                         </td>
                         <td class="py-6 px-4">
-                            <span class="px-3 py-1 rounded-lg bg-slate-50 text-slate-600 text-[10px] font-bold">{{ $item->user->type == 'client' ? __('Individual') : __('Corporate') }}</span>
+                            <span class="px-3 py-1 rounded-lg bg-slate-50 text-slate-600 dark:text-white text-[10px] font-bold">{{ $item->user->type == 'client' ? __('Individual') : __('Corporate') }}</span>
                         </td>
                         <td class="py-6 px-4">
                             <span class="text-[11px] font-bold text-slate-400">{{ $item->service->name_ar }}</span>

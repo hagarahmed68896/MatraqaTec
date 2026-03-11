@@ -11,7 +11,9 @@
             <h2 class="text-2xl font-black text-slate-900 dark:text-white">{{ __('All Users') }}</h2>
             <p class="text-sm text-slate-500 dark:text-white/50 mt-1">{{ __('Manage system users and their access') }}</p>
         </div>
-        <a href="{{ route('admin.users.create') }}" class="px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-light transition-all flex items-center gap-2">
+        <a href="{{ route('admin.users.create') }}"
+         class="px-6 py-3 bg-primary text-white rounded-xl font-bold 
+         hover:bg-primary-light transition-all flex items-center gap-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
             {{ __('Add New User') }}
         </a>
@@ -67,7 +69,7 @@
                 </thead>
                 <tbody class="text-xs font-bold text-slate-600 dark:text-white/70">
                     @forelse($users as $user)
-                    <tr class="border-b border-slate-50 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
+                    <tr class="border-b border-slate-50 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all">
                         <td class="py-4 px-6">#{{ $user->id }}</td>
                         <td class="py-4 px-6">
                             <div class="flex items-center gap-3">

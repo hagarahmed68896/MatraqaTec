@@ -320,16 +320,27 @@ class AdminController extends Controller
             }
         }
 
-        // Top Services fallback
-        $topServices = Order::select('service_id', DB::raw('count(*) as count'))
-            ->groupBy('service_id')
+        // Top Services aggregation at parent level
+        $topServicesQuery = Order::join('services', 'orders.service_id', '=', 'services.id')
+            ->select(
+                DB::raw('COALESCE(services.parent_id, services.id) as parent_service_id'),
+                DB::raw('count(DISTINCT orders.user_id) as count')
+            )
+            ->groupBy('parent_service_id')
             ->orderByDesc('count')
             ->take(5)
-            ->with('service')
             ->get();
 
-        $serviceLabels = $topServices->pluck('service.name_' . App::getLocale());
-        $serviceData = $topServices->pluck('count');
+        $serviceLabels = [];
+        $serviceData = [];
+        
+        foreach ($topServicesQuery as $item) {
+            $service = Service::find($item->parent_service_id);
+            if ($service) {
+                $serviceLabels[] = $service->getAttribute('name_' . App::getLocale());
+                $serviceData[] = $item->count;
+            }
+        }
 
         // 3. Top Technicians
         $topTechnicians = Technician::with(['user', 'category'])
@@ -382,7 +393,12 @@ class AdminController extends Controller
     {
         $type = $request->get('type', 'all'); // 'all', 'individual', 'corporate_customer'
         
-        $query = Order::query();
+        $query = Order::query()
+            ->join('services', 'orders.service_id', '=', 'services.id')
+            ->select(
+                DB::raw('COALESCE(services.parent_id, services.id) as parent_service_id'),
+                DB::raw('count(DISTINCT orders.user_id) as count')
+            );
         
         if ($type !== 'all') {
             $query->whereHas('user', function($q) use ($type) {
@@ -390,15 +406,21 @@ class AdminController extends Controller
             });
         }
         
-        $topServices = $query->select('service_id', DB::raw('count(*) as count'))
-            ->groupBy('service_id')
+        $topServices = $query->groupBy('parent_service_id')
             ->orderByDesc('count')
             ->take(5)
-            ->with('service')
             ->get();
 
-        $labels = $topServices->pluck('service.name_' . App::getLocale())->values();
-        $data = $topServices->pluck('count')->values();
+        $labels = [];
+        $data = [];
+        
+        foreach ($topServices as $item) {
+            $service = Service::find($item->parent_service_id);
+            if ($service) {
+                $labels[] = $service->getAttribute('name_' . App::getLocale());
+                $data[] = $item->count;
+            }
+        }
         
         return response()->json([
             'labels' => $labels,

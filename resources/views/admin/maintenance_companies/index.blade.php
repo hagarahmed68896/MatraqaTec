@@ -139,14 +139,14 @@
             </div>
 
             <!-- Controls Row (Visible when no rows selected) -->
-            <div x-show="selectedIds.length === 0" class="flex flex-row items-center justify-between gap-4 w-full">
+            <div x-show="selectedIds.length === 0" class="flex flex-col lg:flex-row items-center justify-between gap-4 w-full">
 
                 <!-- Filter & Search -->
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 w-full lg:w-auto flex-1 min-w-0 justify-end">
                     <!-- Filter Button -->
                     <div class="relative">
                         <button @click="showFilters = !showFilters"
-                            class="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-slate-400 hover:text-primary transition shadow-sm">
+                            class="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-slate-400 hover:text-primary dark:hover:text-white transition shadow-sm">
                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-sliders" viewBox="0 0 16 16">
                                 <path fill-rule="evenodd" d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z"/>
                             </svg>
@@ -170,20 +170,22 @@
                                     <label class="text-md font-black text-slate-400 uppercase tracking-widest block mb-4">{{ __('Sort by') }}</label>
                                     <div class="space-y-3">
                                         <label class="flex items-center gap-3 cursor-pointer group">
-                                            <input type="radio" name="sort_by" value="all" x-model="selectedSort" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                            <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('All') }}</span>
+                                            <input type="radio" name="sort_by" value="all" x-model="selectedSort"
+                                             class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary 
+                                             focus:ring-primary/20 bg-transparent dark:hover:text-white">
+                                            <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('All') }}</span>
                                         </label>
                                         <label class="flex items-center gap-3 cursor-pointer group">
                                             <input type="radio" name="sort_by" value="name" x-model="selectedSort" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                            <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('Name') }}</span>
+                                            <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('Name') }}</span>
                                         </label>
                                         <label class="flex items-center gap-3 cursor-pointer group">
                                             <input type="radio" name="sort_by" value="newest" x-model="selectedSort" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                            <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('Newest') }}</span>
+                                            <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('Newest') }}</span>
                                         </label>
                                          <label class="flex items-center gap-3 cursor-pointer group">
                                             <input type="radio" name="sort_by" value="oldest" x-model="selectedSort" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                            <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('Oldest') }}</span>
+                                            <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('Oldest') }}</span>
                                         </label>
                                     </div>
                                 </div>
@@ -196,21 +198,21 @@
                                     <div class="space-y-3">
                                         <label class="flex items-center gap-3 cursor-pointer group">
                                             <input type="radio" name="status" value="" x-model="selectedStatus" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                            <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('All') }}</span>
+                                            <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('All') }}</span>
                                         </label>
                                         <label class="flex items-center gap-3 cursor-pointer group">
                                             <input type="radio" name="status" value="active" x-model="selectedStatus" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                            <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('Active') }}</span>
+                                            <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('Active') }}</span>
                                         </label>
                                         <label class="flex items-center gap-3 cursor-pointer group">
                                             <input type="radio" name="status" value="inactive" x-model="selectedStatus" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                            <span class="text-sm font-bold text-slate-700 dark:text-slate-300 group-hover:text-primary transition-colors">{{ __('Inactive') }}</span>
+                                            <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('Inactive') }}</span>
                                         </label>
                                     </div>
                                 </div>
 
                                 <div class="flex gap-2 pt-2">
-                                    <button type="submit" class="flex-1 py-3 bg-[#1A1A31] text-white text-sm font-bold rounded-xl hover:bg-black transition-all shadow-lg">{{ __('Apply') }}</button>
+                                    <button type="submit" class="flex-1 py-3 bg-[#1A1A31] text-white border border-slate-100 dark:border-white/5 text-sm font-bold rounded-xl hover:bg-black transition-all shadow-lg">{{ __('Apply') }}</button>
                                     <a href="{{ url()->current() }}" class="px-4 py-3 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-sm font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all text-center">{{ __('Reset') }}</a>
                                 </div>
                             </form>
@@ -218,7 +220,7 @@
                     </div>
 
                     <!-- Search -->
-                    <form action="{{ url()->current() }}" method="GET" class="relative w-72" x-data="{ search: '{{ request('search') }}' }">
+                    <form action="{{ url()->current() }}" method="GET" class="relative w-full max-w-[18rem] flex-1" x-data="{ search: '{{ request('search') }}' }">
                         @foreach(request()->except('search','page') as $key => $value)
                             <input type="hidden" name="{{ $key }}" value="{{ $value }}">
                         @endforeach
@@ -229,7 +231,7 @@
                             class="w-full pr-10 pl-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl text-sm font-bold text-slate-800 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-primary/20 transition-all">
 
                         <button type="submit"
-                            class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors">
+                            class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary dark:hover:text-white transition-colors">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                             </svg>
@@ -238,9 +240,11 @@
                 </div>
 
                 <!-- Actions (Add + Download) -->
-                <div class="flex items-center gap-3 shrink-0">
+                <div class="flex items-center gap-3 flex-wrap justify-center lg:justify-end">
                     <a href="{{ route('admin.maintenance-companies.create') }}"
-                       class="flex items-center gap-2 px-5 py-3 bg-[#1A1A31] text-white text-sm font-bold rounded-xl hover:bg-black transition">
+                       class="flex items-center gap-2 px-5 py-3 bg-[#1A1A31]
+                        text-white text-sm font-bold rounded-xl hover:bg-black border border-slate-200 dark:border-white/10
+                         transition">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"/>
                         </svg>
@@ -248,7 +252,7 @@
                     </a>
 
                     <a href="{{ route('admin.maintenance-companies.download') . '?' . http_build_query(request()->all()) }}" 
-                       class="flex items-center gap-2 px-5 py-3 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white text-sm font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition">
+                       class="flex items-center gap-2 px-5 py-3 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white text-sm font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M7 10l5 5m0 0l5-5m-5 5V3"/>
@@ -284,7 +288,7 @@
                 <tbody class="text-md font-bold text-slate-600 dark:text-white/70 divide-y divide-slate-50 dark:divide-white/5">
                     @forelse($items as $item)
                     <tr @click="window.location.href = '{{ route('admin.maintenance-companies.show', $item->id) }}'" 
-                        class="hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer group"
+                        class="hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all cursor-pointer group"
                         :class="selectedIds.includes({{ $item->id }}) ? 'bg-primary/5' : ''">
                         <td class="py-4 px-6 text-center" @click.stop>
                             <input type="checkbox" value="{{ $item->id }}" x-model="selectedIds"

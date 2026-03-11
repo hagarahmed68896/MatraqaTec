@@ -10,7 +10,7 @@
             {{ __('Notifications') }}
             <span class="text-sm font-bold text-slate-400 dark:text-slate-500">({{ $notifications->total() }})</span>
         </h2>
-        <button id="markAllReadBtn" class="flex items-center gap-2 text-sm font-bold text-primary hover:text-primary-dark transition-colors">
+        <button id="markAllReadBtn" class="flex items-center gap-2 text-sm font-bold text-primary hover:text-primary dark:hover:text-white-dark transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
             {{ __('Mark all as read') }}
         </button>
@@ -19,7 +19,7 @@
     <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-sm overflow-hidden">
         <div class="divide-y divide-slate-50 dark:divide-white/5" id="notificationsList">
             @forelse($notifications as $notification)
-            <div class="p-6 hover:bg-slate-50 dark:hover:bg-white/5 transition-all group relative {{ !$notification->read_at ? 'bg-primary/5 dark:bg-white/5' : '' }}">
+            <div class="p-6 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all group relative {{ !$notification->read_at ? 'bg-primary/5 dark:bg-white/5' : '' }}">
                 <div class="flex items-start gap-4">
                     <!-- Icon -->
                     <div class="w-12 h-12 rounded-[1.25rem] bg-slate-900 dark:bg-white flex items-center justify-center flex-shrink-0 text-white dark:text-slate-900">
@@ -37,12 +37,12 @@
                             
                             <!-- Dropdown -->
                             <div x-data="{ open: false }" class="relative">
-                                <button @click="open = !open" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+                                <button @click="open = !open" class="text-slate-400 hover:text-slate-600 dark:text-white dark:hover:text-white transition-colors">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
                                 </button>
                                 <div x-show="open" @click.away="open = false" class="absolute {{ app()->getLocale() == 'ar' ? 'left-0' : 'right-0' }} mt-2 w-48 bg-white dark:bg-[#1A1A31] rounded-xl shadow-xl border border-slate-100 dark:border-white/10 z-10 overflow-hidden" style="display: none;">
                                     @if(!$notification->read_at)
-                                    <button onclick="markRead('{{ $notification->id }}')" class="block w-full text-start px-4 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">{{ __('Mark as read') }}</button>
+                                    <button onclick="markRead('{{ $notification->id }}')" class="block w-full text-start px-4 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-colors">{{ __('Mark as read') }}</button>
                                     @endif
                                     <form action="{{ route('admin.notifications.destroy', $notification->id) }}" method="POST">
                                         @csrf

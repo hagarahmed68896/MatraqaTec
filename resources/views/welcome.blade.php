@@ -178,7 +178,7 @@
                <div class="relative w-[240px] lg:w-[280px] mx-auto flex justify-center">
                    
                    <!-- Phone Mockup Frame -->
-                   <div class="relative w-full rounded-[2.5rem] lg:rounded-[3rem] border-[10px] lg:border-[12px] border-[#1A1A31] dark:border-slate-800 overflow-hidden flex flex-col z-30 bg-white h-[450px] lg:h-[500px]">
+                   <div class="relative w-full rounded-[2.5rem] lg:rounded-[3rem] border-[10px] lg:border-[12px] border-[#1A1A31] dark:border-slate-800 overflow-hidden flex flex-col z-30 bg-white dark:bg-[#1A1A31] h-[450px] lg:h-[500px]">
              
                        <!-- Image -->
                        <img src="{{ asset('assets/images/Group 28.png') }}" 
@@ -341,9 +341,13 @@
 
                 <!-- Navigation Arrow (Left) -->
                 <button @click="prev()"
-                        class="absolute left-2 md:-left-4 lg:-left-6 top-1/2 -translate-y-1/2 w-10 h-10 lg:w-14 lg:h-14 bg-white text-[#1A1A31] border border-slate-100 dark:border-slate-700 rounded-full shadow-xl flex items-center justify-center transition-all z-20 hover:bg-[#1A1A31] hover:text-white hover:scale-110 active:scale-95"
+                        class="absolute left-2 md:-left-4 lg:-left-6 top-1/2 
+                        -translate-y-1/2 w-10 h-10 lg:w-14 lg:h-14 bg-white 
+                        border border-slate-100 dark:border-slate-700 rounded-full shadow-xl 
+                        flex items-center justify-center transition-all z-20 text-black
+                        hover:bg-[#1A1A31]  hover:scale-110 active:scale-95"
                         style="left: 0.5rem; right: auto;">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6" fill="none" stroke="#1A1A31" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
                 </button>
@@ -352,7 +356,7 @@
                 <button @click="next()"
                         class="absolute right-2 md:-right-4 lg:-right-6 top-1/2 -translate-y-1/2 w-10 h-10 lg:w-14 lg:h-14 bg-white text-[#1A1A31] border border-slate-100 dark:border-slate-700 rounded-full shadow-xl flex items-center justify-center transition-all z-20 hover:bg-[#1A1A31] hover:text-white hover:scale-110 active:scale-95"
                         style="right: 0.5rem; left: auto;">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6" fill="none" stroke="#1A1A31" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                     </svg>
                 </button>
@@ -519,7 +523,7 @@
 </section>
 
     <!-- Footer -->
-    <footer class="bg-[#1A1A31] dark:bg-[#0B0B1A] pt-20 pb-12 text-white transition-colors duration-300 border-t-4 border-white/10 dark:border-white/5">
+    <footer class="bg-[#1A1A31] dark:bg-[#0B0B1A] pt-20 pb-12 text-white transition-colors duration-300 border-t-4 border-white/10 ">
         <div class="max-w-7xl mx-auto px-6">
             <div class="flex flex-col items-center text-center space-y-10 mb-20">
                 <img src="{{ asset('assets/images/9802a3c60b5a7d4a948f48f2ddfe26cb7d01812f (1).png') }}" class="h-24 mb-4 mt-8 invert" alt="MatraqaTec">
