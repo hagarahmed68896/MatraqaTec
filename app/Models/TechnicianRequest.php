@@ -33,6 +33,14 @@ class TechnicianRequest extends Model
         'districts' => 'array',
     ];
 
+    protected $appends = ['photo_url'];
+
+    public function getPhotoUrlAttribute()
+    {
+        return $this->photo ? asset($this->photo) : null;
+    }
+
+
     /**
      * Set the phone attribute.
      * Normalizes the phone number by removing non-digits and leading country code/zero.

@@ -22,28 +22,21 @@ class WalletController extends Controller
             $query->where('type', $request->type);
         }
 
-        // Filter by Time Range
-        if ($request->filled('time_filter')) {
-            switch ($request->time_filter) {
-                case 'yesterday': // أمس
-                    $query->whereDate('created_at', now()->subDay()->toDateString());
-                    break;
-                case 'last_month': // الشهر الماضي
-                    $query->whereMonth('created_at', now()->subMonth()->month)
-                          ->whereYear('created_at', now()->subMonth()->year);
-                    break;
-                case 'last_3_months': // آخر 3 شهور
-                    $query->where('created_at', '>=', now()->subMonths(3));
-                    break;
-                case 'custom': // الفترة المخصصة
-                    if ($request->filled('start_date') && $request->filled('end_date')) {
-                        $query->whereBetween('created_at', [
-                            $request->start_date,
-                            $request->end_date . ' 23:59:59'
-                        ]);
-                    }
-                    break;
-            }
+        // Filter by Time Range (Removed)
+
+        // Filter by Category (الفئة)
+        if ($request->filled('category_id')) {
+            $query->whereHas('order.service', function ($q) use ($request) {
+                $q->where('parent_id', $request->category_id);
+            });
+        }
+
+        // Filter by Service Types (نوع الخدمة - array or comma separated)
+        if ($request->filled('service_ids')) {
+            $serviceIds = is_array($request->service_ids) ? $request->service_ids : explode(',', $request->service_ids);
+            $query->whereHas('order', function ($q) use ($serviceIds) {
+                $q->whereIn('service_id', $serviceIds);
+            });
         }
 
         // Sorting (ترتيب)

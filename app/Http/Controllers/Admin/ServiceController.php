@@ -21,10 +21,14 @@ class ServiceController extends Controller
 
         $items = $query->orderBy('id', 'desc')->paginate(10);
         
-        // Add companies count logic
+        // Add companies and correct technician counts
         $items->getCollection()->transform(function ($service) {
-            $service->companies_count = $service->technicians()
+            // Count technicians for this category
+            $service->technicians_count = \App\Models\Technician::where('category_id', $service->id)->count();
+            
+            $service->companies_count = \App\Models\Technician::where('category_id', $service->id)
                 ->distinct('maintenance_company_id')
+                ->whereNotNull('maintenance_company_id')
                 ->count('maintenance_company_id');
             return $service;
         });
@@ -103,8 +107,30 @@ class ServiceController extends Controller
 
     public function show($id)
     {
-        $item = Service::withCount(['technicians', 'children'])->with('children')->findOrFail($id);
-        $item->companies_count = $item->technicians()->distinct('maintenance_company_id')->count('maintenance_company_id');
+        $item = Service::withCount(['children'])->with('children')->findOrFail($id);
+        
+        // Correct Technician Count (if parent, check category_id, if child check service_id)
+        if ($item->parent_id) {
+            $item->technicians_count = \App\Models\Technician::where('service_id', $item->id)->count();
+            $item->companies_count = \App\Models\Technician::where('service_id', $item->id)
+                ->distinct('maintenance_company_id')
+                ->whereNotNull('maintenance_company_id')
+                ->count('maintenance_company_id');
+        } else {
+            $item->technicians_count = \App\Models\Technician::where('category_id', $item->id)->count();
+            $item->companies_count = \App\Models\Technician::where('category_id', $item->id)
+                ->distinct('maintenance_company_id')
+                ->whereNotNull('maintenance_company_id')
+                ->count('maintenance_company_id');
+        }
+
+        // Also update children counts
+        if ($item->children) {
+            foreach ($item->children as $child) {
+                $child->technicians_count = \App\Models\Technician::where('service_id', $child->id)->count();
+            }
+        }
+
         return view('admin.services.show', compact('item'));
     }
 

@@ -5,6 +5,8 @@
 @section('content')
 <div class="space-y-6 pb-20" x-data="{ 
     selectedIds: [], 
+    unblockModal: false,
+    unblockIds: [],
     
     toggleAll(e) {
         if (e.target.checked) {
@@ -14,9 +16,7 @@
         }
     },
 
-    async unblockSelected() {
-        if (!confirm('{{ __('Are you sure you want to unblock the selected customers?') }}')) return;
-
+    async confirmUnblock() {
         try {
             const response = await fetch('{{ route('admin.blocked.bulk-unblock') }}', {
                 method: 'POST',
@@ -25,7 +25,7 @@
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
                 body: JSON.stringify({ 
-                    ids: this.selectedIds,
+                    ids: this.unblockIds,
                     target_type: 'customer'
                 })
             });
@@ -46,17 +46,16 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 overflow-visible">
         <div>
             <h1 class="text-3xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">{{ __('Blocked Customers') }}</h1>
-            <p class="text-slate-500 dark:text-slate-400 font-bold text-sm">{{ __('Manage blocked individual and corporate customers.') }}</p>
         </div>
         
         <!-- Tabs -->
         <div class="bg-white dark:bg-[#1A1A31] p-1.5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm flex items-center gap-2">
             <a href="{{ route('admin.blocked.customers', ['type' => 'individual']) }}" 
-               class="px-6 py-2.5 rounded-xl text-sm font-black transition-all duration-300 {{ $type === 'individual' ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-105' : 'text-slate-400 hover:text-slate-600 dark:text-white dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white' }}">
+               class="px-6 py-2.5 rounded-xl text-sm font-black transition-all duration-300 {{ $type === 'individual' ? 'bg-primary dark:bg-white/10  text-white shadow-lg shadow-primary/30 scale-105' : 'text-slate-400 hover:text-slate-600 dark:text-white dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white' }}">
                 {{ __('Individual Customers') }}
             </a>
             <a href="{{ route('admin.blocked.customers', ['type' => 'corporate']) }}" 
-               class="px-6 py-2.5 rounded-xl text-sm font-black transition-all duration-300 {{ $type === 'corporate' ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-105' : 'text-slate-400 hover:text-slate-600 dark:text-white dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white' }}">
+               class="px-6 py-2.5 rounded-xl text-sm font-black transition-all duration-300 {{ $type === 'corporate' ? 'bg-primary dark:bg-white/10  text-white shadow-lg shadow-primary/30 scale-105' : 'text-slate-400 hover:text-slate-600 dark:text-white dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white' }}">
                 {{ __('Corporate Customers') }}
             </a>
         </div>
@@ -64,7 +63,7 @@
 
     <!-- Main Container -->
     <div class="bg-white dark:bg-[#1A1A31] rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden transition-all duration-500" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
-        <div class="p-8 flex flex-col md:flex-row items-center justify-between gap-6 bg-slate-50/50 dark:bg-white/[0.02] border-b border-slate-100 dark:border-white/5">
+        <div class="p-8 flex flex-col md:flex-row items-center justify-between gap-6 bg-slate-50/50 dark:bg-[#1A1A31] border-b border-slate-100 dark:border-white/5">
             <!-- Search -->
              <div class="flex items-center gap-3 w-full md:w-auto" x-show="selectedIds.length === 0">
                 <form action="{{ url()->current() }}" method="GET" class="relative group" x-data="{ search: '{{ request('search') }}' }">
@@ -72,8 +71,7 @@
                     <input type="text"
                         name="search"
                         x-model="search"
-                        placeholder="{{ __('Search by name, email or phone...') }}"
-                        class="w-80 pr-12 pl-4 py-3.5 bg-white dark:bg-[#0F0F1E] border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-bold text-slate-800 dark:text-white placeholder-slate-400 outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all duration-300">
+                        class="w-80 pr-12 pl-4 py-4 bg-white dark:bg-[#0F0F1E] border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-bold text-slate-800 dark:text-white placeholder-slate-400 outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all duration-300">
 
                     <button type="submit"
                         class="absolute {{ app()->getLocale() == 'ar' ? 'right-4' : 'left-auto right-4' }} top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-primary dark:hover:text-white transition-colors duration-300">
@@ -96,10 +94,10 @@
                         <span class="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-ping"></span>
                         <span class="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center text-sm font-black shadow-lg shadow-primary/30" x-text="selectedIds.length"></span>
                     </div>
-                    <span class="text-sm font-black text-primary uppercase tracking-wider">{{ __('Items Selected') }}</span>
+                    <span class="text-sm font-black text-primary dark:text-white uppercase tracking-wider">{{ __('Items Selected') }}</span>
                 </div>
                 <div class="h-10 w-px bg-primary/20"></div>
-                <button @click="unblockSelected()" 
+                <button @click="unblockIds = selectedIds; unblockModal = true" 
                         class="flex items-center gap-3 px-6 py-3 bg-green-500 text-white text-sm font-black rounded-xl hover:bg-green-600 hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg shadow-green-500/30">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
@@ -111,12 +109,12 @@
             <!-- Actions (Download) -->
             <div class="flex items-center gap-3 shrink-0" x-show="selectedIds.length === 0">
                 <a href="{{ route('admin.blocked.download', ['target' => 'customers', 'type' => $type]) }}" 
-                   class="flex items-center gap-3 px-6 py-3.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-black rounded-2xl hover:bg-slate-50 dark:hover:bg-white/10 hover:border-primary/30 transition-all duration-300 group">
+                   class="flex items-center gap-3 px-6 py-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-black rounded-2xl hover:bg-slate-50 dark:hover:bg-white/10 hover:border-primary/30 transition-all duration-300 group">
                     <svg class="w-5 h-5 text-slate-400 group-hover:text-primary dark:hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M7 10l5 5m0 0l5-5m-5 5V3"/>
                     </svg>
-                    {{ __('Export to CSV') }}
+                    {{ __('Download') }}
                 </a>
             </div>
         </div>
@@ -125,16 +123,18 @@
         <div class="overflow-x-auto overflow-y-visible">
              <table class="w-full text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
                 <thead>
-                <tr class="text-slate-400 text-[11px] font-black uppercase tracking-[0.2em] border-b border-slate-100 dark:border-white/5 bg-slate-50/30 dark:bg-white/[0.01]">
+                <tr class="text-slate-400 text-[11px] font-black uppercase tracking-[0.2em] border-b border-slate-100 dark:border-white/5  bg-slate-50/30 dark:bg-white/[0.01]">
                     <th class="py-5 px-8 text-center w-16">
                         <input type="checkbox" @change="toggleAll($event)" class="w-5 h-5 border-2 border-slate-200 dark:border-white/10 rounded-lg text-primary focus:ring-primary focus:ring-offset-0 transition-all cursor-pointer">
                     </th>
-                    <th class="py-5 px-6">{{ __('Company Name') }}</th>
+                    <th class="py-5 px-6">{{ $type === 'corporate' ? __('Company Name') : __('Client Name') }}</th>
                     <th class="py-5 px-6">{{ __('Mobile Number') }}</th>
                     <th class="py-5 px-6">{{ __('Email') }}</th>
                     <th class="py-5 px-6">{{ __('Address') }}</th>
+                    @if($type === 'corporate')
                     <th class="py-5 px-6">{{ __('Commercial Record') }}</th>
                     <th class="py-5 px-6">{{ __('Tax Number') }}</th>
+                    @endif
                     <th class="py-5 px-6 text-center">{{ __('Orders Count') }}</th>
                     <th class="py-5 px-6">{{ __('Date') }}</th>
                     <th class="py-5 px-8 text-center">{{ __('Actions') }}</th>
@@ -149,10 +149,15 @@
                         <td class="py-6 px-6">
                             <div class="flex items-center gap-4">
                                 <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black text-md shadow-sm group-hover:scale-110 transition-transform duration-300">
-                                    {{ mb_substr($item->company_name_ar, 0, 1) }}
+                                    @php
+                                        $displayName = ($type === 'corporate') 
+                                            ? ($item->company_name_ar ?? $item->company_name_en)
+                                            : ($item->first_name_ar . ' ' . $item->last_name_ar);
+                                    @endphp
+                                    {{ mb_substr($displayName, 0, 1) }}
                                 </div>
                                 <div class="flex flex-col">
-                                    <span class="text-slate-900 dark:text-white font-black text-sm whitespace-nowrap">{{ $item->company_name_ar }}</span>
+                                    <span class="text-slate-900 dark:text-white font-black text-sm whitespace-nowrap">{{ $displayName }}</span>
                                     <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">ID: #{{ $item->id }}</span>
                                 </div>
                             </div>
@@ -166,12 +171,14 @@
                         <td class="py-6 px-6">
                             <span class="text-xs opacity-70 line-clamp-1 truncate max-w-[150px] inline-block">{{ $item->address ?? $item->user->address ?? '-' }}</span>
                         </td>
+                        @if($type === 'corporate')
                         <td class="py-6 px-6 whitespace-nowrap">
                             <span class="text-xs font-mono opacity-80">{{ $item->commercial_record_number ?? '-' }}</span>
                         </td>
                         <td class="py-6 px-6 whitespace-nowrap">
                             <span class="text-xs font-mono opacity-80">{{ $item->tax_number ?? '-' }}</span>
                         </td>
+                        @endif
                         <td class="py-6 px-6 text-center">
                             <span class="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-400 text-xs font-black">
                                 {{ $item->order_count ?? 0 }}
@@ -181,16 +188,12 @@
                             <span class="text-xs text-slate-400 font-bold">{{ $item->created_at->format('M d, Y') }}</span>
                         </td>
                         <td class="py-6 px-8 text-center">
-                            <form action="{{ route('admin.blocked.bulk-unblock') }}" method="POST" onsubmit="return confirm('{{ __('Are you sure you want to unblock this customer?') }}')">
-                                @csrf
-                                <input type="hidden" name="ids[]" value="{{ $item->user_id }}">
-                                <input type="hidden" name="target_type" value="customer">
-                                <button type="submit" class="w-10 h-10 rounded-xl flex items-center justify-center text-green-500 hover:bg-green-500 hover:text-white dark:hover:bg-green-500/20 dark:hover:text-green-400 transition-all duration-300 shadow-sm" title="{{ __('Unblock') }}">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                                    </svg>
-                                </button>
-                            </form>
+                            <button @click="unblockIds = [{{ $item->user_id }}]; unblockModal = true" 
+                                    class="w-10 h-10 rounded-xl mx-auto flex items-center justify-center text-green-500 hover:bg-green-500 hover:text-white dark:hover:bg-green-500/20 dark:hover:text-green-400 transition-all duration-300 shadow-sm" title="{{ __('Unblock') }}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                </svg>
+                            </button>
                         </td>
                     </tr>
                     @empty
@@ -216,5 +219,57 @@
             {{ $items->links() }}
         </div>
     </div>
+<!-- Custom Unblock Modal -->
+<template x-teleport="body">
+    <div x-show="unblockModal" 
+         class="fixed inset-0 z-[150] flex items-center justify-center p-4 overflow-x-hidden overflow-y-auto" 
+         x-cloak>
+        
+        <div x-show="unblockModal" 
+             x-transition:enter="transition ease-out duration-300" 
+             x-transition:enter-start="opacity-0" 
+             x-transition:enter-end="opacity-100" 
+             x-transition:leave="transition ease-in duration-200" 
+             x-transition:leave-start="opacity-100" 
+             x-transition:leave-end="opacity-0" 
+             @click="unblockModal = false" 
+             class="fixed inset-0 bg-[#1A1A31]/60 backdrop-blur-sm transition-opacity"></div>
+
+        <div x-show="unblockModal"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+             x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+             class="relative bg-white dark:bg-[#1A1A31] w-full max-w-md rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-white/10 overflow-hidden transform transition-all">
+            
+            <div class="p-10 text-center">
+                <div class="mx-auto w-24 h-24 bg-green-50 dark:bg-green-500/10 rounded-full flex items-center justify-center mb-8 relative">
+                    <div class="absolute inset-0 rounded-full bg-green-500/10 animate-ping"></div>
+                    <svg class="w-10 h-10 text-green-500 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                </div>
+
+                <h3 class="text-2xl font-black text-slate-800 dark:text-white mb-4">{{ __('Confirm Unblock') }}</h3>
+                <p class="text-slate-500 dark:text-slate-400 font-bold leading-relaxed mb-10">
+                    {{ __('Are you sure you want to unblock the selected customer(s)?') }}
+                </p>
+
+                <div class="flex gap-4">
+                    <button @click="unblockModal = false" 
+                            class="flex-1 py-4 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 rounded-2xl text-sm font-black hover:bg-slate-200 transition-all">
+                        {{ __('Cancel') }}
+                    </button>
+                    <button @click="confirmUnblock()" 
+                            class="flex-1 py-4 bg-green-500 text-white rounded-2xl text-sm font-black shadow-lg shadow-green-500/30 hover:bg-green-600 transition-all">
+                        {{ __('Unblock') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
 </div>
 @endsection

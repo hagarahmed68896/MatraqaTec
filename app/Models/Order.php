@@ -37,7 +37,20 @@ class Order extends Model
         'spare_parts_metadata' => 'array',
     ];
 
-    protected $appends = ['status_label', 'status_color', 'formatted_scheduled_date', 'formatted_scheduled_time', 'client_name', 'client_phone', 'technician_name', 'technician_avatar', 'acceptance_duration_minutes', 'acceptance_expiry_time'];
+    protected $appends = ['status_label', 'status_color', 'formatted_scheduled_date', 'formatted_scheduled_time', 'client_name', 'client_phone', 'technician_name', 'technician_avatar', 'acceptance_duration_minutes', 'acceptance_expiry_time', 'attachment_urls', 'image'];
+
+    public function getAttachmentUrlsAttribute()
+    {
+        return $this->attachments->map(function ($attachment) {
+            return $attachment->file_path ? asset($attachment->file_path) : null;
+        })->filter()->values();
+    }
+
+    public function getImageAttribute()
+    {
+        return $this->attachment_urls[0] ?? null;
+    }
+
 
     public function getAcceptanceDurationMinutesAttribute()
     {

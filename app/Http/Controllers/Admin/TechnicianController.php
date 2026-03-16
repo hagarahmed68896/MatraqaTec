@@ -173,6 +173,7 @@ class TechnicianController extends Controller
             'national_id' => 'nullable|string|max:255',
             'bio_ar' => 'nullable|string',
             'bio_en' => 'nullable|string',
+            'city_id' => 'required|exists:cities,id',
             'districts' => 'nullable|array',
             'districts.*' => 'exists:districts,id',
         ];
@@ -187,6 +188,7 @@ class TechnicianController extends Controller
             'password' => Hash::make($password),
             'type' => 'technician',
             'phone' => $request->phone,
+            'city_id' => $request->city_id,
             'status' => $request->status,
         ]);
         
@@ -314,6 +316,7 @@ class TechnicianController extends Controller
             'status' => 'required|string',
             'bio_ar' => 'nullable|string',
             'bio_en' => 'nullable|string',
+            'city_id' => 'required|exists:cities,id',
             'districts' => 'nullable|array',
             'districts.*' => 'exists:districts,id',
         ];
@@ -328,6 +331,7 @@ class TechnicianController extends Controller
             }
             if ($request->has('phone')) $user->phone = $request->phone;
             if ($request->has('status')) $user->status = $request->status;
+            if ($request->has('city_id')) $user->city_id = $request->city_id;
             $user->name = $request->name_ar;
             $user->save();
         }

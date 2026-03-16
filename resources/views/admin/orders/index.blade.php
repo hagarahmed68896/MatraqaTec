@@ -17,7 +17,7 @@
     
     <!-- PAGE HEADER -->
     <div class="flex items-center justify-between mb-8">
-        <h1 class="text-2xl font-black text-[#1A1A31]">{{ __('New Orders') }}</h1>
+        <h1 class="text-2xl font-black text-[#1A1A31] dark:text-white">{{ __('New Orders') }}</h1>
     </div>
 
     <!-- Stats Cards Grid -->
@@ -32,13 +32,13 @@
         @endphp
 
         @foreach($cardStats as $index => $stat)
-        <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-50 flex flex-col justify-between h-48 relative overflow-hidden group hover:shadow-md transition-all">
+        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 shadow-sm border border-slate-50 dark:border-white/5 flex flex-col justify-between h-48 relative overflow-hidden group hover:shadow-md transition-all">
             <div class="flex items-center justify-between">
                 <div class="space-y-1">
-                    <p class="text-md font-bold text-[#1A1A31] opacity-60">{{ __($stat['label']) }}</p>
+                    <p class="text-md font-bold text-[#1A1A31] dark:text-white opacity-60">{{ __($stat['label']) }}</p>
                     <div class="flex items-center gap-3">
-                        <h3 class="text-3xl font-black text-[#1A1A31]">{{ $stat['value'] }}</h3>
-                        <div class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center">
+                        <h3 class="text-3xl font-black text-[#1A1A31] dark:text-white">{{ $stat['value'] }}</h3>
+                        <div class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-white/5 flex items-center justify-center">
                             <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                         </div>
                     </div>
@@ -72,9 +72,9 @@
 
         @foreach($tabs as $tab)
         <a href="{{ request()->fullUrlWithQuery(['tab' => $tab['id']]) }}" 
-           class="flex items-center gap-3 px-8 py-3 rounded-2xl font-black text-md transition-all {{ $currentTab == $tab['id'] ? 'bg-[#1A1A31] text-white shadow-lg' : 'bg-white text-[#1A1A31] border border-slate-100 hover:bg-slate-50' }}">
+           class="flex items-center gap-3 px-8 py-3 rounded-2xl font-black text-md transition-all {{ $currentTab == $tab['id'] ? 'bg-[#1A1A31] text-white dark:bg-white/10 dark:text-[#1A1A31] shadow-lg' : 'bg-white dark:bg-[#1A1A31] text-[#1A1A31] dark:text-white border border-slate-100 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5' }}">
             {{ __($tab['label']) }}
-            <span class="w-6 h-6 rounded-lg {{ $currentTab == $tab['id'] ? 'bg-white/20 text-white' : 'bg-slate-100 text-[#1A1A31]' }} flex items-center justify-center text-[11px]">{{ $tab['count'] }}</span>
+            <span class="w-6 h-6 rounded-lg {{ $currentTab == $tab['id'] ? 'bg-white/20 text-white dark:bg-[#1A1A31]/20 dark:text-[#1A1A31]' : 'bg-slate-100 dark:bg-white/10 text-[#1A1A31] dark:text-white' }} flex items-center justify-center text-[11px]">{{ $tab['count'] }}</span>
         </a>
         @endforeach
     </div>
@@ -83,7 +83,7 @@
     <div class="flex items-center justify-center gap-6 relative">
         <div class="w-full max-w-2xl relative group">
             <input type="text" x-model="searchQuery" @keyup.enter="document.getElementById('filterForm').submit()"
-                   class="w-full h-16 pr-14 pl-6 bg-white border border-slate-50 rounded-[1.5rem] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1A1A31]/5 transition-all font-bold text-md text-[#1A1A31]">
+                   class="w-full h-16 pr-14 pl-6 bg-white dark:bg-[#1A1A31] border border-slate-50 dark:border-white/10 rounded-[1.5rem] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1A1A31]/5 transition-all font-bold text-md text-[#1A1A31] dark:text-white">
             <div class="absolute right-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </div>
@@ -91,9 +91,9 @@
 
         <!-- Filter Dropdown Trigger -->
         <button @click="showFilters = !showFilters" 
-                class="w-16 h-16 flex items-center justify-center bg-white rounded-2xl shadow-sm border border-slate-50 text-[#1A1A31] hover:bg-slate-50 transition-all relative">
+                class="w-16 h-16 flex items-center justify-center bg-white dark:bg-[#1A1A31] rounded-2xl shadow-sm border border-slate-50 dark:border-white/10 text-[#1A1A31] dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-all relative">
             <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-            <div x-show="showFilters" class="absolute top-0 right-0 w-3 h-3 bg-red-500 border-2 border-white rounded-full"></div>
+            <div x-show="showFilters" class="absolute top-0 right-0 w-3 h-3 bg-red-500 border-2 border-white dark:border-[#1A1A31] rounded-full"></div>
         </button>
 
         <!-- Filter Dropdown Panel -->
@@ -101,7 +101,7 @@
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 scale-95 translate-y-2"
              x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-             class="absolute top-20 right-0 mt-4 w-80 bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-white/10 z-[100] p-6 space-y-6 text-right overflow-y-auto max-h-[calc(100vh-200px)] custom-scrollbar">
+             class="absolute top-20 right-0 mt-4 w-80 bg-white dark:bg-[#1A1A31] rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-white/10 z-[100] p-6 space-y-6 text-right overflow-y-auto max-h-[calc(100vh-200px)] custom-scrollbar">
             
             <form id="filterForm" action="{{ route('admin.orders.index') }}" method="GET" class="space-y-8">
                 <input type="hidden" name="tab" value="{{ request('tab') }}">
@@ -109,7 +109,7 @@
                 
                 <!-- Filter Section: Sort -->
                 <div class="space-y-4">
-                    <h4 class="text-xs font-black text-[#1A1A31] opacity-60 uppercase tracking-widest">
+                    <h4 class="text-xs font-black text-[#1A1A31] dark:text-white opacity-60 uppercase tracking-widest">
                         {{ __('Sort by:') }}
                     </h4>
                     <div class="space-y-3">
@@ -128,11 +128,11 @@
                     </div>
                 </div>
 
-                <div class="h-px bg-slate-50"></div>
+                <div class="h-px bg-slate-50 dark:bg-white/5"></div>
 
                 <!-- Filter Section: Customer Type -->
                 <div class="space-y-4">
-                    <h4 class="text-xs font-black text-[#1A1A31] opacity-60 uppercase tracking-widest">{{ __('Customer Type:') }}</h4>
+                    <h4 class="text-xs font-black text-[#1A1A31] dark:text-white opacity-60 uppercase tracking-widest">{{ __('Customer Type:') }}</h4>
                     <div class="space-y-3">
                         @foreach(['' => __('All'), 'client' => __('Individual'), 'corporate' => __('Corporate')] as $val => $label)
                         <label class="flex items-center justify-between cursor-pointer group">
@@ -149,11 +149,11 @@
                     </div>
                 </div>
 
-                <div class="h-px bg-slate-50"></div>
+                <div class="h-px bg-slate-50 dark:bg-white/5"></div>
 
                 <!-- Filter Section: Technician Type -->
                 <div class="space-y-4">
-                    <h4 class="text-xs font-black text-[#1A1A31] opacity-60 uppercase tracking-widest">{{ __('Technician Type:') }}</h4>
+                    <h4 class="text-xs font-black text-[#1A1A31] dark:text-white opacity-60 uppercase tracking-widest">{{ __('Technician Type:') }}</h4>
                     <div class="space-y-3">
                         @foreach(['' => __('All'), 'platform' => __('Platform'), 'company' => __('Company')] as $val => $label)
                         <label class="flex items-center justify-between cursor-pointer group">
@@ -170,11 +170,11 @@
                     </div>
                 </div>
 
-                <div class="h-px bg-slate-50"></div>
+                <div class="h-px bg-slate-50 dark:bg-white/5"></div>
 
                 <!-- Filter Section: Appointment Status -->
                 <div class="space-y-4">
-                    <h4 class="text-xs font-black text-[#1A1A31] opacity-60 uppercase tracking-widest">{{ __('Status:') }}</h4>
+                    <h4 class="text-xs font-black text-[#1A1A31] dark:text-white opacity-60 uppercase tracking-widest">{{ __('Status:') }}</h4>
                     <div class="space-y-3">
                         @foreach(['' => __('All'), 'assigned' => __('Assigned'), 'waiting' => __('Waiting')] as $val => $label)
                         <label class="flex items-center justify-between cursor-pointer group">
@@ -191,11 +191,11 @@
                     </div>
                 </div>
 
-                <div class="h-px bg-slate-50"></div>
+                <div class="h-px bg-slate-50 dark:bg-white/5"></div>
 
                 <!-- Filter Section: Sub Status -->
                 <div class="space-y-4">
-                    <h4 class="text-xs font-black text-[#1A1A31] opacity-60 uppercase tracking-widest">{{ __('Sub Status:') }}</h4>
+                    <h4 class="text-xs font-black text-[#1A1A31] dark:text-white opacity-60 uppercase tracking-widest">{{ __('Sub Status:') }}</h4>
                     <div class="space-y-3">
                         @foreach(['' => __('All'), 'on_way' => __('On Way'), 'arrived' => __('Arrived'), 'work_started' => __('Work Started'), 'additional_visit' => __('Additional Visit'), 'completed' => __('Completed')] as $val => $label)
                         <label class="flex items-center justify-between cursor-pointer group">
@@ -212,11 +212,11 @@
                     </div>
                 </div>
 
-                <div class="h-px bg-slate-50"></div>
+                <div class="h-px bg-slate-50 dark:bg-white/5"></div>
 
                     <!-- Filter Section: Service Category (RADIO) -->
                     <div class="space-y-4">
-                        <h4 class="text-xs font-black text-[#1A1A31] opacity-60 uppercase tracking-widest">{{ __('Service Category:') }}</h4>
+                        <h4 class="text-xs font-black text-[#1A1A31] dark:text-white opacity-60 uppercase tracking-widest">{{ __('Service Category:') }}</h4>
                         <div class="space-y-3">
                             <label class="flex items-center justify-between cursor-pointer group">
                                  <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ __('All') }}</span>
@@ -245,8 +245,8 @@
 
                     <!-- Filter Section: Service Type (Child Services) - DYNAMIC MULTISELECT -->
                     <div class="space-y-4" x-show="filteredServices.length > 0" x-cloak>
-                        <div class="h-px bg-slate-50 mb-4"></div>
-                        <h4 class="text-xs font-black text-[#1A1A31] opacity-60 uppercase tracking-widest">{{ __('Service Type:') }}</h4>
+                        <div class="h-px bg-slate-50 dark:bg-white/5 mb-4"></div>
+                        <h4 class="text-xs font-black text-[#1A1A31] dark:text-white opacity-60 uppercase tracking-widest">{{ __('Service Type:') }}</h4>
                         <div class="space-y-3 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
                             <template x-for="service in filteredServices" :key="service.id">
                                 <label class="flex items-center justify-between cursor-pointer group">
@@ -265,10 +265,10 @@
 
                 <!-- Actions -->
                 <div class="flex gap-2 pt-4">
-                    <button type="submit" class="flex-1 py-3 bg-[#1A1A31] text-white rounded-xl font-black text-[10px] shadow-lg hover:scale-[1.02] transition-all">
+                    <button type="submit" class="flex-1 py-3 bg-[#1A1A31] dark:bg-white dark:text-[#1A1A31] text-white rounded-xl font-black text-[10px] shadow-lg hover:scale-[1.02] transition-all">
                         {{ __('Apply') }}
                     </button>
-                    <a href="{{ route('admin.orders.index') }}" class="flex-1 py-3 bg-slate-50 text-slate-400 rounded-xl font-bold text-[10px] text-center hover:bg-slate-100 transition-all">
+                    <a href="{{ route('admin.orders.index') }}" class="flex-1 py-3 bg-slate-50 dark:bg-white/10 text-slate-400 dark:text-slate-300 rounded-xl font-bold text-[10px] text-center hover:bg-slate-100 dark:hover:bg-white/5 transition-all">
                         {{ __('Cancel') }}
                     </a>
                 </div>
@@ -277,11 +277,11 @@
     </div>
 
     <!-- Orders Table Section -->
-    <div class="bg-white rounded-[2.5rem] border border-slate-50 shadow-sm overflow-hidden min-h-[600px] mt-8">
+    <div class="bg-white dark:bg-[#1A1A31] rounded-[2.5rem] border border-slate-50 dark:border-white/5 shadow-sm overflow-hidden min-h-[600px] mt-8">
         <div class="overflow-x-auto">
             <table class="w-full text-right">
                 <thead>
-                    <tr class="bg-slate-50/50 text-[12x] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50">
+                    <tr class="bg-slate-50/50 dark:bg-white/5 text-[12px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest border-b border-slate-50 dark:border-white/5">
                         <th class="py-6 px-8 flex items-center gap-4">
                             <input type="checkbox" class="w-5 h-5 rounded-lg border-2 border-slate-200 text-[#1A1A31] focus:ring-0">
                             <span>#</span>
@@ -306,9 +306,9 @@
                         @endif
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-50">
+                <tbody class="divide-y divide-slate-50 dark:divide-white/5">
                     @forelse($items as $item)
-                    <tr onclick="window.location.href='{{ route('admin.orders.show', $item->id) }}'" class="hover:bg-slate-50/50 transition-all group cursor-pointer">
+                    <tr onclick="window.location.href='{{ route('admin.orders.show', $item->id) }}'" class="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-all group cursor-pointer">
                         <td class="py-6 px-8 flex items-center gap-4" onclick="event.stopPropagation()">
                             <input type="checkbox" class="w-5 h-5 rounded-lg border-2 border-slate-200 text-[#1A1A31] focus:ring-0">
                             <span class="text-xs font-mono opacity-40">{{ $loop->iteration }}</span>
@@ -317,10 +317,10 @@
                             <a href="{{ route('admin.orders.show', $item->id) }}" class="text-primary font-black text-md hover:underline">{{ app()->getLocale() == 'ar' ? 'طلب-' : 'Order-' }}{{ $item->order_number }}</a>
                         </td>
                         <td class="py-6 px-4">
-                            <span class="text-md font-bold text-[#1A1A31]">{{ $item->user->name }}</span>
+                            <span class="text-md font-bold text-[#1A1A31] dark:text-white">{{ $item->user->name }}</span>
                         </td>
                         <td class="py-6 px-4">
-                            <span class="px-4 py-1.5 rounded-xl bg-slate-50 text-[10px] font-bold text-slate-600 dark:text-white">{{ $item->user->type == 'client' ? __('Individual') : __('Corporate') }}</span>
+                            <span class="px-4 py-1.5 rounded-xl bg-slate-50 dark:bg-white/5 text-[10px] font-bold text-slate-600 dark:text-white">{{ $item->user->type == 'client' ? __('Individual') : __('Corporate') }}</span>
                         </td>
                         <td class="py-6 px-4">
                             <span class="text-md font-bold text-slate-500 dark:text-white">{{ $item->service->name_ar }}</span>
@@ -330,7 +330,7 @@
                         </td>
                         @if($currentTab == 'scheduled')
                         <td class="py-6 px-4">
-                            <span class="text-md font-bold text-[#1A1A31]">{{ $item->technician->user->name ?? ($item->maintenanceCompany->user->name ?? '-') }}</span>
+                            <span class="text-md font-bold text-[#1A1A31] dark:text-white">{{ $item->technician->user->name ?? ($item->maintenanceCompany->user->name ?? '-') }}</span>
                         </td>
                         <td class="py-6 px-4">
                             <span class="px-3 py-1 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-bold">
@@ -371,7 +371,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="py-20 text-center text-slate-400 font-bold uppercase tracking-widest bg-white">
+                        <td colspan="9" class="py-20 text-center text-slate-400 font-bold uppercase tracking-widest bg-white dark:bg-[#1A1A31]">
                             {{ __('No orders found currently') }}
                         </td>
                     </tr>
@@ -385,7 +385,7 @@
                  x-transition:enter-start="opacity-0"
                  x-transition:enter-end="opacity-100">
                 
-                <div class="bg-white rounded-[3rem] w-full max-w-2xl shadow-2xl relative overflow-hidden"
+                <div class="bg-white dark:bg-[#1A1A31] rounded-[3rem] w-full max-w-2xl shadow-2xl relative overflow-hidden"
                      @click.away="showAcceptModal = false"
                      x-transition:enter="transition ease-out duration-300"
                      x-transition:enter-start="opacity-0 scale-95 translate-y-4"
@@ -398,8 +398,8 @@
 
                     <div class="p-12 text-center space-y-8">
                         <div class="flex items-center justify-between">
-                            <h2 class="text-2xl font-black text-[#1A1A31]">{{ __('Accept Order') }}</h2>
-                            <button @click="toggleViewMode()" class="px-6 py-2 rounded-xl border border-slate-100 font-bold text-xs text-[#1A1A31] hover:bg-slate-50 transition-all flex items-center gap-2">
+                            <h2 class="text-2xl font-black text-[#1A1A31] dark:text-white">{{ __('Accept Order') }}</h2>
+                            <button @click="toggleViewMode()" class="px-6 py-2 rounded-xl border border-slate-100 dark:border-white/10 font-bold text-xs text-[#1A1A31] dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-all flex items-center gap-2">
                                 <template x-if="viewMode === 'list'">
                                     <span class="flex items-center gap-2">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
@@ -418,14 +418,14 @@
                         <!-- LIST VIEW -->
                         <div x-show="viewMode === 'list'" class="space-y-8">
                             <!-- Tabs -->
-                            <div class="flex p-1.5 bg-slate-50 rounded-2xl">
+                            <div class="flex p-1.5 bg-slate-50 dark:bg-white/5 rounded-2xl">
                                 <button @click="activeTab = 'platform'; fetchTechnicians()" 
-                                        :class="activeTab === 'platform' ? 'bg-[#1A1A31] text-white shadow-lg' : 'text-slate-400'"
+                                        :class="activeTab === 'platform' ? 'bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] shadow-lg' : 'text-slate-400'"
                                         class="flex-1 py-3 rounded-xl font-bold text-md transition-all whitespace-nowrap px-4">
                                     {{ __('Assign Platform Technician') }}
                                 </button>
                                 <button @click="activeTab = 'company'; fetchCompanies()" 
-                                        :class="activeTab === 'company' ? 'bg-[#1A1A31] text-white shadow-lg' : 'text-slate-400'"
+                                        :class="activeTab === 'company' ? 'bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] shadow-lg' : 'text-slate-400'"
                                         class="flex-1 py-3 rounded-xl font-bold text-md transition-all whitespace-nowrap px-4">
                                     {{ __('Send Order to Maintenance Company') }}
                                 </button>
@@ -436,7 +436,7 @@
                             <!-- List Section -->
                             <div class="space-y-6 text-right">
                                 <div class="flex items-center justify-between">
-                                    <h3 class="text-md font-black text-[#1A1A31]" x-text="activeTab === 'platform' ? '{{ __('Technicians') }}' : '{{ __('Maintenance Companies') }}'"></h3>
+                                    <h3 class="text-md font-black text-[#1A1A31] dark:text-white" x-text="activeTab === 'platform' ? '{{ __('Technicians') }}' : '{{ __('Maintenance Companies') }}'"></h3>
                                 </div>
 
                                 <!-- Items Container -->
@@ -451,13 +451,13 @@
                                         <div class="space-y-4">
                                             <template x-for="tech in technicians" :key="tech.id">
                                                 <label class="flex items-center gap-6 p-6 rounded-[2rem] border-2 transition-all cursor-pointer group"
-                                                       :class="selectedTechId === tech.id ? 'border-primary bg-primary/5 shadow-sm' : 'border-slate-50 hover:border-slate-100'">
+                                                       :class="selectedTechId === tech.id ? 'border-primary bg-primary/5 shadow-sm' : 'border-slate-50 dark:border-white/5 hover:border-slate-100 dark:hover:border-white/10'">
                                                     <div class="flex-1 flex items-center gap-4">
-                                                        <div class="w-14 h-14 rounded-2xl overflow-hidden bg-slate-100">
+                                                        <div class="w-14 h-14 rounded-2xl overflow-hidden bg-slate-100 dark:bg-white/5">
                                                             <img :src="tech.avatar || '/assets/admin/images/avatar-placeholder.png'" class="w-full h-full object-cover">
                                                         </div>
                                                         <div class="space-y-1">
-                                                            <h4 class="font-black text-[#1A1A31] transition-colors" x-text="tech.name"></h4>
+                                                            <h4 class="font-black text-[#1A1A31] dark:text-white transition-colors" x-text="tech.name"></h4>
                                                             <div class="flex items-center gap-4 text-[10px] font-bold text-slate-400">
                                                                 <span x-text="tech.service_name"></span>
                                                                 <span class="flex items-center gap-1">
@@ -481,13 +481,13 @@
                                         <div class="space-y-4">
                                             <template x-for="comp in companies" :key="comp.id">
                                                 <label class="flex items-center gap-6 p-6 rounded-[2rem] border-2 transition-all cursor-pointer group"
-                                                       :class="selectedCompanyId === comp.id ? 'border-primary bg-primary/5 shadow-sm' : 'border-slate-50 hover:border-slate-100'">
+                                                       :class="selectedCompanyId === comp.id ? 'border-primary bg-primary/5 shadow-sm' : 'border-slate-50 dark:border-white/5 hover:border-slate-100 dark:hover:border-white/10'">
                                                     <div class="flex-1 flex items-center gap-4">
-                                                        <div class="w-14 h-14 rounded-2xl overflow-hidden bg-slate-100">
+                                                        <div class="w-14 h-14 rounded-2xl overflow-hidden bg-slate-100 dark:bg-white/5">
                                                             <img :src="comp.avatar || '/assets/admin/images/avatar-placeholder.png'" class="w-full h-full object-cover">
                                                         </div>
                                                         <div class="space-y-1">
-                                                            <h4 class="font-black text-[#1A1A31] transition-colors" x-text="comp.name"></h4>
+                                                            <h4 class="font-black text-[#1A1A31] dark:text-white transition-colors" x-text="comp.name"></h4>
                                                             <div class="flex items-center gap-4 text-[10px] font-bold text-slate-400">
                                                                 <span class="flex items-center gap-1">
                                                                     <svg class="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
@@ -513,7 +513,7 @@
                                     </template>
                                 </div>
 
-                                <button type="button" @click="activeTab === 'platform' ? fetchTechnicians(true) : fetchCompanies(true)" class="w-full py-4 border-2 border-slate-100 rounded-2xl font-black text-xs text-slate-400 hover:bg-slate-50 transition-all uppercase tracking-widest flex items-center justify-center gap-2">
+                                <button type="button" @click="activeTab === 'platform' ? fetchTechnicians(true) : fetchCompanies(true)" class="w-full py-4 border-2 border-slate-100 dark:border-white/10 rounded-2xl font-black text-xs text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-all uppercase tracking-widest flex items-center justify-center gap-2">
                                     {{ __('Show More') }}
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
                                 </button>
@@ -524,10 +524,10 @@
                         <div x-show="viewMode === 'map'" class="relative" style="min-height: 500px;" x-effect="if(searchMap !== undefined) renderMarkers()">
                             <!-- Top Left Buttons (Close/Expand) -->
                             <div class="absolute top-6 right-6 z-[1000] flex gap-3 pointer-events-auto">
-                                <button @click="viewMode = 'list'" class="w-10 h-10 rounded-xl bg-white/90 backdrop-blur-md border border-slate-100 shadow-lg flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-white transition-colors">
+                                <button @click="viewMode = 'list'" class="w-10 h-10 rounded-xl bg-white/90 dark:bg-[#1A1A31]/90 backdrop-blur-md border border-slate-100 dark:border-white/10 shadow-lg flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-white transition-colors">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                                 </button>
-                                <button class="w-10 h-10 rounded-xl bg-white/90 backdrop-blur-md border border-slate-100 shadow-lg flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-white transition-colors">
+                                <button class="w-10 h-10 rounded-xl bg-white/90 dark:bg-[#1A1A31]/90 backdrop-blur-md border border-slate-100 dark:border-white/10 shadow-lg flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-white transition-colors">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
                                 </button>
                             </div>
@@ -537,7 +537,7 @@
                                 <!-- Search bar -->
                                 <div class="flex-1 max-w-sm pointer-events-auto">
                                     <div class="relative">
-                                        <input type="text" x-model="searchMap" @input="renderMarkers()" placeholder="{{ __('Search...') }}" class="w-full h-12 pr-12 pl-4 bg-white/90 backdrop-blur-md border border-slate-100 rounded-2xl shadow-lg focus:outline-none font-bold text-md">
+                                        <input type="text" x-model="searchMap" @input="renderMarkers()" placeholder="{{ __('Search...') }}" class="w-full h-12 pr-12 pl-4 bg-white/90 dark:bg-[#1A1A31]/90 backdrop-blur-md border border-slate-100 dark:border-white/10 rounded-2xl shadow-lg focus:outline-none font-bold text-md text-[#1A1A31] dark:text-white">
                                         <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                                         </div>
@@ -546,12 +546,12 @@
                                 
                                 <div class="flex-1 flex justify-end pointer-events-auto gap-3">
                                     <button @click="activeTab = 'platform'; fetchTechnicians()" 
-                                            :class="activeTab === 'platform' ? 'bg-[#1A1A31] text-white' : 'bg-white/90 text-slate-400'"
+                                            :class="activeTab === 'platform' ? 'bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31]' : 'bg-white/90 dark:bg-[#1A1A31]/90 text-slate-400'"
                                             class="px-6 py-3 rounded-2xl font-black text-xs shadow-lg backdrop-blur-md transition-all">
                                         {{ __('Assign Platform Technician') }}
                                     </button>
                                     <button @click="activeTab = 'company'; fetchCompanies()" 
-                                            :class="activeTab === 'company' ? 'bg-[#1A1A31] text-white' : 'bg-white/90 text-slate-400'"
+                                            :class="activeTab === 'company' ? 'bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31]' : 'bg-white/90 dark:bg-[#1A1A31]/90 text-slate-400'"
                                             class="px-6 py-3 rounded-2xl font-black text-xs shadow-lg backdrop-blur-md transition-all">
                                         {{ __('Send Order to Maintenance Company') }}
                                     </button>
@@ -563,12 +563,12 @@
 
                             <!-- Technician Card (Floating) -->
                             <template x-if="selectedMapTech">
-                                <div class="absolute bottom-10 right-10 z-[1000] w-[340px] bg-white rounded-[2.5rem] shadow-2xl p-8 text-right space-y-6 animate-fade-in-up">
+                                <div class="absolute bottom-10 right-10 z-[1000] w-[340px] bg-white dark:bg-[#1A1A31] rounded-[2.5rem] shadow-2xl p-8 text-right space-y-6 animate-fade-in-up">
                                     <div class="flex items-start justify-between">
-                                        <span class="px-3 py-1 bg-green-50 text-green-600 rounded-lg text-[10px] font-black" x-text="selectedMapTech.status_label"></span>
+                                        <span class="px-3 py-1 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 rounded-lg text-[10px] font-black" x-text="selectedMapTech.status_label"></span>
                                         <div class="flex items-center gap-4">
                                             <div class="text-right">
-                                                <h4 class="font-black text-[#1A1A31] text-md" x-text="selectedMapTech.name"></h4>
+                                                <h4 class="font-black text-[#1A1A31] dark:text-white text-md" x-text="selectedMapTech.name"></h4>
                                                 <p class="text-[10px] font-bold text-slate-400" x-text="selectedMapTech.specialty"></p>
                                             </div>
                                             <div class="w-14 h-14 rounded-2xl overflow-hidden bg-slate-100">
@@ -577,7 +577,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="space-y-4 pt-4 border-t border-slate-50">
+                                    <div class="space-y-4 pt-4 border-t border-slate-50 dark:border-white/5">
                                         <div class="flex items-center justify-between text-[11px] font-bold">
                                             <span class="text-[#1A1A31]" x-text="selectedMapTech.service_name"></span>
                                             <span class="text-slate-400 flex items-center gap-2">
@@ -602,7 +602,7 @@
                                         <div class="flex items-center justify-between text-[11px] font-bold">
                                             <div class="flex items-center gap-1">
                                                 <svg class="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
-                                                <span class="text-[#1A1A31]" x-text="selectedMapTech.rating"></span>
+                                                <span class="text-[#1A1A31] dark:text-white" x-text="selectedMapTech.rating"></span>
                                             </div>
                                             <span class="text-slate-400 flex items-center gap-2">
                                                 {{ __('Average Rating:') }}
@@ -619,7 +619,7 @@
                                         <template x-if="activeTab === 'company'">
                                             <input type="hidden" name="maintenance_company_id" :value="selectedMapTech.id">
                                         </template>
-                                        <button type="submit" class="w-full py-4 bg-[#1A1A31] text-white rounded-2xl font-black text-xs shadow-xl shadow-[#1A1A31]/20 hover:scale-[1.02] transition-all uppercase tracking-widest">
+                                        <button type="submit" class="w-full py-4 bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] rounded-2xl font-black text-xs shadow-xl shadow-[#1A1A31]/20 hover:scale-[1.02] transition-all uppercase tracking-widest">
                                             {{ __('Assign Technician') }}
                                         </button>
                                     </form>
@@ -637,14 +637,14 @@
                                 <template x-if="activeTab === 'company'">
                                     <input type="hidden" name="maintenance_company_id" :value="selectedCompanyId">
                                 </template>
-                                        <button type="submit" 
-                                                :disabled="(activeTab === 'platform' && !selectedTechId) || (activeTab === 'company' && !selectedCompanyId)"
-                                                :class="(activeTab === 'platform' && selectedTechId) || (activeTab === 'company' && selectedCompanyId) ? 'bg-[#1A1A31] shadow-xl shadow-[#1A1A31]/20 hover:scale-[1.02]' : 'bg-slate-300 cursor-not-allowed'"
-                                                class="w-full py-5 text-white rounded-[1.5rem] font-black text-md transition-all transform uppercase tracking-widest">
-                                            <span x-text="activeTab === 'platform' ? '{{ __('Send assignment to technician') }}' : '{{ __('Send order to company') }}'"></span>
-                                        </button>
+                                                <button type="submit" 
+                                                        :disabled="(activeTab === 'platform' && !selectedTechId) || (activeTab === 'company' && !selectedCompanyId)"
+                                                        :class="(activeTab === 'platform' && selectedTechId) || (activeTab === 'company' && selectedCompanyId) ? 'bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] shadow-xl shadow-[#1A1A31]/20 hover:scale-[1.02]' : 'bg-slate-300 dark:bg-white/10 dark:text-slate-500 cursor-not-allowed'"
+                                                        class="w-full py-5 rounded-[1.5rem] font-black text-md transition-all transform uppercase tracking-widest">
+                                                    <span x-text="activeTab === 'platform' ? '{{ __('Send assignment to technician') }}' : '{{ __('Send order to company') }}'"></span>
+                                                </button>
                             </form>
-                                <button @click="showAcceptModal = false" class="flex-[0.5] py-5 bg-slate-100 text-slate-400 rounded-[1.5rem] font-bold text-md hover:bg-slate-200 transition-all">
+                                <button @click="showAcceptModal = false" class="flex-[0.5] py-5 bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-300 rounded-[1.5rem] font-bold text-md hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
                                     {{ __('Cancel') }}
                                 </button>
                         </div>
@@ -659,7 +659,7 @@
                  x-transition:enter-start="opacity-0"
                  x-transition:enter-end="opacity-100">
                 
-                <div class="bg-white rounded-[3rem] w-full max-w-xl shadow-2xl relative overflow-hidden"
+                <div class="bg-white dark:bg-[#1A1A31] rounded-[3rem] w-full max-w-xl shadow-2xl relative overflow-hidden"
                      @click.away="showRefuseModal = false"
                      x-transition:enter="transition ease-out duration-300"
                      x-transition:enter-start="opacity-0 scale-95 translate-y-4"
@@ -675,7 +675,7 @@
                         </div>
 
                         <div class="space-y-2">
-                            <h2 class="text-2xl font-black text-[#1A1A31]">{{ __('Refuse Order') }}</h2>
+                            <h2 class="text-2xl font-black text-[#1A1A31] dark:text-white">{{ __('Refuse Order') }}</h2>
                             <p class="text-slate-400 font-bold text-md">{{ __('Please state the reason for rejection to clarify to the customer') }}</p>
                         </div>
 
@@ -683,7 +683,7 @@
                             @csrf
                             <textarea name="rejection_reason" x-model="rejectionReason" required
                                       placeholder="{{ __('Write the rejection reason here...') }}"
-                                      class="w-full h-40 p-6 bg-slate-50 border-none rounded-[2rem] focus:ring-2 focus:ring-red-500/20 transition-all font-bold text-md text-[#1A1A31] resize-none"></textarea>
+                                      class="w-full h-40 p-6 bg-slate-50 dark:bg-white/5 border-none rounded-[2rem] focus:ring-2 focus:ring-red-500/20 transition-all font-bold text-md text-[#1A1A31] dark:text-white resize-none"></textarea>
 
                             <div class="flex gap-4">
                                 <button type="submit" 
@@ -692,7 +692,7 @@
                                         class="flex-1 py-5 text-white rounded-[1.5rem] font-black text-md transition-all transform capitalize tracking-widest">
                                     {{ __('Confirm Rejection') }}
                                 </button>
-                                <button type="button" @click="showRefuseModal = false" class="flex-[0.5] py-5 bg-slate-100 text-slate-400 rounded-[1.5rem] font-bold text-md hover:bg-slate-200 transition-all">
+                                <button type="button" @click="showRefuseModal = false" class="flex-[0.5] py-5 bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-300 rounded-[1.5rem] font-bold text-md hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
                                     {{ __('Cancel') }}
                                 </button>
                             </div>
@@ -705,7 +705,7 @@
     </div> <!-- Main Alpine Container -->
 
     <!-- Pagination & Footer -->
-    <div class="px-10 py-6 border-t border-slate-50 bg-white rounded-b-[2.5rem]">
+    <div class="px-10 py-6 border-t border-slate-50 dark:border-white/5 bg-white dark:bg-[#1A1A31] rounded-b-[2.5rem]">
         {{ $items->appends(request()->query())->links('vendor.pagination.custom-admin') }}
     </div>
 

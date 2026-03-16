@@ -37,13 +37,22 @@ class AppointmentController extends Controller
         }
 
         // 2. Tab Filter & Status Logic
-        // If a specific status is requested, prioritize it over the tab default.
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $status = $request->status;
+            if ($status === 'on_way') {
+                $query->whereHas('order', function($o) {
+                    $o->where('status', 'in_progress')->where('sub_status', 'on_way');
+                });
+            } elseif ($status === 'arrived') {
+                $query->whereHas('order', function($o) {
+                    $o->where('status', 'in_progress')->where('sub_status', 'arrived');
+                });
+            } else {
+                $query->where('status', $status);
+            }
         } elseif ($request->tab === 'previous') {
             $query->whereIn('status', ['completed', 'cancelled']);
         } else {
-            // Default to 'current' logic only if no status is specified
             $query->whereIn('status', ['scheduled', 'in_progress']);
         }
 
@@ -65,7 +74,12 @@ class AppointmentController extends Controller
             $query->whereDate('appointment_date', $request->date);
         }
 
-        // Precise Hour Filter (e.g., 9, 10, 13)
+        // Precise Time Filter (e.g., "09:00", "13:30")
+        if ($request->filled('time')) {
+            $query->whereRaw('TIME_FORMAT(appointment_date, "%H:%i") = ?', [$request->time]);
+        }
+
+        // Precise Hour Filter (Legacy/Numeric)
         if ($request->filled('hour')) {
             $query->whereRaw('HOUR(appointment_date) = ?', [$request->hour]);
         }

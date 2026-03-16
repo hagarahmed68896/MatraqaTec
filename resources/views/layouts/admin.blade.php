@@ -374,22 +374,55 @@
 
                                             <!-- Actions for Technician Requests -->
                                             @if(($notification->data['type'] ?? $notification->type) == 'technician_request' && isset($notification->data['request_id']))
-                                            <div class="flex items-center gap-2 mt-3">
-                                                <form action="{{ route('admin.technician-requests.accept', $notification->data['request_id']) }}" method="POST" class="flex-1">
-                                                    @csrf
-                                                    <button type="submit" class="w-full py-1.5 bg-slate-900 bg-[#1A1A31] text-white dark:text-slate-900 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-black transition-all">
-                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                                        {{ __('Accept') }}
-                                                    </button>
-                                                </form>
-                                                <form action="{{ route('admin.technician-requests.refuse', $notification->data['request_id']) }}" method="POST" class="flex-1">
-                                                    @csrf
-                                                    <button type="submit" class="w-full py-1.5 bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-white rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-slate-300 dark:hover:bg-white/20 transition-all">
-                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                        {{ __('Refuse') }}
-                                                    </button>
-                                                </form>
-                                            </div>
+                                                @php
+                                                    $techRequest = \App\Models\TechnicianRequest::find($notification->data['request_id']);
+                                                @endphp
+                                                @if($techRequest && $techRequest->status === 'pending')
+                                                <div class="flex items-center gap-2 mt-3">
+                                                    <form action="{{ route('admin.technician-requests.accept', $notification->data['request_id']) }}" method="POST" class="flex-1">
+                                                        @csrf
+                                                        <input type="hidden" name="notification_id" value="{{ $notification->id }}">
+                                                        <input type="hidden" name="password" value="password123"> {{-- Default password for auto-acceptance --}}
+                                                        <button type="submit" class="w-full py-1.5 bg-slate-900 bg-[#1A1A31] text-white dark:text-slate-900 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-black transition-all">
+                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                            {{ __('Accept') }}
+                                                        </button>
+                                                    </form>
+                                                    <form action="{{ route('admin.technician-requests.refuse', $notification->data['request_id']) }}" method="POST" class="flex-1">
+                                                        @csrf
+                                                        <input type="hidden" name="notification_id" value="{{ $notification->id }}">
+                                                        <input type="hidden" name="rejection_reason" value="Rejected via notification">
+                                                        <button type="submit" class="w-full py-1.5 bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-white rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-slate-300 dark:hover:bg-white/20 transition-all">
+                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                            {{ __('Refuse') }}
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                                @endif
+                                            @endif
+
+                                            <!-- Actions for New Orders -->
+                                            @if(($notification->data['type'] ?? $notification->type) == 'new_order' && isset($notification->data['order_id']))
+                                                @php
+                                                    $order = \App\Models\Order::find($notification->data['order_id']);
+                                                @endphp
+                                                @if($order && $order->status === 'new')
+                                                <div class="flex items-center gap-2 mt-3">
+                                                    <a href="{{ route('admin.orders.show', $order->id) }}?notification_id={{ $notification->id }}" class="flex-1 py-1.5 bg-slate-900 bg-[#1A1A31] text-white dark:text-slate-900 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-black transition-all">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                        {{ __('Details') }}
+                                                    </a>
+                                                    <form action="{{ route('admin.orders.refuse', $order->id) }}" method="POST" class="flex-1">
+                                                        @csrf
+                                                        <input type="hidden" name="notification_id" value="{{ $notification->id }}">
+                                                        <input type="hidden" name="rejection_reason" value="Rejected via notification">
+                                                        <button type="submit" class="w-full py-1.5 bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-white rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-slate-300 dark:hover:bg-white/20 transition-all">
+                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                            {{ __('Refuse') }}
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                                @endif
                                             @endif
                                         </div>
 

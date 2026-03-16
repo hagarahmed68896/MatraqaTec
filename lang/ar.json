@@ -955,5 +955,17 @@
     "Are you sure you want to delete selected roles?": "هل أنت متأكد من رغبتك في حذف الأدوار المحددة؟",
     "Show All Specialties": "عرض جميع التخصصات",
     "Customize Permissions (Advanced)": "تخصيص الصلاحيات (خيارات متقدمة)",
-    "Showing :from to :to of :total": "عرض :from إلى :to من :total"
+    "Showing :from to :to of :total": "عرض :from إلى :to من :total",
+    "Accept": "قبول",
+    "Refuse": "رفض",
+    "Search by name, email or phone...": "ابحث بالاسم أو البريد الإلكتروني أو رقم الهاتف...",
+    "Client Name": "اسم العميل",
+    "Items Selected": "العناصر المحددة",
+    "Are you sure you want to unblock the selected technician?": "هل أنت متأكد من رغبتك في إلغاء حظر الفني المحدد؟",
+    "Are you sure you want to unblock the selected supervisor?": "هل أنت متأكد من رغبتك في إلغاء حظر المشرف المحدد؟",
+    "Are you sure you want to unblock the selected user?": "هل أنت متأكد من رغبتك في إلغاء حظر المستخدم المحدد؟",
+    "Are you sure you want to unblock the selected company?": "هل أنت متأكد من رغبتك في إلغاء حظر الشركة المحددة؟",
+    "Confirm Unblock": "تأكيد إلغاء الحظر",
+    "The Contract": "العقد",
+    "Enter service name": "أدخل اسم الخدمة"
 }

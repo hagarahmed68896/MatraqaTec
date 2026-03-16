@@ -8,7 +8,7 @@
     
     {{-- Top Bar: Title, Search, Add Button --}}
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h2 class="text-2xl font-black text-[#1A1A31]">{{ __('Service Management') }}</h2>
+        <h2 class="text-2xl font-black text-[#1A1A31] dark:text-white">{{ __('Service Management') }}</h2>
         
         <div class="flex flex-1 max-w-2xl items-center gap-4">
             {{-- Search Bar --}}
@@ -16,7 +16,9 @@
                 <form action="{{ route('admin.services.index') }}" method="GET">
                     <input type="text" name="search" value="{{ request('search') }}"
                            placeholder="{{ __('Search...') }}"
-                           class="w-full pl-5 pr-12 py-3 bg-white border border-slate-100 rounded-2xl text-sm font-bold shadow-sm focus:border-[#1A1A31] focus:ring-4 focus:ring-[#1A1A31]/5 transition-all outline-none">
+                           class="w-full pl-5 pr-12 py-3 bg-white dark:bg-white/5  rounded-2xl 
+                            text-sm font-bold shadow-sm focus:border-[#1A1A31]
+                            focus:ring-4 focus:ring-[#1A1A31]/5 transition-all outline-none">
                     <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1A1A31] transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -122,7 +124,10 @@
                 {{-- Action Buttons --}}
                 <div class="flex items-center gap-3 pt-2">
                     <a href="{{ route('admin.services.edit', $item->id) }}" 
-                       class="flex-1 py-3 bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] rounded-2xl font-black text-xs flex items-center justify-center gap-2 hover:bg-[#2a2a4d] dark:hover:bg-slate-200 transition-colors">
+                       class="flex-1 py-3 bg-[#1A1A31] dark:bg-white/10 text-white
+                         rounded-2xl font-black text-xs flex
+                         items-center justify-center gap-2 hover:bg-[#2a2a4d] 
+                         transition-colors">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                         {{ __('Edit') }}
                     </a>

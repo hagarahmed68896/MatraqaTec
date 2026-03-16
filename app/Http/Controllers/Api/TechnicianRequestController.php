@@ -87,7 +87,30 @@ class TechnicianRequestController extends Controller
         if (auth()->check()) {
             $request->merge(['user_id' => auth()->id()]);
         }
-        $techRequest = TechnicianRequest::create($request->all());
+
+        $data = $request->all();
+
+        // Handle File Uploads
+        if ($request->hasFile('photo')) {
+            $file = $request->file('photo');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/technician_requests/photos'), $fileName);
+            $data['photo'] = 'uploads/technician_requests/photos/' . $fileName;
+        }
+        if ($request->hasFile('image')) { // Some clients might use 'image' instead of 'photo'
+            $file = $request->file('image');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/technician_requests/photos'), $fileName);
+            $data['photo'] = 'uploads/technician_requests/photos/' . $fileName;
+        }
+        if ($request->hasFile('iqama_photo')) {
+            $file = $request->file('iqama_photo');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/technician_requests/iqamas'), $fileName);
+            $data['iqama_photo'] = 'uploads/technician_requests/iqamas/' . $fileName;
+        }
+
+        $techRequest = TechnicianRequest::create($data);
         return response()->json(['status' => true, 'message' => 'Request submitted successfully', 'data' => $techRequest]);
     }
 

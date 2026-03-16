@@ -99,7 +99,18 @@ class OrderController extends Controller
         }
 
 
-        // 3. Advanced Filtering
+        // 3. Search Logic
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('order_number', 'like', "%{$search}%")
+                  ->orWhereHas('technician.user', function($u) use ($search) {
+                      $u->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // 4. Advanced Filtering
         // Single Date Filter
         if ($request->filled('date')) {
             $query->whereDate('scheduled_at', $request->date);
@@ -113,7 +124,12 @@ class OrderController extends Controller
             $query->whereDate('scheduled_at', '<=', $request->date_to);
         }
 
-        // Precise Hour Filter
+        // Precise Time Filter (e.g., "09:00", "13:30")
+        if ($request->filled('time')) {
+            $query->whereRaw('TIME_FORMAT(scheduled_at, "%H:%i") = ?', [$request->time]);
+        }
+
+        // Precise Hour Filter (Legacy/Numeric)
         if ($request->filled('hour')) {
             $query->whereRaw('HOUR(scheduled_at) = ?', [$request->hour]);
         }
@@ -146,9 +162,16 @@ class OrderController extends Controller
             $query->whereIn('service_id', $serviceIds);
         }
 
-        // Specific Status Filter
+        // Specific Status Filter (Supporting Sub-statuses)
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $status = $request->status;
+            if ($status === 'on_way') {
+                $query->where('status', 'in_progress')->where('sub_status', 'on_way');
+            } elseif ($status === 'arrived') {
+                $query->where('status', 'in_progress')->where('sub_status', 'arrived');
+            } else {
+                $query->where('status', $status);
+            }
         }
 
         $orders = $query->latest()->paginate(10);
@@ -183,7 +206,7 @@ class OrderController extends Controller
             'address' => 'required|string',
             'payment_method' => 'nullable|string|in:cash,credit_card,apple_pay,wallet',
             'scheduled_at' => 'required|date|after:now',
-            'attachments' => 'nullable|array',
+            'attachments' => 'nullable',
             'attachments.*' => 'file|mimes:jpg,jpeg,png,mp4,mov|max:10240',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
@@ -205,13 +228,6 @@ class OrderController extends Controller
         // Fallback to user's registered city if detection fails
         if (!$cityId && $user) {
             $cityId = $user->city_id;
-        }
-
-        if (!$cityId) {
-             return response()->json([
-                 'status' => false,
-                 'message' => 'City could not be determined. Please provide city_id or valid coordinates.',
-             ], 422);
         }
 
         // 1. Availability Check Logic
@@ -318,28 +334,36 @@ class OrderController extends Controller
 
         // 3. Handle Attachments
         if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $path = $file->store('order_attachments', 'public');
+            $files = $request->file('attachments');
+            if (is_array($files)) {
+                foreach ($files as $file) {
+                    $fileName = time() . '_' . $file->getClientOriginalName();
+                    $file->move(public_path('uploads/order_attachments'), $fileName);
+                    $path = 'uploads/order_attachments/' . $fileName;
+                    $order->attachments()->create([
+                        'file_path' => $path,
+                        'type' => 'before'
+                    ]);
+                }
+            } else {
+                // Handle single file upload
+                $fileName = time() . '_' . $files->getClientOriginalName();
+                $files->move(public_path('uploads/order_attachments'), $fileName);
+                $path = 'uploads/order_attachments/' . $fileName;
                 $order->attachments()->create([
                     'file_path' => $path,
                     'type' => 'before'
                 ]);
             }
+            // Refresh to load attachments relationships
+            $order->refresh();
         }
 
         return response()->json([
             'status' => true,
             'message' => __('Order created successfully and scheduled.'),
             'data' => [
-                'order' => [
-                    'id' => $order->id,
-                    'order_number' => $order->order_number,
-                    'technician_name' => $order->technician_name,
-                    'technician_avatar' => $order->technician_avatar,
-                    'service_name' => $order->service->name_ar ?? '',
-                    'formatted_scheduled_date' => $order->formatted_scheduled_date,
-                    'formatted_scheduled_time' => $order->formatted_scheduled_time,
-                ],
+                'order' => $order,
                 'invoice' => [
                     'base_price' => number_format($basePrice, 2),
                     'tax' => number_format($tax, 2),

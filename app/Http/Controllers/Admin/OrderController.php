@@ -294,6 +294,13 @@ class OrderController extends Controller
 
     public function accept(Request $request, $id)
     {
+        // Mark notification as read if provided
+        if ($request->has('notification_id')) {
+            \App\Models\Notification::where('id', $request->notification_id)
+                ->where('user_id', auth()->id())
+                ->update(['is_read' => true]);
+        }
+
         $order = Order::findOrFail($id);
 
         $request->validate([
@@ -320,6 +327,13 @@ class OrderController extends Controller
 
     public function refuse(Request $request, $id)
     {
+        // Mark notification as read if provided
+        if ($request->has('notification_id')) {
+            \App\Models\Notification::where('id', $request->notification_id)
+                ->where('user_id', auth()->id())
+                ->update(['is_read' => true]);
+        }
+
         $order = Order::findOrFail($id);
 
         $request->validate([

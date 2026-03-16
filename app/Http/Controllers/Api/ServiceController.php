@@ -88,12 +88,20 @@ class ServiceController extends Controller
             $cityId = auth('sanctum')->user()->city_id;
         }
 
-        // Filter by city (Technician availability in the city)
+        // Filter by city
         if ($cityId) {
-            $query->whereHas('technicians', function($q) use ($cityId) {
-                $q->whereHas('user', function($q2) use ($cityId) {
-                    $q2->where('city_id', $cityId)->where('status', 'active');
-                });
+            $query->where(function($q) use ($cityId) {
+                // Case 1: Service is explicitly assigned to this city
+                $q->where('city_id', $cityId)
+                  // Case 2: Service is global (city_id is null) but has active technicians in this city
+                  ->orWhere(function($q2) use ($cityId) {
+                      $q2->whereNull('city_id')
+                         ->whereHas('technicians', function($q3) use ($cityId) {
+                             $q3->whereHas('user', function($q4) use ($cityId) {
+                                 $q4->where('city_id', $cityId)->where('status', 'active');
+                             });
+                         });
+                  });
             });
         }
 
@@ -168,10 +176,16 @@ class ServiceController extends Controller
         // Apply city filtering to child services as well if cityId is determined
         $services = $query->with(['children' => function($q) use ($cityId) {
             if ($cityId) {
-                $q->whereHas('technicians', function($q2) use ($cityId) {
-                    $q2->whereHas('user', function($q3) use ($cityId) {
-                        $q3->where('city_id', $cityId)->where('status', 'active');
-                    });
+                $q->where(function($q2) use ($cityId) {
+                    $q2->where('city_id', $cityId)
+                      ->orWhere(function($q3) use ($cityId) {
+                          $q3->whereNull('city_id')
+                             ->whereHas('technicians', function($q4) use ($cityId) {
+                                 $q4->whereHas('user', function($q5) use ($cityId) {
+                                     $q5->where('city_id', $cityId)->where('status', 'active');
+                                 });
+                             });
+                      });
                 });
             }
         }, 'city'])->get();
