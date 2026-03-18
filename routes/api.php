@@ -191,7 +191,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // Support & Complaints
     Route::apiResource('support/tickets', ComplaintController::class)->only(['index', 'store', 'show']);
 
-    Route::apiResource('contracts', ContractController::class)->only(['index', 'show']);
+    Route::apiResource('contracts', ContractController::class)->only(['index', 'show', 'update']);
+    Route::get('my-contract', [ContractController::class, 'myContract']);
+    Route::post('my-contract', [ContractController::class, 'updateMyContract']);
+    Route::post('contracts/{id}/upload-receipt', [ContractController::class, 'uploadReceipt']);
+    Route::post('contracts/{id}/upload-file', [ContractController::class, 'uploadContractFile']);
+
     Route::apiResource('settlements', FinancialSettlementController::class)->only(['index', 'store', 'show']);
     Route::apiResource('technician-requests', TechnicianRequestController::class)->only(['index', 'show']); // View own requests
 

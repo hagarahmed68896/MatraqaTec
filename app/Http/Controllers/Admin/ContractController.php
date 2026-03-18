@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Contract;
 use App\Models\MaintenanceCompany;
+use App\Models\CorporateCustomer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,10 @@ class ContractController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('contract_number', 'like', "%{$search}%")
                   ->orWhereHas('maintenanceCompany', function ($q2) use ($search) {
+                      $q2->where('company_name_en', 'like', "%{$search}%")
+                         ->orWhere('company_name_ar', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('corporateCustomer', function ($q2) use ($search) {
                       $q2->where('company_name_en', 'like', "%{$search}%")
                          ->orWhere('company_name_ar', 'like', "%{$search}%");
                   });
@@ -72,7 +77,8 @@ class ContractController extends Controller
     public function create()
     {
         $companies = MaintenanceCompany::all();
-        return view('admin.contracts.create', compact('companies'));
+        $corporate_customers = CorporateCustomer::all();
+        return view('admin.contracts.create', compact('companies', 'corporate_customers'));
     }
 
     public function store(Request $request)
@@ -80,6 +86,7 @@ class ContractController extends Controller
         $validator = Validator::make($request->all(), [
             'contract_number'        => 'required|string|unique:contracts',
             'maintenance_company_id' => 'required|exists:maintenance_companies,id',
+            'corporate_customer_id'  => 'nullable|exists:corporate_customers,id',
             'project_value'          => 'required|numeric|min:0',
             'start_date'             => 'required|date',
             'end_date'               => 'required|date|after:start_date',
@@ -97,7 +104,10 @@ class ContractController extends Controller
 
         // Handle file upload
         if ($request->hasFile('contract_file')) {
-            $data['contract_file'] = $request->file('contract_file')->store('contracts', 'public');
+            $file = $request->file('contract_file');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/contracts'), $filename);
+            $data['contract_file'] = 'uploads/contracts/' . $filename;
         }
 
         // Serialize contact numbers
@@ -115,7 +125,7 @@ class ContractController extends Controller
 
     public function show($id)
     {
-        $item = Contract::with('maintenanceCompany')->findOrFail($id);
+        $item = Contract::with(['maintenanceCompany', 'corporateCustomer', 'paymentReceipts'])->findOrFail($id);
         return view('admin.contracts.show', compact('item'));
     }
 
@@ -123,7 +133,8 @@ class ContractController extends Controller
     {
         $item     = Contract::findOrFail($id);
         $companies = MaintenanceCompany::all();
-        return view('admin.contracts.edit', compact('item', 'companies'));
+        $corporate_customers = CorporateCustomer::all();
+        return view('admin.contracts.edit', compact('item', 'companies', 'corporate_customers'));
     }
 
     public function update(Request $request, $id)
@@ -133,6 +144,7 @@ class ContractController extends Controller
         $validator = Validator::make($request->all(), [
             'contract_number'        => 'required|string|unique:contracts,contract_number,' . $id,
             'maintenance_company_id' => 'required|exists:maintenance_companies,id',
+            'corporate_customer_id'  => 'nullable|exists:corporate_customers,id',
             'project_value'          => 'required|numeric|min:0',
             'start_date'             => 'required|date',
             'end_date'               => 'required|date|after:start_date',
@@ -150,16 +162,25 @@ class ContractController extends Controller
 
         // Handle file deletion request
         if ($request->input('delete_contract_file') == '1' && $contract->contract_file) {
-            Storage::disk('public')->delete($contract->contract_file);
+            $oldPath = public_path($contract->contract_file);
+            if (file_exists($oldPath)) {
+                unlink($oldPath);
+            }
             $data['contract_file'] = null;
         }
 
         // Handle new file upload (replaces old one)
         if ($request->hasFile('contract_file')) {
             if ($contract->contract_file) {
-                Storage::disk('public')->delete($contract->contract_file);
+                $oldPath = public_path($contract->contract_file);
+                if (file_exists($oldPath)) {
+                    unlink($oldPath);
+                }
             }
-            $data['contract_file'] = $request->file('contract_file')->store('contracts', 'public');
+            $file = $request->file('contract_file');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/contracts'), $filename);
+            $data['contract_file'] = 'uploads/contracts/' . $filename;
         }
 
         // Serialize contact numbers
@@ -180,7 +201,10 @@ class ContractController extends Controller
         $contract = Contract::findOrFail($id);
 
         if ($contract->contract_file) {
-            Storage::disk('public')->delete($contract->contract_file);
+            $oldPath = public_path($contract->contract_file);
+            if (file_exists($oldPath)) {
+                unlink($oldPath);
+            }
         }
 
         $contract->delete();
@@ -196,13 +220,14 @@ class ContractController extends Controller
     private function generateCsv($contracts, $filename)
     {
         $handle = fopen('php://memory', 'w');
-        fputcsv($handle, ['ID', 'Contract Number', 'Company Name', 'Value', 'Status', 'Start Date', 'End Date']);
+        fputcsv($handle, ['ID', 'Contract Number', 'Maintenance Company', 'Corporate Customer', 'Value', 'Status', 'Start Date', 'End Date']);
 
         foreach ($contracts as $contract) {
             fputcsv($handle, [
                 $contract->id,
                 $contract->contract_number,
-                $contract->maintenanceCompany ? $contract->maintenanceCompany->company_name_en : 'N/A',
+                $contract->maintenanceCompany ? ($contract->maintenanceCompany->company_name_en ?? $contract->maintenanceCompany->name) : 'N/A',
+                $contract->corporateCustomer ? ($contract->corporateCustomer->company_name_en ?? $contract->corporateCustomer->company_name_ar) : 'N/A',
                 $contract->project_value,
                 $contract->status,
                 $contract->start_date ? $contract->start_date->format('Y-m-d') : '',

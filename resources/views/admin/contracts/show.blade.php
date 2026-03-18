@@ -79,6 +79,10 @@
                         <p class="text-md font-bold text-[#1A1A31] dark:text-white">{{ $item->maintenanceCompany->company_name_ar ?? $item->maintenanceCompany->name ?? '-' }}</p>
                     </div>
                     <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{{ __('Corporate Customer') }}</label>
+                        <p class="text-md font-bold text-[#1A1A31] dark:text-white">{{ $item->corporateCustomer->company_name_ar ?? $item->corporateCustomer->company_name_en ?? '-' }}</p>
+                    </div>
+                    <div class="space-y-1">
                         <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{{ __('Created At') }}</label>
                         <p class="text-md font-bold text-slate-600 dark:text-slate-300">{{ $item->created_at->format('Y/m/d H:i') }}</p>
                     </div>
@@ -168,6 +172,66 @@
             </div>
         </div>
 
+        {{-- Payment Receipts --}}
+        <div class="lg:col-span-3">
+            <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 shadow-sm border border-slate-50 dark:border-white/5 mt-8">
+                <div class="flex items-center justify-between mb-8 pb-6 border-b border-slate-50 dark:border-white/5">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-green-500/5 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-black text-[#1A1A31] dark:text-white">{{ __('Payment Receipts') }}</h3>
+                            <p class="text-xs text-slate-400 dark:text-slate-500 font-bold mt-0.5">{{ __('List of uploaded payment confirmations') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto text-right">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50 dark:border-white/5">
+                                <th class="py-4 px-4">{{ __('Date') }}</th>
+                                <th class="py-4 px-4">{{ __('Amount') }}</th>
+                                <th class="py-4 px-4">{{ __('Method') }}</th>
+                                <th class="py-4 px-4">{{ __('File') }}</th>
+                                <th class="py-4 px-4">{{ __('Notes') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y dark:divide-white/5">
+                            @forelse($item->paymentReceipts as $receipt)
+                            <tr class="group">
+                                <td class="py-4 px-4">
+                                    <span class="text-sm font-bold text-[#1A1A31] dark:text-white">{{ $receipt->payment_date->format('Y/m/d') }}</span>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <span class="text-sm font-black text-green-600 dark:text-green-400 font-mono">{{ number_format($receipt->amount) }} SAR</span>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ __($receipt->payment_method) }}</span>
+                                </td>
+                                <td class="py-4 px-4 text-center">
+                                    <a href="{{ asset('storage/' . $receipt->receipt_file) }}" target="_blank" class="text-primary dark:text-white font-black text-xs hover:underline uppercase tracking-widest">
+                                        {{ __('View Receipt') }}
+                                    </a>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <p class="text-xs text-slate-400 font-bold max-w-xs truncate">{{ $receipt->notes ?? '-' }}</p>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="5" class="py-12 text-center text-slate-300 font-bold uppercase tracking-widest">{{ __('No receipts found') }}</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
 @endsection

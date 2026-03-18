@@ -24,6 +24,15 @@ class ContractPaymentReceipt extends Model
         'amount' => 'decimal:2',
     ];
 
+    protected $appends = ['receipt_url'];
+
+    public function getReceiptUrlAttribute()
+    {
+        if (!$this->receipt_file) return null;
+        if (filter_var($this->receipt_file, FILTER_VALIDATE_URL)) return $this->receipt_file;
+        return asset($this->receipt_file);
+    }
+
     public function contract()
     {
         return $this->belongsTo(Contract::class);

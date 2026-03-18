@@ -33,14 +33,16 @@
             <!-- Actions (Left in RTL) -->
             <div class="flex items-center gap-4">
                 <!-- Theme Toggle -->
-                <button @click="darkMode = !darkMode" class="w-10 h-10 flex items-center justify-center border border-slate-200 dark:border-slate-700 rounded-xl bg-gray-700 dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-all hover:bg-slate-100 ">
+                <button @click="darkMode = !darkMode" class="w-10 h-10 flex items-center justify-center border border-slate-200 
+                dark:border-slate-700 rounded-xl bg-[#1A1A31] dark:bg-slate-800 text-white dark:text-slate-300 transition-all">
                     <svg x-show="!darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                     <svg x-show="darkMode" style="display: none;" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.727 12.727L12 12l8.485 8.485z"></path></svg>
                 </button>
 
                 <!-- Language Dropdown -->
          <div x-data="{ open: false }" class="relative">
-    <button @click="open = !open" class="h-10 w-30 flex items-center justify-center border border-slate-200 dark:border-slate-700 rounded-xl bg-gray-700 dark:bg-slate-800 text-slate-600 dark:text-slate-300 transition-all hover:bg-slate-100">
+    <button @click="open = !open" class="h-10 w-30 flex items-center justify-center border border-slate-200 
+    dark:border-slate-700 rounded-xl bg-[#1A1A31] dark:bg-[#1A1A31] text-white dark:text-slate-300 transition-all">
         
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-globe mx-2" viewBox="0 0 16 16">
             <path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m7.5-6.923c-.67.204-1.335.82-1.887 1.855A8 8 0 0 0 5.145 4H7.5zM4.09 4a9.3 9.3 0 0 1 .64-1.539 7 7 0 0 1 .597-.933A7.03 7.03 0 0 0 2.255 4zm-.582 3.5c.03-.877.138-1.718.312-2.5H1.674a7 7 0 0 0-.656 2.5zM4.847 5a12.5 12.5 0 0 0-.338 2.5H7.5V5zM8.5 5v2.5h2.99a12.5 12.5 0 0 0-.337-2.5zM4.51 8.5a12.5 12.5 0 0 0 .337 2.5H7.5V8.5zm3.99 0V11h2.653c.187-.765.306-1.608.338-2.5zM5.145 12q.208.58.468 1.068c.552 1.035 1.218 1.65 1.887 1.855V12zm.182 2.472a7 7 0 0 1-.597-.933A9.3 9.3 0 0 1 4.09 12H2.255a7 7 0 0 0 3.072 2.472M3.82 11a13.7 13.7 0 0 1-.312-2.5h-2.49c.062.89.291 1.733.656 2.5zm6.853 3.472A7 7 0 0 0 13.745 12H11.91a9.3 9.3 0 0 1-.64 1.539 7 7 0 0 1-.597.933M8.5 12v2.923c.67-.204 1.335-.82 1.887-1.855q.26-.487.468-1.068zm3.68-1h2.146c.365-.767.594-1.61.656-2.5h-2.49a13.7 13.7 0 0 1-.312 2.5m2.802-3.5a7 7 0 0 0-.656-2.5H12.18c.174.782.282 1.623.312 2.5zM11.27 2.461c.247.464.462.98.64 1.539h1.835a7 7 0 0 0-3.072-2.472c.218.284.418.598.597.933M10.855 4a8 8 0 0 0-.468-1.068C9.835 1.897 9.17 1.282 8.5 1.077V4z"/>
@@ -63,7 +65,8 @@
 </div>
 
                 <!-- Download App (Hidden on Mobile) -->
-                <a href="#" class="hidden md:flex px-6 py-2.5 bg-[#1A1A31] border border-slate-200 dark:border-slate-700 dark:bg-indigo-600 text-white text-sm font-bold rounded-xl shadow-md hover:bg-black transition-all active:scale-95">
+                <a href="#" class="hidden md:flex px-6 py-2.5 bg-[#1A1A31] border border-slate-200 dark:border-slate-700 
+                dark:bg-indigo-600 text-white text-sm font-bold rounded-xl shadow-md hover:bg-black transition-all active:scale-95">
                     {{ __('Download App') }}
                 </a>
             </div>
@@ -71,12 +74,12 @@
 </nav>
 
     <!-- Hero Section -->
-    <section class="hero-bg dark:bg-[#111122] transition-colors duration-300 relative pt-40
-     md:pt-48 pt-20 pb-10 overflow-hidden flex items-center">
+    <section class="hero-bg dark:bg-[#111122] transition-colors duration-300 relative
+     pt-20  overflow-hidden flex items-center">
         <div class="max-w-7xl mx-auto px-6 relative z-10 flex flex-col lg:flex-row items-center justify-center gap-12 w-full">
            
             <!-- Hero Content (Right side) -->
-            <div class="flex-1 space-y-8 pb-20 lg:pb-32 md:mt-4 mt-8">
+            <div class="flex-1 space-y-8   md:mt-4 mt-8">
                 <div class="flex">
                     <div class="inline-flex gap-2 px-5  font-bold py-2 bg-white/10 backdrop-blur-md rounded-full text-xs text-black dark:text-[#1A1A31] shadow-sm">
                     <span class="text-rose-500 text-sm">🛠️</span>    
@@ -94,7 +97,8 @@
                 </p>
                 
                 <div class="pt-6 flex">
-                    <button class="px-8 py-4 bg-[#1A1A31] dark:bg-indigo-600 text-white rounded-2xl font-bold hover:bg-black dark:hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1">
+                    <button class="px-8 py-4 bg-[#1A1A31] dark:bg-indigo-600 text-white rounded-2xl font-bold hover:bg-black
+                     dark:hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1">
                         {{ __('Download App Now') }}
                     </button>
                 </div>
@@ -102,14 +106,14 @@
              
             <!-- Hero Graphics (Phone Mockup - Left side) -->
             <div class="flex-1 relative w-full flex justify-center lg:justify-end">
-                <div class="relative w-[350px]  rounded-[1rem] border-[12px] border-[#1A1A31] dark:border-slate-800 overflow-hidden flex flex-col duration-500">
+                <div class="relative overflow-hidden flex flex-col duration-500">
                     <!-- Notch / Dynamic Island -->
-                    <div class="absolute top-0 inset-x-0 h-10 flex justify-center z-30">
+                    <!-- <div class="absolute top-0 inset-x-0 h-10 flex justify-center z-30">
                         <div class="mt-3 w-32 h-6 bg-[#1A1A31] dark:bg-slate-800 rounded-full"></div>
-                    </div>
+                    </div> -->
                     
-                    <div class="flex-1 w-full px-1 pb-1 flex flex-col relative rounded-b-[2.5rem] overflow-hidden">
-                        <img src="{{ asset('assets/images/Screenshot 2026-03-02 124457.png') }}" class="w-[110%] max-w-none transform ltr:-translate-x-4 rtl:translate-x-4 h-full object-cover object-bottom rounded-b-[2rem]" alt="App Preview">
+                    <div class="flex-1 w-full px-1 flex flex-col relative  overflow-hidden">
+                        <img src="{{ asset('assets/images/Screenshot 2026-03-02 124457.png') }}" class="h-full object-cover object-bottom " alt="App Preview">
                     </div>
                 </div>
             </div>
@@ -175,10 +179,10 @@
            <div class="flex-1 relative w-full flex justify-center py-10 lg:pl-10">
     
                <!-- Main Wrapper for Graphic and Overlays -->
-               <div class="relative w-[240px] lg:w-[280px] mx-auto flex justify-center">
+               <div class="relative  mx-auto flex justify-center">
                    
                    <!-- Phone Mockup Frame -->
-                   <div class="relative w-full rounded-[2.5rem] lg:rounded-[3rem] border-[10px] lg:border-[12px] border-[#1A1A31] dark:border-slate-800 overflow-hidden flex flex-col z-30 bg-white dark:bg-[#1A1A31] h-[450px] lg:h-[500px]">
+                   <div class="relative w-full overflow-hidden flex flex-col z-30 bg-white dark:bg-[#1A1A31] h-[450px] lg:h-[500px]">
              
                        <!-- Image -->
                        <img src="{{ asset('assets/images/Group 28.png') }}" 
@@ -475,8 +479,8 @@
             {{-- ═══════════════════════════════════════════════════════ --}}
             {{-- DESKTOP LAYOUT: text left + staggered phones right     --}}
             {{-- ═══════════════════════════════════════════════════════ --}}
-            <div class="hidden overflow-hidden lg:flex flex-row items-center justify-between px-8 min-h-[700px]"
-            style="height: 400px;">
+            <div class="hidden overflow-hidden lg:flex flex-row items-center justify-between px-8 "
+             style="height: 400px;">
 
                 {{-- Text side --}}
                 <div class="flex-1 text-right relative z-10 space-y-8 py-12">
@@ -500,8 +504,7 @@
                 <div class="flex-1 rtl:mr-4 justify-end" style="position: relative; ">
                     {{-- Phone 1: rises above the card (uses -translate-y so it pops above) --}}
                     <div style="position: absolute; left: 0;  width: 270px; z-index: 10;">
-                        <div class="overflow-hidden h-full rounded-[2.5rem]
-                         border-8 border-[#1A1A31] shadow-2xl bg-[#C8C9E0]">
+                        <div class="overflow-hidden h-full bg-[#C8C9E0]">
                             <img src="{{ asset('assets/images/iphone13 (2).png') }}"
                                  class="w-full h-full object-cover object-top" alt="App Preview Top">
                         </div>
@@ -509,7 +512,7 @@
                     {{-- Phone 2: sits at bottom edge --}}
                     <div style="position: absolute; bottom: 0;
                      right: 0; width: 270px; height: full; z-index: 20;">
-                        <div class="overflow-hidden h-full rounded-[2.5rem] border-8 border-[#1A1A31] shadow-2xl bg-[#C8C9E0]">
+                        <div class="overflow-hidden h-full bg-[#C8C9E0]">
                             <img src="{{ asset('assets/images/iphone13 (1).png') }}"
                                  class="w-full h-full object-cover object-top" alt="App Preview Bottom">
                         </div>
@@ -523,10 +526,10 @@
 </section>
 
     <!-- Footer -->
-    <footer class="bg-[#1A1A31] dark:bg-[#0B0B1A] pt-20 pb-12 text-white transition-colors duration-300 border-t-4 border-white/10 ">
+    <footer class="bg-[#1A1A31] dark:bg-[#0B0B1A] pb-12 text-white transition-colors duration-300 border-t-4 border-white/10 ">
         <div class="max-w-7xl mx-auto px-6">
-            <div class="flex flex-col items-center text-center space-y-10 mb-20">
-                <img src="{{ asset('assets/images/9802a3c60b5a7d4a948f48f2ddfe26cb7d01812f (1).png') }}" class="h-24 mb-4 mt-8 invert" alt="MatraqaTec">
+            <div class="flex flex-col items-center text-center space-y-10 ">
+                <img src="{{ asset('assets/images/logo.png') }}" class="h-24 mb-4  mt-8 invert" alt="MatraqaTec">
                 <p class="text-slate-300 text-lg mb-4 font-medium max-w-2xl mx-auto leading-relaxed italic opacity-80">
                     "{{ __('MatraqaTec is a leading service platform in the region that connects you with the best specialized technicians.') }}"
                 </p>
