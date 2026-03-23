@@ -421,6 +421,9 @@ class OrderController extends Controller
         $categoryId = $order->service->parent_id ?? $order->service_id;
 
         $companies = MaintenanceCompany::with(['user', 'city'])
+            ->whereHas('user', function($q) {
+                $q->where('status', 'active');
+            })
             ->where('city_id', $order->city_id)
             ->whereHas('services', function($q) use ($order, $categoryId) {
                 $q->where('services.id', $order->service_id)

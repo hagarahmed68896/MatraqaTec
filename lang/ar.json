@@ -967,5 +967,9 @@
     "Are you sure you want to unblock the selected company?": "هل أنت متأكد من رغبتك في إلغاء حظر الشركة المحددة؟",
     "Confirm Unblock": "تأكيد إلغاء الحظر",
     "The Contract": "العقد",
-    "Enter service name": "أدخل اسم الخدمة"
+    "Enter service name": "أدخل اسم الخدمة",
+    "Try adding a new app banner or content section": "حاول إضافة بنر جديد أو قسم محتوى",
+    "No content found": "لم يتم العثور على محتوى",
+    "Content Builder": "منشئ المحتوى"
+
 }

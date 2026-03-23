@@ -48,7 +48,7 @@ class InventoryController extends Controller
             'name_en' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
             'quantity' => 'nullable|integer|min:0',
-            'status'  => 'required|in:available,not_available',
+            'status'  => 'required|in:available,unavailable',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
@@ -91,7 +91,7 @@ class InventoryController extends Controller
             'name_en' => 'sometimes|string|max:255',
             'price'   => 'sometimes|numeric|min:0',
             'quantity' => 'nullable|integer|min:0',
-            'status'  => 'sometimes|in:available,not_available',
+            'status'  => 'sometimes|in:available,unavailable',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 

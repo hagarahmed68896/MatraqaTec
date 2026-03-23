@@ -10,7 +10,7 @@ class Notification extends Model
     use HasFactory;
 
     const TYPES = ['alert', 'reminder', 'notification'];
-    const TARGET_AUDIENCES = ['clients', 'companies', 'technicians', 'all'];
+    const TARGET_AUDIENCES = ['clients', 'companies', 'technicians', 'all', 'individual_user'];
     const STATUSES = ['sent', 'scheduled', 'unsent'];
 
     // Specific Notification Type Slugs for Data Logic

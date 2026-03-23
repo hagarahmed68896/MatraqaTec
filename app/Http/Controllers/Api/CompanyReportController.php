@@ -75,6 +75,51 @@ class CompanyReportController extends Controller
             ->limit(5)
             ->get();
 
+        // 4. Financial Statistics (Completed Orders)
+        $currentRevenue = Order::where('maintenance_company_id', $company->id)
+            ->where('status', 'completed')
+            ->whereBetween('created_at', [$currentStart, $now])
+            ->sum('total_price');
+
+        $previousRevenue = Order::where('maintenance_company_id', $company->id)
+            ->where('status', 'completed')
+            ->whereBetween('created_at', [$previousStart, $previousEnd])
+            ->sum('total_price');
+
+        $revenuePercentageChange = 0;
+        if ($previousRevenue > 0) {
+            $revenuePercentageChange = (($currentRevenue - $previousRevenue) / $previousRevenue) * 100;
+        } elseif ($currentRevenue > 0) {
+            $revenuePercentageChange = 100;
+        }
+
+        // 5. Orders by Status (Current Period)
+        $statusDistribution = Order::where('maintenance_company_id', $company->id)
+            ->whereBetween('created_at', [$currentStart, $now])
+            ->select('status', DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->get()
+            ->pluck('count', 'status')
+            ->all();
+
+        // Ensure all statuses exist in the output with 0 if missing
+        $allStatuses = ['new', 'accepted', 'scheduled', 'in_progress', 'completed', 'rejected', 'cancelled'];
+        foreach ($allStatuses as $status) {
+            if (!isset($statusDistribution[$status])) {
+                $statusDistribution[$status] = 0;
+            }
+        }
+
+        // 6. Active Technicians Count
+        $activeTechniciansCount = $company->technicians()->where('availability_status', 'available')->count();
+
+        // 7. Completion Rate
+        $totalOrders = Order::where('maintenance_company_id', $company->id)
+            ->whereBetween('created_at', [$currentStart, $now])
+            ->count();
+        $completedOrdersCount = $statusDistribution['completed'] ?? 0;
+        $completionRate = $totalOrders > 0 ? ($completedOrdersCount / $totalOrders) * 100 : 0;
+
         return response()->json([
             'status' => true,
             'message' => 'Statistics retrieved successfully',
@@ -85,8 +130,17 @@ class CompanyReportController extends Controller
                     'percentage_change' => round($percentageChange, 2),
                     'trend' => $percentageChange >= 0 ? 'up' : 'down'
                 ],
+                'revenue' => [
+                    'current_amount' => round($currentRevenue, 2),
+                    'previous_amount' => round($previousRevenue, 2),
+                    'percentage_change' => round($revenuePercentageChange, 2),
+                    'trend' => $revenuePercentageChange >= 0 ? 'up' : 'down'
+                ],
                 'chart' => $chartData,
-                'top_services' => $topServices
+                'top_services' => $topServices,
+                'status_distribution' => $statusDistribution,
+                'active_technicians_count' => $activeTechniciansCount,
+                'completion_rate' => round($completionRate, 2)
             ]
         ]);
     }
@@ -99,7 +153,7 @@ class CompanyReportController extends Controller
         }
 
         $query = WalletTransaction::where('user_id', $user->id)
-            ->with(['order.service']);
+            ->with(['order.service', 'order.user', 'order.technician.user']);
 
         // 1. Filter by Categories (Multiple)
         if ($request->filled('category_ids')) {
@@ -142,6 +196,26 @@ class CompanyReportController extends Controller
         }
 
         $transactions = $query->paginate($request->input('per_page', 15));
+
+        // Transform data to provide flatter structure for frontend if needed
+        $transactions->getCollection()->transform(function($transaction) {
+            return [
+                'id' => $transaction->id,
+                'amount' => $transaction->amount,
+                'type' => $transaction->type,
+                'note' => $transaction->note,
+                'created_at' => $transaction->created_at,
+                'order_details' => $transaction->order ? [
+                    'id' => $transaction->order->id,
+                    'order_number' => $transaction->order->order_number,
+                    'status' => $transaction->order->status,
+                    'status_label' => $transaction->order->status_label,
+                    'service_name' => $transaction->order->service->name_ar ?? $transaction->order->service->name_en ?? null,
+                    'client_name' => $transaction->order->user->name ?? null,
+                    'technician_name' => $transaction->order->technician->user->name ?? null,
+                ] : null
+            ];
+        });
 
         return response()->json([
             'status' => true,

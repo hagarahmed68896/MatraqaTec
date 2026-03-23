@@ -11,7 +11,7 @@ class ContractController extends Controller
     public function index()
     {
         $user = auth()->user();
-        if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized [CON-INDEX]'], 401);
+        if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
         
         $query = Contract::with(['maintenanceCompany', 'paymentReceipts']);
 
@@ -38,7 +38,7 @@ class ContractController extends Controller
     public function show($id)
     {
         $user = auth()->user();
-        if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized [CON-SHOW]'], 401);
+        if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
 
         $query = Contract::with(['maintenanceCompany', 'paymentReceipts']);
 
@@ -70,7 +70,7 @@ class ContractController extends Controller
     public function uploadReceipt(Request $request, $id)
     {
         $user = auth()->user();
-        if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized [CON-UPLOAD-REC]'], 401);
+        if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
 
         $contract = Contract::find($id);
 
@@ -125,7 +125,7 @@ class ContractController extends Controller
     public function uploadContractFile(Request $request, $id)
     {
         $user = auth()->user();
-        if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized [CON-UPLOAD-FILE]'], 401);
+        if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
 
         $contract = Contract::find($id);
 
@@ -167,7 +167,7 @@ class ContractController extends Controller
     public function update(Request $request, $id)
     {
         $user = auth()->user();
-        if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized [CON-UPDATE]'], 401);
+        if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
 
         $contract = Contract::find($id);
 
@@ -256,7 +256,7 @@ class ContractController extends Controller
             'token' => request()->bearerToken() ? substr(request()->bearerToken(), 0, 10) . '...' : 'none',
             'headers' => request()->headers->all(),
         ]);
-        if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized [DEBUG-CON-MC]'], 401);
+        if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
 
         $query = Contract::with(['maintenanceCompany', 'paymentReceipts']);
 
@@ -288,7 +288,7 @@ class ContractController extends Controller
     public function updateMyContract(Request $request)
     {
         $user = auth()->user();
-        if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized [CON-UPDATE-MY]'], 401);
+        if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
 
         $query = Contract::query();
 

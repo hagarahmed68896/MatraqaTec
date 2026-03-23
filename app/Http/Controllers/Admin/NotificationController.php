@@ -108,6 +108,7 @@ class NotificationController extends Controller
             'body_ar' => 'required|string',
             'body_en' => 'required|string',
             'target_audience' => ['required', Rule::in(Notification::TARGET_AUDIENCES)],
+            'user_id' => 'required_if:target_audience,individual_user|nullable|exists:users,id',
             'type' => ['required', Rule::in(Notification::TYPES)],
             'status' => ['nullable', Rule::in(Notification::STATUSES)],
             'scheduled_at' => 'nullable|date',

@@ -8,9 +8,9 @@ use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $notifications = Notification::where('user_id', auth()->id())->latest()->get();
+        $notifications = Notification::where('user_id', auth()->id())->latest()->paginate($request->get('limit', 10));
         return response()->json(['status' => true, 'message' => 'Notifications retrieved', 'data' => $notifications]);
     }
     

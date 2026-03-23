@@ -69,4 +69,9 @@ class MaintenanceCompany extends Model
     {
         return $this->hasMany(CompanySchedule::class);
     }
+
+    public function inventory()
+    {
+        return $this->hasMany(Inventory::class);
+    }
 }

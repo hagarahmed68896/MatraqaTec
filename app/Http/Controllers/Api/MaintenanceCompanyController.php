@@ -214,13 +214,23 @@ class MaintenanceCompanyController extends Controller
             $query->whereRaw('(SELECT AVG(rating) FROM reviews WHERE reviews.technician_id = technicians.id) >= ?', [$minRating]);
         }
 
-        $technicians = $query->orderByDesc('completed_orders_count')->get();
+        $technicians = $query->orderByDesc('completed_orders_count')->paginate($request->get('limit', 10));
         
         $locale = app()->getLocale();
-        $technicians->each(function($tech) use ($locale) {
+        $technicians->getCollection()->each(function($tech) use ($locale) {
             $tech->name = $tech->name ?? $tech->name_ar ?? $tech->name_en;
             $tech->company_name = $locale == 'ar' ? ($tech->maintenanceCompany?->company_name_ar ?? $tech->maintenanceCompany?->name) : ($tech->maintenanceCompany?->company_name_en ?? $tech->maintenanceCompany?->name);
             $tech->specialty = $tech->category ? (__('Specialized in') . ' ' . ($locale == 'ar' ? $tech->category->name_ar : ($tech->category->name_en ?? $tech->category->name_ar))) : null;
+            
+            // Add District Names
+            if ($tech->districts && is_array($tech->districts)) {
+                $tech->district_names = \App\Models\District::whereIn('id', $tech->districts)
+                    ->pluck($locale == 'ar' ? 'name_ar' : 'name_en')
+                    ->toArray();
+            } else {
+                $tech->district_names = [];
+            }
+
             $tech->makeHidden(['name_ar', 'name_en', 'maintenanceCompany', 'category']);
         });
 
@@ -428,6 +438,15 @@ class MaintenanceCompanyController extends Controller
                 'order_number' => $review->order->order_number ?? null,
             ];
         });
+
+        // Add district names to details
+        if (isset($data['districts']) && is_array($data['districts'])) {
+            $data['district_names'] = \App\Models\District::whereIn('id', $data['districts'])
+                ->pluck($locale == 'ar' ? 'name_ar' : 'name_en')
+                ->toArray();
+        } else {
+            $data['district_names'] = [];
+        }
 
         return response()->json([
             'status' => true,
@@ -719,6 +738,13 @@ class MaintenanceCompanyController extends Controller
         // Format response
         $locale = app()->getLocale();
         $technicians = $technicians->map(function($tech) use ($locale) {
+            $districtNames = [];
+            if ($tech->districts && is_array($tech->districts)) {
+                $districtNames = \App\Models\District::whereIn('id', $tech->districts)
+                    ->pluck($locale == 'ar' ? 'name_ar' : 'name_en')
+                    ->toArray();
+            }
+
             return [
                 'id' => $tech->id,
                 'name' => $tech->user->name ?? ($locale == 'ar' ? $tech->name_ar : ($tech->name_en ?? $tech->name_ar)),
@@ -727,6 +753,7 @@ class MaintenanceCompanyController extends Controller
                 'rating' => round($tech->reviews_avg_rating ?? 0, 1),
                 'is_online' => $tech->user->is_online ?? false,
                 'districts' => $tech->districts,
+                'district_names' => $districtNames,
                 'service_name' => $locale == 'ar' ? ($tech->service->name_ar ?? '') : ($tech->service->name_en ?? $tech->service->name_ar ?? ''),
                 'company_name' => $locale == 'ar' ? ($tech->maintenanceCompany?->company_name_ar ?? $tech->maintenanceCompany?->name) : ($tech->maintenanceCompany?->company_name_en ?? $tech->maintenanceCompany?->name),
                 'specialty' => $tech->category ? (__('Specialized in') . ' ' . ($locale == 'ar' ? $tech->category->name_ar : ($tech->category->name_en ?? $tech->category->name_ar))) : null,

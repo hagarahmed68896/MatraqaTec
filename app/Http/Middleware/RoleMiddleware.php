@@ -17,11 +17,7 @@ class RoleMiddleware
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
         if (!$request->user()) {
-            \Log::info('RoleMiddleware: User not found', [
-                'has_token' => $request->bearerToken() ? 'yes' : 'no',
-                'url' => $request->fullUrl(),
-            ]);
-            return response()->json(['status' => false, 'message' => 'Unauthorized [DEBUG-ROLE]'], 401);
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
         }
 
         if (!in_array($request->user()->type, $roles)) {
