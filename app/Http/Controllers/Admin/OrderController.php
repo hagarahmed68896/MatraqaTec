@@ -317,7 +317,10 @@ class OrderController extends Controller
 
         $order->technician_id = $request->technician_id;
         $order->maintenance_company_id = $request->maintenance_company_id;
-        $order->status = 'scheduled';
+        
+        // If assigned to a technician, it's scheduled. 
+        // If assigned only to a company, it remains 'new' so it appears in their New tab.
+        $order->status = $request->technician_id ? 'scheduled' : 'new';
         if ($request->scheduled_at) {
             $order->scheduled_at = $request->scheduled_at;
         }

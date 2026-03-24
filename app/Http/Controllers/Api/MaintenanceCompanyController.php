@@ -783,31 +783,44 @@ class MaintenanceCompanyController extends Controller
             'scheduled_at' => 'nullable|date',
         ]);
 
-        $query = \App\Models\Technician::with(['user:id,name,avatar,phone,is_online', 'service:id,name_ar,name_en', 'maintenanceCompany', 'category'])
+        $query = \App\Models\Technician::whereHas('user', function($u) {
+                $u->where('status', 'active');
+            })
+            ->with(['user:id,name,avatar,phone,is_online', 'service:id,name_ar,name_en', 'maintenanceCompany', 'category'])
             ->where('maintenance_company_id', $company->id);
 
-        // Filter by service if provided
+        // Filter by service or its category
         if ($request->filled('service_id')) {
-            $query->where('service_id', $request->service_id);
+            $service = \App\Models\Service::find($request->service_id);
+            if ($service) {
+                $categoryId = $service->parent_id ?? $service->id;
+                $query->where(function($q) use ($request, $categoryId) {
+                    $q->where('service_id', $request->service_id)
+                      ->orWhere('category_id', $categoryId);
+                });
+            }
         }
 
         // Filter by district if provided
         if ($request->filled('district_id')) {
-            $query->whereJsonContains('districts', (string)$request->district_id);
+            $query->where(function($q) use ($request) {
+                $q->whereJsonContains('districts', (string)$request->district_id)
+                  ->orWhereJsonContains('districts', (int)$request->district_id);
+            });
         }
 
-        // --- NEW: Schedule Conflict Check ---
+        // --- Schedule Conflict Check ---
         $scheduledAt = null;
         if ($request->filled('order_id')) {
             $order = \App\Models\Order::find($request->order_id);
-            $scheduledAt = $order->scheduled_at;
+            if ($order) $scheduledAt = $order->scheduled_at;
         } elseif ($request->filled('scheduled_at')) {
             $scheduledAt = \Carbon\Carbon::parse($request->scheduled_at);
         }
 
         if ($scheduledAt) {
-            $start = (clone $scheduledAt)->subHours(1)->addMinute();
-            $end = (clone $scheduledAt)->addHours(1)->subMinute();
+            $start = $scheduledAt->copy()->subHours(1)->addMinute();
+            $end = $scheduledAt->copy()->addHours(1)->subMinute();
 
             $query->whereDoesntHave('orders', function($q) use ($start, $end) {
                 $q->whereIn('status', ['accepted', 'scheduled', 'in_progress'])
@@ -818,18 +831,10 @@ class MaintenanceCompanyController extends Controller
             });
         }
 
-        // Fallback to online status ONLY if no specific time is provided or explicitly requested
-        if ($request->boolean('available_only', false) && !$scheduledAt) {
-            $query->whereHas('user', function($q) {
-                $q->where('is_online', true);
-            });
-        }
-
-        // Get technicians with average rating
+        // Get technicians with average rating, ordered by highest rating
         $technicians = $query->withAvg('reviews', 'rating')
-            ->get()
-            ->sortByDesc('reviews_avg_rating')
-            ->values();
+            ->orderByRaw('reviews_avg_rating DESC NULLS LAST')
+            ->get();
 
         // Format response
         $locale = app()->getLocale();

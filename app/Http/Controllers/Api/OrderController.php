@@ -50,23 +50,30 @@ class OrderController extends Controller
         if ($user->type === 'maintenance_company') {
             // Company-specific tabs
             if ($request->tab === 'all') {
-                // All orders: assigned to company OR available new orders in their city/service
-                $query->where(function($q) use ($company) {
-                    $q->where('maintenance_company_id', $company->id)
-                      ->orWhere(function($q2) use ($company) {
-                          $q2->where('status', 'new')
-                             ->where('city_id', $company->city_id)
-                             ->whereHas('service', function($q3) use ($company) {
-                                 $q3->whereIn('id', $company->services->pluck('id'));
-                             });
+                // All CURRENT orders: (assigned to company OR marketplace) AND status is active
+                $query->whereIn('status', ['new', 'accepted', 'scheduled', 'in_progress'])
+                      ->where(function($q) use ($company) {
+                          $q->where('maintenance_company_id', $company->id)
+                            ->orWhere(function($q2) use ($company) {
+                                $q2->whereNull('maintenance_company_id')
+                                   ->where('city_id', $company->city_id)
+                                   ->whereHas('service', function($q3) use ($company) {
+                                       $q3->whereIn('id', $company->services->pluck('id'));
+                                   });
+                            });
                       });
-                });
             } elseif ($request->tab === 'new') {
-                // New orders only: status = 'new' in company's city and matching services
+                // New orders: status = 'new' AND (Marketplace OR specifically assigned to this company)
                 $query->where('status', 'new')
-                      ->where('city_id', $company->city_id)
-                      ->whereHas('service', function($q) use ($company) {
-                          $q->whereIn('id', $company->services->pluck('id'));
+                      ->where(function($q) use ($company) {
+                          $q->where('maintenance_company_id', $company->id)
+                            ->orWhere(function($q2) use ($company) {
+                                $q2->whereNull('maintenance_company_id')
+                                   ->where('city_id', $company->city_id)
+                                   ->whereHas('service', function($q3) use ($company) {
+                                       $q3->whereIn('id', $company->services->pluck('id'));
+                                   });
+                            });
                       });
             } elseif ($request->tab === 'in_progress') {
                 // In Progress: accepted, scheduled, in_progress (assigned to this company)
@@ -301,6 +308,7 @@ class OrderController extends Controller
 
         if ($availableTech) {
             $data['technician_id'] = $availableTech->id;
+            $data['maintenance_company_id'] = $availableTech->maintenance_company_id;
             $data['status'] = 'scheduled';
             $data['assigned_at'] = now();
         }
