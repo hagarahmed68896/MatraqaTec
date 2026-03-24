@@ -21,7 +21,15 @@ class Service extends Model
         'parent_id',
         'city_id',
         'is_featured',
+        'districts',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'districts' => 'array',
+        ];
+    }
 
     protected $appends = ['image_url', 'icon_url'];
 

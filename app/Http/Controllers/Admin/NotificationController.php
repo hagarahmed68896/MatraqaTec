@@ -108,13 +108,26 @@ class NotificationController extends Controller
             'body_ar' => 'required|string',
             'body_en' => 'required|string',
             'target_audience' => ['required', Rule::in(Notification::TARGET_AUDIENCES)],
-            'user_id' => 'required_if:target_audience,individual_user|nullable|exists:users,id',
+            'phone' => 'required_if:target_audience,individual_user|nullable|string',
             'type' => ['required', Rule::in(Notification::TYPES)],
             'status' => ['nullable', Rule::in(Notification::STATUSES)],
             'scheduled_at' => 'nullable|date',
         ]);
 
-        Notification::create($request->all());
+        $data = $request->except('phone');
+
+        if ($request->target_audience === 'individual_user' && $request->filled('phone')) {
+            $user = \App\Models\User::where('phone', $request->phone)
+                      ->orWhere('phone', 'like', '%' . ltrim($request->phone, '0'))
+                      ->first();
+
+            if (!$user) {
+                return back()->withInput()->withErrors(['phone' => __('No user found with this phone number.')]);
+            }
+            $data['user_id'] = $user->id;
+        }
+
+        Notification::create($data);
         return redirect()->route('admin.broadcast-notifications.index')->with('success', __('Notification created successfully.'));
     }
 
@@ -140,12 +153,26 @@ class NotificationController extends Controller
             'body_ar' => 'sometimes|string',
             'body_en' => 'sometimes|string',
             'target_audience' => ['sometimes', Rule::in(Notification::TARGET_AUDIENCES)],
+            'phone' => 'nullable|string',
             'type' => ['sometimes', Rule::in(Notification::TYPES)],
             'status' => ['sometimes', Rule::in(Notification::STATUSES)],
             'scheduled_at' => 'nullable|date',
         ]);
 
-        $notification->update($request->all());
+        $data = $request->except('phone');
+
+        if (isset($data['target_audience']) && $data['target_audience'] === 'individual_user' && $request->filled('phone')) {
+            $user = \App\Models\User::where('phone', $request->phone)
+                      ->orWhere('phone', 'like', '%' . ltrim($request->phone, '0'))
+                      ->first();
+
+            if (!$user) {
+                return back()->withInput()->withErrors(['phone' => __('No user found with this phone number.')]);
+            }
+            $data['user_id'] = $user->id;
+        }
+
+        $notification->update($data);
         return redirect()->route('admin.broadcast-notifications.index')->with('success', __('Notification updated successfully.'));
     }
 

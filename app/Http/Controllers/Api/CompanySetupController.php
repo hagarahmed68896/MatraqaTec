@@ -25,6 +25,13 @@ class CompanySetupController extends Controller
             ->select('services.id', 'services.name_ar', 'services.name_en', 'services.image', 'services.icon')
             ->get()
             ->map(function ($service) use ($company) {
+                // Decode JSON districts
+                $districtIdsDecoded = $service->pivot->district_ids ? json_decode($service->pivot->district_ids, true) : [];
+                $service->district_names = \App\Models\District::whereIn('id', $districtIdsDecoded)
+                    ->pluck(app()->getLocale() == 'ar' ? 'name_ar' : 'name_en')
+                    ->toArray();
+                $service->district_ids = $districtIdsDecoded;
+
                 // Count sub-services (children of this service)
                 $service->sub_service_count = Service::where('parent_id', $service->id)->count();
                 
@@ -74,8 +81,10 @@ class CompanySetupController extends Controller
     public function updateServices(Request $request)
     {
         $request->validate([
-            'service_ids' => 'required|array',
-            'service_ids.*' => 'exists:services,id',
+            'services' => 'required|array',
+            'services.*.service_id' => 'required|exists:services,id',
+            'services.*.district_ids' => 'required|array',
+            'services.*.district_ids.*' => 'exists:districts,id',
         ]);
 
         $user = auth()->user();
@@ -84,7 +93,14 @@ class CompanySetupController extends Controller
             return response()->json(['status' => false, 'message' => 'User is not a company'], 403);
         }
 
-        $company->services()->sync($request->service_ids);
+        $syncData = [];
+        foreach ($request->services as $serviceData) {
+            $syncData[$serviceData['service_id']] = [
+                'district_ids' => json_encode($serviceData['district_ids'])
+            ];
+        }
+
+        $company->services()->sync($syncData);
 
         return response()->json(['status' => true, 'message' => 'Services updated successfully']);
     }

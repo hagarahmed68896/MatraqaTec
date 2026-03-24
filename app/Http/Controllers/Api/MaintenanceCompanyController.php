@@ -28,11 +28,16 @@ class MaintenanceCompanyController extends Controller
         
         $ordersCount = \App\Models\Order::where('maintenance_company_id', $user->maintenanceCompany->id)->count();
 
+        $userData = $user->toArray();
+        if ($user->avatar) {
+            $userData['avatar'] = asset($user->avatar);
+        }
+
         return response()->json([
             'status' => true, 
             'message' => 'Profile retrieved successfully', 
             'data' => [
-                'user' => $user,
+                'user' => $userData,
                 'stats' => [
                     'orders_count' => $ordersCount,
                     'wallet_balance' => $user->wallet_balance ?? "0.00"
@@ -64,6 +69,7 @@ class MaintenanceCompanyController extends Controller
             'swift_code' => 'sometimes|string|max:20',
             'city_id' => 'sometimes|exists:cities,id',
             'address' => 'sometimes|string',
+            'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
 
         if ($validator->fails()) {
@@ -76,6 +82,19 @@ class MaintenanceCompanyController extends Controller
             if ($request->has('email')) $userModel->email = $request->email;
             if ($request->has('password') && $request->password) $userModel->password = Hash::make($request->password);
             if ($request->has('phone')) $userModel->phone = $request->phone;
+            
+            if ($request->hasFile('avatar')) {
+                if ($userModel->avatar && file_exists(public_path($userModel->avatar))) {
+                    unlink(public_path($userModel->avatar));
+                }
+                
+                $file = $request->file('avatar');
+                $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9_\.]/', '', $file->getClientOriginalName());
+                $file->move(public_path('avatars'), $filename);
+                
+                $userModel->avatar = 'avatars/' . $filename;
+            }
+            
             $userModel->save();
         }
 
@@ -97,11 +116,16 @@ class MaintenanceCompanyController extends Controller
 
         $ordersCount = \App\Models\Order::where('maintenance_company_id', $company->id)->count();
         
+        $userData = $user->toArray();
+        if ($user->avatar) {
+            $userData['avatar'] = asset($user->avatar);
+        }
+
         return response()->json([
             'status' => true, 
-            'message' => 'Profile updated successfully', 
+            'message' => __('Profile updated successfully'), 
             'data' => [
-                'user' => $user,
+                'user' => $userData,
                 'stats' => [
                     'orders_count' => $ordersCount,
                     'wallet_balance' => $user->wallet_balance ?? "0.00"
@@ -222,14 +246,19 @@ class MaintenanceCompanyController extends Controller
             $tech->company_name = $locale == 'ar' ? ($tech->maintenanceCompany?->company_name_ar ?? $tech->maintenanceCompany?->name) : ($tech->maintenanceCompany?->company_name_en ?? $tech->maintenanceCompany?->name);
             $tech->specialty = $tech->category ? (__('Specialized in') . ' ' . ($locale == 'ar' ? $tech->category->name_ar : ($tech->category->name_en ?? $tech->category->name_ar))) : null;
             
-            // Add District Names
+            // Format Districts with ID and Name
+            $formattedDistricts = [];
             if ($tech->districts && is_array($tech->districts)) {
-                $tech->district_names = \App\Models\District::whereIn('id', $tech->districts)
-                    ->pluck($locale == 'ar' ? 'name_ar' : 'name_en')
-                    ->toArray();
-            } else {
-                $tech->district_names = [];
+                $districtModels = \App\Models\District::whereIn('id', $tech->districts)->get();
+                foreach ($districtModels as $dist) {
+                    $formattedDistricts[] = [
+                        'id' => $dist->id,
+                        'name' => $locale == 'ar' ? $dist->name_ar : $dist->name_en
+                    ];
+                }
             }
+            $tech->districts = $formattedDistricts;
+            unset($tech->district_names);
 
             $tech->makeHidden(['name_ar', 'name_en', 'maintenanceCompany', 'category']);
         });
@@ -390,6 +419,20 @@ class MaintenanceCompanyController extends Controller
             $tech->name = $tech->name ?? $tech->name_ar ?? $tech->name_en;
             $tech->company_name = $locale == 'ar' ? ($tech->maintenanceCompany?->company_name_ar ?? $tech->maintenanceCompany?->name) : ($tech->maintenanceCompany?->company_name_en ?? $tech->maintenanceCompany?->name);
             $tech->specialty = $tech->category ? (__('Specialized in') . ' ' . ($locale == 'ar' ? $tech->category->name_ar : ($tech->category->name_en ?? $tech->category->name_ar))) : null;
+            
+            // Format Districts with ID and Name
+            $formattedDistricts = [];
+            if ($tech->districts && is_array($tech->districts)) {
+                $districtModels = \App\Models\District::whereIn('id', $tech->districts)->get();
+                foreach ($districtModels as $dist) {
+                    $formattedDistricts[] = [
+                        'id' => $dist->id,
+                        'name' => $locale == 'ar' ? $dist->name_ar : $dist->name_en
+                    ];
+                }
+            }
+            $tech->districts = $formattedDistricts;
+            
             $tech->makeHidden(['name_ar', 'name_en', 'maintenanceCompany', 'category']);
         });
 
@@ -473,13 +516,18 @@ class MaintenanceCompanyController extends Controller
         });
 
         // Add district names to details
+        $formattedDistricts = [];
         if (isset($data['districts']) && is_array($data['districts'])) {
-            $data['district_names'] = \App\Models\District::whereIn('id', $data['districts'])
-                ->pluck($locale == 'ar' ? 'name_ar' : 'name_en')
-                ->toArray();
-        } else {
-            $data['district_names'] = [];
+            $districtModels = \App\Models\District::whereIn('id', $data['districts'])->get();
+            foreach ($districtModels as $dist) {
+                $formattedDistricts[] = [
+                    'id' => $dist->id,
+                    'name' => $locale == 'ar' ? $dist->name_ar : $dist->name_en
+                ];
+            }
         }
+        $data['districts'] = $formattedDistricts;
+        unset($data['district_names']);
 
         return response()->json([
             'status' => true,
@@ -684,8 +732,23 @@ class MaintenanceCompanyController extends Controller
 
         $technicians = $techQuery->latest()->take(20)->get();
 
-        $technicians->each(function($tech) {
+        $locale = app()->getLocale();
+        $technicians->each(function($tech) use ($locale) {
             $tech->name = $tech->name ?? $tech->name_ar ?? $tech->name_en;
+            
+            // Format Districts with ID and Name
+            $formattedDistricts = [];
+            if ($tech->districts && is_array($tech->districts)) {
+                $districtModels = \App\Models\District::whereIn('id', $tech->districts)->get();
+                foreach ($districtModels as $dist) {
+                    $formattedDistricts[] = [
+                        'id' => $dist->id,
+                        'name' => $locale == 'ar' ? $dist->name_ar : $dist->name_en
+                    ];
+                }
+            }
+            $tech->districts = $formattedDistricts;
+            
             $tech->makeHidden(['name_ar', 'name_en']);
         });
 
@@ -771,11 +834,15 @@ class MaintenanceCompanyController extends Controller
         // Format response
         $locale = app()->getLocale();
         $technicians = $technicians->map(function($tech) use ($locale) {
-            $districtNames = [];
+            $formattedDistricts = [];
             if ($tech->districts && is_array($tech->districts)) {
-                $districtNames = \App\Models\District::whereIn('id', $tech->districts)
-                    ->pluck($locale == 'ar' ? 'name_ar' : 'name_en')
-                    ->toArray();
+                $districtModels = \App\Models\District::whereIn('id', $tech->districts)->get();
+                foreach ($districtModels as $dist) {
+                    $formattedDistricts[] = [
+                        'id' => $dist->id,
+                        'name' => $locale == 'ar' ? $dist->name_ar : $dist->name_en
+                    ];
+                }
             }
 
             return [
@@ -785,8 +852,7 @@ class MaintenanceCompanyController extends Controller
                 'phone' => $tech->user->phone,
                 'rating' => round($tech->reviews_avg_rating ?? 0, 1),
                 'is_online' => $tech->user->is_online ?? false,
-                'districts' => $tech->districts,
-                'district_names' => $districtNames,
+                'districts' => $formattedDistricts,
                 'service_name' => $locale == 'ar' ? ($tech->service->name_ar ?? '') : ($tech->service->name_en ?? $tech->service->name_ar ?? ''),
                 'company_name' => $locale == 'ar' ? ($tech->maintenanceCompany?->company_name_ar ?? $tech->maintenanceCompany?->name) : ($tech->maintenanceCompany?->company_name_en ?? $tech->maintenanceCompany?->name),
                 'specialty' => $tech->category ? (__('Specialized in') . ' ' . ($locale == 'ar' ? $tech->category->name_ar : ($tech->category->name_en ?? $tech->category->name_ar))) : null,

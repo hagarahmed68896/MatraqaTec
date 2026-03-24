@@ -84,11 +84,8 @@ class TechnicianProfileController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Profile updated successfully',
-            'data' => [
-                'user' => $user->fresh(),
-                'technician' => $technician->fresh()
-            ]
+            'message' => __('Profile updated successfully'),
+            'data' => $user->load('district', 'city', 'technician.service', 'technician.category', 'technician.maintenanceCompany')
         ]);
     }
 

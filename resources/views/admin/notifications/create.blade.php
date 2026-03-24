@@ -56,12 +56,12 @@
                     </div>
                 </div>
 
-                <!-- Specific User ID (Conditional) -->
+                <!-- Specific User Phone (Conditional) -->
                 <div x-show="audience === 'individual_user'" class="space-y-3" x-transition>
-                    <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">{{ __('User ID') }}</label>
-                    <input type="number" name="user_id" value="{{ old('user_id') }}" :required="audience === 'individual_user'" placeholder="{{ __('Enter User ID') }}"
-                           class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none">
-                    @error('user_id')
+                    <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">{{ __('Phone Number') }}</label>
+                    <input type="text" name="phone" value="{{ old('phone') }}" :required="audience === 'individual_user'" placeholder="{{ __('Enter Phone Number') }}"
+                           class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none text-left" dir="ltr">
+                    @error('phone')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>

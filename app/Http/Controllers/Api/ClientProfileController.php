@@ -147,7 +147,7 @@ class ClientProfileController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Profile updated successfully',
+            'message' => __('Profile updated successfully'),
             'data' => $user->load(['individualCustomer', 'corporateCustomer'])
         ]);
     }

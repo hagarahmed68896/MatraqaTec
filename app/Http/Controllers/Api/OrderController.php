@@ -78,6 +78,10 @@ class OrderController extends Controller
                  $query->where('maintenance_company_id', $company->id)
                        ->whereNotNull('technician_id')
                        ->where('status', 'scheduled'); // Assuming 'scheduled' is the status when assigned
+            } elseif ($request->tab === 'previous') {
+                // Previous: completed, cancelled, rejected (assigned to this company)
+                $query->where('maintenance_company_id', $company->id)
+                      ->whereIn('status', ['completed', 'cancelled', 'rejected']);
             } else {
                 // Default: show all assigned orders
                 $query->where('maintenance_company_id', $company->id);

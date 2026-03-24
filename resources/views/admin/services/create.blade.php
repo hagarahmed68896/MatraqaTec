@@ -1,4 +1,4 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('title', __('Create New Service'))
 
@@ -99,14 +99,28 @@
                 </div>
             </div>
 
-            {{-- Price Row --}}
-            <div class="space-y-4 mt-4">
-                <label class="block text-sm font-black text-[#1A1A31] dark:text-slate-300">{{ __('Price') }}</label>
-                <div class="relative">
-                    <input type="number" step="0.01" name="price" placeholder="{{ __('Enter service price') }}" class="w-full px-8 py-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-sm font-bold text-[#1A1A31] dark:text-white focus:ring-4 focus:ring-[#1A1A31]/5 transition-all outline-none">
-                    <div class="absolute left-6 top-1/2 -translate-y-1/2">
-                        <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-5 h-5 opacity-40 dark:invert">
+            {{-- Price and Districts Row --}}
+            <div class="grid grid-cols-1 mt-4 mb-4 md:grid-cols-2 gap-8">
+                <div class="space-y-4">
+                    <label class="block text-sm font-black text-[#1A1A31] dark:text-slate-300">{{ __('Price') }}</label>
+                    <div class="relative">
+                        <input type="number" step="0.01" name="price" value="{{ old('price') }}" placeholder="{{ __('Enter service price') }}" class="w-full px-8 py-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-sm font-bold text-[#1A1A31] dark:text-white focus:ring-4 focus:ring-[#1A1A31]/5 transition-all outline-none">
+                        <div class="absolute left-6 top-1/2 -translate-y-1/2">
+                            <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-5 h-5 opacity-40 dark:invert">
+                        </div>
                     </div>
+                </div>
+
+                <div class="space-y-4">
+                    <label class="block text-sm font-black text-[#1A1A31] dark:text-slate-300">{{ __('Service Districts') }}</label>
+                    <select name="districts[]" multiple class="w-full px-6 py-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-sm font-bold text-[#1A1A31] dark:text-white focus:ring-4 focus:ring-[#1A1A31]/5 transition-all outline-none">
+                        @foreach($districts as $district)
+                            <option value="{{ $district->id }}" {{ collect(old('districts'))->contains($district->id) ? 'selected' : '' }}>
+                                {{ app()->getLocale() == 'ar' ? $district->name_ar : $district->name_en }} - {{ $district->city->name_ar ?? '' }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <p class="text-xs text-slate-400 mt-1">{{ __('Hold Ctrl/Cmd to select multiple districts') }}</p>
                 </div>
             </div>
 

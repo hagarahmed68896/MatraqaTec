@@ -38,7 +38,8 @@ class ServiceController extends Controller
 
     public function create()
     {
-        return view('admin.services.create');
+        $districts = \App\Models\District::all();
+        return view('admin.services.create', compact('districts'));
     }
 
     public function store(Request $request)
@@ -55,6 +56,8 @@ class ServiceController extends Controller
             'children.*.name_ar' => 'required_with:children|string',
             'children.*.name_en' => 'required_with:children|string',
             'children.*.image' => 'nullable|image',
+            'districts' => 'nullable|array',
+            'districts.*' => 'exists:districts,id',
         ]);
 
         if ($validator->fails()) {
@@ -137,7 +140,8 @@ class ServiceController extends Controller
     public function edit($id)
     {
         $item = Service::with('children')->findOrFail($id);
-        return view('admin.services.edit', compact('item'));
+        $districts = \App\Models\District::all();
+        return view('admin.services.edit', compact('item', 'districts'));
     }
 
     public function update(Request $request, $id)
@@ -157,6 +161,8 @@ class ServiceController extends Controller
             'children.*.name_ar' => 'required_with:children|string',
             'children.*.name_en' => 'required_with:children|string',
             'children.*.image' => 'nullable|image',
+            'districts' => 'nullable|array',
+            'districts.*' => 'exists:districts,id',
         ]);
 
         if ($validator->fails()) {

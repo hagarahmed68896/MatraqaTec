@@ -57,7 +57,7 @@ class MaintenanceCompany extends Model
 
     public function services()
     {
-        return $this->belongsToMany(Service::class, 'maintenance_company_service');
+        return $this->belongsToMany(Service::class, 'maintenance_company_service')->withPivot('district_ids');
     }
 
     public function districts()
