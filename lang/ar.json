@@ -1,4 +1,11 @@
 {
+    "This email is already registered in the system.": "هذا البريد الإلكتروني مسجل مسبقاً في النظام.",
+    "This phone number is already registered in the system.": "رقم الجوال هذا مسجل مسبقاً في النظام.",
+    "There is already a pending request for this technician.": "هناك طلب قيد الانتظار لهذا الفني بالفعل.",
+    "A user with this email is already registered as a technician.": "هذا البريد الإلكتروني مسجل بالفعل لفني آخر.",
+    "A user with this phone is already registered as a technician.": "رقم الجوال هذا مسجل بالفعل لفني آخر.",
+    "A user with this email already exists.": "هذا البريد الإلكتروني مسجل مسبقاً لمستخدم آخر.",
+    "A user with this phone number already exists.": "رقم الجوال هذا مسجل مسبقاً لمستخدم آخر.",
     "+966 Enter mobile number": "966+ أدخل رقم الجوال",
     "24\/7 Support": "دعم 24\/7",
     "5 Star Rating": "تقييم 5 نجوم",

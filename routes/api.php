@@ -242,6 +242,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // Company Reports & Transactions
         Route::get('statistics', [CompanyReportController::class, 'statistics']);
         Route::get('transactions', [CompanyReportController::class, 'transactions']);
+        Route::get('backfill-transactions', [CompanyReportController::class, 'backfillTransactions']);
+
 
         // Inventory Management
         Route::apiResource('inventory', InventoryController::class);

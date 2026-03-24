@@ -830,9 +830,18 @@
             async fetchTechnicians() {
                 this.loadingTechs = true;
                 this.technicians = [];
+                console.log('Fetching technicians for order:', this.selectedOrder);
                 try {
-                    const response = await fetch(`/admin/orders/${this.selectedOrder}/available-technicians`);
+                    if (!this.selectedOrder) {
+                        console.error('No selected order ID');
+                        return;
+                    }
+                    const response = await fetch(`{{ url('/admin/orders') }}/${this.selectedOrder}/available-technicians`);
+                    console.log('Fetch response status:', response.status);
+                    if (!response.ok) throw new Error('Network response was not ok: ' + response.status);
+
                     const result = await response.json();
+                    console.log('Fetch result technicians:', result);
                     if (result.status) {
                         this.technicians = result.data;
                         if (this.viewMode === 'map') this.renderMarkers();
@@ -847,9 +856,18 @@
             async fetchCompanies() {
                 this.loadingCompanies = true;
                 this.companies = [];
+                console.log('Fetching companies for order:', this.selectedOrder);
                 try {
-                    const response = await fetch(`/admin/orders/${this.selectedOrder}/available-companies`);
+                    if (!this.selectedOrder) {
+                        console.error('No selected order ID');
+                        return;
+                    }
+                    const response = await fetch(`{{ url('/admin/orders') }}/${this.selectedOrder}/available-companies`);
+                    console.log('Fetch response status:', response.status);
+                    if (!response.ok) throw new Error('Network response was not ok: ' + response.status);
+
                     const result = await response.json();
+                    console.log('Fetch result companies:', result);
                     if (result.status) {
                         this.companies = result.data;
                         if (this.viewMode === 'map') this.renderMarkers();

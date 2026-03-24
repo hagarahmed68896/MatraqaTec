@@ -1,4 +1,4 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('styles')
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -106,26 +106,48 @@
 
                 async fetchTechnicians() {
                     this.loadingTechs = true;
+                    console.log('Fetching technicians for order:', this.selectedOrder);
                     try {
-                        const response = await fetch(`/admin/orders/${this.selectedOrder}/available-technicians`);
+                        if (!this.selectedOrder) {
+                            console.error('No selected order ID');
+                            return;
+                        }
+                        const response = await fetch(`{{ url('/admin/orders') }}/${this.selectedOrder}/available-technicians`);
+                        console.log('Fetch response status:', response.status);
+                        if (!response.ok) throw new Error('Network response was not ok: ' + response.status);
+                        
                         const result = await response.json();
+                        console.log('Fetch result technicians:', result);
                         if (result.status) {
                             this.technicians = result.data;
                             if (this.viewMode === 'map') this.renderMarkers();
                         }
-                    } catch (error) { console.error(error); } finally { this.loadingTechs = false; }
+                    } catch (error) { 
+                        console.error('Fetch error technicians:', error);
+                    } finally { this.loadingTechs = false; }
                 },
 
                 async fetchCompanies() {
                     this.loadingCompanies = true;
+                    console.log('Fetching companies for order:', this.selectedOrder);
                     try {
-                        const response = await fetch(`/admin/orders/${this.selectedOrder}/available-companies`);
+                        if (!this.selectedOrder) {
+                            console.error('No selected order ID');
+                            return;
+                        }
+                        const response = await fetch(`{{ url('/admin/orders') }}/${this.selectedOrder}/available-companies`);
+                        console.log('Fetch response status:', response.status);
+                        if (!response.ok) throw new Error('Network response was not ok: ' + response.status);
+
                         const result = await response.json();
+                        console.log('Fetch result companies:', result);
                         if (result.status) {
                             this.companies = result.data;
                             if (this.viewMode === 'map') this.renderMarkers();
                         }
-                    } catch (error) { console.error(error); } finally { this.loadingCompanies = false; }
+                    } catch (error) { 
+                        console.error('Fetch error companies:', error);
+                    } finally { this.loadingCompanies = false; }
                 }
             }));
         });

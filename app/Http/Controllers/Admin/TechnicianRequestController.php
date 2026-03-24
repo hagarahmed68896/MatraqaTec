@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
 use App\Mail\TechnicianAccountCreated;
 
 class TechnicianRequestController extends Controller
@@ -102,6 +103,8 @@ class TechnicianRequestController extends Controller
 
     public function accept(Request $request, $id)
     {
+        \Log::info('TechnicianRequestController@accept called', ['id' => $id, 'request' => $request->all()]);
+
         // Mark notification as read if provided
         if ($request->has('notification_id')) {
             \App\Models\Notification::where('id', $request->notification_id)
@@ -119,65 +122,80 @@ class TechnicianRequestController extends Controller
             'password' => 'required|string|min:8',
         ]);
 
-        // Check for existing user by email or phone (normalized)
-        $normalizedPhone = $techRequest->phone;
-        if ($normalizedPhone) {
-            $normalizedPhone = preg_replace('/[^0-9]/', '', $normalizedPhone);
+        // 2. Acceptance Logic
+        try {
+            DB::beginTransaction();
+
+            // Robust phone normalization for comparison
+            $normalizedPhone = preg_replace('/[^0-9]/', '', $techRequest->phone);
             if (str_starts_with($normalizedPhone, '966')) $normalizedPhone = substr($normalizedPhone, 3);
             if (str_starts_with($normalizedPhone, '0')) $normalizedPhone = substr($normalizedPhone, 1);
-        }
 
-        $existingUser = \App\Models\User::where('email', $techRequest->email)
-            ->orWhere('phone', $normalizedPhone)
-            ->first();
+            // Detailed search for existing user (support both formats in DB)
+            $existingUser = \App\Models\User::where('email', $techRequest->email)
+                ->orWhere('phone', $normalizedPhone)
+                ->orWhere('phone', '0' . $normalizedPhone)
+                ->first();
 
-        if ($existingUser) {
-            $errorMessage = $existingUser->email === $techRequest->email
-                ? __('A user with this email already exists.')
-                : __('A user with this phone number already exists.');
-            return back()->with('error', $errorMessage);
-        }
+            if ($existingUser) {
+                $errorMessage = $existingUser->email === $techRequest->email
+                    ? __('This email is already registered in the system.')
+                    : __('This phone number is already registered in the system.');
+                DB::rollBack();
+                return back()->with('error', $errorMessage);
+            }
 
-        // 1. Create User
-        $user = \App\Models\User::create([
-            'name' => $techRequest->name_ar ?? $techRequest->name,
-            'email' => $techRequest->email,
-            'phone' => $techRequest->phone,
-            'password' => Hash::make($request->password),
-            'type' => 'technician',
-            'avatar' => $techRequest->photo,
-        ]);
+            // Create new user
+            $user = \App\Models\User::create([
+                'name' => $techRequest->name_ar ?? $techRequest->name,
+                'email' => $techRequest->email,
+                'phone' => $techRequest->phone,
+                'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+                'type' => 'technician',
+                'avatar' => $techRequest->photo,
+                'status' => 'active',
+            ]);
 
-        // 2. Create Technician Profile
-        \App\Models\Technician::create([
-            'user_id' => $user->id,
-            'maintenance_company_id' => $techRequest->maintenance_company_id,
-            'category_id' => $techRequest->category_id,
-            'service_id' => $techRequest->service_id,
-            'years_experience' => $techRequest->years_experience,
-            'name' => $techRequest->name ?? $techRequest->name_ar,
-            'name_ar' => $techRequest->name_ar,
-            'name_en' => $techRequest->name_en,
-            'bio_ar' => $techRequest->bio_ar,
-            'bio_en' => $techRequest->bio_en,
-            'image' => $techRequest->photo,
-            'national_id' => $techRequest->iqama_photo,
-            'districts' => $techRequest->districts,
-        ]);
+            // 3. Create Technician Profile
+            \App\Models\Technician::create([
+                'user_id' => $user->id,
+                'maintenance_company_id' => $techRequest->maintenance_company_id,
+                'category_id' => $techRequest->category_id,
+                'service_id' => $techRequest->service_id,
+                'years_experience' => $techRequest->years_experience,
+                'name' => $techRequest->name ?? $techRequest->name_ar,
+                'name_ar' => $techRequest->name_ar,
+                'name_en' => $techRequest->name_en,
+                'bio_ar' => $techRequest->bio_ar,
+                'bio_en' => $techRequest->bio_en,
+                'image' => $techRequest->photo,
+                'national_id_image' => $techRequest->iqama_photo,
+                'districts' => $techRequest->districts,
+            ]);
 
-        $techRequest->update(['status' => 'accepted']);
+            // 4. Update Request Status
+            $techRequest->update(['status' => 'accepted']);
 
-        // 3. Send Email
-        try {
-            Mail::to($techRequest->email)->send(new TechnicianAccountCreated($techRequest->email, $request->password));
+            DB::commit();
+
+            // 5. Send Email (Optional)
+            try {
+                \Log::info('TechnicianRequestController: Sending email', ['email' => $techRequest->email]);
+            Mail::to($techRequest->email)->send(new TechnicianAccountCreated($user, $request->password));
+            \Log::info('TechnicianRequestController: Email sent successfully');
+            } catch (\Exception $e) {
+                // Ignore email errors
+            }
+
+            return redirect()->route('admin.technician-requests.index')->with([
+                'success' => __('Request accepted successfully.'),
+                'success_onboarding' => true
+            ]);
+
         } catch (\Exception $e) {
-             // Log error or handle silently for now
+            DB::rollBack();
+            return back()->with('error', __('An error occurred while accepting the request: ') . $e->getMessage());
         }
-
-        return redirect()->route('admin.technician-requests.index')->with([
-            'success' => __('Request accepted successfully.'),
-            'success_onboarding' => true
-        ]);
     }
 
     public function refuse(Request $request, $id)

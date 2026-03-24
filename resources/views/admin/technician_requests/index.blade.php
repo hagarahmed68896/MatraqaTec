@@ -8,20 +8,22 @@
     selectedIds: [], 
     showFilters: false,
     showSuccessModal: {{ session('success_onboarding') ? 'true' : 'false' }},
-    
+
     // Accept Modal State
     showAcceptModal: false,
     acceptTargetId: null,
-    
+    isAccepting: false,
+
     // Reject Modal State
     showRejectModal: false,
     rejectTargetId: null,
-    
+
     confirmAccept(id) {
         this.acceptTargetId = id;
+        this.isAccepting = false;
         this.showAcceptModal = true;
     },
-    
+
     confirmReject(id) {
         this.rejectTargetId = id;
         this.showRejectModal = true;
@@ -433,7 +435,11 @@
                     </p>
                 </div>
 
-                <form :action="'{{ url('admin/technician-requests') }}/' + acceptTargetId + '/accept'" method="POST" class="space-y-8">
+                <form x-ref="acceptForm" 
+                      :action="'{{ url('admin/technician-requests') }}/' + acceptTargetId + '/accept'" 
+                      method="POST" 
+                      class="space-y-8" 
+                      @submit="if(!acceptTargetId) { $event.preventDefault(); return; } isAccepting = true;">
                     @csrf
                     <div>
                         <label class="text-sm font-black text-[#1A1A31] dark:text-white block mb-3">{{ __('Password') }}</label>
@@ -441,16 +447,22 @@
                                class="w-full px-5 py-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl text-md font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 transition-all text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
                     </div>
 
-                <div class="flex justify-end gap-3 pt-4">
-                    <button type="button" @click="showAcceptModal = false" 
-                            class="px-8 py-4 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-xl font-black hover:bg-slate-200 transition-all uppercase tracking-widest text-sm">
-                        {{ __('Cancel') }}
-                    </button>
-                    <button type="submit" 
-                            class="px-8 py-4 bg-[#1A1A31] text-white rounded-xl font-black hover:bg-[#2A2A41] transition-all shadow-xl shadow-[#1A1A31]/20 uppercase tracking-widest text-sm">
-                        {{ __('Confirm & Create Account') }}
-                    </button>
-                </div>
+                    <div class="flex justify-end gap-3 pt-4">
+                        <button type="button" @click="showAcceptModal = false" :disabled="isAccepting"
+                                class="px-8 py-4 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-xl font-black hover:bg-slate-200 transition-all uppercase tracking-widest text-sm disabled:opacity-50">
+                            {{ __('Cancel') }}
+                        </button>
+                        <button type="submit" 
+                                :disabled="isAccepting"
+                                :class="isAccepting ? 'opacity-50 cursor-not-allowed' : ''"
+                                class="px-8 py-4 bg-[#1A1A31] text-white rounded-xl font-black hover:bg-[#2A2A41] transition-all shadow-xl shadow-[#1A1A31]/20 uppercase tracking-widest text-sm flex items-center gap-2">
+                            <span x-show="!isAccepting">{{ __('Confirm & Create Account') }}</span>
+                            <span x-show="isAccepting" class="flex items-center gap-2">
+                                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                {{ __('Processing...') }}
+                            </span>
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>

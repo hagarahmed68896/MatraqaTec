@@ -74,6 +74,17 @@ class TechnicianRequestController extends Controller
 
         $requests = $query->latest()->paginate($request->input('per_page', 15));
         
+        $locale = app()->getLocale();
+        $requests->getCollection()->each(function($r) use ($locale) {
+            if ($r->districts && is_array($r->districts)) {
+                $r->district_names = \App\Models\District::whereIn('id', $r->districts)
+                    ->pluck($locale == 'ar' ? 'name_ar' : 'name_en')
+                    ->toArray();
+            } else {
+                $r->district_names = [];
+            }
+        });
+
         return response()->json([
             'status' => true,
             'message' => 'Requests retrieved successfully',
@@ -116,8 +127,33 @@ class TechnicianRequestController extends Controller
 
     public function show($id)
     {
-        $techRequest = TechnicianRequest::where('user_id', auth()->id())->where('id', $id)->first();
+        $user = auth()->user();
+        if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+
+        $query = TechnicianRequest::with(['category', 'service']);
+
+        if ($user->type === 'maintenance_company') {
+            $company = $user->maintenanceCompany;
+            $query->where('maintenance_company_id', $company->id);
+        } elseif ($user->type === 'admin') {
+            // Admin sees all
+        } else {
+            $query->where('user_id', $user->id);
+        }
+
+        $techRequest = $query->find($id);
+
         if (!$techRequest) return response()->json(['status' => false, 'message' => 'Not found'], 404);
+
+        $locale = app()->getLocale();
+        if ($techRequest->districts && is_array($techRequest->districts)) {
+            $techRequest->district_names = \App\Models\District::whereIn('id', $techRequest->districts)
+                ->pluck($locale == 'ar' ? 'name_ar' : 'name_en')
+                ->toArray();
+        } else {
+            $techRequest->district_names = [];
+        }
+
         return response()->json(['status' => true, 'message' => 'Request retrieved', 'data' => $techRequest]);
     }
 

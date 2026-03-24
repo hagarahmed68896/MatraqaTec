@@ -120,6 +120,42 @@ class CompanyReportController extends Controller
         $completedOrdersCount = $statusDistribution['completed'] ?? 0;
         $completionRate = $totalOrders > 0 ? ($completedOrdersCount / $totalOrders) * 100 : 0;
 
+        // 8. Top Technicians (by completed orders and rating)
+        $topTechnicians = DB::table('orders')
+            ->join('technicians', 'orders.technician_id', '=', 'technicians.id')
+            ->join('users', 'technicians.user_id', '=', 'users.id')
+            ->leftJoin('reviews', 'orders.id', '=', 'reviews.order_id')
+            ->where('orders.maintenance_company_id', $company->id)
+            ->where('orders.status', 'completed')
+            ->select(
+                'technicians.id',
+                'users.name as name',
+                'users.email as email',
+                'users.phone as phone',
+                'users.avatar as avatar',
+                DB::raw('count(DISTINCT orders.id) as completed_orders'),
+                DB::raw('sum(orders.total_price) as generated_revenue'),
+                DB::raw('round(avg(reviews.rating), 1) as average_rating')
+            )
+            ->groupBy(
+                'technicians.id',
+                'users.name',
+                'users.email',
+                'users.phone',
+                'users.avatar'
+            )
+            ->orderByDesc('completed_orders')
+            ->orderByDesc('average_rating')
+            ->limit(5)
+            ->get();
+
+        // Format avatar URLs properly
+        $topTechnicians->transform(function ($tech) {
+            $tech->avatar = $tech->avatar ? asset('storage/' . $tech->avatar) : null;
+            $tech->average_rating = $tech->average_rating ?? 0;
+            return $tech;
+        });
+
         return response()->json([
             'status' => true,
             'message' => 'Statistics retrieved successfully',
@@ -140,7 +176,8 @@ class CompanyReportController extends Controller
                 'top_services' => $topServices,
                 'status_distribution' => $statusDistribution,
                 'active_technicians_count' => $activeTechniciansCount,
-                'completion_rate' => round($completionRate, 2)
+                'completion_rate' => round($completionRate, 2),
+                'top_technicians' => $topTechnicians,
             ]
         ]);
     }
@@ -221,6 +258,66 @@ class CompanyReportController extends Controller
             'status' => true,
             'message' => 'Transactions retrieved successfully',
             'data' => $transactions
+        ]);
+    }
+
+    /**
+     * Backfill wallet transactions for all completed orders (one-time use).
+     * Call: GET /api/company/backfill-transactions
+     */
+    public function backfillTransactions(Request $request)
+    {
+        $user = $request->user();
+        if ($user->type !== 'maintenance_company') {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $company = $user->maintenanceCompany;
+        if (!$company) {
+            return response()->json(['status' => false, 'message' => 'Company not found'], 404);
+        }
+
+        $commissionRate = (float) \App\Models\Setting::getByKey('platform_commission', 15);
+
+        $orders = \App\Models\Order::where('maintenance_company_id', $company->id)
+            ->where('status', 'completed')
+            ->where('total_price', '>', 0)
+            ->get();
+
+        $created = 0;
+        $skipped = 0;
+
+        foreach ($orders as $order) {
+            $exists = WalletTransaction::where('reference_id', $order->id)
+                ->where('user_id', $user->id)
+                ->exists();
+
+            if ($exists) {
+                $skipped++;
+                continue;
+            }
+
+            $companyShare = $order->total_price * (1 - ($commissionRate / 100));
+
+            WalletTransaction::create([
+                'user_id'        => $user->id,
+                'amount'         => round($companyShare, 2),
+                'type'           => 'deposit',
+                'note'           => 'تحصيل دفعة للطلب رقم ' . $order->order_number,
+                'reference_id'   => $order->id,
+                'reference_type' => \App\Models\Order::class,
+            ]);
+
+            $created++;
+        }
+
+        return response()->json([
+            'status'  => true,
+            'message' => "تم إنشاء $created معاملة، تم تخطي $skipped معاملة موجودة مسبقاً",
+            'data'    => [
+                'created' => $created,
+                'skipped' => $skipped,
+            ]
         ]);
     }
 }

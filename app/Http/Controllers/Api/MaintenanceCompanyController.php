@@ -265,8 +265,41 @@ class MaintenanceCompanyController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['status' => false, 'message' => 'Validation error', 'errors' => $validator->errors()], 422);
+            return response()->json(['status' => false, 'message' => $validator->errors()->first(), 'errors' => $validator->errors()], 422);
         }
+
+        // --- NEW: Duplicate Check ---
+        $phone = preg_replace('/[^0-9]/', '', $request->phone);
+        if (str_starts_with($phone, '966')) $phone = substr($phone, 3);
+        if (str_starts_with($phone, '0')) $phone = substr($phone, 1);
+
+        // 1. Check existing users (Technicians/Customers/etc)
+        $existingUser = \App\Models\User::where('email', $request->email)
+            ->orWhere('phone', $phone)
+            ->first();
+
+        if ($existingUser) {
+            $msg = $existingUser->phone == $phone 
+                ? __('This phone number is already registered in the system.') 
+                : __('This email is already registered in the system.');
+            return response()->json(['status' => false, 'message' => $msg], 422);
+        }
+
+        // 2. Check existing pending technician requests
+        $existingRequest = \App\Models\TechnicianRequest::where('status', 'pending')
+            ->where(function($q) use ($request, $phone) {
+                $q->where('email', $request->email)
+                  ->orWhere('phone', $phone);
+            })
+            ->first();
+
+        if ($existingRequest) {
+            return response()->json([
+                'status' => false, 
+                'message' => __('هناك طلب قيد الانتظار لهذا الفني بالفعل.') // There is already a pending request for this technician
+            ], 422);
+        }
+        // --- END Duplicate Check ---
 
         // Handle File Uploads
         $imagePath = null;

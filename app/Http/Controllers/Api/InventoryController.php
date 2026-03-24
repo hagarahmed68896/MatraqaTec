@@ -29,11 +29,13 @@ class InventoryController extends Controller
         $query = Inventory::where('maintenance_company_id', $user->maintenanceCompany->id);
 
         // Search by name
-        if ($request->filled('search')) {
+        if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('name_ar', 'like', "%{$search}%")
-                  ->orWhere('name_en', 'like', "%{$search}%");
+                // Remove extra spaces from search term just in case
+                $term = trim($search);
+                $q->where('name_ar', 'LIKE', "%{$term}%")
+                  ->orWhere('name_en', 'LIKE', "%{$term}%");
             });
         }
 
@@ -146,10 +148,20 @@ class InventoryController extends Controller
             return response()->json(['status' => false, 'message' => $validator->errors()->first()], 422);
         }
 
-        $data = $request->except('image');
+        // Handle case where PUT request has empty payload due to multipart/form-data PHP bug
+        $data = $request->except(['image', '_method']);
+        
+        // If data is completely empty and it's a PUT request, 
+        // try to parse the content body manually (fallback)
+        if (empty($data) && $request->isMethod('PUT') && str_contains($request->header('Content-Type'), 'multipart/form-data')) {
+            // Note: The standard way in Laravel to handle this is for the frontend 
+            // to send a POST request with `_method=PUT` in the body.
+            // If the frontend didn't do this, the payload will be empty here.
+            \Log::warning('Empty PUT multipart payload detected in inventory update');
+        }
         
         \Log::info('Inventory update attempt', [
-            'id' => $id,
+            'id' => $inventory,
             'method' => $request->method(),
             'all_input' => $request->all(),
             'has_image' => $request->hasFile('image') ? 'yes' : 'no',

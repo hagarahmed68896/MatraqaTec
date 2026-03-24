@@ -802,6 +802,32 @@ class OrderController extends Controller
         
         $order->save();
 
+        // --- Credit Company Wallet ---
+        if ($order->maintenance_company_id) {
+            $company = \App\Models\MaintenanceCompany::find($order->maintenance_company_id);
+            if ($company && $company->user_id && $order->total_price > 0) {
+                // Get platform commission rate from settings (default 15%)
+                $commissionRate = (float) \App\Models\Setting::getByKey('platform_commission', 15);
+                $companyShare = $order->total_price * (1 - ($commissionRate / 100));
+
+                // Update company wallet balance
+                $companyUser = \App\Models\User::find($company->user_id);
+                if ($companyUser) {
+                    $companyUser->wallet_balance = ($companyUser->wallet_balance ?? 0) + $companyShare;
+                    $companyUser->save();
+                }
+
+                \App\Models\WalletTransaction::create([
+                    'user_id'        => $company->user_id,
+                    'amount'         => round($companyShare, 2),
+                    'type'           => 'deposit',
+                    'note'           => 'تحصيل دفعة للطلب رقم ' . $order->order_number,
+                    'reference_id'   => $order->id,
+                    'reference_type' => Order::class,
+                ]);
+            }
+        }
+
         $this->sendNotification($order->user_id, [
             'type' => \App\Models\Notification::TYPE_WORK_FINISHED,
             'title_ar' => 'تم الانتهاء من العمل',

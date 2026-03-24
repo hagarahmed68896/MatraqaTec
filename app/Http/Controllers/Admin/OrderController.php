@@ -255,6 +255,8 @@ class OrderController extends Controller
 
         $lastOrder = Order::latest('id')->first();
         $nextId = $lastOrder ? $lastOrder->id + 1 : 1;
+        $user = User::find($request->user_id);
+        $validated['city_id'] = $request->city_id ?? ($user->city_id ?? null);
         $validated['order_number'] = $nextId;
 
         Order::create($validated);
@@ -363,10 +365,15 @@ class OrderController extends Controller
         $service = $order->service;
         $categoryId = $service->parent_id ?? $service->id;
 
+        $cityId = $order->city_id ?? ($order->user->city_id ?? null);
+        \Log::info("OrderAssignment - Techs - Order: {$id}, CityId: " . ($cityId ?? 'null'));
+
         $technicians = Technician::with(['user', 'service'])
-            ->whereHas('user', function($q) use ($order) {
-                $q->where('city_id', $order->city_id)
-                  ->where('status', 'active');
+            ->whereHas('user', function($q) use ($cityId) {
+                $q->when($cityId, function($sub) use ($cityId) {
+                    $sub->where('city_id', $cityId);
+                })
+                ->where('status', 'active');
             })
             ->where(function($q) use ($order, $categoryId) {
                 $q->where('service_id', $order->service_id)
@@ -420,16 +427,22 @@ class OrderController extends Controller
         
         $categoryId = $order->service->parent_id ?? $order->service_id;
 
+        $cityId = $order->city_id ?? ($order->user->city_id ?? null);
+        \Log::info("OrderAssignment - Companies - Order: {$id}, CityId: " . ($cityId ?? 'null') . ", Category: {$categoryId}");
+
         $companies = MaintenanceCompany::with(['user', 'city'])
             ->whereHas('user', function($q) {
                 $q->where('status', 'active');
             })
-            ->where('city_id', $order->city_id)
+            ->when($cityId, function($q) use ($cityId) {
+                return $q->where('city_id', $cityId);
+            })
             ->whereHas('services', function($q) use ($order, $categoryId) {
                 $q->where('services.id', $order->service_id)
                   ->orWhere('services.id', $categoryId);
             })
             ->get();
+        \Log::info("OrderAssignment - Companies - Results Count: " . $companies->count());
 
         return response()->json([
             'status' => true,
