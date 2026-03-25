@@ -210,6 +210,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('chat', [ChatController::class, 'store']);
 
     // Company Setup (Services & Coverage)
+    Route::get('test-auth', function (Request $request) {
+        return response()->json([
+            'authenticated' => true,
+            'user' => $request->user(),
+            'token' => $request->bearerToken()
+        ]);
+    });
+
     Route::middleware('role:maintenance_company')->prefix('company')->group(function () {
         Route::get('/', [MaintenanceCompanyController::class, 'show']);
         Route::post('update', [MaintenanceCompanyController::class, 'update']);

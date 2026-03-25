@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -40,7 +41,10 @@ class AuthController extends Controller
             'commercial_record_number' => 'required_if:type,maintenance_company,corporate_customer|nullable|string|max:255',
             'commercial_record_file' => 'required_if:type,maintenance_company,corporate_customer|nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
             'tax_number' => 'required_if:type,maintenance_company,corporate_customer|nullable|string|max:255',
-            'address' => 'required_if:type,maintenance_company,corporate_customer|nullable|string|max:255',
+            'address' => 'nullable|string|max:255',
+            // Location (Optional but recommended for map-based features)
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
         ]);
 
         if ($validator->fails()) {
@@ -58,6 +62,9 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
             'type' => $request->type,
             'phone' => $request->phone,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'address' => $request->address,
         ]);
 
         // Create Profile based on type
@@ -103,9 +110,17 @@ class AuthController extends Controller
                 'address' => $request->address,
             ]);
         } elseif ($request->type === 'technician') {
-            Technician::create([
+            $technician = Technician::create([
                 'user_id' => $user->id,
             ]);
+            
+            if ($request->filled('latitude') && $request->filled('longitude')) {
+                \App\Models\TechnicianLocation::create([
+                    'technician_id' => $technician->id,
+                    'latitude' => $request->latitude,
+                    'longitude' => $request->longitude,
+                ]);
+            }
         }
 
         $this->sendOtp($user);
@@ -228,8 +243,10 @@ class AuthController extends Controller
         $user->otp_expires_at = null;
         $user->status = 'active'; 
         $user->save();
-
+        
         $token = $user->createToken('auth_token')->plainTextToken;
+        
+        \Log::info("Token generated for user {$user->phone}: " . substr($token, 0, 10) . "...");
 
         $profileData = $this->getProfileData($user);
 
@@ -349,7 +366,7 @@ class AuthController extends Controller
     {
         $otp = "0000";
         $user->otp = $otp;
-        $user->otp_expires_at = Carbon::now()->addMinutes(10);
+        $user->otp_expires_at = Carbon::now()->addHours(24);
         $user->save();
 
         //  may would integrate an SMS gateway here.

@@ -100,7 +100,7 @@ class CompanySetupController extends Controller
             ];
         }
 
-        $company->services()->sync($syncData);
+        $company->services()->syncWithoutDetaching($syncData);
 
         return response()->json(['status' => true, 'message' => 'Services updated successfully']);
     }
@@ -169,7 +169,7 @@ class CompanySetupController extends Controller
             return response()->json(['status' => false, 'message' => 'User is not a company'], 403);
         }
 
-        $company->districts()->sync($request->district_ids);
+        $company->districts()->syncWithoutDetaching($request->district_ids);
 
         return response()->json(['status' => true, 'message' => 'Coverage areas updated successfully']);
     }

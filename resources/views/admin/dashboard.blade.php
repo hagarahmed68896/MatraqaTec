@@ -4,7 +4,16 @@
 @section('page_title', __('Admin Dashboard'))
 
 @section('content')
-<div class="space-y-8 animate-in fade-in slide-in-from-bottom duration-700">
+<div class="space-y-8 animate-in fade-in slide-in-from-bottom duration-700" x-data="orderManagement()">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
+        #tech-map { width: 100%; height: 500px; border-radius: 3rem; }
+        .leaflet-container { background: #f8fafc; }
+    </style>
     
     <!-- Dashboard Heading -->
     <div class="flex items-center justify-between">
@@ -355,20 +364,7 @@
     </div>
 
     <!-- Recent Orders Table FULL WIDTH -->
-    <div x-data="{ 
-        status: 'new',
-        loading: false,
-        filterOrders(val) {
-            this.status = val;
-            this.loading = true;
-            fetch('{{ route('admin.dashboard.orders') }}?status=' + val)
-                .then(res => res.text())
-                .then(html => {
-                    document.getElementById('orders-table-body').innerHTML = html;
-                    this.loading = false;
-                });
-        }
-    }" class="bg-white dark:bg-[#1A1A31] p-8 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-sm mt-8">
+    <div class="bg-white dark:bg-[#1A1A31] p-8 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-sm mt-8">
                     <h3 class="text-lg mb-2 sm:text-xl font-black text-slate-800 dark:text-white whitespace-nowrap">{{ __('Orders') }}</h3>
 
         <div class="flex items-center justify-between mb-8 gap-4 flex-wrap sm:flex-nowrap">
@@ -414,6 +410,239 @@
                     @include('admin.dashboard-orders-table', ['recent_orders' => $recent_orders, 'status' => $status])
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- ACCEPT ORDER MODAL -->
+    <div x-show="showAcceptModal" x-cloak 
+         class="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-[#1A1A31]/40 backdrop-blur-sm"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100">
+        
+        <div class="bg-white dark:bg-[#1A1A31] rounded-[3rem] w-full max-w-2xl shadow-2xl relative overflow-hidden"
+             @click.away="showAcceptModal = false"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+            
+            <!-- Close Button -->
+            <button @click="showAcceptModal = false" class="absolute top-8 left-8 text-slate-300 hover:text-slate-500 dark:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+
+            <div class="p-12 text-center space-y-8">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-black text-[#1A1A31] dark:text-white">{{ __('Accept Order') }}</h2>
+                    <button @click="toggleViewMode()" class="px-6 py-2 rounded-xl border border-slate-100 dark:border-white/10 font-bold text-xs text-[#1A1A31] dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-all flex items-center gap-2">
+                        <template x-if="viewMode === 'list'">
+                            <span class="flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                {{ __('Show Map') }}
+                            </span>
+                        </template>
+                        <template x-if="viewMode === 'map'">
+                            <span class="flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                                {{ __('Show List') }}
+                            </span>
+                        </template>
+                    </button>
+                </div>
+
+                <!-- LIST VIEW -->
+                <div x-show="viewMode === 'list'" class="space-y-8">
+                    <!-- Tabs -->
+                    <div class="flex p-1.5 bg-slate-50 dark:bg-white/5 rounded-2xl">
+                        <button @click="activeTab = 'platform'; fetchTechnicians()" 
+                                :class="activeTab === 'platform' ? 'bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] shadow-lg' : 'text-slate-400'"
+                                class="flex-1 py-3 rounded-xl font-bold text-md transition-all whitespace-nowrap px-4">
+                            {{ __('Assign Platform Technician') }}
+                        </button>
+                        <button @click="activeTab = 'company'; fetchCompanies()" 
+                                :class="activeTab === 'company' ? 'bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] shadow-lg' : 'text-slate-400'"
+                                class="flex-1 py-3 rounded-xl font-bold text-md transition-all whitespace-nowrap px-4">
+                            {{ __('Send Order to Maintenance Company') }}
+                        </button>
+                    </div>
+
+                    <p class="text-slate-400 font-bold text-md leading-relaxed" x-text="activeTab === 'platform' ? '{{ __('Select an available technician to perform the maintenance request') }}' : '{{ __('Select an available maintenance company to perform the request') }}'"></p>
+
+                    <!-- List Section -->
+                    <div class="space-y-6 text-right">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-md font-black text-[#1A1A31] dark:text-white" x-text="activeTab === 'platform' ? '{{ __('Technicians') }}' : '{{ __('Maintenance Companies') }}'"></h3>
+                        </div>
+
+                        <!-- Items Container -->
+                        <div class="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                            <template x-if="(activeTab === 'platform' && loadingTechs) || (activeTab === 'company' && loadingCompanies)">
+                                <div class="py-10 text-center">
+                                    <div class="inline-block w-8 h-8 border-4 border-[#1A1A31] border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                            </template>
+
+                            <template x-if="activeTab === 'platform' && !loadingTechs">
+                                <div class="space-y-4">
+                                    <template x-for="tech in technicians" :key="tech.id">
+                                        <label class="flex items-center gap-6 p-6 rounded-[2rem] border-2 transition-all cursor-pointer group"
+                                               :class="selectedTechId === tech.id ? 'border-primary bg-primary/5 shadow-sm' : 'border-slate-50 dark:border-white/5 hover:border-slate-100 dark:hover:border-white/10'">
+                                            <div class="flex-1 flex items-center gap-4">
+                                                <div class="w-14 h-14 rounded-2xl overflow-hidden bg-slate-100 dark:bg-white/5">
+                                                    <img :src="tech.avatar || '/assets/admin/images/avatar-placeholder.png'" class="w-full h-full object-cover">
+                                                </div>
+                                                <div class="space-y-1">
+                                                    <h4 class="font-black text-[#1A1A31] dark:text-white transition-colors" x-text="tech.name"></h4>
+                                                    <div class="flex items-center gap-4 text-[10px] font-bold text-slate-400">
+                                                        <span x-text="tech.service_name"></span>
+                                                        <span class="flex items-center gap-1">
+                                                            <svg class="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                                            <span x-text="`{{ __('Rating:') }} ${tech.rating}`"></span>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="relative w-6 h-6 border-2 rounded-full transition-all flex items-center justify-center"
+                                                 :class="selectedTechId === tech.id ? 'border-primary bg-primary' : 'border-slate-200 group-hover:border-primary/50'">
+                                                <input type="radio" x-model="selectedTechId" :value="tech.id" class="hidden">
+                                                <svg x-show="selectedTechId === tech.id" class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
+                                            </div>
+                                        </label>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <template x-if="activeTab === 'company' && !loadingCompanies">
+                                <div class="space-y-4">
+                                    <template x-for="comp in companies" :key="comp.id">
+                                        <label class="flex items-center gap-6 p-6 rounded-[2rem] border-2 transition-all cursor-pointer group"
+                                               :class="selectedCompanyId === comp.id ? 'border-primary bg-primary/5 shadow-sm' : 'border-slate-50 dark:border-white/5 hover:border-slate-100 dark:hover:border-white/10'">
+                                            <div class="flex-1 flex items-center gap-4">
+                                                <div class="w-14 h-14 rounded-2xl overflow-hidden bg-slate-100 dark:bg-white/5">
+                                                    <img :src="comp.avatar || '/assets/admin/images/avatar-placeholder.png'" class="w-full h-full object-cover">
+                                                </div>
+                                                <div class="space-y-1">
+                                                    <h4 class="font-black text-[#1A1A31] dark:text-white transition-colors" x-text="comp.name"></h4>
+                                                    <div class="flex items-center gap-4 text-[10px] font-bold text-slate-400">
+                                                        <span class="flex items-center gap-1">
+                                                            <svg class="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                                            <span x-text="`{{ __('Rating:') }} ${comp.rating}`"></span>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="relative w-6 h-6 border-2 rounded-full transition-all flex items-center justify-center"
+                                                 :class="selectedCompanyId === comp.id ? 'border-primary bg-primary' : 'border-slate-200 group-hover:border-primary/50'">
+                                                <input type="radio" x-model="selectedCompanyId" :value="comp.id" class="hidden">
+                                                <svg x-show="selectedCompanyId === comp.id" class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
+                                            </div>
+                                        </label>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+
+                        <button type="button" @click="activeTab === 'platform' ? fetchTechnicians(true) : fetchCompanies(true)" class="w-full py-4 border-2 border-slate-100 dark:border-white/10 rounded-2xl font-black text-xs text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-all uppercase tracking-widest flex items-center justify-center gap-2">
+                            {{ __('Show More') }}
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- MAP VIEW -->
+                <div x-show="viewMode === 'map'" class="relative" style="min-height: 500px;" x-effect="if(searchMap !== undefined) renderMarkers()">
+                    <div class="absolute top-6 right-6 z-[1000] flex gap-3 pointer-events-auto">
+                        <button @click="viewMode = 'list'" class="w-10 h-10 rounded-xl bg-white/90 dark:bg-[#1A1A31]/90 backdrop-blur-md border border-slate-100 dark:border-white/10 shadow-lg flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-white transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+
+                    <div class="absolute top-6 left-6 right-20 z-[1000] flex gap-4 pointer-events-none">
+                        <div class="flex-1 max-w-sm pointer-events-auto">
+                            <div class="relative">
+                                <input type="text" x-model="searchMap" @input="renderMarkers()" placeholder="{{ __('Search...') }}" class="w-full h-12 pr-12 pl-4 bg-white/90 dark:bg-[#1A1A31]/90 backdrop-blur-md border border-slate-100 dark:border-white/10 rounded-2xl shadow-lg focus:outline-none font-bold text-md text-[#1A1A31] dark:text-white">
+                                <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tech-map" class="z-[1]"></div>
+                </div>
+
+                <!-- Footer Actions -->
+                <div class="flex gap-4 pt-6">
+                    <form :action="`/admin/orders/${selectedOrder}/accept`" method="POST" class="flex-1">
+                        @csrf
+                        <template x-if="activeTab === 'platform'">
+                            <input type="hidden" name="technician_id" :value="selectedTechId">
+                        </template>
+                        <template x-if="activeTab === 'company'">
+                            <input type="hidden" name="maintenance_company_id" :value="selectedCompanyId">
+                        </template>
+                        <button type="submit" 
+                                :disabled="(activeTab === 'platform' && !selectedTechId) || (activeTab === 'company' && !selectedCompanyId)"
+                                :class="(activeTab === 'platform' && selectedTechId) || (activeTab === 'company' && selectedCompanyId) ? 'bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] shadow-xl shadow-[#1A1A31]/20 hover:scale-[1.02]' : 'bg-slate-300 dark:bg-white/10 dark:text-slate-500 cursor-not-allowed'"
+                                class="w-full py-5 rounded-[1.5rem] font-black text-md transition-all transform uppercase tracking-widest">
+                            <span x-text="activeTab === 'platform' ? '{{ __('Send assignment to technician') }}' : '{{ __('Send order to company') }}'"></span>
+                        </button>
+                    </form>
+                    <button @click="showAcceptModal = false" class="flex-[0.5] py-5 bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-300 rounded-[1.5rem] font-bold text-md hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
+                        {{ __('Cancel') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- REFUSE ORDER MODAL -->
+    <div x-show="showRefuseModal" x-cloak 
+         class="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-[#1A1A31]/40 backdrop-blur-sm"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100">
+        
+        <div class="bg-white dark:bg-[#1A1A31] rounded-[3rem] w-full max-w-xl shadow-2xl relative overflow-hidden"
+             @click.away="showRefuseModal = false"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+            
+            <button @click="showRefuseModal = false" class="absolute top-8 left-8 text-slate-300 hover:text-slate-500 dark:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+
+            <div class="p-12 text-center space-y-8">
+                <div class="w-20 h-20 bg-red-50 rounded-[2rem] flex items-center justify-center mx-auto text-red-500">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </div>
+
+                <div class="space-y-2">
+                    <h2 class="text-2xl font-black text-[#1A1A31] dark:text-white">{{ __('Refuse Order') }}</h2>
+                    <p class="text-slate-400 font-bold text-md">{{ __('Please state the reason for rejection to clarify to the customer') }}</p>
+                </div>
+
+                <form :action="`/admin/orders/${selectedOrder}/destroy`" method="POST" class="space-y-8">
+                    @csrf
+                    @method('DELETE')
+                    <textarea name="rejection_reason" x-model="rejectionReason" required
+                              placeholder="{{ __('Write the rejection reason here...') }}"
+                              class="w-full h-40 p-6 bg-slate-50 dark:bg-white/5 border-none rounded-[2rem] focus:ring-2 focus:ring-red-500/20 transition-all font-bold text-md text-[#1A1A31] dark:text-white resize-none"></textarea>
+
+                    <div class="flex gap-4">
+                        <button type="submit" 
+                                :disabled="!rejectionReason.trim()"
+                                :class="rejectionReason.trim() ? 'bg-red-500 shadow-xl shadow-red-500/20 hover:scale-[1.02]' : 'bg-slate-300 cursor-not-allowed'"
+                                class="flex-1 py-5 text-white rounded-[1.5rem] font-black text-md transition-all transform capitalize tracking-widest">
+                            {{ __('Confirm Rejection') }}
+                        </button>
+                        <button type="button" @click="showRefuseModal = false" class="flex-[0.5] py-5 bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-300 rounded-[1.5rem] font-bold text-md hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
+                            {{ __('Cancel') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -628,6 +857,118 @@ document.addEventListener('DOMContentLoaded', () => {
             maintainAspectRatio: false
         }
     });
+});
+
+document.addEventListener('alpine:init', () => {
+    Alpine.data('orderManagement', () => ({
+        showAcceptModal: false,
+        showRefuseModal: false,
+        selectedOrder: null,
+        status: 'new',
+        loading: false,
+        viewMode: 'list',
+        map: null,
+        markers: [],
+        selectedMapTech: null,
+        searchMap: '',
+        technicians: [],
+        companies: [],
+        loadingTechs: false,
+        loadingCompanies: false,
+        activeTab: 'platform',
+        selectedTechId: null,
+        selectedCompanyId: null,
+        rejectionReason: '',
+        categories: @json($categories),
+
+        filterOrders(val) {
+            this.status = val;
+            this.loading = true;
+            fetch('{{ route('admin.dashboard.orders') }}?status=' + val)
+                .then(res => res.text())
+                .then(html => {
+                    const body = document.getElementById('orders-table-body');
+                    body.innerHTML = html;
+                    this.loading = false;
+                    this.$nextTick(() => {
+                        Alpine.initTree(body);
+                    });
+                });
+        },
+
+        async openAcceptModal(orderId) {
+            console.log('Opening accept modal for:', orderId);
+            this.selectedOrder = orderId;
+            this.showAcceptModal = true;
+            this.selectedTechId = null;
+            this.selectedCompanyId = null;
+            this.activeTab = 'platform';
+            this.viewMode = 'list';
+            await this.fetchTechnicians();
+        },
+
+        async toggleViewMode() {
+            this.viewMode = this.viewMode === 'list' ? 'map' : 'list';
+            if (this.viewMode === 'map') {
+                this.$nextTick(() => this.initMap());
+            }
+        },
+
+        initMap() {
+            if (!this.map) {
+                this.map = L.map('tech-map', {
+                    zoomControl: false,
+                    attributionControl: false
+                }).setView([24.7136, 46.6753], 12);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
+            }
+            this.renderMarkers();
+        },
+
+        renderMarkers() {
+            if (!this.map) return;
+            this.markers.forEach(m => this.map.removeLayer(m));
+            this.markers = [];
+            let data = this.activeTab === 'platform' ? this.technicians : this.companies;
+            if (this.searchMap.trim()) {
+                const query = this.searchMap.toLowerCase();
+                data = data.filter(item => item.name.toLowerCase().includes(query));
+            }
+            data.forEach(item => {
+                if (item.lat && item.lng) {
+                    const marker = L.marker([item.lat, item.lng]).addTo(this.map)
+                        .on('click', () => { this.selectedMapTech = item; });
+                    this.markers.push(marker);
+                }
+            });
+        },
+
+        async fetchTechnicians() {
+            this.loadingTechs = true;
+            try {
+                const res = await fetch(`/admin/orders/${this.selectedOrder}/available-technicians`);
+                const result = await res.json();
+                if (result.status) this.technicians = result.data;
+            } finally { this.loadingTechs = false; }
+        },
+
+        async fetchCompanies() {
+            this.loadingCompanies = true;
+            try {
+                const res = await fetch(`/admin/orders/${this.selectedOrder}/available-companies`);
+                const result = await res.json();
+                if (result.status) this.companies = result.data;
+            } finally { this.loadingCompanies = false; }
+        },
+
+        openRefuseModal(orderId) {
+            console.log('Opening refuse modal for:', orderId);
+            this.selectedOrder = orderId;
+            this.showRefuseModal = true;
+            this.rejectionReason = '';
+        }
+    }));
 });
 </script>
 @endsection

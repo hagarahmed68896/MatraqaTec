@@ -358,6 +358,9 @@ class AdminController extends Controller
             ->take(10)
             ->get();
 
+        // 5. Service Categories (for modals)
+        $categories = Service::whereNull('parent_id')->with('children')->get();
+
         return view('admin.dashboard', compact(
             'stats', 
             'recent_orders', 
@@ -371,7 +374,8 @@ class AdminController extends Controller
             'serviceData',
             'topTechnicians',
             'period',
-            'status'
+            'status',
+            'categories'
         ));
     }
 

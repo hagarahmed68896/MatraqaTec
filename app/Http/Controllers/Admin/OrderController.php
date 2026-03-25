@@ -318,9 +318,16 @@ class OrderController extends Controller
         $order->technician_id = $request->technician_id;
         $order->maintenance_company_id = $request->maintenance_company_id;
         
-        // If assigned to a technician, it's scheduled. 
-        // If assigned only to a company, it remains 'new' so it appears in their New tab.
-        $order->status = $request->technician_id ? 'scheduled' : 'new';
+        // If assigned to an independent technician, it's scheduled.
+        // If assigned to a company or a company-owned technician, it remains 'new' so it appears in their New tab for confirmation.
+        $status = 'new';
+        if ($request->technician_id) {
+            $tech = \App\Models\Technician::find($request->technician_id);
+            if ($tech && !$tech->maintenance_company_id) {
+                $status = 'scheduled';
+            }
+        }
+        $order->status = $status;
         if ($request->scheduled_at) {
             $order->scheduled_at = $request->scheduled_at;
         }

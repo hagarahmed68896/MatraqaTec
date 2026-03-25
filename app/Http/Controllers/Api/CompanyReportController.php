@@ -24,12 +24,27 @@ class CompanyReportController extends Controller
             return response()->json(['status' => false, 'message' => 'Company profile not found'], 404);
         }
 
-        $filter = $request->input('period', 'monthly'); // monthly, weekly
+        $filter = $request->input('period', 'monthly'); // monthly, weekly, yearly
+        $locale = $request->header('Accept-Language', 'ar');
 
         $now = Carbon::now();
-        $currentStart = ($filter === 'weekly') ? $now->startOfWeek() : $now->startOfMonth();
-        $previousStart = ($filter === 'weekly') ? $currentStart->copy()->subWeek() : $currentStart->copy()->subMonth();
-        $previousEnd = $currentStart->copy()->subSecond();
+        
+        if ($filter === 'weekly') {
+            $currentStart = $now->copy()->startOfWeek();
+            $previousStart = $currentStart->copy()->subWeek();
+            $currentEnd = $now->copy()->endOfWeek();
+            $previousEnd = $currentEnd->copy()->subWeek();
+        } elseif ($filter === 'yearly') {
+            $currentStart = $now->copy()->startOfYear();
+            $previousStart = $currentStart->copy()->subYear();
+            $currentEnd = $now->copy()->endOfYear();
+            $previousEnd = $currentEnd->copy()->subYear();
+        } else { // monthly
+            $currentStart = $now->copy()->startOfMonth();
+            $previousStart = $currentStart->copy()->subMonth();
+            $currentEnd = $now->copy()->endOfMonth();
+            $previousEnd = $currentEnd->copy()->subMonth();
+        }
 
         // 1. Order Count Summary
         $currentCount = Order::where('maintenance_company_id', $company->id)
@@ -47,23 +62,64 @@ class CompanyReportController extends Controller
             $percentageChange = 100;
         }
 
-        // 2. Chart Data (Last 4 units - weeks or months)
+        // 2. Chart Data (Current vs Previous)
         $chartData = [];
-        for ($i = 0; $i < 4; $i++) {
-            $date = ($filter === 'weekly') ? $now->copy()->subWeeks($i) : $now->copy()->subMonths($i);
-            $start = ($filter === 'weekly') ? $date->copy()->startOfWeek() : $date->copy()->startOfMonth();
-            $end = ($filter === 'weekly') ? $date->copy()->endOfWeek() : $date->copy()->endOfMonth();
+        
+        if ($filter === 'weekly') {
+            // Days of the week
+            for ($i = 0; $i < 7; $i++) {
+                $date = $currentStart->copy()->addDays($i);
+                $prevDate = $previousStart->copy()->addDays($i);
 
-            $count = Order::where('maintenance_company_id', $company->id)
-                ->whereBetween('created_at', [$start, $end])
-                ->count();
+                $chartData[] = [
+                    'label' => $locale == 'ar' ? $date->translatedFormat('D') : $date->format('D'),
+                    'value' => Order::where('maintenance_company_id', $company->id)
+                        ->whereBetween('created_at', [$date->copy()->startOfDay(), $date->copy()->endOfDay()])
+                        ->count(),
+                    'pre_value' => Order::where('maintenance_company_id', $company->id)
+                        ->whereBetween('created_at', [$prevDate->copy()->startOfDay(), $prevDate->copy()->endOfDay()])
+                        ->count(),
+                ];
+            }
+        } elseif ($filter === 'yearly') {
+            // Months of the year
+            for ($i = 0; $i < 12; $i++) {
+                $date = $currentStart->copy()->addMonths($i);
+                $prevDate = $previousStart->copy()->addMonths($i);
 
-            $chartData[] = [
-                'label' => ($filter === 'weekly') ? "Week " . $date->weekOfYear : $date->format('M'),
-                'value' => $count
-            ];
+                $chartData[] = [
+                    'label' => $locale == 'ar' ? $date->translatedFormat('M') : $date->format('M'),
+                    'value' => Order::where('maintenance_company_id', $company->id)
+                        ->whereBetween('created_at', [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()])
+                        ->count(),
+                    'pre_value' => Order::where('maintenance_company_id', $company->id)
+                        ->whereBetween('created_at', [$prevDate->copy()->startOfMonth(), $prevDate->copy()->endOfMonth()])
+                        ->count(),
+                ];
+            }
+        } else {
+            // Weeks of the month (Up to 5 weeks)
+            $totalWeeks = ceil($currentStart->diffInDays($currentEnd) / 7);
+            for ($i = 0; $i < $totalWeeks; $i++) {
+                $start = $currentStart->copy()->addWeeks($i);
+                $end = $start->copy()->endOfWeek();
+                if ($end->gt($currentEnd)) $end = $currentEnd->copy();
+
+                $prevStart = $previousStart->copy()->addWeeks($i);
+                $prevEnd = $prevStart->copy()->endOfWeek();
+                if ($prevEnd->gt($previousEnd)) $prevEnd = $previousEnd->copy();
+
+                $chartData[] = [
+                    'label' => ($locale == 'ar' ? 'الأسبوع ' : 'Week ') . ($i + 1),
+                    'value' => Order::where('maintenance_company_id', $company->id)
+                        ->whereBetween('created_at', [$start, $end])
+                        ->count(),
+                    'pre_value' => Order::where('maintenance_company_id', $company->id)
+                        ->whereBetween('created_at', [$prevStart, $prevEnd])
+                        ->count(),
+                ];
+            }
         }
-        $chartData = array_reverse($chartData);
 
         // 3. Top Services
         $topServices = DB::table('orders')
@@ -208,7 +264,24 @@ class CompanyReportController extends Controller
             });
         }
 
-        // 3. Sorting Logic
+        // 3. Search by Query (Note, Order Number, Client Name, or Tech Name)
+        if ($request->filled('query')) {
+            $search = $request->get('query');
+            $query->where(function($q) use ($search) {
+                $q->where('note', 'like', "%{$search}%")
+                  ->orWhereHas('order', function($q2) use ($search) {
+                      $q2->where('order_number', 'like', "%{$search}%")
+                        ->orWhereHas('user', function($q3) use ($search) {
+                            $q3->where('name', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('technician.user', function($q4) use ($search) {
+                            $q4->where('name', 'like', "%{$search}%");
+                        });
+                  });
+            });
+        }
+
+        // 4. Sorting Logic
         $sort = $request->input('sort_by', 'newest');
         switch ($sort) {
             case 'name':
@@ -234,6 +307,13 @@ class CompanyReportController extends Controller
 
         $transactions = $query->paginate($request->input('per_page', 15));
 
+        // Add summary stats
+        $stats = [
+            'total_balance' => $user->wallet_balance ?? "0.00",
+            'total_credit' => (clone $query)->where('type', 'credit')->sum('amount'),
+            'total_debit' => (clone $query)->where('type', 'debit')->sum('amount'),
+        ];
+
         // Transform data to provide flatter structure for frontend if needed
         $transactions->getCollection()->transform(function($transaction) {
             return [
@@ -257,7 +337,8 @@ class CompanyReportController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Transactions retrieved successfully',
-            'data' => $transactions
+            'data' => $transactions,
+            'stats' => $stats
         ]);
     }
 

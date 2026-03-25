@@ -38,6 +38,25 @@ class Technician extends Model
         'districts' => 'array',
     ];
 
+    public function getDistrictsAttribute($value)
+    {
+        $ids = is_array($value) ? $value : json_decode($value, true);
+        
+        if (!$ids || !is_array($ids)) {
+            return [];
+        }
+
+        $locale = app()->getLocale();
+        return \App\Models\District::whereIn('id', $ids)
+            ->get(['id', 'name_ar', 'name_en'])
+            ->map(function ($d) use ($locale) {
+                return [
+                    'id' => (string)$d->id,
+                    'name' => $locale == 'ar' ? $d->name_ar : $d->name_en
+                ];
+            })->toArray();
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

@@ -333,8 +333,8 @@
                              x-transition:leave="transition ease-in duration-150" 
                              x-transition:leave-start="opacity-100 translate-y-0" 
                              x-transition:leave-end="opacity-0 translate-y-2" 
-                             class="fixed inset-x-2 top-[5rem] md:absolute md:inset-x-auto md:top-auto md:{{ app()->getLocale() == 'ar' ? 'left-0' : 'right-0' }}
-                              md:mt-3 md:w-[28rem] bg-white dark:bg-[#1A1A31] rounded-2xl shadow-2xl border border-slate-100 dark:border-white/10 overflow-hidden z-[60] py-2">
+                             class="fixed inset-x-4 top-10 md:absolute md:top-full md:mt-3 md:inset-x-auto w-auto md:w-[28rem] bg-white dark:bg-[#1A1A31] rounded-2xl shadow-2xl border border-slate-100 dark:border-white/10 overflow-hidden z-[60] py-2"
+                             style="{{ app()->getLocale() == 'ar' ? 'left: 10px !important; right: auto !important;' : 'right: 10px !important; left: auto !important;' }}">
                             <div class="px-5 py-3 border-b border-slate-50 dark:border-white/5 flex items-center justify-between">
                                 <h3 class="font-bold text-sm text-slate-800 dark:text-white">{{ __('Notifications') }}</h3>
                                 <div class="flex items-center gap-3">
@@ -351,7 +351,9 @@
                                     $notifTitle = $locale === 'ar' ? ($notification->title_ar ?? $notification->title_en ?? __('Notification')) : ($notification->title_en ?? $notification->title_ar ?? __('Notification'));
                                     $notifBody  = $locale === 'ar' ? ($notification->body_ar ?? $notification->body_en ?? '') : ($notification->body_en ?? $notification->body_ar ?? '');
                                 @endphp
-                                <div class="notification-item px-5 py-4 border-b border-slate-50 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all relative {{ $notification->is_read ? 'opacity-60' : '' }}">
+                                <div x-data="{ expanded: false }" 
+                                     @click="expanded = !expanded"
+                                     class="notification-item px-5 py-4 border-b border-slate-50 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all relative cursor-pointer {{ $notification->is_read ? 'opacity-60' : '' }}">
                                     <!-- Unread dot -->
                                     @if(!$notification->is_read)
                                     <span class="absolute top-4 {{ app()->getLocale() == 'ar' ? 'left-5' : 'right-5' }} w-2 h-2 rounded-full bg-primary"></span>
@@ -361,73 +363,91 @@
                                             {{ mb_strtoupper(mb_substr($notifTitle, 0, 1)) }}
                                         </div>
                                         <div class="flex-1 min-w-0">
-                                            <p class="text-xs font-bold text-slate-800 dark:text-white mb-1 leading-snug">{{ $notifTitle }}</p>
-                                            <p class="text-[11px] text-slate-500 dark:text-slate-300 leading-relaxed mb-2 break-words">{{ Str::limit($notifBody, 140) }}</p>
+                                            <div class="flex items-center justify-between mb-1">
+                                                <p class="text-xs font-bold text-slate-800 dark:text-white leading-snug">{{ $notifTitle }}</p>
+                                                <svg class="w-3 h-3 text-slate-400 transition-transform duration-300" :class="expanded ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                            </div>
+                                            
+                                            <div class="text-[11px] text-slate-500 dark:text-slate-300 leading-relaxed break-words">
+                                                <p :class="expanded ? '' : 'line-clamp-2'">{{ $notifBody }}</p>
+                                                
+                                                <div x-show="expanded" x-collapse @click.stop>
+                                                    <div class="pt-3 space-y-3">
+                                                        <!-- Detailed Fields from data -->
+                                                        @if(isset($notification->data['customer_name']))
+                                                            <div class="flex items-center gap-2 text-[10px] bg-slate-50 dark:bg-white/5 p-2 rounded-lg">
+                                                                <span class="text-slate-400 font-bold uppercase tracking-wider">{{ __('Customer') }}:</span> 
+                                                                <span class="text-slate-700 dark:text-white font-black">{{ $notification->data['customer_name'] }}</span>
+                                                            </div>
+                                                        @endif
+
+                                                        <!-- Actions for Technician Requests -->
+                                                        @if(($notification->data['type'] ?? $notification->type) == 'technician_request' && isset($notification->data['request_id']))
+                                                            @php
+                                                                $techRequest = \App\Models\TechnicianRequest::find($notification->data['request_id']);
+                                                            @endphp
+                                                            @if($techRequest && $techRequest->status === 'pending')
+                                                            <div class="flex items-center gap-2">
+                                                                <form action="{{ route('admin.technician-requests.accept', $notification->data['request_id']) }}" method="POST" class="flex-1">
+                                                                    @csrf
+                                                                    <input type="hidden" name="notification_id" value="{{ $notification->id }}">
+                                                                    <input type="hidden" name="password" value="password123">
+                                                                    <button type="submit" class="w-full py-2 bg-primary text-white rounded-xl text-[10px] font-black flex items-center justify-center gap-1 hover:brightness-110 transition-all shadow-lg shadow-primary/20">
+                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                                        {{ __('Accept') }}
+                                                                    </button>
+                                                                </form>
+                                                                <form action="{{ route('admin.technician-requests.refuse', $notification->data['request_id']) }}" method="POST" class="flex-1">
+                                                                    @csrf
+                                                                    <input type="hidden" name="notification_id" value="{{ $notification->id }}">
+                                                                    <input type="hidden" name="rejection_reason" value="Rejected via notification">
+                                                                    <button type="submit" class="w-full py-2 bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-white rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-slate-200 dark:hover:bg-white/20 transition-all">
+                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                                        {{ __('Refuse') }}
+                                                                    </button>
+                                                                </form>
+                                                            </div>
+                                                            @endif
+                                                        @endif
+
+                                                        <!-- Actions for New Orders -->
+                                                        @if(($notification->data['type'] ?? $notification->type) == 'new_order' && isset($notification->data['order_id']))
+                                                            @php
+                                                                $order = \App\Models\Order::find($notification->data['order_id']);
+                                                            @endphp
+                                                            @if($order && $order->status === 'new')
+                                                            <div class="flex items-center gap-2">
+                                                                <a href="{{ route('admin.orders.show', $order->id) }}?notification_id={{ $notification->id }}" class="flex-1 py-1.5 bg-primary text-white rounded-xl text-[10px] font-black flex items-center justify-center gap-1 hover:brightness-110 transition-all shadow-lg shadow-primary/20">
+                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                                    {{ __('Details') }}
+                                                                </a>
+                                                                <form action="{{ route('admin.orders.refuse', $order->id) }}" method="POST" class="flex-1">
+                                                                    @csrf
+                                                                    <input type="hidden" name="notification_id" value="{{ $notification->id }}">
+                                                                    <input type="hidden" name="rejection_reason" value="Rejected via notification">
+                                                                    <button type="submit" class="w-full py-1.5 bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-white rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-slate-200 dark:hover:bg-white/20 transition-all">
+                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                                        {{ __('Refuse') }}
+                                                                    </button>
+                                                                </form>
+                                                            </div>
+                                                            @endif
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
                                             
                                             <!-- Type badge + time -->
-                                            <div class="flex items-center gap-2 flex-wrap">
+                                            <div class="flex items-center gap-2 flex-wrap mt-2">
                                                 @if($notification->type)
                                                 <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-300 uppercase tracking-wide">{{ __($notification->type) }}</span>
                                                 @endif
                                                 <span class="text-[10px] text-slate-400 dark:text-slate-500">{{ $notification->created_at->diffForHumans() }}</span>
                                             </div>
-
-                                            <!-- Actions for Technician Requests -->
-                                            @if(($notification->data['type'] ?? $notification->type) == 'technician_request' && isset($notification->data['request_id']))
-                                                @php
-                                                    $techRequest = \App\Models\TechnicianRequest::find($notification->data['request_id']);
-                                                @endphp
-                                                @if($techRequest && $techRequest->status === 'pending')
-                                                <div class="flex items-center gap-2 mt-3">
-                                                    <form action="{{ route('admin.technician-requests.accept', $notification->data['request_id']) }}" method="POST" class="flex-1">
-                                                        @csrf
-                                                        <input type="hidden" name="notification_id" value="{{ $notification->id }}">
-                                                        <input type="hidden" name="password" value="password123"> {{-- Default password for auto-acceptance --}}
-                                                        <button type="submit" class="w-full py-1.5 bg-slate-900 bg-[#1A1A31] text-white dark:text-slate-900 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-black transition-all">
-                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                                            {{ __('Accept') }}
-                                                        </button>
-                                                    </form>
-                                                    <form action="{{ route('admin.technician-requests.refuse', $notification->data['request_id']) }}" method="POST" class="flex-1">
-                                                        @csrf
-                                                        <input type="hidden" name="notification_id" value="{{ $notification->id }}">
-                                                        <input type="hidden" name="rejection_reason" value="Rejected via notification">
-                                                        <button type="submit" class="w-full py-1.5 bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-white rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-slate-300 dark:hover:bg-white/20 transition-all">
-                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                            {{ __('Refuse') }}
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                                @endif
-                                            @endif
-
-                                            <!-- Actions for New Orders -->
-                                            @if(($notification->data['type'] ?? $notification->type) == 'new_order' && isset($notification->data['order_id']))
-                                                @php
-                                                    $order = \App\Models\Order::find($notification->data['order_id']);
-                                                @endphp
-                                                @if($order && $order->status === 'new')
-                                                <div class="flex items-center gap-2 mt-3">
-                                                    <a href="{{ route('admin.orders.show', $order->id) }}?notification_id={{ $notification->id }}" class="flex-1 py-1.5 bg-slate-900 bg-[#1A1A31] text-white dark:text-slate-900 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-black transition-all">
-                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                                        {{ __('Details') }}
-                                                    </a>
-                                                    <form action="{{ route('admin.orders.refuse', $order->id) }}" method="POST" class="flex-1">
-                                                        @csrf
-                                                        <input type="hidden" name="notification_id" value="{{ $notification->id }}">
-                                                        <input type="hidden" name="rejection_reason" value="Rejected via notification">
-                                                        <button type="submit" class="w-full py-1.5 bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-white rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-slate-300 dark:hover:bg-white/20 transition-all">
-                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                            {{ __('Refuse') }}
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                                @endif
-                                            @endif
                                         </div>
 
                                         <!-- ... menu -->
-                                        <div x-data="{ openMenu: false }" class="absolute top-3 {{ app()->getLocale() == 'ar' ? 'left-3' : 'right-3' }}">
+                                        <div x-data="{ openMenu: false }" class="absolute top-3 {{ app()->getLocale() == 'ar' ? 'left-3' : 'right-3' }}" @click.stop>
                                             <button @click="openMenu = !openMenu" class="text-slate-300 hover:text-slate-600 dark:text-white dark:hover:text-white transition-colors p-1">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"/></svg>
                                             </button>

@@ -1,5 +1,6 @@
 @forelse($recent_orders as $order)
-<tr class="border-b border-slate-50 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all text-xs font-bold text-slate-600 dark:text-white/70">
+<tr @click="window.location='{{ route('admin.orders.show', $order->id) }}'" 
+    class="border-b border-slate-50 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all text-xs font-bold text-slate-600 dark:text-white/70 cursor-pointer">
     <td class="py-5 px-2 opacity-50">{{ $loop->iteration }}</td>
     <td class="py-5 px-2 text-slate-400">{{ $order->order_number }}</td>
     <td class="py-5 px-2 text-slate-800 dark:text-white">{{ $order->user->name ?? '-' }}</td>
@@ -28,21 +29,18 @@
     <td class="py-5 px-2">
         @if($order->status == 'new')
         <div class="flex items-center justify-center gap-2">
-            <!-- Accept/Details Button -->
+            <!-- Accept/Assignment Modal Button -->
             @can('edit orders')
-            <a href="{{ route('admin.orders.show', $order->id) }}" class="w-8 h-8 rounded-full bg-[#1e1b4b] dark:bg-emerald-500 text-white flex items-center justify-center transition-all shadow-lg shadow-indigo-500/20 group/btn border border-white/10" title="{{ __('Accept/Details') }}">
-                <svg class="w-4 h-4 group-hover/btn:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-            </a>
+            <button @click.stop="openAcceptModal({{ $order->id }})" class="w-10 h-10 rounded-full bg-[#1e1b4b] dark:bg-emerald-500 text-white flex items-center justify-center transition-all shadow-lg shadow-indigo-500/20 group/btn border border-white/10" title="{{ __('Accept/Assign') }}">
+                <svg class="w-5 h-5 group-hover/btn:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </button>
             @endcan
             
-            <!-- Cancel/Refuse Button -->
+            <!-- Refusal Modal Button -->
             @can('delete orders')
-            <form action="{{ route('admin.orders.destroy', $order->id) }}" method="POST" class="inline" onsubmit="return confirm('{{ __('Are you sure?') }}')">
-                @csrf @method('DELETE')
-                <button type="submit" class="w-8 h-8 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center transition-all shadow-lg shadow-rose-500/30 group/btn border border-rose-400/20" title="{{ __('Refuse/Cancel') }}">
-                    <svg class="w-4 h-4 group-hover/btn:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </form>
+            <button @click.stop="openRefuseModal({{ $order->id }})" class="w-10 h-10 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center transition-all shadow-lg shadow-rose-500/30 group/btn border border-rose-400/20" title="{{ __('Refuse/Cancel') }}">
+                <svg class="w-5 h-5 group-hover/btn:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
             @endcan
 
             @if(!auth()->user()->hasPermission('edit orders') && !auth()->user()->hasPermission('delete orders'))

@@ -978,6 +978,12 @@
     "Enter service name": "أدخل اسم الخدمة",
     "Try adding a new app banner or content section": "حاول إضافة بنر جديد أو قسم محتوى",
     "No content found": "لم يتم العثور على محتوى",
-    "Content Builder": "منشئ المحتوى"
+    "Content Builder": "منشئ المحتوى",
+    "Notifications": "الإشعارات",
+    "Notification": "إشعار",
+    "Mark all as read": "تم القراءة",
+    "Mark as read": "تم القراءة",
+    "No notifications found": "لا توجد إشعارات",
+    "Read": "تم القراءة"
 
 }

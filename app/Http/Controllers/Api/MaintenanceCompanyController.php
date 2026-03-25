@@ -8,6 +8,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class MaintenanceCompanyController extends Controller
 {
@@ -246,20 +248,6 @@ class MaintenanceCompanyController extends Controller
             $tech->company_name = $locale == 'ar' ? ($tech->maintenanceCompany?->company_name_ar ?? $tech->maintenanceCompany?->name) : ($tech->maintenanceCompany?->company_name_en ?? $tech->maintenanceCompany?->name);
             $tech->specialty = $tech->category ? (__('Specialized in') . ' ' . ($locale == 'ar' ? $tech->category->name_ar : ($tech->category->name_en ?? $tech->category->name_ar))) : null;
             
-            // Format Districts with ID and Name
-            $formattedDistricts = [];
-            if ($tech->districts && is_array($tech->districts)) {
-                $districtModels = \App\Models\District::whereIn('id', $tech->districts)->get();
-                foreach ($districtModels as $dist) {
-                    $formattedDistricts[] = [
-                        'id' => $dist->id,
-                        'name' => $locale == 'ar' ? $dist->name_ar : $dist->name_en
-                    ];
-                }
-            }
-            $tech->districts = $formattedDistricts;
-            unset($tech->district_names);
-
             $tech->makeHidden(['name_ar', 'name_en', 'maintenanceCompany', 'category']);
         });
 
@@ -420,19 +408,6 @@ class MaintenanceCompanyController extends Controller
             $tech->company_name = $locale == 'ar' ? ($tech->maintenanceCompany?->company_name_ar ?? $tech->maintenanceCompany?->name) : ($tech->maintenanceCompany?->company_name_en ?? $tech->maintenanceCompany?->name);
             $tech->specialty = $tech->category ? (__('Specialized in') . ' ' . ($locale == 'ar' ? $tech->category->name_ar : ($tech->category->name_en ?? $tech->category->name_ar))) : null;
             
-            // Format Districts with ID and Name
-            $formattedDistricts = [];
-            if ($tech->districts && is_array($tech->districts)) {
-                $districtModels = \App\Models\District::whereIn('id', $tech->districts)->get();
-                foreach ($districtModels as $dist) {
-                    $formattedDistricts[] = [
-                        'id' => $dist->id,
-                        'name' => $locale == 'ar' ? $dist->name_ar : $dist->name_en
-                    ];
-                }
-            }
-            $tech->districts = $formattedDistricts;
-            
             $tech->makeHidden(['name_ar', 'name_en', 'maintenanceCompany', 'category']);
         });
 
@@ -514,20 +489,6 @@ class MaintenanceCompanyController extends Controller
                 'order_number' => $review->order->order_number ?? null,
             ];
         });
-
-        // Add district names to details
-        $formattedDistricts = [];
-        if (isset($data['districts']) && is_array($data['districts'])) {
-            $districtModels = \App\Models\District::whereIn('id', $data['districts'])->get();
-            foreach ($districtModels as $dist) {
-                $formattedDistricts[] = [
-                    'id' => $dist->id,
-                    'name' => $locale == 'ar' ? $dist->name_ar : $dist->name_en
-                ];
-            }
-        }
-        $data['districts'] = $formattedDistricts;
-        unset($data['district_names']);
 
         return response()->json([
             'status' => true,
@@ -736,19 +697,6 @@ class MaintenanceCompanyController extends Controller
         $technicians->each(function($tech) use ($locale) {
             $tech->name = $tech->name ?? $tech->name_ar ?? $tech->name_en;
             
-            // Format Districts with ID and Name
-            $formattedDistricts = [];
-            if ($tech->districts && is_array($tech->districts)) {
-                $districtModels = \App\Models\District::whereIn('id', $tech->districts)->get();
-                foreach ($districtModels as $dist) {
-                    $formattedDistricts[] = [
-                        'id' => $dist->id,
-                        'name' => $locale == 'ar' ? $dist->name_ar : $dist->name_en
-                    ];
-                }
-            }
-            $tech->districts = $formattedDistricts;
-            
             $tech->makeHidden(['name_ar', 'name_en']);
         });
 
@@ -784,7 +732,7 @@ class MaintenanceCompanyController extends Controller
         ]);
 
         $query = \App\Models\Technician::whereHas('user', function($u) {
-                $u->where('status', 'active');
+                $u->where('users.status', 'active');
             })
             ->with(['user:id,name,avatar,phone,is_online', 'service:id,name_ar,name_en', 'maintenanceCompany', 'category'])
             ->where('maintenance_company_id', $company->id);
@@ -833,22 +781,13 @@ class MaintenanceCompanyController extends Controller
 
         // Get technicians with average rating, ordered by highest rating
         $technicians = $query->withAvg('reviews', 'rating')
-            ->orderByRaw('reviews_avg_rating DESC NULLS LAST')
+            ->orderByRaw('reviews_avg_rating DESC')
             ->get();
 
         // Format response
         $locale = app()->getLocale();
         $technicians = $technicians->map(function($tech) use ($locale) {
-            $formattedDistricts = [];
-            if ($tech->districts && is_array($tech->districts)) {
-                $districtModels = \App\Models\District::whereIn('id', $tech->districts)->get();
-                foreach ($districtModels as $dist) {
-                    $formattedDistricts[] = [
-                        'id' => $dist->id,
-                        'name' => $locale == 'ar' ? $dist->name_ar : $dist->name_en
-                    ];
-                }
-            }
+            $formattedDistricts = $tech->districts ?? [];
 
             return [
                 'id' => $tech->id,

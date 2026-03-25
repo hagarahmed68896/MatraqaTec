@@ -21,17 +21,22 @@
             @forelse($notifications as $notification)
             <div class="p-6 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all group relative {{ !$notification->is_read ? 'bg-primary/5 dark:bg-white/5' : '' }}">
                 <div class="flex items-start gap-4">
+                    @php
+                        $locale = app()->getLocale();
+                        $notifTitle = $locale === 'ar' ? ($notification->title_ar ?? $notification->title_en ?? ($notification->data['title'] ?? __('Notification'))) : ($notification->title_en ?? $notification->title_ar ?? ($notification->data['title'] ?? __('Notification')));
+                        $notifBody  = $locale === 'ar' ? ($notification->body_ar ?? $notification->body_en ?? ($notification->data['body'] ?? $notification->data['message'] ?? '')) : ($notification->body_en ?? $notification->body_ar ?? ($notification->data['body'] ?? $notification->data['message'] ?? ''));
+                    @endphp
                     <!-- Icon -->
-                    <div class="w-12 h-12 rounded-[1.25rem] bg-slate-900 dark:bg-white flex items-center justify-center flex-shrink-0 text-white dark:text-slate-900">
-                        <span class="text-xl font-black">{{ strtoupper(substr($notification->data['title'] ?? 'N', 0, 1)) }}</span>
+                    <div class="w-14 h-14 rounded-2xl bg-[#1A1A31] dark:bg-white flex items-center justify-center flex-shrink-0 text-white dark:text-slate-900 shadow-lg shadow-indigo-500/10">
+                        <span class="text-xl font-black">{{ mb_strtoupper(mb_substr($notifTitle, 0, 1)) }}</span>
                     </div>
 
-                    <div class="flex-1">
-                        <div class="flex items-start justify-between mb-1">
-                            <h3 class="font-bold text-slate-800 dark:text-white text-lg">
-                                {{ $notification->data['title'] ?? __('Notification') }}
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between mb-2">
+                            <h3 class="font-black text-slate-800 dark:text-white text-lg leading-tight">
+                                {{ $notifTitle }}
                                 @if(!$notification->is_read)
-                                <span class="inline-block w-2 h-2 rounded-full bg-red-500 ml-2"></span>
+                                <span class="inline-block w-2.5 h-2.5 rounded-full bg-primary border-2 border-white dark:border-[#1A1A31] ml-2 animate-pulse"></span>
                                 @endif
                             </h3>
                             
@@ -53,30 +58,57 @@
                             </div>
                         </div>
 
-                        <p class="text-slate-500 dark:text-slate-300 mb-4 leading-relaxed">{{ $notification->data['body'] ?? $notification->data['message'] ?? '' }}</p>
+                        <p class="text-slate-500 dark:text-slate-300 mb-4 leading-relaxed text-sm font-medium">{{ $notifBody }}</p>
+
+                        <!-- Expanded Metadata -->
+                        <div class="flex flex-wrap gap-2 mb-6">
+                            @if(isset($notification->data['customer_name']))
+                                <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10">
+                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ __('Customer') }}</span>
+                                    <span class="text-[11px] font-black text-slate-700 dark:text-slate-200">{{ $notification->data['customer_name'] }}</span>
+                                </div>
+                            @endif
+                            @if(isset($notification->data['order_number']))
+                                <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10">
+                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ __('Order #') }}</span>
+                                    <span class="text-[11px] font-black text-slate-700 dark:text-slate-200">#{{ $notification->data['order_number'] }}</span>
+                                </div>
+                            @endif
+                            @if(isset($notification->data['service_name']))
+                                <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20">
+                                    <span class="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{{ __('Service') }}</span>
+                                    <span class="text-[11px] font-black text-indigo-600 dark:text-indigo-300">{{ $notification->data['service_name'] }}</span>
+                                </div>
+                            @endif
+                            @if($notification->type)
+                                <span class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest border border-slate-200/50 dark:border-white/5">
+                                    {{ __($notification->type) }}
+                                </span>
+                            @endif
+                        </div>
 
                         <!-- Actions for Technician Requests -->
-                        @if(($notification->data['type'] ?? '') == 'technician_request' && isset($notification->data['request_id']))
+                        @if(($notification->data['type'] ?? $notification->type) == 'technician_request' && isset($notification->data['request_id']))
                             @php
                                 $techRequest = \App\Models\TechnicianRequest::find($notification->data['request_id']);
                             @endphp
                             @if($techRequest && $techRequest->status === 'pending')
-                            <div class="flex items-center gap-3 mb-3">
+                            <div class="flex items-center gap-3 mb-4">
                                 <form action="{{ route('admin.technician-requests.accept', $notification->data['request_id']) }}" method="POST">
                                     @csrf
                                     <input type="hidden" name="notification_id" value="{{ $notification->id }}">
                                     <input type="hidden" name="password" value="password123">
-                                    <button type="submit" class="flex items-center gap-2 px-6 py-2 rounded-xl bg-slate-800 dark:bg-white text-white dark:text-slate-800 font-bold hover:opacity-90 transition-all">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        {{ __('Accept') }}
+                                    <button type="submit" class="h-10 px-6 rounded-xl bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] font-black text-xs flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all shadow-lg hover:shadow-indigo-500/20">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                        {{ __('Accept Request') }}
                                     </button>
                                 </form>
                                 <form action="{{ route('admin.technician-requests.refuse', $notification->data['request_id']) }}" method="POST">
                                     @csrf
                                     <input type="hidden" name="notification_id" value="{{ $notification->id }}">
-                                    <input type="hidden" name="rejection_reason" value="Rejected via notification">
-                                    <button type="submit" class="flex items-center gap-2 px-6 py-2 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-white font-bold hover:bg-slate-200 dark:hover:bg-white/20 transition-all">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    <input type="hidden" name="rejection_reason" value="Rejected via notifications list">
+                                    <button type="submit" class="h-10 px-6 rounded-xl bg-rose-500/10 text-rose-500 font-black text-xs flex items-center gap-2 hover:bg-rose-500 hover:text-white transition-all">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                                         {{ __('Refuse') }}
                                     </button>
                                 </form>
@@ -85,21 +117,21 @@
                         @endif
 
                         <!-- Actions for New Orders -->
-                        @if(($notification->data['type'] ?? '') == 'new_order' && isset($notification->data['order_id']))
+                        @if(($notification->data['type'] ?? $notification->type) == 'new_order' && isset($notification->data['order_id']))
                             @php
                                 $order = \App\Models\Order::find($notification->data['order_id']);
                             @endphp
                             @if($order && $order->status === 'new')
-                            <div class="flex items-center gap-3 mb-3">
-                                <a href="{{ route('admin.orders.show', $order->id) }}?notification_id={{ $notification->id }}" class="flex items-center gap-2 px-6 py-2 rounded-xl bg-slate-800 dark:bg-white text-white dark:text-slate-800 font-bold hover:opacity-90 transition-all">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                    {{ __('Order Details') }}
+                            <div class="flex items-center gap-3 mb-4">
+                                <a href="{{ route('admin.orders.show', $order->id) }}?notification_id={{ $notification->id }}" class="h-10 px-6 rounded-xl bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] font-black text-xs flex items-center gap-2 hover:scale-[1.02] active:scale-95 transition-all shadow-lg hover:shadow-indigo-500/20">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    {{ __('View Order Details') }}
                                 </a>
                                 <form action="{{ route('admin.orders.refuse', $order->id) }}" method="POST">
                                     @csrf
                                     <input type="hidden" name="notification_id" value="{{ $notification->id }}">
-                                    <input type="hidden" name="rejection_reason" value="Rejected via notification">
-                                    <button type="submit" class="flex items-center gap-2 px-6 py-2 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-white font-bold hover:bg-slate-200 dark:hover:bg-white/20 transition-all">
+                                    <input type="hidden" name="rejection_reason" value="Rejected via notifications list">
+                                    <button type="submit" class="h-10 px-6 rounded-xl bg-rose-500/10 text-rose-500 font-black text-xs flex items-center gap-2 hover:bg-rose-500 hover:text-white transition-all">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                                         {{ __('Refuse Order') }}
                                     </button>
@@ -108,7 +140,12 @@
                             @endif
                         @endif
 
-                        <span class="text-xs font-bold text-slate-400 dark:text-slate-500">{{ $notification->created_at->diffForHumans() }}</span>
+                        <div class="flex items-center justify-between mt-auto pt-2 border-t border-slate-50 dark:border-white/5">
+                            <span class="text-xs font-bold text-slate-400 dark:text-slate-500">{{ $notification->created_at->diffForHumans() }}</span>
+                            @if($notification->is_read)
+                                <span class="text-[10px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-widest">{{ __('Read') }}</span>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
@@ -130,7 +167,7 @@
     </div>
 </div>
 
-@push('scripts')
+@section('scripts')
 <script>
     document.getElementById('markAllReadBtn').addEventListener('click', async () => {
         try {
@@ -166,5 +203,5 @@
         }
     }
 </script>
-@endpush
+@endsection
 @endsection

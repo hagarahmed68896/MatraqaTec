@@ -309,7 +309,9 @@ class OrderController extends Controller
         if ($availableTech) {
             $data['technician_id'] = $availableTech->id;
             $data['maintenance_company_id'] = $availableTech->maintenance_company_id;
-            $data['status'] = 'scheduled';
+            // If technician belongs to a company, order stays 'new' so company can review/accept.
+            // If independent technician, it becomes 'scheduled' immediately.
+            $data['status'] = $availableTech->maintenance_company_id ? 'new' : 'scheduled';
             $data['assigned_at'] = now();
         }
 
@@ -332,12 +334,23 @@ class OrderController extends Controller
 
         // Trigger Notification for Tech if assigned, else Admin/Company
         if ($availableTech) {
-            $this->sendNotification($availableTech->user_id, [
+            $notificationTargetId = $availableTech->user_id;
+            
+            // If it belongs to a company, notify the company user instead of the tech directly (or in addition to)
+            // Based on user request, the company should handle "New" orders.
+            if ($availableTech->maintenance_company_id) {
+                $company = \App\Models\MaintenanceCompany::find($availableTech->maintenance_company_id);
+                if ($company && $company->user_id) {
+                    $notificationTargetId = $company->user_id;
+                }
+            }
+
+            $this->sendNotification($notificationTargetId, [
                 'type' => \App\Models\Notification::TYPE_NEW_ORDER ?? 'new_order',
                 'title_ar' => 'مهمة جديدة',
-                'title_en' => 'New  Task',
-                'body_ar' => 'تم تعيين مهمة جديدة لك، يرجى القبول أو الرفض خلال 15 دقيقة',
-                'body_en' => 'A new task has been automatically assigned to you. Please accept or reject within 15 minutes',
+                'title_en' => 'New Task',
+                'body_ar' => 'تم استلام طلب جديد، يرجى مراجعته وقبوله',
+                'body_en' => 'A new task has been received. Please review and accept it.',
                 'data' => ['order_id' => $order->id]
             ]);
         } else {
