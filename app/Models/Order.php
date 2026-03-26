@@ -104,7 +104,7 @@ class Order extends Model
     public function getStatusLabelAttribute()
     {
         $mainLabels = [
-            'new' => 'قيد المراجعة',
+            'new' => 'جديد',
             'accepted' => 'مقبول',
             'scheduled' => 'مجدولة',
             'in_progress' => 'قيد التنفيذ',

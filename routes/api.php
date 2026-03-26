@@ -106,6 +106,7 @@ Route::post('/technician-requests', [TechnicianRequestController::class, 'store'
 // --- Protected Routes (User Scope) ---
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::delete('/account', [AuthController::class, 'deleteAccount']);
     Route::get('/profile', [AuthController::class, 'profile']); // Generic profile info
     Route::get('/home', [\App\Http\Controllers\Api\HomeController::class, 'index']);
 

@@ -374,6 +374,38 @@ class AuthController extends Controller
         \Log::info("OTP for user {$user->phone}: {$otp}");
     }
 
+    public function deleteAccount(Request $request)
+    {
+        $user = $request->user();
+
+        // Revoke all tokens
+        $user->tokens()->delete();
+
+        // Delete type-specific profile
+        switch ($user->type) {
+            case 'individual':
+                $user->individualCustomer?->delete();
+                break;
+            case 'corporate_customer':
+                $user->corporateCustomer?->delete();
+                break;
+            case 'maintenance_company':
+                $user->maintenanceCompany?->delete();
+                break;
+            case 'technician':
+                $user->technician?->delete();
+                break;
+        }
+
+        // Delete the user
+        $user->delete();
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'تم حذف الحساب بنجاح',
+        ]);
+    }
+
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();

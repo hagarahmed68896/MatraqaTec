@@ -245,7 +245,7 @@ class CompanyReportController extends Controller
             return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        $query = WalletTransaction::where('user_id', $user->id)
+        $query = WalletTransaction::where('wallet_transactions.user_id', $user->id)
             ->with(['order.service', 'order.user', 'order.technician.user']);
 
         // 1. Filter by Categories (Multiple)
@@ -268,7 +268,7 @@ class CompanyReportController extends Controller
         if ($request->filled('query')) {
             $search = $request->get('query');
             $query->where(function($q) use ($search) {
-                $q->where('note', 'like', "%{$search}%")
+                $q->where('wallet_transactions.note', 'like', "%{$search}%")
                   ->orWhereHas('order', function($q2) use ($search) {
                       $q2->where('order_number', 'like', "%{$search}%")
                         ->orWhereHas('user', function($q3) use ($search) {
@@ -291,17 +291,17 @@ class CompanyReportController extends Controller
                     ->select('wallet_transactions.*'); // Avoid column collision
                 break;
             case 'oldest':
-                $query->orderBy('created_at', 'asc');
+                $query->orderBy('wallet_transactions.created_at', 'asc');
                 break;
             case 'highest_price':
-                $query->orderBy('amount', 'desc');
+                $query->orderBy('wallet_transactions.amount', 'desc');
                 break;
             case 'lowest_price':
-                $query->orderBy('amount', 'asc');
+                $query->orderBy('wallet_transactions.amount', 'asc');
                 break;
             case 'newest':
             default:
-                $query->orderBy('created_at', 'desc');
+                $query->orderBy('wallet_transactions.created_at', 'desc');
                 break;
         }
 
