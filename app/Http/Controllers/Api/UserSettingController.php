@@ -15,14 +15,20 @@ class UserSettingController extends Controller
     {
         $user = $request->user();
         
+        $data = [
+            'notification_enabled' => (bool) $user->notification_enabled,
+            'night_mode' => (bool) $user->night_mode,
+            'language' => $user->language ?? 'ar',
+        ];
+
+        if ($user->type === 'technician') {
+            $data['is_online'] = (bool) $user->is_online;
+        }
+
         return response()->json([
             'status' => true,
             'message' => 'User settings retrieved',
-            'data' => [
-                'notification_enabled' => (bool) $user->notification_enabled,
-                'night_mode' => (bool) $user->night_mode,
-                'language' => $user->language ?? 'ar',
-            ]
+            'data' => $data
         ]);
     }
 
@@ -37,6 +43,7 @@ class UserSettingController extends Controller
             'notification_enabled' => 'nullable|boolean',
             'night_mode'           => 'nullable|boolean',
             'language'             => 'nullable|string|in:ar,en',
+            'is_online'            => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -58,16 +65,26 @@ class UserSettingController extends Controller
             $user->language = $request->language;
         }
 
+        if ($request->has('is_online')) {
+            $user->is_online = $request->is_online;
+        }
+
         $user->save();
+
+        $data = [
+            'notification_enabled' => (bool) $user->notification_enabled,
+            'night_mode' => (bool) $user->night_mode,
+            'language' => $user->language,
+        ];
+
+        if ($user->type === 'technician') {
+            $data['is_online'] = (bool) $user->is_online;
+        }
 
         return response()->json([
             'status' => true,
             'message' => 'Settings updated successfully',
-            'data' => [
-                'notification_enabled' => (bool) $user->notification_enabled,
-                'night_mode' => (bool) $user->night_mode,
-                'language' => $user->language,
-            ]
+            'data' => $data
         ]);
     }
 }

@@ -293,22 +293,46 @@ class ContractController extends Controller
         $query = Contract::query();
 
         if ($user->type === 'maintenance_company') {
-            $query->where('maintenance_company_id', $user->maintenanceCompany?->id);
+            $company = $user->maintenanceCompany;
+            $query->where('maintenance_company_id', $company->id ?? 0);
         } elseif ($user->type === 'corporate_customer') {
-            $query->where(function($q) use ($user) {
-                $q->where('corporate_customer_id', $user->corporateCustomer?->id)
+            $corporate = $user->corporateCustomer;
+            $query->where(function($q) use ($corporate, $user) {
+                $q->where('corporate_customer_id', $corporate?->id ?? 0)
                   ->orWhere('user_id', $user->id);
             });
         } elseif ($user->type === 'technician') {
-            $query->where('maintenance_company_id', $user->technician?->maintenance_company_id);
+            $technician = $user->technician;
+            $query->where('maintenance_company_id', $technician->maintenance_company_id ?? 0);
         } else {
             $query->where('user_id', $user->id);
         }
 
         $contract = $query->latest()->first();
 
+        // If no contract exists, create a draft placeholder to allow data syncing
         if (!$contract) {
-            return response()->json(['status' => false, 'message' => 'No contract found to update'], 404);
+            $contractData = [
+                'contract_number' => 'CNT-DRFT-' . strtoupper(uniqid()),
+                'project_value'   => 0, // Mandatory field
+                'status'          => 'active',
+                'user_id'         => $user->id
+            ];
+
+            if ($user->type === 'maintenance_company') {
+                $contractData['maintenance_company_id'] = $user->maintenanceCompany?->id;
+            } elseif ($user->type === 'corporate_customer') {
+                $contractData['corporate_customer_id'] = $user->corporateCustomer?->id;
+            } elseif ($user->type === 'technician') {
+                $contractData['maintenance_company_id'] = $user->technician?->maintenance_company_id;
+            }
+
+            try {
+                $contract = Contract::create($contractData);
+            } catch (\Exception $e) {
+                \Log::error('Failed to auto-create contract: ' . $e->getMessage());
+                return response()->json(['status' => false, 'message' => 'No contract found and initialization failed'], 404);
+            }
         }
 
         return $this->update($request, $contract->id);

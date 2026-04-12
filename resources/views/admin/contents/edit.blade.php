@@ -35,7 +35,7 @@
         });
 @endphp
 
-<div class="max-w-4xl mx-auto pb-20" dir="rtl" x-data="contentManager({{ json_encode($initialItems) }}, {{ $item->is_visible ? 1 : 0 }})">
+<div class="max-w-4xl mx-auto pb-10" dir="rtl" x-data="contentManager({{ json_encode($initialItems) }}, {{ $item->is_visible ? 1 : 0 }})">
     {{-- Header --}}
     <div class="flex items-center gap-4 mb-10">
         <a href="{{ route('admin.contents.index') }}" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white dark:bg-[#1A1A31] text-[#1A1A31] dark:text-white shadow-sm border border-slate-100 dark:border-white/5 hover:scale-105 transition-all">
@@ -218,7 +218,7 @@
         </div>
 
         {{-- Final Actions --}}
-        <div class="flex items-center justify-end gap-4 p-4 bg-white/80 dark:bg-[#1A1A31]/80 backdrop-blur-xl rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-2xl sticky bottom-4 z-50">
+        <div class="flex items-center justify-end gap-4 p-8 bg-white dark:bg-[#1A1A31] rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-sm mt-8">
             <a href="{{ route('admin.contents.index') }}" class="px-8 py-5 bg-gray-200 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-2xl font-black transition-all hover:bg-red-50 hover:text-red-500">
                 {{ __('Cancel') }}
             </a>

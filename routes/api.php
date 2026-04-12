@@ -94,12 +94,6 @@ Route::apiResource('cities', CityController::class)->only(['index', 'show']);
 Route::apiResource('districts', DistrictController::class)->only(['index', 'show']);
 Route::apiResource('services', ServiceController::class)->only(['index', 'show']);
 Route::apiResource('contents', ContentController::class)->only(['index', 'show']);
-Route::apiResource('terms', TermController::class)->only(['index', 'show']);
-Route::apiResource('privacy-policies', PrivacyPolicyController::class)->only(['index', 'show']);
-Route::apiResource('social-links', SocialLinkController::class)->only(['index', 'show']);
-Route::apiResource('faqs', FaqController::class)->only(['index', 'show']);
-Route::get('support', [SupportController::class, 'index']);
-Route::apiResource('reviews', ReviewController::class)->only(['index', 'show']); // Often public
 
 Route::post('/technician-requests', [TechnicianRequestController::class, 'store']); // Public Apply
 
@@ -110,15 +104,33 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [AuthController::class, 'profile']); // Generic profile info
     Route::get('/home', [\App\Http\Controllers\Api\HomeController::class, 'index']);
 
+    // Informational Resources (Smart filtering via SupportController)
+    Route::get('terms', [SupportController::class, 'terms']);
+    Route::get('privacy-policies', [SupportController::class, 'privacy']);
+    Route::get('faqs', [SupportController::class, 'faqs']);
+    Route::get('support', [SupportController::class, 'index']);
+    Route::apiResource('social-links', SocialLinkController::class)->only(['index', 'show']);
+    
+    Route::get('contact_us', [SupportController::class, 'index']); // Alias
+    Route::get('privacy_terms', [SupportController::class, 'privacy']); // Alias for app
+    
+    Route::apiResource('reviews', ReviewController::class)->only(['index', 'show']); // Often public
+
     // User Profile Management (Self)
     Route::prefix('profile')->group(function () {
         // Consolidated Client Profile (For Mobile App)
         Route::get('/', [\App\Http\Controllers\Api\ClientProfileController::class, 'show']);
+        Route::post('/', [\App\Http\Controllers\Api\ClientProfileController::class, 'update']); // Alias for POST /api/profile to allow updates
         Route::post('/update', [\App\Http\Controllers\Api\ClientProfileController::class, 'update']);
         Route::post('/change-password', [\App\Http\Controllers\Api\ClientProfileController::class, 'changePassword']);
         Route::post('/update-location', [\App\Http\Controllers\Api\ClientProfileController::class, 'updateLocation']);
         Route::get('/settings', [UserSettingController::class, 'index']);
         Route::post('/settings', [UserSettingController::class, 'update']);
+        
+        // Informational Aliases (Protected to identify user type)
+        Route::get('/contact_us', [SupportController::class, 'index']); 
+        Route::get('/privacy_terms', [SupportController::class, 'privacy']); 
+        Route::get('/my_inquiries', [ComplaintController::class, 'index']);
 
         // Legacy / Specific Controller Routes (Keep if needed for specific granular updates)
         Route::get('individual-customer', [IndividualCustomerController::class, 'show']);
@@ -141,7 +153,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('orders/{id}/send-invoice', [OrderController::class, 'sendInvoiceToClient']);
     Route::post('orders/{id}/save-completion-photos', [OrderController::class, 'saveCompletionPhotos']);
     Route::post('orders/{id}/finish-work', [OrderController::class, 'finishWork']); // تم الإنجاز
+    Route::post('orders/{id}/attachments', [OrderController::class, 'addAttachment']);
+    Route::delete('orders/{id}/attachments/{attachment_id}', [OrderController::class, 'deleteAttachment']);
     Route::post('orders/{id}/reschedule', [OrderController::class, 'reschedule']);
+    Route::post('orders/{id}/respond-reschedule', [OrderController::class, 'respondToReschedule']);
     Route::post('orders/{id}/cancel', [OrderController::class, 'cancel']);
     Route::post('orders/{id}/resend', [OrderController::class, 'resend']);
     Route::get('orders/{id}/invoice', [OrderController::class, 'getInvoice']);
@@ -264,16 +279,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('privacy-policy', [SupportController::class, 'privacy']);
     });
 
-    // Tracking
-    Route::post('tracking/update', [TrackingController::class, 'updateLocation']);
-    Route::get('tracking/{technician_id}', [TrackingController::class, 'getLocation']);
-
-    // Search History
-    Route::delete('search-history/{id}', [ServiceController::class, 'destroySearchHistory']);
-    Route::delete('search-history', [ServiceController::class, 'clearSearchHistory']);
     // Search History & Favorites
     Route::post('services/toggle-favorite', [ServiceController::class, 'toggleFavorite']);
     Route::delete('search-history/{id}', [ServiceController::class, 'destroySearchHistory']);
+    Route::delete('search-history', [ServiceController::class, 'clearSearchHistory']);
+    
+    // My Inquiries Alias
+    Route::get('my_inquiries', [ComplaintController::class, 'index']);
 
     // --- ADMIN Routes ---
     Route::prefix('admin')->group(function () {

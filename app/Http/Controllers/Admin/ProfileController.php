@@ -43,16 +43,23 @@ class ProfileController extends Controller
 
         // Handle Avatar Upload
         if ($request->hasFile('avatar')) {
-            // Delete old avatar if exists
-            if ($user->avatar && File::exists(public_path($user->avatar))) {
-                File::delete(public_path($user->avatar));
-            }
+             if ($user->avatar) {
+                 if (str_starts_with($user->avatar, 'uploads/')) {
+                     if (file_exists(public_path($user->avatar))) {
+                         unlink(public_path($user->avatar));
+                     }
+                 } else {
+                     if (file_exists(public_path($user->avatar))) {
+                         unlink(public_path($user->avatar));
+                     }
+                 }
+             }
             
             $file = $request->file('avatar');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('avatars'), $filename);
+            $file->move(public_path('uploads/avatars'), $filename);
             
-            $user->avatar = 'avatars/' . $filename;
+            $user->avatar = 'uploads/avatars/' . $filename;
         }
 
         $user->save();

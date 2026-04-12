@@ -127,8 +127,47 @@ class NotificationController extends Controller
             $data['user_id'] = $user->id;
         }
 
-        Notification::create($data);
-        return redirect()->route('admin.broadcast-notifications.index')->with('success', __('Notification created successfully.'));
+        $notification = Notification::create($data);
+
+        // Send FCM if status is 'sent'
+        if ($notification->status === 'sent') {
+            $fcmService = app(\App\Services\FcmService::class);
+            $details = [
+                'type' => $notification->type,
+                'title_ar' => $notification->title_ar,
+                'title_en' => $notification->title_en,
+                'body_ar' => $notification->body_ar,
+                'body_en' => $notification->body_en,
+                'data' => $notification->data ?? [],
+            ];
+
+            if ($notification->target_audience === 'individual_user' && $notification->user_id) {
+                $fcmService->sendToUser($notification->user, $details, false);
+            } else {
+                $query = \App\Models\User::whereNotNull('fcm_token');
+                
+                switch ($notification->target_audience) {
+                    case 'clients':
+                        $query->whereIn('type', ['individual', 'corporate_customer']);
+                        break;
+                    case 'technicians':
+                        $query->where('type', 'technician');
+                        break;
+                    case 'companies':
+                        $query->where('type', 'maintenance_company');
+                        break;
+                    // 'all' doesn't need extra filter
+                }
+                
+                $query->chunk(100, function ($users) use ($fcmService, $details) {
+                    foreach ($users as $user) {
+                        $fcmService->sendToUser($user, $details, false);
+                    }
+                });
+            }
+        }
+
+        return redirect()->route('admin.broadcast-notifications.index')->with('success', __('Notification created successfully and sending process initiated.'));
     }
 
     public function show($id)

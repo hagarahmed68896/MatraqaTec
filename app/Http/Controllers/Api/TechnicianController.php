@@ -15,23 +15,23 @@ class TechnicianController extends Controller
     {
         $user = $request->user();
         if ($user->type !== 'technician') {
-             return response()->json(['status' => false, 'message' => 'Unauthorized access'], 403);
+             return response()->json(['status' => false, 'message' => __('Unauthorized access')], 403);
         }
 
         $technician = Technician::with('user', 'service', 'maintenanceCompany')->where('user_id', $user->id)->first();
-        if (!$technician) return response()->json(['status' => false, 'message' => 'Technician not found'], 404);
-        return response()->json(['status' => true, 'message' => 'Technician retrieved', 'data' => $technician]);
+        if (!$technician) return response()->json(['status' => false, 'message' => __('Technician not found')], 404);
+        return response()->json(['status' => true, 'message' => __('Technician retrieved'), 'data' => $technician]);
     }
 
     public function update(Request $request)
     {
         $user = $request->user();
         if ($user->type !== 'technician') {
-             return response()->json(['status' => false, 'message' => 'Unauthorized access'], 403);
+             return response()->json(['status' => false, 'message' => __('Unauthorized access')], 403);
         }
 
         $technician = Technician::where('user_id', $user->id)->first();
-        if (!$technician) return response()->json(['status' => false, 'message' => 'Technician not found'], 404);
+        if (!$technician) return response()->json(['status' => false, 'message' => __('Technician not found')], 404);
         
         $user = $technician->user;
         if ($user) {
@@ -44,6 +44,6 @@ class TechnicianController extends Controller
 
         $technician->update($request->except(['name', 'email', 'password', 'phone', 'status', 'type', 'user_id', 'id']));
         
-        return response()->json(['status' => true, 'message' => 'Technician updated', 'data' => $technician->load('user')]);
+        return response()->json(['status' => true, 'message' => __('Technician updated'), 'data' => $technician->load('user')]);
     }
 }

@@ -32,6 +32,7 @@
                 selectedTechId: null,
                 selectedCompanyId: null,
                 rejectionReason: '',
+                showAll: false,
 
                 async openAcceptModal() {
                     this.showAcceptModal = true;
@@ -39,6 +40,7 @@
                     this.selectedCompanyId = null;
                     this.modalTab = 'platform';
                     this.viewMode = 'list';
+                    this.showAll = false;
                     await this.fetchTechnicians();
                 },
 
@@ -456,7 +458,7 @@
                         @if(Str::startsWith($item->client_signature, 'data:image'))
                             <img src="{{ $item->client_signature }}" alt="Signature" class="max-h-full max-w-full object-contain">
                         @else
-                            <img src="{{ Storage::url($item->client_signature) }}" alt="Signature" class="max-h-full max-w-full object-contain">
+                            <img src="{{ asset($item->client_signature) }}" alt="Signature" class="max-h-full max-w-full object-contain">
                         @endif
                     @else
                         <span class="text-xs font-bold text-slate-300 uppercase tracking-widest">{{ __('Not Signed') }}</span>

@@ -84,12 +84,12 @@ class ContractController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'contract_number'        => 'required|string|unique:contracts',
+            'contract_number'        => 'nullable|string|unique:contracts',
             'maintenance_company_id' => 'required|exists:maintenance_companies,id',
             'corporate_customer_id'  => 'nullable|exists:corporate_customers,id',
             'project_value'          => 'required|numeric|min:0',
-            'start_date'             => 'required|date',
-            'end_date'               => 'required|date|after:start_date',
+            'start_date'             => 'nullable|date',
+            'end_date'               => 'nullable|date|after:start_date',
             'status'                 => 'required|in:active,expired,completed',
             'contract_file'          => 'nullable|file|mimes:pdf|max:5120',
             'contact_numbers'        => 'nullable|array',
@@ -101,6 +101,11 @@ class ContractController extends Controller
         }
 
         $data = $request->except(['contract_file', 'contact_numbers']);
+
+        // Auto-generate contract number if not provided
+        if (empty($data['contract_number'])) {
+            $data['contract_number'] = 'CNT-' . strtoupper(uniqid());
+        }
 
         // Handle file upload
         if ($request->hasFile('contract_file')) {
@@ -142,12 +147,12 @@ class ContractController extends Controller
         $contract = Contract::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'contract_number'        => 'required|string|unique:contracts,contract_number,' . $id,
+            'contract_number'        => 'nullable|string|unique:contracts,contract_number,' . $id,
             'maintenance_company_id' => 'required|exists:maintenance_companies,id',
             'corporate_customer_id'  => 'nullable|exists:corporate_customers,id',
             'project_value'          => 'required|numeric|min:0',
-            'start_date'             => 'required|date',
-            'end_date'               => 'required|date|after:start_date',
+            'start_date'             => 'nullable|date',
+            'end_date'               => 'nullable|date|after:start_date',
             'status'                 => 'required|in:active,expired,completed',
             'contract_file'          => 'nullable|file|mimes:pdf|max:5120',
             'contact_numbers'        => 'nullable|array',
@@ -159,6 +164,11 @@ class ContractController extends Controller
         }
 
         $data = $request->except(['contract_file', 'contact_numbers', 'delete_contract_file']);
+
+        // Keep existing contract number if not submitted
+        if (empty($data['contract_number'])) {
+            $data['contract_number'] = $contract->contract_number;
+        }
 
         // Handle file deletion request
         if ($request->input('delete_contract_file') == '1' && $contract->contract_file) {

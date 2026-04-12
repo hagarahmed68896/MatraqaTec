@@ -207,7 +207,9 @@ class CompanyReportController extends Controller
 
         // Format avatar URLs properly
         $topTechnicians->transform(function ($tech) {
-            $tech->avatar = $tech->avatar ? asset('storage/' . $tech->avatar) : null;
+            if ($tech->avatar) {
+                $tech->avatar = str_starts_with($tech->avatar, 'uploads/') ? asset($tech->avatar) : asset('storage/' . $tech->avatar);
+            }
             $tech->average_rating = $tech->average_rating ?? 0;
             return $tech;
         });

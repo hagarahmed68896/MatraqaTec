@@ -13,7 +13,8 @@ class ComplaintController extends Controller
     public function index(Request $request)
     {
         $query = Complaint::with(['order', 'actions'])
-            ->where('user_id', auth()->id());
+            ->where('user_id', auth()->id())
+            ->has('actions'); // Only show complaints that have been replied to by admin
 
         // Search by ticket number or order ID
         if ($request->filled('search')) {
@@ -44,7 +45,7 @@ class ComplaintController extends Controller
                 return $complaint;
             });
             
-        return response()->json(['status' => true, 'message' => 'Inquiries retrieved', 'data' => $complaints]);
+        return response()->json(['status' => true, 'message' => __('Complaints retrieved'), 'data' => $complaints]);
     }
 
     public function store(Request $request)
@@ -87,7 +88,7 @@ class ComplaintController extends Controller
             'status' => 'pending',
         ]);
 
-        return response()->json(['status' => true, 'message' => 'Ticket created successfully', 'data' => $complaint]);
+        return response()->json(['status' => true, 'message' => __('Ticket created successfully'), 'data' => $complaint]);
     }
 
     public function show($id)
@@ -95,9 +96,9 @@ class ComplaintController extends Controller
         $complaint = Complaint::where('user_id', auth()->id())->find($id);
 
         if (!$complaint) {
-            return response()->json(['status' => false, 'message' => 'Ticket not found'], 404);
+            return response()->json(['status' => false, 'message' => __('Ticket not found')], 404);
         }
 
-        return response()->json(['status' => true, 'message' => 'Ticket details retrieved', 'data' => $complaint]);
+        return response()->json(['status' => true, 'message' => __('Ticket details retrieved'), 'data' => $complaint]);
     }
 }

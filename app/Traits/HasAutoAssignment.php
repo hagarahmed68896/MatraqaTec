@@ -50,7 +50,8 @@ trait HasAutoAssignment
         return Technician::where('availability_status', 'available') 
             ->whereHas('user', function($q) use ($cityId) {
                 $q->where('city_id', $cityId)
-                  ->where('status', 'active');
+                  ->where('status', 'active')
+                  ->where('is_online', true);
             })
             ->where(function($q) use ($serviceId, $categoryId) {
                 $q->where('service_id', $serviceId)
@@ -79,7 +80,9 @@ trait HasAutoAssignment
         $categoryId = $service->parent_id ?? $service->id;
 
         $hasAnyTech = Technician::whereHas('user', function($q) use ($cityId) {
-                $q->where('city_id', $cityId)->where('status', 'active');
+                $q->where('city_id', $cityId)
+                  ->where('status', 'active')
+                  ->where('is_online', true);
             })
             ->where(function($q) use ($serviceId, $categoryId) {
                 $q->where('service_id', $serviceId)

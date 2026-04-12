@@ -14,18 +14,18 @@ class AppointmentController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+        if (!$user) return response()->json(['status' => false, 'message' => __('Unauthorized')], 401);
 
         $query = Appointment::with(['order.service.parent', 'technician.user']);
         
         // 1. Ownership & Security
         if ($user->type === 'technician') {
             $technician = \App\Models\Technician::where('user_id', $user->id)->first();
-            if (!$technician) return response()->json(['status' => true, 'message' => 'No appointments', 'data' => []]);
+            if (!$technician) return response()->json(['status' => true, 'message' => __('No appointments'), 'data' => []]);
             $query->where('technician_id', $technician->id);
         } elseif ($user->type === 'maintenance_company') {
             $company = $user->maintenanceCompany;
-            if (!$company) return response()->json(['status' => true, 'message' => 'No appointments', 'data' => []]);
+            if (!$company) return response()->json(['status' => true, 'message' => __('No appointments'), 'data' => []]);
             $query->whereHas('technician', function($q) use ($company) {
                 $q->where('maintenance_company_id', $company->id);
             });
@@ -47,11 +47,18 @@ class AppointmentController extends Controller
                 $query->whereHas('order', function($o) {
                     $o->where('status', 'in_progress')->where('sub_status', 'arrived');
                 });
+            } elseif (in_array($status, ['completed', 'cancelled'])) {
+                // completed/cancelled: check the linked order's status
+                $query->whereHas('order', function($o) use ($status) {
+                    $o->where('status', $status);
+                });
             } else {
                 $query->where('status', $status);
             }
         } elseif ($request->tab === 'previous') {
-            $query->whereIn('status', ['completed', 'cancelled']);
+            $query->whereHas('order', function($o) {
+                $o->whereIn('status', ['completed', 'cancelled']);
+            });
         } else {
             $query->whereIn('status', ['scheduled', 'in_progress']);
         }
@@ -114,7 +121,7 @@ class AppointmentController extends Controller
         
         return response()->json([
             'status' => true, 
-            'message' => 'Appointments retrieved', 
+            'message' => __('Appointments retrieved'), 
             'data' => $appointments
         ]);
     }
@@ -132,7 +139,7 @@ class AppointmentController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'message' => 'Validation Error',
+                'message' => __('Validation Error'),
                 'errors' => $validator->errors()
             ], 422);
         }
@@ -141,7 +148,7 @@ class AppointmentController extends Controller
         
         // Ensure user owns the order
         if ($order->user_id !== auth()->id() && auth()->user()->type !== 'admin') {
-            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+            return response()->json(['status' => false, 'message' => __('Unauthorized')], 403);
         }
 
         $appointmentDate = \Carbon\Carbon::parse($request->appointment_date);
@@ -156,9 +163,9 @@ class AppointmentController extends Controller
                 $suggestedTime = $this->getSuggestedTime($order->service_id, $order->city_id, $appointmentDate);
                 return response()->json([
                     'status' => false,
-                    'message' => 'The selected time is currently fully booked.',
+                    'message' => __('The selected time is currently fully booked.'),
                     'suggested_time' => $suggestedTime->toDateTimeString(),
-                    'suggestion_message' => 'لا يتوفر فني في الموعد الذي اخترته، ولكن نقترح عليك أقرب موعد متاح.'
+                    'suggestion_message' => __('لا يتوفر فني في الموعد الذي اخترته، ولكن نقترح عليك أقرب موعد متاح.')
                 ], 422);
             }
         }
@@ -191,7 +198,7 @@ class AppointmentController extends Controller
             }
         }
 
-        return response()->json(['status' => true, 'message' => $technicianId ? 'Appointment scheduled and technician assigned' : 'Appointment scheduled', 'data' => $appointment]);
+        return response()->json(['status' => true, 'message' => $technicianId ? __('Appointment scheduled and technician assigned') : __('Appointment scheduled'), 'data' => $appointment]);
     }
 
     public function show($id)
@@ -206,14 +213,14 @@ class AppointmentController extends Controller
             if ($user->type === 'technician') {
                 $tech = $user->technician;
                 if (!$tech || $appointment->technician_id !== $tech->id) {
-                    return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+                    return response()->json(['status' => false, 'message' => __('Unauthorized')], 403);
                 }
             } else {
-                return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+                return response()->json(['status' => false, 'message' => __('Unauthorized')], 403);
             }
         }
 
-        return response()->json(['status' => true, 'message' => 'Appointment retrieved', 'data' => $appointment]);
+        return response()->json(['status' => true, 'message' => __('Appointment retrieved'), 'data' => $appointment]);
     }
 
     public function update(Request $request, $id)
@@ -227,7 +234,7 @@ class AppointmentController extends Controller
         }
 
         $appointment->update($request->all());
-        return response()->json(['status' => true, 'message' => 'Appointment updated', 'data' => $appointment]);
+        return response()->json(['status' => true, 'message' => __('Appointment updated'), 'data' => $appointment]);
     }
 
     public function destroy($id)
@@ -241,25 +248,36 @@ class AppointmentController extends Controller
         }
 
         $appointment->delete();
-        return response()->json(['status' => true, 'message' => 'Appointment deleted']);
+        return response()->json(['status' => true, 'message' => __('Appointment deleted')]);
     }
 
     private function sendNotification($userId, $details)
     {
-        // Simple wrapper for notification logic
         $user = \App\Models\User::find($userId);
-        if ($user && $user->fcm_token) {
-            // Logic to send FCM would go here
+        if ($user) {
+            // Set target audience based on user type for precise filtering
+            $details['target_audience'] = match ($user->type) {
+                'technician' => 'technicians',
+                'maintenance_company' => 'companies',
+                'individual', 'corporate_customer' => 'clients',
+                default => 'individual_user',
+            };
+            
+            // Replicate OrderController pattern: Save then send
+            \App\Models\Notification::create([
+                'user_id' => $userId,
+                'type' => $details['type'] ?? 'notification',
+                'target_audience' => $details['target_audience'],
+                'title_ar' => $details['title_ar'],
+                'title_en' => $details['title_en'],
+                'body_ar' => $details['body_ar'],
+                'body_en' => $details['body_en'],
+                'data' => $details['data'] ?? [],
+                'status' => 'sent',
+                'is_read' => false
+            ]);
+
+            $user->sendFcmNotification($details, false);
         }
-        
-        \App\Models\Notification::create([
-            'user_id' => $userId,
-            'type' => $details['type'],
-            'title_ar' => $details['title_ar'],
-            'title_en' => $details['title_en'],
-            'body_ar' => $details['body_ar'],
-            'body_en' => $details['body_en'],
-            'data' => $details['data'],
-        ]);
     }
 }

@@ -7,6 +7,7 @@
 <div class="space-y-6 pb-20" x-data="{ 
     selectedIds: [], 
     showFilters: false,
+    selectedCategoryId: '{{ request('category_id', '') }}',
     
     // Block Modal State
     showBlockModal: false,
@@ -223,13 +224,13 @@
                                 <div class="grid grid-cols-1 gap-3">
                                     <label class="flex items-center justify-between cursor-pointer group">
                                         <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ __('All') }}</span>
-                                        <input type="radio" name="category_id" value="" {{ !request('category_id') ? 'checked' : '' }}
+                                        <input type="radio" name="category_id" value="" x-model="selectedCategoryId"
                                                class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
                                     </label>
                                     @foreach($categories as $cat)
                                     <label class="flex items-center justify-between cursor-pointer group">
                                         <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ $cat->name_ar }}</span>
-                                        <input type="radio" name="category_id" value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'checked' : '' }}
+                                        <input type="radio" name="category_id" value="{{ $cat->id }}" x-model="selectedCategoryId"
                                                class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
                                     </label>
                                     @endforeach
@@ -245,7 +246,7 @@
                                 </label>
                                 <div class="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                                     @foreach($services as $service)
-                                    <label class="flex items-center justify-between cursor-pointer group">
+                                    <label class="flex items-center justify-between cursor-pointer group" x-show="selectedCategoryId === '' || selectedCategoryId == '{{ $service->parent_id }}'">
                                         <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ $service->name_ar }}</span>
                                         <input type="checkbox" name="service_id[]" value="{{ $service->id }}" {{ is_array(request('service_id')) && in_array($service->id, request('service_id')) ? 'checked' : '' }}
                                                class="w-5 h-5 border-2 border-slate-200 rounded-lg text-primary focus:ring-primary transition-all cursor-pointer">
@@ -260,13 +261,47 @@
                                     {{ __('Tech Status') }}:
                                 </label>
                                 <div class="grid grid-cols-1 gap-3">
-                                    @foreach(['all' => 'All', 'available' => 'Available', 'busy' => 'Busy', 'offline' => 'Offline'] as $val => $key)
                                     <label class="flex items-center justify-between cursor-pointer group">
-                                        <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ __($key) }}</span>
-                                        <input type="radio" name="tech_status" value="{{ $val === 'all' ? '' : $val }}" {{ request('tech_status', 'all') == ($val === 'all' ? '' : $val) ? 'checked' : '' }}
+                                        <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ __('All') }}</span>
+                                        <input type="radio" name="tech_status" value="" {{ !request('tech_status') ? 'checked' : '' }}
                                                class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
                                     </label>
-                                    @endforeach
+                                    <label class="flex items-center justify-between cursor-pointer group">
+                                        <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ __('Available') }}</span>
+                                        <input type="radio" name="tech_status" value="available" {{ request('tech_status') == 'available' ? 'checked' : '' }}
+                                               class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
+                                    </label>
+                                    <label class="flex items-center justify-between cursor-pointer group">
+                                        <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ __('Unavailable') }}</span>
+                                        <input type="radio" name="tech_status" value="unavailable" {{ request('tech_status') == 'unavailable' ? 'checked' : '' }}
+                                               class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="h-px bg-slate-100 dark:bg-white/5"></div>
+
+                            <!-- Account Status (Radio Buttons) -->
+                            <div class="space-y-4">
+                                <label class="text-sm font-black text-[#1A1A31] dark:text-white flex items-center gap-2">
+                                    {{ __('Account Status') }}:
+                                </label>
+                                <div class="grid grid-cols-1 gap-3">
+                                    <label class="flex items-center justify-between cursor-pointer group">
+                                        <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ __('All') }}</span>
+                                        <input type="radio" name="status" value="" {{ !request('status') ? 'checked' : '' }}
+                                               class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
+                                    </label>
+                                    <label class="flex items-center justify-between cursor-pointer group">
+                                        <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ __('Active') }}</span>
+                                        <input type="radio" name="status" value="active" {{ request('status') == 'active' ? 'checked' : '' }}
+                                               class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
+                                    </label>
+                                    <label class="flex items-center justify-between cursor-pointer group">
+                                        <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ __('Inactive') }}</span>
+                                        <input type="radio" name="status" value="blocked" {{ request('status') == 'blocked' ? 'checked' : '' }}
+                                               class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
+                                    </label>
                                 </div>
                             </div>
 

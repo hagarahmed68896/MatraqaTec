@@ -224,7 +224,7 @@ class ServiceController extends Controller
 
         return response()->json([
             'status' => true, 
-            'message' => 'Services retrieved successfully', 
+            'message' => __('Services retrieved successfully'), 
             'data' => $data
         ]);
     }
@@ -234,7 +234,7 @@ class ServiceController extends Controller
         $service = Service::with(['city', 'children'])->withCount(['children', 'technicians'])->find($id);
 
         if (!$service) {
-            return response()->json(['status' => false, 'message' => 'Service not found'], 404);
+            return response()->json(['status' => false, 'message' => __('Service not found')], 404);
         }
 
         // Add is_favorite status
@@ -261,7 +261,7 @@ class ServiceController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Service retrieved successfully',
+            'message' => __('Service retrieved successfully'),
             'data' => [
                 'service' => $service,
                 'related_services' => $relatedServices
@@ -274,15 +274,15 @@ class ServiceController extends Controller
         $history = \App\Models\SearchHistory::where('user_id', auth()->id())->where('id', $id)->first();
         if ($history) {
             $history->delete();
-            return response()->json(['status' => true, 'message' => 'Search history deleted']);
+            return response()->json(['status' => true, 'message' => __('Search history deleted')]);
         }
-        return response()->json(['status' => false, 'message' => 'History not found'], 404);
+        return response()->json(['status' => false, 'message' => __('History not found')], 404);
     }
 
     public function clearSearchHistory()
     {
         \App\Models\SearchHistory::where('user_id', auth()->id())->delete();
-        return response()->json(['status' => true, 'message' => 'Search history cleared']);
+        return response()->json(['status' => true, 'message' => __('Search history cleared')]);
     }
 
     public function toggleFavorite(Request $request)
@@ -304,13 +304,13 @@ class ServiceController extends Controller
 
         if ($favorite) {
             $favorite->delete();
-            return response()->json(['status' => true, 'message' => 'Removed from favorites', 'is_favorite' => false]);
+            return response()->json(['status' => true, 'message' => __('Removed from favorites'), 'is_favorite' => false]);
         } else {
             Favorite::create([
                 'user_id' => $userId,
                 'service_id' => $serviceId,
             ]);
-            return response()->json(['status' => true, 'message' => 'Added to favorites', 'is_favorite' => true]);
+            return response()->json(['status' => true, 'message' => __('Added to favorites'), 'is_favorite' => true]);
         }
     }
 
@@ -343,7 +343,7 @@ class ServiceController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Favorite services retrieved successfully',
+            'message' => __('Favorite services retrieved successfully'),
             'data' => $services
         ]);
     }

@@ -11,7 +11,7 @@ class DistrictController extends Controller
     public function index()
     {
         $districts = District::with('city')->get();
-        return response()->json(['status' => true, 'message' => 'Districts retrieved successfully', 'data' => $districts]);
+        return response()->json(['status' => true, 'message' => __('Districts retrieved successfully'), 'data' => $districts]);
     }
 
 }

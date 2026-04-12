@@ -41,13 +41,16 @@ class SupportController extends Controller
     public function faqs(Request $request)
     {
         $user = $request->user();
-        $targetGroup = $user ? $user->type : 'client'; // Default to client if not auth
-        if ($targetGroup === 'individual') $targetGroup = 'client';
+        $type = $user ? $user->type : 'client';
+        if ($type === 'individual') $type = 'client';
+
+        $groups = ['all', 'both', $type];
+        // Handle plurals if present in DB (e.g. 'clients', 'technicians')
+        if ($type === 'client') $groups[] = 'clients';
+        if ($type === 'technician') $groups[] = 'technicians';
 
         $faqs = Faq::where('status', 'active')
-            ->where(function($q) use ($targetGroup) {
-                $q->whereIn('target_group', [$targetGroup, 'all', 'both']);
-            })
+            ->whereIn('target_group', $groups)
             ->get();
 
         return response()->json([
@@ -63,13 +66,15 @@ class SupportController extends Controller
     public function terms(Request $request)
     {
         $user = $request->user();
-        $targetGroup = $user ? $user->type : 'client';
-        if ($targetGroup === 'individual') $targetGroup = 'client';
+        $type = $user ? $user->type : 'client';
+        if ($type === 'individual') $type = 'client';
+
+        $groups = ['all', 'both', $type];
+        if ($type === 'client') $groups[] = 'clients';
+        if ($type === 'technician') $groups[] = 'technicians';
 
         $terms = Term::where('status', 'active')
-            ->where(function($q) use ($targetGroup) {
-                $q->whereIn('target_group', [$targetGroup, 'all', 'both']);
-            })
+            ->whereIn('target_group', $groups)
             ->get();
 
         return response()->json([
@@ -85,13 +90,15 @@ class SupportController extends Controller
     public function privacy(Request $request)
     {
         $user = $request->user();
-        $targetGroup = $user ? $user->type : 'client';
-        if ($targetGroup === 'individual') $targetGroup = 'client';
+        $type = $user ? $user->type : 'client';
+        if ($type === 'individual') $type = 'client';
+
+        $groups = ['all', 'both', $type];
+        if ($type === 'client') $groups[] = 'clients';
+        if ($type === 'technician') $groups[] = 'technicians';
 
         $policies = PrivacyPolicy::where('status', 'active')
-            ->where(function($q) use ($targetGroup) {
-                $q->whereIn('target_group', [$targetGroup, 'all', 'both']);
-            })
+            ->whereIn('target_group', $groups)
             ->get();
 
         return response()->json([

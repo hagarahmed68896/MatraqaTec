@@ -46,8 +46,9 @@ class OrderController extends Controller
         }
 
 
-        // 2. Tab Filter
-        if ($user->type === 'maintenance_company') {
+        // 2. Tab Filter (Apply only if NOT searching by date, time, or keyword)
+        if (!$request->filled('search') && !$request->filled('date') && !$request->filled('time') && !$request->filled('time_slot')) {
+            if ($user->type === 'maintenance_company') {
             // Company-specific tabs
             if ($request->tab === 'all') {
                 // All CURRENT orders: (assigned to company OR marketplace) AND status is active
@@ -96,8 +97,11 @@ class OrderController extends Controller
         } else {
             // Client/Technician tabs (existing logic)
             if ($request->tab === 'under_review') {
-                // قيد المراجعة - Pending admin approval
-                $query->where('status', 'new');
+                // قيد المراجعة - Pending admin approval or reschedule request
+                $query->where(function($q) {
+                    $q->where('status', 'new')
+                      ->orWhere('sub_status', 'reschedule_requested');
+                });
             } elseif ($request->tab === 'previous') {
                 // السابقة - Completed/Cancelled/Rejected
                 $query->whereIn('status', ['completed', 'cancelled', 'rejected']);
@@ -105,84 +109,118 @@ class OrderController extends Controller
                 // Default to 'current' - الحالية
                 // في الطريق, وصل, مجدولة, بدأ العمل
                 // Maps to: accepted, scheduled, in_progress (and sub_status variations)
-                $query->whereIn('status', ['accepted', 'scheduled', 'in_progress']);
+                if (!$request->filled('status')) {
+                    $query->whereIn('status', ['accepted', 'scheduled', 'in_progress'])
+                          ->where(function($q) {
+                              $q->whereNull('sub_status')
+                                ->orWhere('sub_status', '!=', 'reschedule_requested');
+                          });
+                }
+            }
             }
         }
 
 
-        // 3. Search Logic
+        // 3. Search Logic (Technician searches Client, Client searches Technician)
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('order_number', 'like', "%{$search}%")
-                  ->orWhereHas('technician.user', function($u) use ($search) {
-                      $u->where('name', 'like', "%{$search}%");
-                  });
+            $query->where(function($q) use ($search, $user) {
+                $q->where('order_number', 'like', "%{$search}%");
+                
+                // Add Date Search Support (YYYY-MM-DD)
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $search)) {
+                    $q->orWhereDate('scheduled_at', $search);
+                }
+                
+                // Add Time Search Support (HH:mm)
+                if (preg_match('/^\d{2}:\d{2}$/', $search)) {
+                    $q->orWhereRaw('TIME_FORMAT(scheduled_at, "%H:%i") = ?', [$search]);
+                }
+                
+                if ($user->type === 'technician') {
+                    $q->orWhereHas('user', function($u) use ($search) {
+                        $u->where('name', 'like', "%{$search}%")
+                          ->orWhere('phone', 'like', "%{$search}%");
+                    });
+                } else {
+                    $q->orWhereHas('technician.user', function($u) use ($search) {
+                        $u->where('name', 'like', "%{$search}%")
+                          ->orWhere('phone', 'like', "%{$search}%");
+                    });
+                }
             });
         }
 
-        // 4. Advanced Filtering
-        // Single Date Filter
+        // 4. Advanced Filtering (Matching the Mobile UI Filter)
+        
+        // A. Date Filter (Calendar)
         if ($request->filled('date')) {
-            $query->whereDate('scheduled_at', $request->date);
+            $date = $request->date;
+            if ($date === 'today') $date = now()->toDateString();
+            elseif ($date === 'tomorrow') $date = now()->addDay()->toDateString();
+            $query->whereDate('scheduled_at', $date);
         }
 
-        // Date Range Filter
-        if ($request->filled('date_from')) {
-            $query->whereDate('scheduled_at', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('scheduled_at', '<=', $request->date_to);
-        }
-
-        // Precise Time Filter (e.g., "09:00", "13:30")
+        // B. Time Filter (Suitable Time/Time Slots)
         if ($request->filled('time')) {
-            $query->whereRaw('TIME_FORMAT(scheduled_at, "%H:%i") = ?', [$request->time]);
+            // Support single time or array of times
+            $times = is_array($request->time) ? $request->time : explode(',', $request->time);
+            $query->where(function($q) use ($times) {
+                foreach ($times as $t) {
+                    $q->orWhereRaw('TIME_FORMAT(scheduled_at, "%H:%i") = ?', [$t]);
+                }
+            });
         }
 
-        // Precise Hour Filter (Legacy/Numeric)
-        if ($request->filled('hour')) {
-            $query->whereRaw('HOUR(scheduled_at) = ?', [$request->hour]);
-        }
-
-        // Time Slot Filter
         if ($request->filled('time_slot')) {
             switch ($request->time_slot) {
-                case 'morning': // 6:00 - 11:59
-                    $query->whereRaw('HOUR(scheduled_at) BETWEEN 6 AND 11');
-                    break;
-                case 'afternoon': // 12:00 - 16:59
-                    $query->whereRaw('HOUR(scheduled_at) BETWEEN 12 AND 16');
-                    break;
-                case 'evening': // 17:00 - 23:59
-                    $query->whereRaw('HOUR(scheduled_at) BETWEEN 17 AND 23');
-                    break;
+                case 'morning': $query->whereRaw('HOUR(scheduled_at) BETWEEN 6 AND 11'); break;
+                case 'afternoon': $query->whereRaw('HOUR(scheduled_at) BETWEEN 12 AND 16'); break;
+                case 'evening': $query->whereRaw('HOUR(scheduled_at) BETWEEN 17 AND 23'); break;
             }
         }
 
-        // Category Filter (Parent Service)
-        if ($request->filled('category_id')) {
-            $query->whereHas('service', function($q) use ($request) {
-                $q->where('parent_id', $request->category_id);
-            });
-        }
-
-        // Specific Service Types Filter (Child Services)
+        // C. Service Type Filter (Multi-select)
         if ($request->filled('service_ids')) {
             $serviceIds = is_array($request->service_ids) ? $request->service_ids : explode(',', $request->service_ids);
             $query->whereIn('service_id', $serviceIds);
         }
 
-        // Specific Status Filter (Supporting Sub-statuses)
+        // D. Status Filter (Matching UI Radio Buttons)
         if ($request->filled('status')) {
             $status = $request->status;
+            // Handle sub-statuses for the 'Status' filter
             if ($status === 'on_way') {
                 $query->where('status', 'in_progress')->where('sub_status', 'on_way');
             } elseif ($status === 'arrived') {
                 $query->where('status', 'in_progress')->where('sub_status', 'arrived');
+            } elseif ($status === 'work_started') {
+                $query->where('status', 'in_progress')->where('sub_status', 'work_started');
+            } elseif ($status === 'scheduled') {
+                $query->where('status', 'scheduled')
+                      ->where(function($q) {
+                          $q->whereNull('sub_status')
+                            ->orWhere('sub_status', '!=', 'reschedule_requested');
+                      });
             } else {
                 $query->where('status', $status);
             }
+        }
+
+        // E. Category Filter (الفئة - Parent Service)
+        if ($request->filled('category_id')) {
+            $query->whereHas('service', function($q) use ($request) {
+                $q->where('parent_id', $request->category_id)
+                  ->orWhere('id', $request->category_id);
+            });
+        }
+
+        // F. Payment Method Filter (الدفعة)
+        if ($request->filled('payment_method')) {
+            $methods = is_array($request->payment_method)
+                ? $request->payment_method
+                : explode(',', $request->payment_method);
+            $query->whereIn('payment_method', $methods);
         }
 
         $orders = $query->latest()->paginate(10);
@@ -454,6 +492,11 @@ class OrderController extends Controller
             return response()->json(['status' => false, 'message' => 'Order not found'], 404);
         }
 
+        // Reset timer if technician is changed/set
+        if ($request->has('technician_id') && ($request->technician_id != $order->technician_id)) {
+            $order->assigned_at = $request->technician_id ? now() : null;
+        }
+
         $order->update($request->all());
 
         return response()->json(['status' => true, 'message' => 'Order updated successfully', 'data' => $order]);
@@ -461,19 +504,22 @@ class OrderController extends Controller
 
     public function startWork(Request $request, $id)
     {
-        $order = Order::find($id);
-        if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+        $order = $this->getOrderIfAuthorized($id);
+        if (!$order) return response()->json(['status' => false, 'message' => __('Order not found')], 404);
 
-        // Security: Ensure assigned tech
-        $user = auth()->user();
-        if ($user->type === 'technician' && $order->technician_id !== $user->technician->id) {
-            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+        // Validation: Prevent starting if scheduled_at is more than 24 hours in the past
+        if ($this->isOrderExpired($order)) {
+            return response()->json([
+                'status' => false, 
+                'message' => __('The order cannot be started because the scheduled time is too old (more than 24 hours). Please reschedule the order first.'),
+                'data' => $order
+            ], 422);
         }
 
         // Handle Attachments if provided in the request
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $path = $file->store('order_attachments', 'public');
+                $path = $this->uploadAttachment($file);
                 $order->attachments()->create([
                     'file_path' => $path,
                     'type' => 'before'
@@ -488,6 +534,11 @@ class OrderController extends Controller
             'sub_status' => 'on_way'
         ]);
 
+        // Mark technician as busy
+        if ($order->technician) {
+            $order->technician->update(['availability_status' => 'busy']);
+        }
+
         $this->sendNotification($order->user_id, [
             'type' => \App\Models\Notification::TYPE_WORK_STARTED,
             'title_ar' => 'الفني في الطريق',
@@ -497,7 +548,7 @@ class OrderController extends Controller
             'data' => ['order_id' => $order->id]
         ]);
 
-        return response()->json(['status' => true, 'message' => 'Work started - Technician is on the way', 'data' => $order]);
+        return response()->json(['status' => true, 'message' => __('Work started - Technician is on the way'), 'data' => $order]);
     }
 
     /**
@@ -520,22 +571,26 @@ class OrderController extends Controller
 
     public function updateSubStatus(Request $request, $id)
     {
-        $order = Order::find($id);
-        if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
-
-        $user = auth()->user();
-        if ($user->type === 'technician' && $order->technician_id !== $user->technician->id) {
-            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
-        }
+        $order = $this->getOrderIfAuthorized($id);
+        if (!$order) return response()->json(['status' => false, 'message' => __('Order not found')], 404);
 
         if ($order->status !== 'in_progress') {
             return response()->json(['status' => false, 'message' => 'Order must be in progress to update sub-status'], 422);
         }
 
+        // Validation: Prevent updating if scheduled_at is more than 24 hours in the past
+        if ($this->isOrderExpired($order)) {
+            return response()->json([
+                'status' => false, 
+                'message' => __('This order status cannot be updated because its time is too old (more than 24 hours). Please reschedule the order first.'),
+                'data' => $order
+            ], 422);
+        }
+
         // Handle Attachments if provided
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $path = $file->store('order_attachments', 'public');
+                $path = $this->uploadAttachment($file);
                 $order->attachments()->create([
                     'file_path' => $path,
                     'type' => 'before' // Typically "before" covers everything up to work_started
@@ -584,7 +639,7 @@ class OrderController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Status updated successfully',
+            'message' => __('Status updated successfully'),
             'data' => $order
         ]);
     }
@@ -594,13 +649,8 @@ class OrderController extends Controller
      */
     public function updateSpareParts(Request $request, $id)
     {
-        $order = Order::find($id);
-        if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
-
-        $user = auth()->user();
-        if ($user->type === 'technician' && $order->technician_id !== $user->technician->id) {
-             return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
-        }
+        $order = $this->getOrderIfAuthorized($id);
+        if (!$order) return response()->json(['status' => false, 'message' => __('Order not found')], 404);
 
         $request->validate([
             'spare_parts' => 'required|array',
@@ -625,7 +675,7 @@ class OrderController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Spare parts updated successfully',
+            'message' => __('Spare parts updated successfully'),
             'data' => $order
         ]);
     }
@@ -635,13 +685,8 @@ class OrderController extends Controller
      */
     public function requestAdditionalVisit(Request $request, $id)
     {
-        $order = Order::find($id);
-        if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
-
-        $user = auth()->user();
-        if ($user->type === 'technician' && $order->technician_id !== $user->technician->id) {
-            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
-        }
+        $order = $this->getOrderIfAuthorized($id);
+        if (!$order) return response()->json(['status' => false, 'message' => __('Order not found')], 404);
 
         $request->validate([
             'note' => 'nullable|string'
@@ -671,7 +716,7 @@ class OrderController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Additional visit request sent successfully',
+            'message' => __('Additional visit request sent successfully'),
             'data' => $order
         ]);
     }
@@ -681,13 +726,8 @@ class OrderController extends Controller
      */
     public function sendInvoiceToClient(Request $request, $id)
     {
-        $order = Order::with('service')->find($id);
-        if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
-
-        $user = auth()->user();
-        if ($user->type === 'technician' && $order->technician_id !== $user->technician->id) {
-            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
-        }
+        $order = $this->getOrderIfAuthorized($id);
+        if (!$order) return response()->json(['status' => false, 'message' => __('Order not found')], 404);
 
         // Calculate current total
         $basePrice = $order->service->price ?? 50;
@@ -720,7 +760,7 @@ class OrderController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Invoice sent to client successfully',
+            'message' => __('Invoice sent to client successfully'),
             'data' => [
                 'total_price' => $grandTotal,
                 'spare_parts' => $order->spare_parts_metadata
@@ -733,17 +773,12 @@ class OrderController extends Controller
      */
     public function saveCompletionPhotos(Request $request, $id)
     {
-        $order = Order::find($id);
-        if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
-
-        $user = auth()->user();
-        if ($user->type === 'technician' && $order->technician_id !== $user->technician->id) {
-            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
-        }
+        $order = $this->getOrderIfAuthorized($id);
+        if (!$order) return response()->json(['status' => false, 'message' => __('Order not found')], 404);
 
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $path = $file->store('order_attachments', 'public');
+                $path = $this->uploadAttachment($file);
                 $order->attachments()->create([
                     'file_path' => $path,
                     'type' => 'after'
@@ -758,25 +793,20 @@ class OrderController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Photos uploaded successfully. Proceed to signature.',
+            'message' => __('Photos uploaded successfully. Proceed to signature.'),
             'data' => $order->load('attachments')
         ]);
     }
 
     public function finishWork(Request $request, $id)
     {
-        $order = Order::find($id);
-        if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
-
-        $user = auth()->user();
-        if ($user->type === 'technician' && $order->technician_id !== $user->technician->id) {
-             return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
-        }
+        $order = $this->getOrderIfAuthorized($id);
+        if (!$order) return response()->json(['status' => false, 'message' => __('Order not found')], 404);
 
         // Handle Attachments (After Photos)
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $path = $file->store('order_attachments', 'public');
+                $path = $this->uploadAttachment($file);
                 $order->attachments()->create([
                     'file_path' => $path,
                     'type' => 'after'
@@ -821,11 +851,22 @@ class OrderController extends Controller
         $order->spare_parts_metadata = $sparePartsMetadata;
         $order->total_price = $order->total_price + $sparePartsTotal; 
         
-        if ($request->filled('client_signature')) {
+        if ($request->filled('client_signature') && Str::startsWith($request->client_signature, 'data:image')) {
+            $order->client_signature = $this->uploadBase64Image($request->client_signature, 'signatures');
+        } elseif ($request->filled('client_signature')) {
             $order->client_signature = $request->client_signature;
         }
         
         $order->save();
+
+        // Sync appointment status to completed
+        \App\Models\Appointment::where('order_id', $order->id)
+            ->update(['status' => 'completed']);
+
+        // Mark technician as available again
+        if ($order->technician) {
+            $order->technician->update(['availability_status' => 'available']);
+        }
 
         // --- Credit Company Wallet ---
         if ($order->maintenance_company_id) {
@@ -868,9 +909,37 @@ class OrderController extends Controller
 
         return response()->json([
             'status' => true, 
-            'message' => 'Work finished successfully', 
+            'message' => __('Work finished successfully'), 
             'data' => $order
         ]);
+    }
+
+    private function uploadBase64Image($base64String, $folder = 'uploads')
+    {
+        try {
+            $image_service_str = $base64String;
+            $after_comma = strpos($image_service_str, ',') + 1;
+            $image_base64_decod = base64_decode(substr($image_service_str, $after_comma));
+            
+            $extension = 'png'; // Default
+            if (preg_match('/^data:image\/(\w+);base64,/', $base64String, $type)) {
+                $extension = strtolower($type[1]);
+            }
+
+            $filename = time() . '_' . Str::random(10) . '.' . $extension;
+            $directory = public_path($folder);
+            
+            if (!file_exists($directory)) {
+                mkdir($directory, 0775, true);
+            }
+
+            $path = $directory . '/' . $filename;
+            file_put_contents($path, $image_base64_decod);
+            
+            return $folder . '/' . $filename;
+        } catch (\Exception $e) {
+            return $base64String; // Fallback to raw if failed
+        }
     }
 
     public function cancel(Request $request, $id)
@@ -879,8 +948,8 @@ class OrderController extends Controller
             'cancellation_reason' => 'required|string|max:500',
         ]);
 
-        $order = Order::where('user_id', auth()->id())->find($id);
-        if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+        $order = $this->getOrderIfAuthorized($id);
+        if (!$order) return response()->json(['status' => false, 'message' => __('Order not found')], 404);
 
         if (in_array($order->status, ['completed', 'cancelled', 'rejected'])) {
             return response()->json(['status' => false, 'message' => 'Order is already closed'], 422);
@@ -892,6 +961,15 @@ class OrderController extends Controller
                 'status' => 'cancelled',
                 'rejection_reason' => $request->cancellation_reason,
             ]);
+
+            // Sync appointment status to cancelled
+            \App\Models\Appointment::where('order_id', $order->id)
+                ->update(['status' => 'cancelled']);
+
+            // Reset technician status if order was in progress
+            if ($order->technician) {
+                $order->technician->update(['availability_status' => 'available']);
+            }
 
             // 2. Refund logic if paid via wallet or electronic payment
             $paymentCount = $order->payments()->where('status', 'completed')->count();
@@ -920,25 +998,16 @@ class OrderController extends Controller
 
     public function destroy($id)
     {
-        // Users usually shouldn't hard delete orders, but providing 'cancel' logic in update or destroy.
-        // Allowing destroy if ownership matches.
-        $query = Order::where('id', $id);
-        if ($user->type === 'maintenance_company') {
-            $company = \App\Models\MaintenanceCompany::where('user_id', $user->id)->first();
-            $query->where('maintenance_company_id', $company->id ?? 0);
-        } else {
-            $query->where('user_id', $user->id);
-        }
-        $order = $query->first();
-        if (!$order) return response()->json(['status' => false, 'message' => 'Not found'], 404);
+        $order = $this->getOrderIfAuthorized($id);
+        if (!$order) return response()->json(['status' => false, 'message' => __('Order not found')], 404);
         $order->delete();
         return response()->json(['status' => true, 'message' => 'Order deleted']);
     }
 
     public function resend(Request $request, $id)
     {
-        $oldOrder = Order::where('id', $id)->where('user_id', $request->user()->id)->first();
-        if (!$oldOrder) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+        $oldOrder = $this->getOrderIfAuthorized($id);
+        if (!$oldOrder) return response()->json(['status' => false, 'message' => __('Order not found')], 404);
 
         if (!in_array($oldOrder->status, ['cancelled', 'completed', 'rejected'])) {
             return response()->json(['status' => false, 'message' => 'Can only resend cancelled/completed orders'], 422);
@@ -967,21 +1036,24 @@ class OrderController extends Controller
 
     public function reschedule(Request $request, $id)
     {
-        $user = auth()->user();
-        $order = Order::where('id', $id)->where('user_id', $user->id)->first();
+        $order = $this->getOrderIfAuthorized($id);
+        if (!$order) return response()->json(['status' => false, 'message' => __('Order not found')], 404);
 
-        if (!$order) {
-            return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+        $user = auth()->user();
+
+        // Check if there is already a pending reschedule request
+        if ($order->sub_status === 'reschedule_requested') {
+            return response()->json(['status' => false, 'message' => __('There is already a pending reschedule request for this order.')], 422);
         }
 
-        if (in_array($order->status, ['completed', 'cancelled', 'rejected'])) {
-            return response()->json(['status' => false, 'message' => 'Closed orders cannot be rescheduled'], 422);
+        if (!$order->can_reschedule) {
+            return response()->json(['status' => false, 'message' => __('This order cannot be rescheduled in its current status.')], 422);
         }
 
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'scheduled_at' => 'required|date|after:now',
         ], [
-            'scheduled_at.after' => 'The scheduled date must be a future date.',
+            'scheduled_at.after' => __('The scheduled date must be a future date.'),
         ]);
 
         if ($validator->fails()) {
@@ -992,28 +1064,148 @@ class OrderController extends Controller
             ], 422);
         }
 
+        // Save proposed schedule instead of applying directly
         $order->update([
-            'scheduled_at' => $request->scheduled_at,
+            'proposed_scheduled_at' => $request->scheduled_at,
+            'reschedule_requested_by' => $user->type,
+            'sub_status' => 'reschedule_requested',
         ]);
 
-        // Update related Appointment records
-        \App\Models\Appointment::where('order_id', $order->id)->update([
-            'appointment_date' => $request->scheduled_at,
-        ]);
-
-        // Notify technician if assigned
-        if ($order->technician_id) {
-            $this->sendNotification($order->technician->user_id, [
+        // Notify the other party
+        if ($user->type === 'client' || $user->type === 'individual' || $user->type === 'corporate_customer') {
+            // Client rescheduled -> Notify technician if assigned
+            if ($order->technician_id) {
+                $this->sendNotification($order->technician->user_id, [
+                    'type' => \App\Models\Notification::TYPE_ORDER_RESCHEDULED ?? 'order_rescheduled',
+                    'title_ar' => 'طلب تعديل موعد الطلب',
+                    'title_en' => 'Order Reschedule Request',
+                    'body_ar' => "اقترح العميل تعديل موعد الطلب رقم {$order->order_number} إلى " . \Carbon\Carbon::parse($order->proposed_scheduled_at)->format('Y-m-d H:i') . ". يرجى الموافقة أو الرفض.",
+                    'body_en' => "The client requested to reschedule order #{$order->order_number} to " . \Carbon\Carbon::parse($order->proposed_scheduled_at)->format('Y-m-d H:i') . ". Please accept or reject.",
+                    'data' => ['order_id' => $order->id]
+                ]);
+            }
+        } else {
+            // Tech or Company rescheduled -> Notify Client
+            $this->sendNotification($order->user_id, [
                 'type' => \App\Models\Notification::TYPE_ORDER_RESCHEDULED ?? 'order_rescheduled',
-                'title_ar' => 'تم تعديل موعد الطلب',
-                'title_en' => 'Order Rescheduled',
-                'body_ar' => "قام العميل بتعديل موعد الطلب رقم {$order->order_number} إلى {$order->scheduled_at}",
-                'body_en' => "The client has rescheduled order #{$order->order_number} to {$order->scheduled_at}",
+                'title_ar' => 'طلب تعديل الموعد من قبل الفني',
+                'title_en' => 'Reschedule Request by Technician',
+                'body_ar' => "اقترح الفني تعديل موعد الطلب رقم {$order->order_number} إلى " . \Carbon\Carbon::parse($order->proposed_scheduled_at)->format('Y-m-d H:i') . ". نعتذر عن أي إزعاج، يرجى الموافقة أو الرفض.",
+                'body_en' => "The technician requested to reschedule order #{$order->order_number} to " . \Carbon\Carbon::parse($order->proposed_scheduled_at)->format('Y-m-d H:i') . ". Sorry for any inconvenience, please accept or reject.",
                 'data' => ['order_id' => $order->id]
             ]);
         }
 
-        return response()->json(['status' => true, 'message' => 'Order rescheduled successfully', 'data' => $order]);
+        return response()->json(['status' => true, 'message' => __('Reschedule request sent successfully awaiting approval.'), 'data' => $order]);
+    }
+
+    public function respondToReschedule(Request $request, $id)
+    {
+        $order = $this->getOrderIfAuthorized($id);
+        if (!$order) return response()->json(['status' => false, 'message' => __('Order not found')], 404);
+
+        if ($order->sub_status !== 'reschedule_requested' || !$order->proposed_scheduled_at) {
+            return response()->json(['status' => false, 'message' => __('No pending reschedule request found for this order.')], 422);
+        }
+
+        $user = auth()->user();
+
+        // Ensure the person responding is NOT the one who requested it
+        // A client cannot respond to a client request.
+        $isClient = in_array($user->type, ['client', 'individual', 'corporate_customer']);
+        $isTechOrCompany = in_array($user->type, ['technician', 'maintenance_company']);
+        $requestWasByClient = in_array($order->reschedule_requested_by, ['client', 'individual', 'corporate_customer']);
+        
+        if (($isClient && $requestWasByClient) || ($isTechOrCompany && !$requestWasByClient)) {
+            return response()->json(['status' => false, 'message' => __('You cannot respond to your own reschedule request.')], 403);
+        }
+
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'action' => 'required|in:accept,reject',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        if ($request->action === 'accept') {
+            // Apply the proposed change
+            $order->update([
+                'scheduled_at' => $order->proposed_scheduled_at,
+                'proposed_scheduled_at' => null,
+                'reschedule_requested_by' => null,
+                'sub_status' => null,
+            ]);
+
+            // Update the reschedule notification type to hide action buttons in the app
+            $this->updateNotificationType($user->id, $order->id, 'order_reschedule_accepted', \App\Models\Notification::TYPE_ORDER_RESCHEDULED);
+
+            // Update related Appointment records
+            \App\Models\Appointment::where('order_id', $order->id)->update([
+                'appointment_date' => $order->scheduled_at,
+            ]);
+
+            // Notify Initiator of Acceptance
+            $notifyUserId = $requestWasByClient ? $order->user_id : ($order->technician->user_id ?? ($order->maintenanceCompany->user_id ?? null));
+            if ($notifyUserId) {
+                $this->sendNotification($notifyUserId, [
+                    'type' => \App\Models\Notification::TYPE_ORDER_RESCHEDULED ?? 'order_rescheduled',
+                    'title_ar' => 'تمت الموافقة على تعديل الموعد',
+                    'title_en' => 'Reschedule Request Accepted',
+                    'body_ar' => "تمت الموافقة على الموعد الجديد للطلب رقم {$order->order_number}.",
+                    'body_en' => "The new scheduled time for order #{$order->order_number} has been accepted.",
+                    'data' => ['order_id' => $order->id]
+                ]);
+            }
+
+            return response()->json(['status' => true, 'message' => __('Reschedule request accepted successfully.'), 'data' => $order]);
+        } else {
+            // Handle Reject
+            $order->update([
+                'proposed_scheduled_at' => null,
+                'reschedule_requested_by' => null,
+                'sub_status' => null,
+            ]);
+
+            // Update the reschedule notification type to hide action buttons in the app
+            $this->updateNotificationType($user->id, $order->id, 'order_reschedule_rejected', \App\Models\Notification::TYPE_ORDER_RESCHEDULED);
+
+            // Notify Initiator of Rejection
+            $notifyUserId = $requestWasByClient ? $order->user_id : ($order->technician->user_id ?? ($order->maintenanceCompany->user_id ?? null));
+            if ($notifyUserId) {
+                $this->sendNotification($notifyUserId, [
+                    'type' => \App\Models\Notification::TYPE_ORDER_RESCHEDULED ?? 'order_rescheduled',
+                    'title_ar' => 'تم رفض طلب تعديل الموعد',
+                    'title_en' => 'Reschedule Request Rejected',
+                    'body_ar' => "تم رفض الموعد المقترح للطلب رقم {$order->order_number}. بقي الموعد الأصلي كما هو.",
+                    'body_en' => "The proposed time for order #{$order->order_number} was rejected. The original time remains.",
+                    'data' => ['order_id' => $order->id]
+                ]);
+            }
+
+            return response()->json(['status' => true, 'message' => __('Reschedule request rejected.'), 'data' => $order]);
+        }
+    }
+
+    private function getOrderIfAuthorized($id)
+    {
+        $user = auth()->user();
+        $query = Order::where('id', $id);
+
+        if ($user->type === 'technician') {
+            $technician = $user->technician;
+            if (!$technician) return null;
+            $query->where('technician_id', $technician->id);
+        } elseif ($user->type === 'maintenance_company') {
+            $company = $user->maintenanceCompany;
+            if (!$company) return null;
+            $query->where('maintenance_company_id', $company->id);
+        } else {
+            // Individual / Corporate / etc.
+            $query->where('user_id', $user->id);
+        }
+
+        return $query->first();
     }
 
     public function getInvoice($id)
@@ -1165,6 +1357,9 @@ class OrderController extends Controller
         
         $order->save();
 
+        // Update the new_order notification type to hide action buttons in the app
+        $this->updateNotificationType($user->id, $order->id, \App\Models\Notification::TYPE_ORDER_ACCEPTED);
+
         $this->sendNotification($order->user_id, [
             'type' => \App\Models\Notification::TYPE_ORDER_ACCEPTED,
             'title_ar' => 'تم قبول طلبك',
@@ -1217,6 +1412,9 @@ class OrderController extends Controller
         // Let's set it to 'accepted' which maps to 'مقبول' (Accepted) in getStatusLabelAttribute
         $order->status = 'accepted'; 
         $order->save();
+
+        // Update the new_order notification type to hide action buttons in the app
+        $this->updateNotificationType($user->id, $order->id, \App\Models\Notification::TYPE_ORDER_ACCEPTED);
 
         // Notify client or company?
         // Notify Company that tech accepted?
@@ -1275,6 +1473,9 @@ class OrderController extends Controller
         
         $order->save();
 
+        // Update the new_order notification type to hide action buttons in the app
+        $this->updateNotificationType($user->id, $order->id, \App\Models\Notification::TYPE_ORDER_REJECTED);
+
         // Notify Company
         if ($order->maintenance_company_id) {
             $companyUser = \App\Models\MaintenanceCompany::find($order->maintenance_company_id)->user_id ?? null;
@@ -1318,6 +1519,14 @@ class OrderController extends Controller
         $order->rejection_reason = $request->rejection_reason;
         $order->save();
 
+        // Update the new_order notification type to hide action buttons in the app
+        $this->updateNotificationType($user->id, $order->id, \App\Models\Notification::TYPE_ORDER_REJECTED);
+
+        // Reset technician status
+        if ($order->technician) {
+            $order->technician->update(['availability_status' => 'available']);
+        }
+
         // Notify client
         $reasonAr = $order->rejection_reason ? (' للسبب التالي: ' . $order->rejection_reason) : '';
         $reasonEn = $order->rejection_reason ? (' for: ' . $order->rejection_reason) : '';
@@ -1358,9 +1567,11 @@ class OrderController extends Controller
         $user = \App\Models\User::find($userId);
         
         if ($user && $user->notification_enabled) {
+            // Save to database for history
             \App\Models\Notification::create([
                 'user_id' => $userId,
                 'type' => $details['type'],
+                'target_audience' => 'individual_user',
                 'title_ar' => $details['title_ar'],
                 'title_en' => $details['title_en'],
                 'body_ar' => $details['body_ar'],
@@ -1369,6 +1580,24 @@ class OrderController extends Controller
                 'status' => 'sent',
                 'is_read' => false
             ]);
+
+            // Send real-time FCM
+            $user->sendFcmNotification($details, false);
+        }
+    }
+
+    private function updateNotificationType($userId, $orderId, $newType, $oldType = null)
+    {
+        $oldTypes = $oldType ? (array) $oldType : [\App\Models\Notification::TYPE_NEW_ORDER];
+
+        $notifications = \App\Models\Notification::where('user_id', $userId)
+            ->whereIn('type', $oldTypes)
+            ->get();
+            
+        foreach ($notifications as $notification) {
+            if (isset($notification->data['order_id']) && $notification->data['order_id'] == $orderId) {
+                $notification->update(['type' => $newType]);
+            }
         }
     }
 
@@ -1384,7 +1613,7 @@ class OrderController extends Controller
             'company_name' => $locale == 'ar' ? ($technician->maintenanceCompany?->company_name_ar ?? $technician->maintenanceCompany?->name) : ($technician->maintenanceCompany?->company_name_en ?? $technician->maintenanceCompany?->name),
             'specialty' => $technician->category ? (__('Specialized in') . ' ' . ($locale == 'ar' ? $technician->category->name_ar : ($technician->category->name_en ?? $technician->category->name_ar))) : null,
             'order_count' => $technician->order_count ?? 0,
-            'image' => ($technician->user && $technician->user->avatar) ? asset('storage/' . $technician->user->avatar) : asset('assets/images/default-avatar.png'),
+            'image' => $technician->user?->avatar_url ?? asset('assets/images/default-avatar.png'),
             'bio_en' => $technician->bio_en,
             'bio_ar' => $technician->bio_ar,
             'service_id' => $technician->service_id,
@@ -1393,5 +1622,79 @@ class OrderController extends Controller
             'review_count' => $technician->reviews_count ?? 0,
             'exper_years' => $technician->years_experience ?? 0,
         ];
+    }
+
+    /**
+     * Add attachments to an order (Anytime)
+     */
+    public function addAttachment(Request $request, $id)
+    {
+        $order = $this->getOrderIfAuthorized($id);
+        if (!$order) return response()->json(['status' => false, 'message' => __('Order not found')], 404);
+
+        $request->validate([
+            'attachments' => 'required|array',
+            'attachments.*' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'type' => 'nullable|string|in:before,after,during'
+        ]);
+
+        $type = $request->type ?? 'during';
+
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = $this->uploadAttachment($file);
+                $order->attachments()->create([
+                    'file_path' => $path,
+                    'type' => $type
+                ]);
+            }
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => __('Photos added successfully'),
+            'data' => $order->load('attachments')
+        ]);
+    }
+
+    /**
+     * Delete a specific attachment from an order
+     */
+    public function deleteAttachment($id, $attachment_id)
+    {
+        $order = $this->getOrderIfAuthorized($id);
+        if (!$order) return response()->json(['status' => false, 'message' => __('Order not found')], 404);
+
+        $attachment = $order->attachments()->find($attachment_id);
+        if (!$attachment) {
+            return response()->json(['status' => false, 'message' => 'Attachment not found'], 404);
+        }
+
+        // Delete from storage
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($attachment->file_path)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($attachment->file_path);
+        }
+
+        $attachment->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => __('Photo deleted successfully'),
+            'data' => $order->load('attachments')
+        ]);
+    }
+
+    private function isOrderExpired($order)
+    {
+        return $order->scheduled_at && 
+               $order->scheduled_at->isPast() && 
+               $order->scheduled_at->diffInHours(now()) > 24;
+    }
+
+    private function uploadAttachment($file)
+    {
+        $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        $file->move(public_path('order_attachments'), $filename);
+        return 'order_attachments/' . $filename;
     }
 }

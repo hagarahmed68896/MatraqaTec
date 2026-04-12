@@ -65,6 +65,7 @@ class AuthController extends Controller
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
             'address' => $request->address,
+            'fcm_token' => $request->fcm_token,
         ]);
 
         // Create Profile based on type
@@ -129,7 +130,7 @@ class AuthController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'User registered successfully. Please verify your phone with OTP.',
+            'message' => __('User registered successfully. Please verify your phone with OTP.'),
             'data' => $profileData,
         ], 200);
     }
@@ -161,7 +162,7 @@ class AuthController extends Controller
         } elseif ($request->filled('phone')) {
             $credentials['phone'] = $request->phone;
         } else {
-             return response()->json(['status' => false, 'message' => 'Email or Phone is required'], 422);
+             return response()->json(['status' => false, 'message' => __('Email or Phone is required')], 422);
         }
 
         if (!Auth::attempt($credentials)) {
@@ -170,7 +171,7 @@ class AuthController extends Controller
             
             return response()->json([
                 'status' => false,
-                'message' => 'Invalid login details',
+                'message' => __('Invalid login details'),
                 'debug' => $userExists ? 'User exists but password incorrect' : 'User not found'
             ], 401);
         }
@@ -182,18 +183,23 @@ class AuthController extends Controller
             if ($user->type !== $request->required_type) {
                 // If it's a technician app but the user is an individual, or vice versa
                 $typeLabels = [
-                    'individual' => 'عميل',
-                    'technician' => 'فني',
-                    'maintenance_company' => 'شركة صيانة',
-                    'corporate_customer' => 'عميل شركات'
+                    'individual' => __('Individual'),
+                    'technician' => __('Technician'),
+                    'maintenance_company' => __('Maintenance Company'),
+                    'corporate_customer' => __('Corporate Customer')
                 ];
                 $label = $typeLabels[$request->required_type] ?? $request->required_type;
                 
                 return response()->json([
                     'status' => false,
-                    'message' => "عذراً، هذا الحساب غير مسجل كـ {$label}."
+                    'message' => __('Sorry, this account is not registered as :label.', ['label' => $label])
                 ], 403);
             }
+        }
+
+        // Update FCM Token if provided
+        if ($request->filled('fcm_token')) {
+            $user->update(['fcm_token' => $request->fcm_token]);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -202,7 +208,7 @@ class AuthController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Login successful',
+            'message' => __('Login successful'),
             'data' => array_merge($profileData, [
                 'access_token' => $token,
                 'token_type' => 'Bearer',
@@ -234,7 +240,7 @@ class AuthController extends Controller
         if (!$user || $user->otp !== $request->otp || Carbon::now()->gt($user->otp_expires_at)) {
             return response()->json([
                 'status' => false,
-                'message' => 'Invalid or expired OTP'
+                'message' => __('Invalid or expired OTP')
             ], 400);
         }
 
@@ -252,7 +258,7 @@ class AuthController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Phone verified successfully',
+            'message' => __('Phone verified successfully'),
             'data' => array_merge($profileData, [
                 'access_token' => $token,
                 'token_type' => 'Bearer',
@@ -281,14 +287,14 @@ class AuthController extends Controller
         $user = User::where('phone', $request->phone)->first();
 
         if (!$user) {
-            return response()->json(['status' => false, 'message' => 'User not found'], 404);
+            return response()->json(['status' => false, 'message' => __('User not found')], 404);
         }
 
         $this->sendOtp($user);
 
         return response()->json([
             'status' => true,
-            'message' => 'OTP sent successfully',
+            'message' => __('OTP sent successfully'),
         ]);
     }
 
@@ -307,7 +313,7 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['status' => false, 'message' => 'Phone number not found'], 404);
+            return response()->json(['status' => false, 'message' => __('Phone number not found')], 404);
         }
 
         $user = User::where('phone', $request->phone)->first();
@@ -315,7 +321,7 @@ class AuthController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'OTP for password reset sent to your phone',
+            'message' => __('OTP for password reset sent to your phone',),
         ]);
     }
 
@@ -347,7 +353,7 @@ class AuthController extends Controller
     if (!$isTemporaryOtp && ($user->otp !== $request->otp || Carbon::now()->gt($user->otp_expires_at))) {
         return response()->json([
                 'status' => false,
-                'message' => 'Invalid or expired OTP'
+                'message' => __('Invalid or expired OTP')
             ], 400);
         }
 
@@ -358,7 +364,7 @@ class AuthController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Password reset successfully. You can now login with your new password.',
+            'message' => __('Password reset successfully. You can now login with your new password.'),
         ]);
     }
 
@@ -402,7 +408,7 @@ class AuthController extends Controller
 
         return response()->json([
             'status'  => true,
-            'message' => 'تم حذف الحساب بنجاح',
+            'message' => __('Account deleted successfully'),
         ]);
     }
 
@@ -412,7 +418,7 @@ class AuthController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Logged out successfully'
+            'message' => __('Logged out successfully')
         ]);
     }
 
@@ -423,7 +429,7 @@ class AuthController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Profile retrieved successfully',
+            'message' => __('Profile retrieved successfully'),
             'data' => $profileData
         ]);
     }

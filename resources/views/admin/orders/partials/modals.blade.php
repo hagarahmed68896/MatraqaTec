@@ -5,21 +5,21 @@
      x-transition:enter-start="opacity-0"
      x-transition:enter-end="opacity-100">
     
-    <div class="bg-white rounded-[3rem] w-full max-w-2xl shadow-2xl relative overflow-hidden"
+    <div class="bg-white rounded-[3rem] w-full max-w-2xl h-[min(600px,80vh)] shadow-2xl relative flex flex-col overflow-hidden"
          @click.away="showAcceptModal = false"
          x-transition:enter="transition ease-out duration-300"
          x-transition:enter-start="opacity-0 scale-95 translate-y-4"
          x-transition:enter-end="opacity-100 scale-100 translate-y-0">
         
         <!-- Close Button -->
-        <button @click="showAcceptModal = false" class="absolute top-8 left-8 text-slate-300 hover:text-slate-500 dark:text-white transition-colors z-[1001]">
+        <button @click="showAcceptModal = false" class="absolute top-8 left-2 text-slate-300 hover:text-slate-500 dark:text-white transition-colors z-[1001]">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
 
-        <div class="p-12 text-center space-y-8">
+        <div class="p-6 sm:p-10 text-center  overflow-y-auto custom-scrollbar flex-1">
             <div class="flex items-center justify-between">
                 <h2 class="text-2xl font-black text-[#1A1A31]">{{ __('Accept Order') }}</h2>
-                <button @click="toggleViewMode()" class="px-6 py-2 rounded-xl border border-slate-100 font-bold text-xs text-[#1A1A31] hover:bg-slate-50 transition-all flex items-center gap-2">
+                <button @click="toggleViewMode()" class="px-2 py-2 rounded-xl border border-slate-100 font-bold text-xs text-[#1A1A31] hover:bg-slate-50 transition-all flex items-center gap-2">
                     <template x-if="viewMode === 'list'">
                         <span class="flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
@@ -39,12 +39,12 @@
             <div x-show="viewMode === 'list'" class="space-y-8">
                 <!-- Tabs -->
                 <div class="flex p-1.5 bg-slate-50 rounded-2xl">
-                    <button @click="modalTab = 'platform'; fetchTechnicians()" 
+                    <button @click="modalTab = 'platform'; fetchTechnicians(); showAll = false" 
                             :class="modalTab === 'platform' ? 'bg-[#1A1A31] text-white shadow-lg' : 'text-slate-400'"
                             class="flex-1 py-3 rounded-xl font-bold text-md transition-all whitespace-nowrap px-4">
                         {{ __('Assign Platform Technician') }}
                     </button>
-                    <button @click="modalTab = 'company'; fetchCompanies()" 
+                    <button @click="modalTab = 'company'; fetchCompanies(); showAll = false" 
                             :class="modalTab === 'company' ? 'bg-[#1A1A31] text-white shadow-lg' : 'text-slate-400'"
                             class="flex-1 py-3 rounded-xl font-bold text-md transition-all whitespace-nowrap px-4">
                         {{ __('Send Order to Maintenance Company') }}
@@ -63,9 +63,10 @@
 
                     <template x-if="modalTab === 'platform' && !loadingTechs">
                         <div class="space-y-4">
-                            <template x-for="tech in technicians" :key="tech.id">
-                                <label class="flex items-center gap-6 p-6 rounded-[2rem] border-2 transition-all cursor-pointer group text-right"
-                                       :class="selectedTechId === tech.id ? 'border-primary bg-primary/5 shadow-sm' : 'border-slate-50 hover:border-slate-100'">
+                            <template x-for="tech in (showAll ? technicians : technicians.slice(0, 3))" :key="tech.id">
+                                <label @click="selectedTechId = tech.id" 
+                                       class="flex items-center gap-6 p-6 rounded-[2rem] border-2 transition-all cursor-pointer group text-right"
+                                       :class="selectedTechId == tech.id ? 'border-primary bg-primary/5 shadow-sm' : 'border-slate-50 hover:border-slate-100'">
                                     <div class="flex-1 flex items-center gap-4">
                                         <div class="w-14 h-14 rounded-2xl overflow-hidden bg-slate-100">
                                             <img :src="tech.avatar || '/assets/admin/images/avatar-placeholder.png'" class="w-full h-full object-cover">
@@ -82,9 +83,9 @@
                                         </div>
                                     </div>
                                     <div class="relative w-6 h-6 border-2 rounded-full transition-all flex items-center justify-center"
-                                         :class="selectedTechId === tech.id ? 'border-primary bg-primary' : 'border-slate-200 group-hover:border-primary/50'">
+                                         :class="selectedTechId == tech.id ? 'border-primary bg-primary' : 'border-slate-200 group-hover:border-primary/50'">
                                         <input type="radio" x-model="selectedTechId" :value="tech.id" class="hidden">
-                                        <svg x-show="selectedTechId === tech.id" class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
+                                        <svg x-show="selectedTechId == tech.id" class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
                                     </div>
                                 </label>
                             </template>
@@ -93,7 +94,7 @@
 
                     <template x-if="modalTab === 'company' && !loadingCompanies">
                         <div class="space-y-4">
-                            <template x-for="comp in companies" :key="comp.id">
+                            <template x-for="comp in (showAll ? companies : companies.slice(0, 3))" :key="comp.id">
                                 <label class="flex items-center gap-6 p-6 rounded-[2rem] border-2 transition-all cursor-pointer group text-right"
                                        :class="selectedCompanyId === comp.id ? 'border-primary bg-primary/5 shadow-sm' : 'border-slate-50 hover:border-slate-100'">
                                     <div class="flex-1 flex items-center gap-4">
@@ -120,6 +121,14 @@
                         </div>
                     </template>
                 </div>
+
+                <button type="button" 
+                        x-show="!showAll && (modalTab === 'platform' ? technicians.length > 3 : companies.length > 3)"
+                        @click="showAll = true" 
+                        class="w-full py-2 border-2 border-slate-100 rounded-2xl font-black text-xs text-slate-400 hover:bg-slate-50 transition-all uppercase tracking-widest flex items-center justify-center gap-2 mt-4">
+                    {{ __('Show More') }}
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
 
                 <form :action="`/admin/orders/${selectedOrder}/accept`" method="POST" class="pt-6">
                     @csrf

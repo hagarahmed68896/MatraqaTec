@@ -15,6 +15,14 @@ class OrderAttachment extends Model
         'type',
     ];
 
+    protected $appends = ['url'];
+
+    public function getUrlAttribute()
+    {
+        if (!$this->file_path) return null;
+        return asset($this->file_path);
+    }
+
     public function order()
     {
         return $this->belongsTo(Order::class);

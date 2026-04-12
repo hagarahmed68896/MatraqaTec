@@ -12,7 +12,7 @@ class CityController extends Controller
     public function index()
     {
         $cities = City::all();
-        return response()->json(['status' => true, 'message' => 'Cities retrieved successfully', 'data' => $cities]);
+        return response()->json(['status' => true, 'message' => __('Cities retrieved successfully'), 'data' => $cities]);
     }
 
 }

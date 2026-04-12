@@ -116,7 +116,7 @@ class WalletController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Wallet data retrieved successfully',
+            'message' => __('Wallet data retrieved successfully'),
             'data' => [
                 'balance' => number_format($user->wallet_balance, 2),
                 'transactions' => $transactions,
@@ -155,7 +155,7 @@ class WalletController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Funds deposited successfully',
+            'message' => __('Funds deposited successfully'),
             'data' => [
                 'balance' => $user->wallet_balance,
             ],

@@ -17,7 +17,7 @@
             </div>
         </a>
         <div>
-            <h1 class="text-2xl font-black text-[#1A1A31] dark:text-white">{{ __('Add Contract') }} <span class="text-slate-300 dark:text-slate-600">←</span></h1>
+            <h1 class="text-2xl font-black text-[#1A1A31] dark:text-white">{{ __('Add Contract') }} </h1>
         </div>
     </div>
 
@@ -113,6 +113,9 @@
                 @enderror
             </div>
 
+            {{-- Hidden auto-generated contract number --}}
+            <input type="hidden" name="contract_number" value="CNT-{{ strtoupper(uniqid()) }}">
+
             {{-- Company + Project Value --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -140,31 +143,6 @@
                     @enderror
                 </div>
 
-                {{-- Corporate Customer --}}
-                <div class="space-y-3">
-                    <label class="block text-sm font-black text-[#1A1A31] dark:text-white text-right">{{ __('Corporate Customer') }} ({{ __('Optional') }})</label>
-                    <div class="relative">
-                        <select name="corporate_customer_id"
-                                class="w-full px-5 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary dark:focus:border-white/20 focus:bg-white dark:focus:bg-white/10 rounded-2xl text-sm font-bold transition-all outline-none appearance-none text-right @error('corporate_customer_id') border-red-400 @enderror dark:text-white">
-                            <option value="">{{ __('Select Customer') }}</option>
-                            @foreach($corporate_customers as $customer)
-                                <option value="{{ $customer->id }}" {{ old('corporate_customer_id') == $customer->id ? 'selected' : '' }} class="dark:bg-[#1A1A31]">
-                                    {{ $customer->company_name_ar ?? $customer->company_name_en }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <div class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-slate-500">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </div>
-                    </div>
-                    @error('corporate_customer_id')
-                        <p class="text-red-500 text-xs font-bold">{{ $message }}</p>
-                    @enderror
-                </div>
-
-
                 {{-- Project Value --}}
                 <div class="space-y-3">
                     <label class="block text-sm font-black text-[#1A1A31] dark:text-white text-right">{{ __('Project Value') }}</label>
@@ -180,17 +158,6 @@
                         <p class="text-red-500 text-xs font-bold">{{ $message }}</p>
                     @enderror
                 </div>
-            </div>
-
-            {{-- Contract Number --}}
-            <div class="space-y-3">
-                <label class="block text-sm font-black text-[#1A1A31] dark:text-white text-right">{{ __('Contract Number') }}</label>
-                <input type="text" name="contract_number" value="{{ old('contract_number') }}"
-                       placeholder="{{ __('Enter contract number') }}"
-                       class="w-full px-5 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary dark:focus:border-white/20 focus:bg-white dark:focus:bg-white/10 rounded-2xl text-sm font-bold transition-all outline-none text-right dark:text-white @error('contract_number') border-red-400 @enderror">
-                @error('contract_number')
-                    <p class="text-red-500 text-xs font-bold">{{ $message }}</p>
-                @enderror
             </div>
 
             {{-- Contact Numbers --}}
@@ -228,46 +195,21 @@
                 @enderror
             </div>
 
-            {{-- Start & End Dates --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="space-y-3">
-                    <label class="block text-sm font-black text-[#1A1A31] dark:text-white text-right">{{ __('Start Date') }}</label>
-                    <input type="date" name="start_date" value="{{ old('start_date') }}"
-                           class="w-full px-5 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary dark:focus:border-white/20 focus:bg-white dark:focus:bg-white/10 rounded-2xl text-sm font-bold transition-all outline-none dark:text-white @error('start_date') border-red-400 @enderror">
-                    @error('start_date')
-                        <p class="text-red-500 text-xs font-bold">{{ $message }}</p>
-                    @enderror
-                </div>
-                <div class="space-y-3">
-                    <label class="block text-sm font-black text-[#1A1A31] dark:text-white text-right">{{ __('End Date') }}</label>
-                    <input type="date" name="end_date" value="{{ old('end_date') }}"
-                           class="w-full px-5 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary dark:focus:border-white/20 focus:bg-white dark:focus:bg-white/10 rounded-2xl text-sm font-bold transition-all outline-none dark:text-white @error('end_date') border-red-400 @enderror">
-                    @error('end_date')
-                        <p class="text-red-500 text-xs font-bold">{{ $message }}</p>
-                    @enderror
-                </div>
-            </div>
-
             {{-- Contract Status --}}
-            <div class="space-y-4" x-data="{ status: '{{ old('status') }}' }">
+            <div class="space-y-3">
                 <label class="block text-sm font-black text-[#1A1A31] dark:text-white text-right">{{ __('Contract Status') }}</label>
-                <div class="p-5 bg-slate-50 dark:bg-white/5 rounded-2xl space-y-3">
-                    @foreach(['active' => __('active'), 'expired' => __('expired'), 'completed' => __('completed')] as $val => $label)
-                    <label class="flex items-center justify-between cursor-pointer group">
-                        <span class="text-sm font-bold text-slate-600 dark:text-gray-300 group-hover:text-[#1A1A31] dark:group-hover:text-white transition-colors">{{ $label }}</span>
-                        <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
-                             :class="status == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-300 dark:border-white/20'">
-                            <input type="radio" name="status" value="{{ $val }}"
-                                   x-model="status"
-                                   class="hidden">
-                            <template x-if="status == '{{ $val }}'">
-                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"/>
-                                </svg>
-                            </template>
-                        </div>
-                    </label>
-                    @endforeach
+                <div class="relative">
+                    <select name="status"
+                            class="w-full px-5 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary dark:focus:border-white/20 focus:bg-white dark:focus:bg-white/10 rounded-2xl text-sm font-bold transition-all outline-none appearance-none text-right @error('status') border-red-400 @enderror dark:text-white">
+                        <option value="">{{ __('Select Status') }}</option>
+                        <option value="active" {{ old('status') == 'active' ? 'selected' : '' }} class="dark:bg-[#1A1A31]">{{ __('active') }}</option>
+                        <option value="expired" {{ old('status') == 'expired' ? 'selected' : '' }} class="dark:bg-[#1A1A31]">{{ __('expired') }}</option>
+                    </select>
+                    <div class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-slate-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </div>
                 </div>
                 @error('status')
                     <p class="text-red-500 text-xs font-bold">{{ $message }}</p>

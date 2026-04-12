@@ -16,15 +16,40 @@ class HomeController extends Controller
         $user = $request->user();
         $userType = $user->type;
         
+        $audienceType = 'all';
+        switch ($user->type) {
+            case 'individual':
+            case 'corporate_customer': $audienceType = 'clients'; break;
+            case 'technician': $audienceType = 'technicians'; break;
+            case 'maintenance_company': $audienceType = 'companies'; break;
+        }
+
+        $unreadCount = Notification::where(function ($query) use ($user, $audienceType) {
+                $query->where('user_id', $user->id)
+                      ->orWhereIn('target_audience', [$audienceType, 'all']);
+            })
+            ->where('status', 'sent')
+            ->whereDoesntHave('userActions', function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->where(function($query) {
+                      $query->where('is_deleted', true)->orWhere('is_read', true);
+                  });
+            })
+            ->where(function($query) {
+                $query->where('is_read', false)->orWhereNull('user_id'); // If individual, must be unread. If broadcast, rely on userActions (handled above)
+            })
+            ->count();
+            
         $data = [
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'type' => $user->type,
-                'avatar' => $user->avatar ? asset($user->avatar) : null,
+                'avatar' => $user->avatar_url,
                 'city' => $user->city ? $user->city->name_ar : null,
             ],
-            'unread_notifications_count' => Notification::where('user_id', $user->id)->unread()->count(),
+            'unread_notifications_count' => $unreadCount,
+            'contents' => Content::with('items')->where('is_visible', true)->get(),
         ];
 
         if (in_array($userType, ['individual', 'corporate_customer'])) {
@@ -150,7 +175,7 @@ class HomeController extends Controller
         } elseif ($userType === 'technician') {
             return response()->json([
                 'status' => true,
-                'message' => 'Please use /api/technician/home for technician dashboard',
+                'message' => __('Please use /api/technician/home for technician dashboard'),
                 'data' => [
                     'redirect_to' => url('/api/technician/home')
                 ]
@@ -159,7 +184,7 @@ class HomeController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Home data retrieved successfully',
+            'message' => __('Home data retrieved successfully'),
             'data' => $data
         ]);
     }

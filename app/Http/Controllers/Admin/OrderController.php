@@ -40,6 +40,11 @@ class OrderController extends Controller
                       $q2->where('name', 'like', "%{$search}%")
                          ->orWhere('phone', 'like', "%{$search}%");
                   });
+                
+                // Add Date Search Support (YYYY-MM-DD)
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $search)) {
+                    $q->orWhereDate('scheduled_at', $search);
+                }
             });
         }
 
@@ -149,6 +154,11 @@ class OrderController extends Controller
                       $q2->where('name', 'like', "%{$search}%")
                          ->orWhere('phone', 'like', "%{$search}%");
                   });
+                
+                // Add Date Search Support (YYYY-MM-DD)
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $search)) {
+                    $q->orWhereDate('scheduled_at', $search);
+                }
             });
         }
 
@@ -290,6 +300,36 @@ class OrderController extends Controller
             'maintenance_company_id' => 'nullable|exists:maintenance_companies,id',
         ]);
 
+        // Send notifications if newly assigned
+        if ($request->filled('technician_id') && ($request->technician_id != $item->technician_id)) {
+            $validated['assigned_at'] = now();
+            $tech = \App\Models\Technician::find($request->technician_id);
+            if ($tech && $tech->user) {
+                $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
+                $this->sendNotification($tech->user_id, [
+                    'type' => \App\Models\Notification::TYPE_NEW_ORDER,
+                    'title_ar' => 'مهمة جديدة',
+                    'title_en' => 'New Task Assigned',
+                    'body_ar' => "تم تعيين مهمة جديدة لك، يرجى القبول أو الرفض خلال $duration دقيقة",
+                    'body_en' => "You have been assigned a new task. Please accept or reject within $duration minutes",
+                    'data' => ['order_id' => $item->id]
+                ]);
+            }
+        } elseif ($request->filled('maintenance_company_id') && ($request->maintenance_company_id != $item->maintenance_company_id)) {
+            $validated['assigned_at'] = now();
+            $company = \App\Models\MaintenanceCompany::find($request->maintenance_company_id);
+            if ($company && $company->user) {
+                $this->sendNotification($company->user_id, [
+                    'type' => \App\Models\Notification::TYPE_NEW_ORDER,
+                    'title_ar' => 'طلب صيانة جديد',
+                    'title_en' => 'New Maintenance Request',
+                    'body_ar' => 'تم تعيين طلب جديد لشركتكم، يرجى مراجعته وتعيين فني',
+                    'body_en' => 'A new request has been assigned to your company. Please review and assign a technician',
+                    'data' => ['order_id' => $item->id]
+                ]);
+            }
+        }
+
         $item->update($validated);
         return redirect()->route('admin.orders.index')->with('success', __('Order updated successfully.'));
     }
@@ -328,11 +368,42 @@ class OrderController extends Controller
             }
         }
         $order->status = $status;
+        $order->assigned_at = now(); // Reset timer on assignment
         if ($request->scheduled_at) {
             $order->scheduled_at = $request->scheduled_at;
         }
         
         $order->save();
+
+        // Send notifications
+        $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
+        if ($order->technician_id) {
+            $tech = \App\Models\Technician::find($order->technician_id);
+            if ($tech && $tech->user) {
+                $this->sendNotification($tech->user_id, [
+                    'type' => \App\Models\Notification::TYPE_NEW_ORDER,
+                    'title_ar' => 'مهمة جديدة',
+                    'title_en' => 'New Task Assigned',
+                    'body_ar' => "تم تعيين مهمة جديدة لك، يرجى القبول أو الرفض خلال $duration دقيقة",
+                    'body_en' => "You have been assigned a new task. Please accept or reject within $duration minutes",
+                    'data' => ['order_id' => $order->id]
+                ]);
+            }
+        }
+
+        if ($order->maintenance_company_id) {
+            $company = \App\Models\MaintenanceCompany::find($order->maintenance_company_id);
+            if ($company && $company->user) {
+                $this->sendNotification($company->user_id, [
+                    'type' => \App\Models\Notification::TYPE_NEW_ORDER,
+                    'title_ar' => 'طلب صيانة جديد',
+                    'title_en' => 'New Maintenance Request',
+                    'body_ar' => 'تم تعيين طلب جديد لشركتكم، يرجى مراجعته وتعيين فني',
+                    'body_en' => 'A new request has been assigned to your company. Please review and assign a technician',
+                    'data' => ['order_id' => $order->id]
+                ]);
+            }
+        }
 
         return redirect()->back()->with('success', __('Order accepted and assigned successfully.'));
     }
@@ -369,36 +440,48 @@ class OrderController extends Controller
     {
         $order = Order::findOrFail($id);
         
-        $start = (clone $order->scheduled_at)->subHours(1)->addMinute();
-        $end = (clone $order->scheduled_at)->addHours(1)->subMinute();
-        
         $service = $order->service;
         $categoryId = $service->parent_id ?? $service->id;
-
         $cityId = $order->city_id ?? ($order->user->city_id ?? null);
-        \Log::info("OrderAssignment - Techs - Order: {$id}, CityId: " . ($cityId ?? 'null'));
 
-        $technicians = Technician::with(['user', 'service'])
+        $query = Technician::with(['user', 'service'])
             ->whereHas('user', function($q) use ($cityId) {
+                // If order has a city, show techs in that city OR techs with no city specified (all cities)
                 $q->when($cityId, function($sub) use ($cityId) {
-                    $sub->where('city_id', $cityId);
+                    $sub->where(function($cityQuery) use ($cityId) {
+                        $cityQuery->where('city_id', $cityId)
+                                 ->orWhereNull('city_id');
+                    });
                 })
                 ->where('status', 'active');
-            })
+                // ->where('is_online', true); // Removed online requirement for Admin Dashboard
+        })
+        // ->where('availability_status', 'available') // Removed availability requirement for Admin Dashboard
             ->where(function($q) use ($order, $categoryId) {
+                // Show techs with matching service OR no service specified (generalists)
                 $q->where('service_id', $order->service_id)
-                  ->orWhere('category_id', $categoryId);
-            })
-            ->whereDoesntHave('orders', function($q) use ($start, $end) {
+                  ->orWhere('category_id', $categoryId)
+                  ->orWhereNull('service_id');
+            });
+
+        // Availability check (only if order has a scheduled time)
+        if ($order->scheduled_at) {
+            $start = $order->scheduled_at->copy()->subHours(1)->addMinute();
+            $end = $order->scheduled_at->copy()->addHours(1)->subMinute();
+            
+            $query->whereDoesntHave('orders', function($q) use ($start, $end) {
                 $q->whereIn('status', ['accepted', 'scheduled', 'in_progress'])
                   ->whereBetween('scheduled_at', [$start, $end]);
             })
             ->whereDoesntHave('appointments', function($q) use ($start, $end) {
                 $q->whereIn('status', ['scheduled', 'in_progress'])
                   ->whereBetween('appointment_date', [$start, $end]);
-            })
-            ->withAvg('reviews', 'rating')
+            });
+        }
+
+        $technicians = $query->withAvg('reviews', 'rating')
             ->withCount('orders')
+            ->orderByRaw("CASE WHEN technicians.service_id = ? THEN 0 ELSE 1 END", [$order->service_id])
             ->orderByDesc('reviews_avg_rating')
             ->get();
 
@@ -421,7 +504,9 @@ class OrderController extends Controller
                     'specialty' => __('Specialist in maintenance services'),
                     'service_name' => $tech->service->name_ar ?? __('Technician'),
                     'rating' => round($tech->reviews_avg_rating ?? 0, 1),
-                    'district' => is_array($tech->districts) ? implode(', ', $tech->districts) : ($tech->districts ?? __('All Regions')),
+                    'district' => is_array($tech->districts) && count($tech->districts) > 0 
+                                    ? implode(', ', array_column($tech->districts, 'name')) 
+                                    : ($tech->districts ?? __('All Regions')),
                     'order_count' => $tech->orders_count ?? 5,
                     'lat' => $lat,
                     'lng' => $lng,
@@ -479,5 +564,33 @@ class OrderController extends Controller
                 ];
             })
         ]);
+    }
+
+    private function sendNotification($userId, $details)
+    {
+        $user = \App\Models\User::find($userId);
+        if ($user) {
+            $targetAudience = match ($user->type) {
+                'technician' => 'technicians',
+                'maintenance_company' => 'companies',
+                'individual', 'corporate_customer' => 'clients',
+                default => 'individual_user',
+            };
+
+            \App\Models\Notification::create([
+                'user_id' => $userId,
+                'type' => $details['type'] ?? 'notification',
+                'target_audience' => $targetAudience,
+                'title_ar' => $details['title_ar'],
+                'title_en' => $details['title_en'],
+                'body_ar' => $details['body_ar'],
+                'body_en' => $details['body_en'],
+                'data' => $details['data'] ?? [],
+                'status' => 'sent',
+                'is_read' => false
+            ]);
+
+            $user->sendFcmNotification($details, false);
+        }
     }
 }

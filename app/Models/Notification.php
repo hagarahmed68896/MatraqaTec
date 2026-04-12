@@ -49,6 +49,11 @@ class Notification extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function userActions()
+    {
+        return $this->hasMany(UserNotificationAction::class);
+    }
+
     public function scopeUnread($query)
     {
         return $query->where('is_read', false);

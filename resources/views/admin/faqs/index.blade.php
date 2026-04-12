@@ -50,10 +50,10 @@
     </div>
 
     <!-- Actions Bar -->
-    <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+    <div class="flex flex-col md:flex-row  justify-between gap-8">
      
 
-        <div class="flex items-center gap-3 w-full md:max-w-xl ">
+        <div class="flex  gap-3 w-full md:max-w-xl ">
             <!-- Filter Button & Dropdown -->
             <div class="relative" x-data="{ localSortBy: '{{ request('sort_by', 'newest') }}', localTargetGroup: '{{ request('target_group', 'all') }}', localStatus: '{{ request('status', 'all') }}' }">
                 <button @click="showFilters = !showFilters" class="w-12 h-12 flex items-center justify-center bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-400 hover:text-primary dark:hover:text-white transition-all relative">
@@ -158,7 +158,7 @@
             </form>
         </div>
 
-           <div class="flex items-center gap-3 w-full ">
+           <div class="flex items-center gap-3 w-full md:w-auto">
             <a href="{{ route('admin.faqs.create') }}" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 bg-[#1A1A31] dark:bg-primary text-white rounded-xl font-bold shadow-lg shadow-indigo-500/10 hover:opacity-90 transition-all active:scale-95">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 {{ __('Add Question') }}

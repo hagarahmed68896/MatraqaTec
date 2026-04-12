@@ -190,7 +190,6 @@
                         </th>
                         <th class="py-6 px-4">{{ __('Contract Number') }}</th>
                         <th class="py-6 px-4">{{ __('Maintenance Company') }}</th>
-                        <th class="py-6 px-4">{{ __('Corporate Customer') }}</th>
                         <th class="py-6 px-4">{{ __('Contract') }}</th>
                         <th class="py-6 px-4">{{ __('Project Value') }}</th>
                         <th class="py-6 px-4">{{ __('Paid Amount') }}</th>
@@ -221,11 +220,7 @@
                                 <span class="text-md font-bold text-[#1A1A31] dark:text-white">{{ $item->maintenanceCompany->company_name_ar ?? $item->maintenanceCompany->name ?? '-' }}</span>
                             </div>
                         </td>
-                        <td class="py-6 px-4">
-                            <div class="flex items-center gap-3">
-                                <span class="text-md font-bold text-[#1A1A31] dark:text-white">{{ $item->corporateCustomer->company_name_ar ?? $item->corporateCustomer->company_name_en ?? '-' }}</span>
-                            </div>
-                        </td>
+
                          <td class="py-6 px-4">
                              <a href="{{ route('admin.contracts.show', $item->id) }}" onclick="event.stopPropagation()" class="text-primary dark:text-white hover:text-primary dark:hover:text-white-dark font-black text-md decoration-slice decoration-2 underline-offset-4 hover:underline transition-all">
                                  {{ __('The Contract') }}

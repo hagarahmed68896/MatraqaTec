@@ -65,7 +65,11 @@ class TechnicianController extends Controller
 
         // 5. Tech Status (Availability) Filter
         if ($request->filled('tech_status')) {
-            $query->where('availability_status', $request->tech_status);
+            if ($request->tech_status === 'unavailable') {
+                $query->where('availability_status', '!=', 'available');
+            } else {
+                $query->where('availability_status', $request->tech_status);
+            }
         }
 
         // 6. Account Status Filter

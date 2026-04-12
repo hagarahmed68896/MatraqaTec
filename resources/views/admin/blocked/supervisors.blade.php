@@ -59,7 +59,6 @@
                     <input type="text"
                         name="search"
                         x-model="search"
-                        placeholder="{{ __('Search supervisor by name or email...') }}"
                         class="w-80 pr-12 pl-4 py-3.5 bg-white dark:bg-[#0F0F1E] border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-bold text-slate-800 dark:text-white placeholder-slate-400 outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all duration-300">
 
                     <button type="submit"

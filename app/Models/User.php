@@ -41,6 +41,23 @@ class User extends Authenticatable
         'language',
     ];
 
+    protected $appends = ['avatar_url'];
+
+    public function getAvatarUrlAttribute()
+    {
+        if (!$this->avatar) {
+            return null;
+        }
+        
+        // If it starts with 'uploads/', it's directly in the public folder
+        if (str_starts_with($this->avatar, 'uploads/')) {
+            return asset($this->avatar);
+        }
+        
+        // Otherwise it's stored in the storage disk
+        return asset('storage/' . $this->avatar);
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -184,5 +201,10 @@ class User extends Authenticatable
     public function readNotifications()
     {
         return $this->notifications()->where('is_read', true);
+    }
+
+    public function sendFcmNotification($details, $saveToDb = true)
+    {
+        return app(\App\Services\FcmService::class)->sendToUser($this, $details, $saveToDb);
     }
 }

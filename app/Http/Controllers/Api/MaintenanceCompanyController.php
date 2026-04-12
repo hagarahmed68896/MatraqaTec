@@ -32,7 +32,7 @@ class MaintenanceCompanyController extends Controller
 
         $userData = $user->toArray();
         if ($user->avatar) {
-            $userData['avatar'] = asset($user->avatar);
+            $userData['avatar'] = $user->avatar_url;
         }
 
         return response()->json([
@@ -71,6 +71,10 @@ class MaintenanceCompanyController extends Controller
             'swift_code' => 'sometimes|string|max:20',
             'city_id' => 'sometimes|exists:cities,id',
             'address' => 'sometimes|string',
+            'latitude' => 'sometimes|numeric',
+            'longitude' => 'sometimes|numeric',
+            'lat' => 'sometimes|numeric',
+            'lng' => 'sometimes|numeric',
             'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
 
@@ -78,26 +82,44 @@ class MaintenanceCompanyController extends Controller
             return response()->json(['status' => false, 'message' => $validator->errors()->first(), 'errors' => $validator->errors()], 422);
         }
 
-        $userModel = $company->user;
-        if ($userModel) {
-            if ($request->has('name')) $userModel->name = $request->name;
-            if ($request->has('email')) $userModel->email = $request->email;
-            if ($request->has('password') && $request->password) $userModel->password = Hash::make($request->password);
-            if ($request->has('phone')) $userModel->phone = $request->phone;
+        if ($user) {
+            if ($request->has('name')) $user->name = $request->name;
+            if ($request->has('email')) $user->email = $request->email;
+            if ($request->has('password') && $request->password) $user->password = Hash::make($request->password);
+            if ($request->has('phone')) $user->phone = $request->phone;
+            if ($request->has('city_id')) $user->city_id = $request->city_id;
+            
+            if ($request->has('address')) $user->address = $request->address;
+            
+            // Handle multiple naming conventions for coordinates
+            $lat = $request->lat ?? $request->latitude;
+            $lng = $request->lng ?? $request->longitude;
+            
+            if ($lat !== null) $user->latitude = $lat;
+            if ($lng !== null) $user->longitude = $lng;
             
             if ($request->hasFile('avatar')) {
-                if ($userModel->avatar && file_exists(public_path($userModel->avatar))) {
-                    unlink(public_path($userModel->avatar));
+                if ($user->avatar) {
+                    if (str_starts_with($user->avatar, 'uploads/')) {
+                        if (file_exists(public_path($user->avatar))) {
+                            unlink(public_path($user->avatar));
+                        }
+                    } else {
+                        // Handle both old 'avatars/' and 'storage/' paths
+                        if (file_exists(public_path($user->avatar))) {
+                            unlink(public_path($user->avatar));
+                        }
+                    }
                 }
                 
                 $file = $request->file('avatar');
                 $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9_\.]/', '', $file->getClientOriginalName());
-                $file->move(public_path('avatars'), $filename);
+                $file->move(public_path('uploads/avatars'), $filename);
                 
-                $userModel->avatar = 'avatars/' . $filename;
+                $user->avatar = 'uploads/avatars/' . $filename;
             }
             
-            $userModel->save();
+            $user->save();
         }
 
         $updateData = $request->only([
@@ -120,7 +142,7 @@ class MaintenanceCompanyController extends Controller
         
         $userData = $user->toArray();
         if ($user->avatar) {
-            $userData['avatar'] = asset($user->avatar);
+            $userData['avatar'] = $user->avatar_url;
         }
 
         return response()->json([
@@ -792,7 +814,7 @@ class MaintenanceCompanyController extends Controller
             return [
                 'id' => $tech->id,
                 'name' => $tech->user->name ?? ($locale == 'ar' ? $tech->name_ar : ($tech->name_en ?? $tech->name_ar)),
-                'avatar' => $tech->user->avatar ? asset('storage/' . $tech->user->avatar) : null,
+                'avatar' => $tech->user?->avatar_url,
                 'phone' => $tech->user->phone,
                 'rating' => round($tech->reviews_avg_rating ?? 0, 1),
                 'is_online' => $tech->user->is_online ?? false,

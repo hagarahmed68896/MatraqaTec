@@ -110,10 +110,10 @@
     <!-- Main Container -->
     <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-sm overflow-visible" x-data="{ selectedIds: [] }">
         
-    <div class="p-6 flex flex-wrap items-center justify-between gap-6 relative min-h-[5rem]">
+    <div class="p-6 flex flex-col lg:flex-row items-center justify-between gap-6 relative min-h-[5rem]">
 
         <!-- Bulk Actions Bar (Visible when rows selected) -->
-        <div x-show="selectedIds.length > 0" x-cloak class="absolute inset-0 bg-white dark:bg-[#1A1A31] z-20 flex items-center justify-between px-6 border-b border-slate-100 dark:border-white/5 animate-fade-in-up">
+        <div x-show="selectedIds.length > 0" x-cloak class="absolute inset-0 bg-white dark:bg-[#1A1A31] z-20 flex items-center justify-between px-6 border-b border-slate-100 dark:border-white/5 animate-fade-in-up rounded-t-[2rem]">
             <div class="flex items-center gap-4">
                 <span class="text-sm font-bold text-slate-500 bg-slate-100 dark:bg-white/5 dark:text-slate-300 px-4 py-3 rounded-2xl">
                     <span x-text="selectedIds.length"></span> {{ __('Selected') }}
@@ -151,120 +151,123 @@
             </button>
         </div>
 
-        <!-- RIGHT SECTION (Filter + Search - Visible when no rows selected) -->
-        <div x-show="selectedIds.length === 0" class="flex items-center gap-3 flex-1 min-w-0 justify-end">
+        <!-- Controls Row (Visible when no rows selected) -->
+        <div x-show="selectedIds.length === 0" class="flex flex-col lg:flex-row items-center justify-between gap-4 w-full">
 
-            <!-- Filter Button -->
-            <div class="relative">
-                <button @click="showFilters = !showFilters"
-                    class="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-slate-400 hover:text-primary dark:hover:text-white transition shadow-sm">
-                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-sliders" viewBox="0 0 16 16">
-                        <path fill-rule="evenodd" d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z"/>
-                    </svg>
-                </button>
+            <!-- Side 1: Filter & Search -->
+            <div class="flex items-center gap-3 w-full lg:w-auto flex-1 min-w-0">
 
-                <!-- Filter Dropdown -->
-                <div x-show="showFilters" 
-                     @click.away="showFilters = false"
-                     x-transition:enter="transition ease-out duration-100"
-                     x-transition:enter-start="opacity-0 scale-95"
-                     x-transition:enter-end="opacity-100 scale-100"
-                     class="absolute right-0 mt-3 w-80 bg-white dark:bg-[#1A1A31] rounded-2xl shadow-2xl border border-slate-100 dark:border-white/10 z-[100] p-6">
-                    
-                    <form action="{{ url()->current() }}" method="GET" class="space-y-6">
-                        @if(request('search'))
-                            <input type="hidden" name="search" value="{{ request('search') }}">
-                        @endif
+                <!-- Filter Button -->
+                <div class="relative">
+                    <button @click="showFilters = !showFilters"
+                        class="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-slate-400 hover:text-primary dark:hover:text-white transition shadow-sm">
+                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-sliders" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z"/>
+                        </svg>
+                    </button>
 
-                        <!-- Sort By -->
-                        <div>
-                            <label class="text-xs font-black text-slate-400 uppercase tracking-widest block mb-4">{{ __('Sort by') }}</label>
-                            <div class="space-y-3">
-                                <label class="flex items-center gap-3 cursor-pointer group">
-                                    <input type="radio" name="sort_by" value="all" x-model="selectedSort" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('All') }}</span>
-                                </label>
-                                <label class="flex items-center gap-3 cursor-pointer group">
-                                    <input type="radio" name="sort_by" value="name" x-model="selectedSort" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('Name') }}</span>
-                                </label>
-                                <label class="flex items-center gap-3 cursor-pointer group">
-                                    <input type="radio" name="sort_by" value="newest" x-model="selectedSort" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('Newest') }}</span>
-                                </label>
+                    <!-- Filter Dropdown -->
+                    <div x-show="showFilters" 
+                         @click.away="showFilters = false"
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="opacity-0 scale-95"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         class="absolute {{ app()->getLocale() == 'ar' ? 'right-0' : 'left-0' }} mt-3 w-80 bg-white dark:bg-[#1A1A31] rounded-2xl shadow-2xl border border-slate-100 dark:border-white/10 z-[100] p-6">
+                        
+                        <form action="{{ url()->current() }}" method="GET" class="space-y-6">
+                            @if(request('search'))
+                                <input type="hidden" name="search" value="{{ request('search') }}">
+                            @endif
+
+                            <!-- Sort By -->
+                            <div>
+                                <label class="text-xs font-black text-slate-400 uppercase tracking-widest block mb-4">{{ __('Sort by') }}</label>
+                                <div class="space-y-3">
+                                    <label class="flex items-center gap-3 cursor-pointer group">
+                                        <input type="radio" name="sort_by" value="all" x-model="selectedSort" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
+                                        <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('All') }}</span>
+                                    </label>
+                                    <label class="flex items-center gap-3 cursor-pointer group">
+                                        <input type="radio" name="sort_by" value="name" x-model="selectedSort" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
+                                        <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('Name') }}</span>
+                                    </label>
+                                    <label class="flex items-center gap-3 cursor-pointer group">
+                                        <input type="radio" name="sort_by" value="newest" x-model="selectedSort" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
+                                        <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('Newest') }}</span>
+                                    </label>
+                                </div>
                             </div>
-                        </div>
 
-                        <hr class="border-slate-100 dark:border-white/5">
+                            <hr class="border-slate-100 dark:border-white/5">
 
-                        <!-- Status -->
-                        <div>
-                            <label class="text-xs font-black text-slate-400 uppercase tracking-widest block mb-4">{{ __('Status:') }}</label>
-                            <div class="space-y-3">
-                                <label class="flex items-center gap-3 cursor-pointer group">
-                                    <input type="radio" name="status" value="" x-model="selectedStatus" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('All') }}</span>
-                                </label>
-                                <label class="flex items-center gap-3 cursor-pointer group">
-                                    <input type="radio" name="status" value="active" x-model="selectedStatus" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('نشط') }}</span>
-                                </label>
-                                <label class="flex items-center gap-3 cursor-pointer group">
-                                    <input type="radio" name="status" value="inactive" x-model="selectedStatus" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
-                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('غير نشط') }}</span>
-                                </label>
+                            <!-- Status -->
+                            <div>
+                                <label class="text-xs font-black text-slate-400 uppercase tracking-widest block mb-4">{{ __('Status:') }}</label>
+                                <div class="space-y-3">
+                                    <label class="flex items-center gap-3 cursor-pointer group">
+                                        <input type="radio" name="status" value="" x-model="selectedStatus" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
+                                        <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('All') }}</span>
+                                    </label>
+                                    <label class="flex items-center gap-3 cursor-pointer group">
+                                        <input type="radio" name="status" value="active" x-model="selectedStatus" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
+                                        <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('نشط') }}</span>
+                                    </label>
+                                    <label class="flex items-center gap-3 cursor-pointer group">
+                                        <input type="radio" name="status" value="inactive" x-model="selectedStatus" class="w-5 h-5 border-slate-300 dark:border-white/10 text-primary focus:ring-primary/20 bg-transparent">
+                                        <span class="text-sm font-bold text-slate-700 dark:text-slate-300 transition-colors">{{ __('غير نشط') }}</span>
+                                    </label>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="flex gap-2 pt-2">
-                            <button type="submit" class="flex-1 py-3 bg-[#1A1A31] text-white text-sm font-bold rounded-xl hover:bg-black transition-all shadow-lg">{{ __('Apply') }}</button>
-                            <button type="button" @click="selectedSort = 'newest'; selectedStatus = ''; $el.form.submit()" class="px-4 py-3 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-sm font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all text-center">{{ __('Reset') }}</button>
-                        </div>
-                    </form>
+                            <div class="flex gap-2 pt-2">
+                                <button type="submit" class="flex-1 py-3 bg-[#1A1A31] text-white text-sm font-bold rounded-xl hover:bg-black transition-all shadow-lg">{{ __('Apply') }}</button>
+                                <button type="button" @click="selectedSort = 'newest'; selectedStatus = ''; $el.form.submit()" class="px-4 py-3 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-sm font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all text-center">{{ __('Reset') }}</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
+
+                <!-- Search -->
+                <form action="{{ url()->current() }}" method="GET" class="relative w-full max-w-[18rem] flex-1">
+                    @foreach(request()->except('search','page') as $key => $value)
+                        <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                    @endforeach
+
+                    <input type="text"
+                           name="search"
+                           x-model="search"
+                           class="w-full pr-10 pl-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl text-sm font-bold text-slate-800 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-primary/20 transition-all">
+
+                    <button type="submit"
+class="absolute {{ app()->getLocale() == 'ar' ? 'right-4' : 'left-4' }} top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary dark:hover:text-white transition-colors">                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </button>
+                </form>
             </div>
 
-            <!-- Search -->
-            <form action="{{ url()->current() }}" method="GET" class="relative w-full max-w-[18rem] flex-1">
-                @foreach(request()->except('search','page') as $key => $value)
-                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
-                @endforeach
+            <!-- Side 2: Actions (Add + Download) -->
+            <div class="flex items-center gap-3 flex-wrap justify-center lg:justify-end shrink-0">
 
-                <input type="text"
-                       name="search"
-                       x-model="search"
-                       class="w-full pr-10 pl-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl text-sm font-bold text-slate-800 dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-primary/20 transition-all">
-
-                <button type="submit"
-class="absolute {{ app()->getLocale() == 'ar' ? 'right-4' : 'left-4' }} top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary dark:hover:text-white transition-colors">                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                <a href="{{ $type == 'individual' ? route('admin.individual-customers.create') : route('admin.corporate-customers.create') }}"
+                   class="flex items-center gap-2 px-5 py-3 bg-[#1A1A31] border border-slate-200 dark:border-white/10
+                    text-white text-sm font-bold rounded-xl hover:bg-black transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"/>
                     </svg>
-                </button>
-            </form>
+                    {{ __('Add New Account') }}
+                </a>
 
-        </div>
+                <a href="{{ ($type == 'individual' ? route('admin.individual-customers.download') : route('admin.corporate-customers.download')) . '?' . http_build_query(request()->all()) }}"
+                   class="flex items-center gap-2 px-5 py-3 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white text-sm font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M7 10l5 5m0 0l5-5m-5 5V3"/>
+                    </svg>
+                    {{ __('Download') }}
+                </a>
 
-        <!-- LEFT SECTION (Add + Download - Visible when no rows selected) -->
-        <div x-show="selectedIds.length === 0" class="flex items-center gap-3 flex-wrap">
-
-            <a href="{{ $type == 'individual' ? route('admin.individual-customers.create') : route('admin.corporate-customers.create') }}"
-               class="flex items-center gap-2 px-5 py-3 bg-[#1A1A31] border border-slate-200 dark:border-white/10
-                text-white text-sm font-bold rounded-xl hover:bg-black transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"/>
-                </svg>
-                {{ __('Add New Account') }}
-            </a>
-
-            <a href="{{ ($type == 'individual' ? route('admin.individual-customers.download') : route('admin.corporate-customers.download')) . '?' . http_build_query(request()->all()) }}"
-               class="flex items-center gap-2 px-5 py-3 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white text-sm font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M7 10l5 5m0 0l5-5m-5 5V3"/>
-                </svg>
-                {{ __('Download') }}
-            </a>
-
+            </div>
         </div>
     </div>
 

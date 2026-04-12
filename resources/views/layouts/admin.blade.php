@@ -369,9 +369,8 @@
                                             </div>
                                             
                                             <div class="text-[11px] text-slate-500 dark:text-slate-300 leading-relaxed break-words">
-                                                <p :class="expanded ? '' : 'line-clamp-2'">{{ $notifBody }}</p>
-                                                
                                                 <div x-show="expanded" x-collapse @click.stop>
+                                                    <p class="mb-3">{{ $notifBody }}</p>
                                                     <div class="pt-3 space-y-3">
                                                         <!-- Detailed Fields from data -->
                                                         @if(isset($notification->data['customer_name']))

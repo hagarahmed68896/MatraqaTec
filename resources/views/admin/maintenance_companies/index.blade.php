@@ -142,7 +142,7 @@
             <div x-show="selectedIds.length === 0" class="flex flex-col lg:flex-row items-center justify-between gap-4 w-full">
 
                 <!-- Filter & Search -->
-                <div class="flex items-center gap-3 w-full lg:w-auto flex-1 min-w-0 justify-end">
+                <div class="flex items-center gap-3 w-full lg:w-auto flex-1 min-w-0">
                     <!-- Filter Button -->
                     <div class="relative">
                         <button @click="showFilters = !showFilters"

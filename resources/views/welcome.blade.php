@@ -349,7 +349,7 @@
                         -translate-y-1/2 w-10 h-10 lg:w-14 lg:h-14 bg-white 
                         border border-slate-100 dark:border-slate-700 rounded-full shadow-xl 
                         flex items-center justify-center transition-all z-20 text-black
-                        hover:bg-[#1A1A31]  hover:scale-110 active:scale-95"
+                         active:scale-95"
                         style="left: 0.5rem; right: auto;">
                     <svg class="w-6 h-6" fill="none" stroke="#1A1A31" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -358,7 +358,11 @@
 
                 <!-- Navigation Arrow (Right) -->
                 <button @click="next()"
-                        class="absolute right-2 md:-right-4 lg:-right-6 top-1/2 -translate-y-1/2 w-10 h-10 lg:w-14 lg:h-14 bg-white text-[#1A1A31] border border-slate-100 dark:border-slate-700 rounded-full shadow-xl flex items-center justify-center transition-all z-20 hover:bg-[#1A1A31] hover:text-white hover:scale-110 active:scale-95"
+                        class="absolute right-2 md:-right-4 lg:-right-6 top-1/2 -translate-y-1/2 
+                        w-10 h-10 lg:w-14 lg:h-14 bg-white text-[#1A1A31] border
+                         border-slate-100 dark:border-slate-700 rounded-full shadow-xl
+                          flex items-center justify-center transition-all z-20
+                           hover:text-white  active:scale-95"
                         style="right: 0.5rem; left: auto;">
                     <svg class="w-6 h-6" fill="none" stroke="#1A1A31" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -411,7 +415,7 @@
                 <div class="flex justify-center gap-2 mt-4">
                     <template x-for="i in (total > perPage ? total - perPage + 1 : 1)" :key="i">
                         <button @click="goTo(i-1)" 
-                                :class="current === (i-1) ? 'w-8 bg-indigo-600' : 'w-2 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400'"
+                                :class="current === (i-1) ? 'w-8 bg-[#1A1A31]' : 'w-2 bg-gray-300 dark:bg-slate-700 hover:bg-slate-400'"
                                 class="h-2 rounded-full transition-all duration-300"></button>
                     </template>
                 </div>

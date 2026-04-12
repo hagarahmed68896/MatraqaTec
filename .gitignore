@@ -16,9 +16,26 @@
 /public/build
 /public/hot
 /public/storage
+/public/uploads
 /storage/*.key
 /storage/pail
 /vendor
 Homestead.json
 Homestead.yaml
-Thumbs.db
+
+# Debug and temporary files
+debug_*.php
+test_*.php
+tmp_*.php
+list_all_orders.php
+test.json
+*.txt
+*.json.key
+*.json
+!composer.json
+!package.json
+!*.lock
+!lang/*.json
+
+# Firebase keys
+*-firebase-*.json

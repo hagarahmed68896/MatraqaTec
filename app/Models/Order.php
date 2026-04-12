@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Order extends Model
 {
@@ -29,15 +30,54 @@ class Order extends Model
         'assigned_at',
         'latitude',
         'longitude',
+        'proposed_scheduled_at',
+        'reschedule_requested_by',
     ];
 
     protected $casts = [
         'scheduled_at' => 'datetime',
         'assigned_at' => 'datetime',
+        'proposed_scheduled_at' => 'datetime',
         'spare_parts_metadata' => 'array',
     ];
 
-    protected $appends = ['status_label', 'status_color', 'formatted_scheduled_date', 'formatted_scheduled_time', 'client_name', 'client_phone', 'technician_name', 'technician_avatar', 'acceptance_duration_minutes', 'acceptance_expiry_time', 'attachment_urls', 'image'];
+    protected $appends = ['status_label', 'status_color', 'formatted_scheduled_date', 'formatted_scheduled_time', 'formatted_proposed_scheduled_date', 'formatted_proposed_scheduled_time', 'client_name', 'client_phone', 'technician_name', 'technician_avatar', 'acceptance_duration_minutes', 'acceptance_expiry_time', 'remaining_acceptance_seconds', 'client_signature_url', 'attachment_urls', 'image', 'can_reschedule'];
+
+    public function getClientSignatureUrlAttribute()
+    {
+        if (!$this->client_signature) return null;
+        if (Str::startsWith($this->client_signature, 'data:image')) {
+            return $this->client_signature;
+        }
+        // Since we now save directly to public/, asset() will link to it correctly
+        return asset($this->client_signature);
+    }
+
+    public function getCanRescheduleAttribute()
+    {
+        $user = auth()->user();
+        if (!$user) return false;
+
+        // Common status check: only scheduled/accepted/new orders can be rescheduled
+        if (!in_array($this->status, ['new', 'scheduled', 'accepted'])) {
+            return false;
+        }
+
+        // Check if there's already a pending reschedule request
+        if ($this->sub_status === 'reschedule_requested') {
+            return false;
+        }
+
+        // Must not have started work (sub_status must be empty)
+        if ($this->sub_status) {
+            return false;
+        }
+
+        // Removed time restrictions for technicians. 
+        // Since we now use a Request & Approval system, anyone can *request* a reschedule at any time, 
+        // and the other party can simply accept or reject it.
+        return true;
+    }
 
     public function getAttachmentUrlsAttribute()
     {
@@ -51,16 +91,33 @@ class Order extends Model
         return $this->attachment_urls[0] ?? null;
     }
 
-
     public function getAcceptanceDurationMinutesAttribute()
     {
-        return (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
+        $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
+        if ($this->assigned_at) {
+            $expiryTime = $this->assigned_at->copy()->addMinutes($duration);
+            $remaining = now()->diffInMinutes($expiryTime, false);
+            return $remaining > 0 ? (int) $remaining : 0;
+        }
+        return $duration;
+    }
+
+    public function getRemainingAcceptanceSecondsAttribute()
+    {
+        $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
+        if ($this->assigned_at) {
+            $expiryTime = $this->assigned_at->copy()->addMinutes($duration);
+            $remainingSeconds = now()->diffInSeconds($expiryTime, false);
+            return $remainingSeconds > 0 ? (int) $remainingSeconds : 0;
+        }
+        return $duration * 60;
     }
 
     public function getAcceptanceExpiryTimeAttribute()
     {
         if (!$this->assigned_at) return null;
-        return $this->assigned_at->copy()->addMinutes($this->acceptance_duration_minutes);
+        $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
+        return $this->assigned_at->copy()->addMinutes($duration);
     }
 
     public function getClientNameAttribute()
@@ -87,7 +144,7 @@ class Order extends Model
             return $this->technician['image'] ?? null;
         }
         if (!$this->technician || !$this->technician->user) return null;
-        return $this->technician->user->avatar ? asset('storage/' . $this->technician->user->avatar) : null;
+        return $this->technician->user->avatar_url;
     }
 
     public function getFormattedScheduledDateAttribute()
@@ -99,6 +156,17 @@ class Order extends Model
     {
         if (!$this->scheduled_at) return null;
         return $this->scheduled_at->translatedFormat('h:i a');
+    }
+
+    public function getFormattedProposedScheduledDateAttribute()
+    {
+        return $this->proposed_scheduled_at ? $this->proposed_scheduled_at->format('Y/m/d') : null;
+    }
+
+    public function getFormattedProposedScheduledTimeAttribute()
+    {
+        if (!$this->proposed_scheduled_at) return null;
+        return $this->proposed_scheduled_at->translatedFormat('h:i a');
     }
 
     public function getStatusLabelAttribute()

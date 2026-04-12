@@ -17,12 +17,20 @@ trait ValidatesOrderPhotos
     protected function validatePhotoCount($order, $phase)
     {
         $settingKey = $phase === 'before' ? 'required_photos_before_count' : 'required_photos_after_count';
-        $requiredCount = Setting::getByKey($settingKey, 2);
+        $minRequired = $phase === 'before' ? 2 : 3;
+        
+        // Get from setting, but ensure it's at least our minimum design requirement
+        $dbCount = Setting::getByKey($settingKey, $minRequired);
+        $requiredCount = max((int)$dbCount, $minRequired);
 
         $currentCount = $order->attachments()->where('type', $phase)->count();
 
         if ($currentCount < $requiredCount) {
-            return "At least {$requiredCount} photos are required {$phase} work.";
+             $phaseTrans = $phase === 'before' ? __('before') : __('after');
+             return __("At least :count photos are required :phase work.", [
+                 'count' => $requiredCount, 
+                 'phase' => $phaseTrans
+             ]);
         }
 
         return true;
