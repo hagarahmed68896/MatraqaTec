@@ -31,13 +31,30 @@ class TechnicianRequest extends Model
 
     protected $casts = [
         'districts' => 'array',
+        'service_ids' => 'array',
     ];
 
-    protected $appends = ['photo_url'];
+    protected $appends = ['photo_url', 'iqama_photo_url', 'services'];
+
+    public function getServicesAttribute()
+    {
+        if (!$this->service_ids || !is_array($this->service_ids)) {
+            if ($this->service_id) {
+                return Service::where('id', $this->service_id)->get();
+            }
+            return collect();
+        }
+        return Service::whereIn('id', $this->service_ids)->get();
+    }
 
     public function getPhotoUrlAttribute()
     {
         return $this->photo ? asset($this->photo) : null;
+    }
+
+    public function getIqamaPhotoUrlAttribute()
+    {
+        return $this->iqama_photo ? asset($this->iqama_photo) : null;
     }
 
 

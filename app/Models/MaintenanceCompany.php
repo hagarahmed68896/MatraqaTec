@@ -30,6 +30,13 @@ class MaintenanceCompany extends Model
         'swift_code',
     ];
 
+    protected $appends = ['commercial_record_url'];
+
+    public function getCommercialRecordUrlAttribute()
+    {
+        return $this->commercial_record_file ? asset($this->commercial_record_file) : null;
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

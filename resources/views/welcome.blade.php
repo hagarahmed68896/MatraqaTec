@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}" x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }" x-init="$watch('darkMode', val => localStorage.setItem('darkMode', val))" :class="{ 'dark': darkMode }">
 <head>
     <meta charset="utf-8">
@@ -23,10 +23,10 @@
      :class=" scrolled ? 'bg-white dark:bg-[#1A1A31] shadow-lg' : 'bg-white dark:bg-[#1A1A31] border-b border-slate-100 dark:border-slate-800 shadow-sm'"
      class="w-full z-50 transition-all duration-500 ">
 
-<div :class="darkMode ? 'h-28 md:h-32' : 'h-20'" class="max-w-7xl mx-auto px-6 flex justify-between items-center flex-row-reverse transition-all duration-300">            <!-- Logo (Right in RTL) -->
+<div class="h-24 max-w-7xl mx-auto px-6 flex justify-between items-center flex-row-reverse transition-all duration-300">            <!-- Logo (Right in RTL) -->
             <a href="#" class="flex items-center">
                 <img :src="darkMode ? '{{ asset('assets/images/163cf4a33948b9671c182f9d0aa410eaab570a58.png') }}' : '{{ asset('assets/images/41b68e035292ba7aa97a9bb8b16143cb90992358.png') }}'" 
-                     :class="darkMode ? 'h-24 md:h-28' : 'h-10'" 
+                     :class="darkMode ? 'h-24 md:h-28' : 'h-12 md:h-14'" 
                      class="object-contain transition-all duration-500" alt="MatraqaTec">
             </a>
             
@@ -34,7 +34,7 @@
             <div class="flex items-center gap-4">
                 <!-- Theme Toggle -->
                 <button @click="darkMode = !darkMode" class="w-10 h-10 flex items-center justify-center border border-slate-200 
-                dark:border-slate-700 rounded-xl bg-[#1A1A31] dark:bg-slate-800 text-white dark:text-slate-300 transition-all">
+                dark:border-slate-700 rounded-xl bg-[#1A1A31] dark:bg-[#1A1A31] text-white dark:text-slate-300 transition-all hover:bg-opacity-90 active:scale-95">
                     <svg x-show="!darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                     <svg x-show="darkMode" style="display: none;" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.727 12.727L12 12l8.485 8.485z"></path></svg>
                 </button>
@@ -65,8 +65,8 @@
 </div>
 
                 <!-- Download App (Hidden on Mobile) -->
-                <a href="#" class="hidden md:flex px-6 py-2.5 bg-[#1A1A31] border border-slate-200 dark:border-slate-700 
-                dark:bg-indigo-600 text-white text-sm font-bold rounded-xl shadow-md hover:bg-black transition-all active:scale-95">
+                <a href="#" class="hidden md:flex h-10 px-6 items-center justify-center border border-slate-200 
+                dark:border-slate-700 rounded-xl bg-[#1A1A31] dark:bg-[#1A1A31] text-white dark:text-slate-300 text-sm font-bold transition-all hover:bg-opacity-90 active:scale-95">
                     {{ __('Download App') }}
                 </a>
             </div>
@@ -97,8 +97,7 @@
                 </p>
                 
                 <div class="pt-6 flex">
-                    <button class="px-8 py-4 bg-[#1A1A31] dark:bg-indigo-600 text-white rounded-2xl font-bold hover:bg-black
-                     dark:hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1">
+                    <button class="px-8 py-4 bg-[#1A1A31] dark:bg-[#1A1A31] text-white rounded-xl font-bold hover:bg-opacity-90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 active:scale-95">
                         {{ __('Download App Now') }}
                     </button>
                 </div>
@@ -393,7 +392,7 @@
                                     </div>
                                     <!-- Name + Stars -->
                                     <div class="flex-1 text-primary">
-                                        <h4 class="font-bold text-lg leading-tight mb-2 text-center md:text-right" style="color: #1A1A31 !important;">{{ $review->user->name ?? __('User') }}</h4>
+                                        <h4 class="font-bold text-lg leading-tight mb-2 text-center md:text-right text-[#1A1A31] dark:text-white">{{ $review->user->name ?? __('User') }}</h4>
                                         <div class="flex gap-0.5 justify-center md:justify-end">
                                             @for($i = 0; $i < 5; $i++)
                                                 <span class="text-2xl font-bold" style="color: {{ $i < (int)($review->rating ?? $review->stars ?? 5) ? '#FFD700' : '#E2E8F0' }}; line-height: 1;">★</span>
@@ -403,7 +402,7 @@
                                 </div>
 
                                 <!-- Comment -->
-                                <p class="text-slate-600 text-sm leading-[1.8] text-center md:text-right" style="color: #1A1A31 !important;">
+                                <p class="text-slate-600 dark:text-slate-400 text-sm leading-[1.8] text-center md:text-right">
                                     "{{ $review->comment }}"
                                 </p>
                             </div>
@@ -533,7 +532,7 @@
     <footer class="bg-[#1A1A31] dark:bg-[#0B0B1A] pb-12 text-white transition-colors duration-300 border-t-4 border-white/10 ">
         <div class="max-w-7xl mx-auto px-6">
             <div class="flex flex-col items-center text-center space-y-10 ">
-                <img src="{{ asset('assets/images/logo.png') }}" class="h-24 mb-4  mt-8 invert" alt="MatraqaTec">
+                <img src="{{ asset('assets/images/logo-02 1.svg') }}" class="h-32 mb-4 mt-8 brightness-0 invert" alt="MatraqaTec">
                 <p class="text-slate-300 text-lg mb-4 font-medium max-w-2xl mx-auto leading-relaxed italic opacity-80">
                     "{{ __('MatraqaTec is a leading service platform in the region that connects you with the best specialized technicians.') }}"
                 </p>

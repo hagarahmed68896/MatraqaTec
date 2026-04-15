@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 use App\Mail\TechnicianAccountCreated;
+use App\Services\FcmService;
 
 class TechnicianRequestController extends Controller
 {
@@ -162,6 +163,7 @@ class TechnicianRequestController extends Controller
                 'maintenance_company_id' => $techRequest->maintenance_company_id,
                 'category_id' => $techRequest->category_id,
                 'service_id' => $techRequest->service_id,
+                'service_ids' => $techRequest->service_ids,
                 'years_experience' => $techRequest->years_experience,
                 'name' => $techRequest->name ?? $techRequest->name_ar,
                 'name_ar' => $techRequest->name_ar,
@@ -177,8 +179,30 @@ class TechnicianRequestController extends Controller
             $techRequest->update(['status' => 'accepted']);
 
             DB::commit();
+            
+            // 5. Notify Maintenance Company
+            try {
+                $companyUser = $techRequest->maintenanceCompany?->user;
+                if ($companyUser) {
+                    $fcmService = app(FcmService::class);
+                    $fcmService->sendToUser($companyUser, [
+                        'type' => 'technician_accepted',
+                        'title_ar' => 'تم قبول طلب إضافة فني',
+                        'title_en' => 'Technician Request Accepted',
+                        'body_ar' => "تم قبول طلبك لإضافة الفني {$techRequest->name}",
+                        'body_en' => "Your request to add technician {$techRequest->name} has been accepted.",
+                        'data' => [
+                            'type' => 'technician_request',
+                            'request_id' => $techRequest->id,
+                            'status' => 'accepted'
+                        ]
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Notification Error (Accept Tech): ' . $e->getMessage());
+            }
 
-            // 5. Send Email (Optional)
+            // 6. Send Email (Optional)
             try {
                 \Log::info('TechnicianRequestController: Sending email', ['email' => $techRequest->email]);
             Mail::to($techRequest->email)->send(new TechnicianAccountCreated($user, $request->password));
@@ -217,6 +241,29 @@ class TechnicianRequestController extends Controller
             'status' => 'rejected',
             'rejection_reason' => $request->rejection_reason
         ]);
+
+        // Notify Maintenance Company
+        try {
+            $companyUser = $techRequest->maintenanceCompany?->user;
+            if ($companyUser) {
+                $fcmService = app(FcmService::class);
+                $fcmService->sendToUser($companyUser, [
+                    'type' => 'technician_rejected',
+                    'title_ar' => 'تم رفض طلب إضافة فني',
+                    'title_en' => 'Technician Request Rejected',
+                    'body_ar' => "تم رفض طلبك لإضافة الفني {$techRequest->name}. السبب: {$request->rejection_reason}",
+                    'body_en' => "Your request to add technician {$techRequest->name} has been rejected. Reason: {$request->rejection_reason}",
+                    'data' => [
+                        'type' => 'technician_request',
+                        'request_id' => $techRequest->id,
+                        'status' => 'rejected',
+                        'reason' => $request->rejection_reason
+                    ]
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Notification Error (Refuse Tech): ' . $e->getMessage());
+        }
 
         return redirect()->route('admin.technician-requests.index')->with('success', __('Request refused successfully.'));
     }

@@ -29,7 +29,10 @@ class NotificationController extends Controller
 
         $notifications = Notification::where(function ($query) use ($user, $audienceType) {
                 $query->where('user_id', $user->id)
-                      ->orWhereIn('target_audience', [$audienceType, 'all']);
+                      ->orWhere(function($q) use ($user, $audienceType) {
+                          $q->whereIn('target_audience', [$audienceType, 'all'])
+                            ->where('created_at', '>=', $user->created_at);
+                      });
             })
             ->where('status', 'sent')
             ->whereDoesntHave('userActions', function ($q) use ($user) {
@@ -102,6 +105,7 @@ class NotificationController extends Controller
         // Mark broadcast ones
         $broadcastNotifications = Notification::whereIn('target_audience', [$audienceType, 'all'])
             ->where('status', 'sent')
+            ->where('created_at', '>=', $user->created_at)
             ->pluck('id');
 
         foreach ($broadcastNotifications as $id) {
@@ -173,6 +177,7 @@ class NotificationController extends Controller
         // Mark broadcast ones as deleted
         $broadcastNotifications = Notification::whereIn('target_audience', [$audienceType, 'all'])
             ->where('status', 'sent')
+            ->where('created_at', '>=', $user->created_at)
             ->pluck('id');
 
         foreach ($broadcastNotifications as $id) {

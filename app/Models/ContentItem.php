@@ -26,13 +26,13 @@ class ContentItem extends Model
     {
         if (!$this->image) return null;
         
-        // New format: bare filename saved in public/content_images/
-        if (!str_contains($this->image, '/')) {
-            return asset('content_images/' . $this->image);
+        // If it starts with 'uploads/', it's in the public folder
+        if (str_starts_with($this->image, 'uploads/')) {
+            return asset($this->image);
         }
-        
-        // Old format: content_items/filename.jpg saved in storage
-        return asset('storage/' . $this->image);
+
+        // Support for some legacy naked paths if they still exist in some tables
+        return asset('uploads/' . $this->image);
     }
 
     public function content()

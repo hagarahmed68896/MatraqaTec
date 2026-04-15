@@ -295,7 +295,9 @@ class MaintenanceCompanyController extends Controller
             'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'iqama_photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'category_id' => 'required|exists:services,id',
-            'service_id' => 'required|exists:services,id',
+            'service_id' => 'nullable|exists:services,id',
+            'service_ids' => 'required|array',
+            'service_ids.*' => 'exists:services,id',
             'districts' => 'required|array',
             'districts.*' => 'exists:districts,id',
             'years_experience' => 'required|integer|min:0',
@@ -360,7 +362,8 @@ class MaintenanceCompanyController extends Controller
             'photo' => $imagePath,
             'iqama_photo' => $iqamaPath,
             'category_id' => $request->category_id,
-            'service_id' => $request->service_id,
+            'service_id' => $request->service_id ?? ($request->service_ids[0] ?? null),
+            'service_ids' => $request->service_ids,
             'years_experience' => $request->years_experience,
             'bio_ar' => $request->bio_ar,
             'bio_en' => $request->bio_en,
@@ -766,7 +769,9 @@ class MaintenanceCompanyController extends Controller
                 $categoryId = $service->parent_id ?? $service->id;
                 $query->where(function($q) use ($request, $categoryId) {
                     $q->where('service_id', $request->service_id)
-                      ->orWhere('category_id', $categoryId);
+                      ->orWhere('category_id', $categoryId)
+                      ->orWhereJsonContains('service_ids', (int)$request->service_id)
+                      ->orWhereJsonContains('service_ids', (string)$request->service_id);
                 });
             }
         }
@@ -820,9 +825,11 @@ class MaintenanceCompanyController extends Controller
                 'is_online' => $tech->user->is_online ?? false,
                 'districts' => $formattedDistricts,
                 'service_name' => $locale == 'ar' ? ($tech->service->name_ar ?? '') : ($tech->service->name_en ?? $tech->service->name_ar ?? ''),
+                'services' => $tech->services, // Return full objects
                 'company_name' => $locale == 'ar' ? ($tech->maintenanceCompany?->company_name_ar ?? $tech->maintenanceCompany?->name) : ($tech->maintenanceCompany?->company_name_en ?? $tech->maintenanceCompany?->name),
                 'specialty' => $tech->category ? (__('Specialized in') . ' ' . ($locale == 'ar' ? $tech->category->name_ar : ($tech->category->name_en ?? $tech->category->name_ar))) : null,
             ];
+            
         });
 
         return response()->json([

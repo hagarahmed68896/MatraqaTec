@@ -97,6 +97,9 @@ Route::apiResource('contents', ContentController::class)->only(['index', 'show']
 
 Route::post('/technician-requests', [TechnicianRequestController::class, 'store']); // Public Apply
 
+// Payment Webhooks / Callbacks (Must be public)
+Route::any('payment/myfatoorah/callback', [\App\Http\Controllers\Api\MyFatoorahCallbackController::class, 'success']);
+Route::any('payment/myfatoorah/error', [\App\Http\Controllers\Api\MyFatoorahCallbackController::class, 'error']);
 // --- Protected Routes (User Scope) ---
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);

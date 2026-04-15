@@ -1315,6 +1315,28 @@ class OrderController extends Controller
             return response()->json(['status' => false, 'message' => 'Order not found or already assigned'], 404);
         }
 
+        // --- DUPLICATE PREVENTION ---
+        // If the order is already assigned and no new information is provided, 
+        // return success without resending notifications.
+        if ($order->status !== 'new') {
+            $isSameTech = $request->technician_id == $order->technician_id;
+            $isSameCompany = ($company->id ?? null) == $order->maintenance_company_id;
+            
+            $isSameScheduled = true;
+            if ($request->filled('scheduled_at')) {
+                if ($order->scheduled_at) {
+                    $reqTime = \Carbon\Carbon::parse($request->scheduled_at)->toDateTimeString();
+                    $ordTime = $order->scheduled_at->toDateTimeString();
+                    $isSameScheduled = ($reqTime === $ordTime);
+                }
+            }
+
+            if ($isSameTech && $isSameCompany && $isSameScheduled) {
+                 return response()->json(['status' => true, 'message' => 'Order already accepted with these details', 'data' => $order]);
+            }
+        }
+        // ----------------------------
+
         if ($order->status !== 'new' && $order->maintenance_company_id !== ($company->id ?? null) && $order->technician_id !== ($technician->id ?? null)) {
             return response()->json(['status' => false, 'message' => 'Order already processed'], 422);
         }
@@ -1360,12 +1382,27 @@ class OrderController extends Controller
         // Update the new_order notification type to hide action buttons in the app
         $this->updateNotificationType($user->id, $order->id, \App\Models\Notification::TYPE_ORDER_ACCEPTED);
 
+        // Prepare Notification Text
+        $titleAr = 'تم قبول طلبك';
+        $bodyAr = 'قامت شركة الصيانة بقبول طلبك وتحديد موعد للزيارة';
+        $titleEn = 'Your order was accepted';
+        $bodyEn = 'The maintenance company has accepted your order and scheduled a visit';
+        $notifType = \App\Models\Notification::TYPE_ORDER_ACCEPTED;
+
+        if ($request->technician_id) {
+            $titleAr = 'تم تعيين فني لطلبك';
+            $bodyAr = 'قامت شركة الصيانة بتعيين فني لطلبك، وفي انتظار تأكيده للموعد.';
+            $titleEn = 'Technician assigned to your order';
+            $bodyEn = 'The maintenance company has assigned a technician to your order and is waiting for his confirmation.';
+            $notifType = \App\Models\Notification::TYPE_TECHNICIAN_ASSIGNED;
+        }
+
         $this->sendNotification($order->user_id, [
-            'type' => \App\Models\Notification::TYPE_ORDER_ACCEPTED,
-            'title_ar' => 'تم قبول طلبك',
-            'title_en' => 'Your order was accepted',
-            'body_ar' => 'قامت شركة الصيانة بقبول طلبك وتحديد موعد للزيارة',
-            'body_en' => 'The maintenance company has accepted your order and scheduled a visit',
+            'type' => $notifType,
+            'title_ar' => $titleAr,
+            'title_en' => $titleEn,
+            'body_ar' => $bodyAr,
+            'body_en' => $bodyEn,
             'data' => ['order_id' => $order->id]
         ]);
 
@@ -1431,6 +1468,16 @@ class OrderController extends Controller
                 ]);
             }
         }
+
+        // Notify Client that the technician has confirmed
+        $this->sendNotification($order->user_id, [
+            'type' => \App\Models\Notification::TYPE_ORDER_ACCEPTED,
+            'title_ar' => 'تأكيد الموعد من قبل الفني',
+            'title_en' => 'Appointment Confirmed by Technician',
+            'body_ar' => "قام الفني {$technician->name_ar} بتأكيد موعد الزيارة لطلبك رقم {$order->order_number}. الفني سيصلك في الموعد المحدد.",
+            'body_en' => "Technician {$technician->name_en} has confirmed the appointment for your order #{$order->order_number}. The technician will arrive at the scheduled time.",
+            'data' => ['order_id' => $order->id]
+        ]);
 
         return response()->json(['status' => true, 'message' => 'Order accepted successfully', 'data' => $order]);
     }

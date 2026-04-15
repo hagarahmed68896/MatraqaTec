@@ -36,7 +36,32 @@ class Technician extends Model
 
     protected $casts = [
         'districts' => 'array',
+        'service_ids' => 'array',
     ];
+
+    protected $appends = ['image_url', 'national_id_image_url', 'services'];
+
+    public function getServicesAttribute()
+    {
+        if (!$this->service_ids || !is_array($this->service_ids)) {
+            // Return existing single service for backward compatibility if multi-services is empty
+            if ($this->service_id) {
+                return Service::where('id', $this->service_id)->get();
+            }
+            return collect();
+        }
+        return Service::whereIn('id', $this->service_ids)->get();
+    }
+
+    public function getImageUrlAttribute()
+    {
+        return $this->image ? asset($this->image) : null;
+    }
+
+    public function getNationalIdImageUrlAttribute()
+    {
+        return $this->national_id_image ? asset($this->national_id_image) : null;
+    }
 
     public function getDistrictsAttribute($value)
     {
