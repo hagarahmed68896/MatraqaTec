@@ -196,8 +196,19 @@ class TechnicianController extends Controller
             'status' => $request->status,
         ]);
         
-        $imagePath = $request->hasFile('image') ? $request->file('image')->store('technicians', 'public') : null;
-        $idImagePath = $request->hasFile('national_id_image') ? $request->file('national_id_image')->store('technicians/ids', 'public') : null;
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imageName = time() . '_' . uniqid() . '.' . $request->file('image')->getClientOriginalExtension();
+            $request->file('image')->move(public_path('uploads/technicians'), $imageName);
+            $imagePath = 'uploads/technicians/' . $imageName;
+        }
+
+        $idImagePath = null;
+        if ($request->hasFile('national_id_image')) {
+            $idImageName = time() . '_' . uniqid() . '.' . $request->file('national_id_image')->getClientOriginalExtension();
+            $request->file('national_id_image')->move(public_path('uploads/technicians/ids'), $idImageName);
+            $idImagePath = 'uploads/technicians/ids/' . $idImageName;
+        }
 
         Technician::create([
             'user_id' => $user->id,
@@ -343,11 +354,21 @@ class TechnicianController extends Controller
         $data = $request->except(['email', 'password', 'phone', 'status', 'type', 'image', 'national_id_image', 'districts']);
         
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('technicians', 'public');
+            if ($technician->image && file_exists(public_path($technician->image))) {
+                unlink(public_path($technician->image));
+            }
+            $imageName = time() . '_' . uniqid() . '.' . $request->file('image')->getClientOriginalExtension();
+            $request->file('image')->move(public_path('uploads/technicians'), $imageName);
+            $data['image'] = 'uploads/technicians/' . $imageName;
         }
 
         if ($request->hasFile('national_id_image')) {
-            $data['national_id_image'] = $request->file('national_id_image')->store('technicians/ids', 'public');
+            if ($technician->national_id_image && file_exists(public_path($technician->national_id_image))) {
+                unlink(public_path($technician->national_id_image));
+            }
+            $idImageName = time() . '_' . uniqid() . '.' . $request->file('national_id_image')->getClientOriginalExtension();
+            $request->file('national_id_image')->move(public_path('uploads/technicians/ids'), $idImageName);
+            $data['national_id_image'] = 'uploads/technicians/ids/' . $idImageName;
         }
 
         $data['districts'] = $request->districts;

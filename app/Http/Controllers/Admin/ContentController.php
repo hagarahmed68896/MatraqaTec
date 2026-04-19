@@ -59,10 +59,10 @@ class ContentController extends Controller
                     $image = str_replace($replace, '', $imageData);
                     $image = str_replace(' ', '+', $image);
                     $imageName = 'content_' . time() . '_' . $index . '.' . $extension;
-                    $dir = public_path('content_images');
+                    $dir = public_path('uploads/content_items');
                     if (!is_dir($dir)) mkdir($dir, 0755, true);
                     file_put_contents($dir . '/' . $imageName, base64_decode($image));
-                    $imagePath = $imageName;
+                    $imagePath = 'uploads/content_items/' . $imageName;
                 }
 
                 $content->items()->create([
@@ -128,10 +128,10 @@ class ContentController extends Controller
                     $image = str_replace($replace, '', $imageData);
                     $image = str_replace(' ', '+', $image);
                     $imageName = 'content_' . time() . '_' . $index . '.' . $extension;
-                    $dir = public_path('content_images');
+                    $dir = public_path('uploads/content_items');
                     if (!is_dir($dir)) mkdir($dir, 0755, true);
                     file_put_contents($dir . '/' . $imageName, base64_decode($image));
-                    $imagePath = $imageName;
+                    $imagePath = 'uploads/content_items/' . $imageName;
                 }
 
                 if (!empty($itemData['id'])) {

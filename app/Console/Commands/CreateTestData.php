@@ -60,7 +60,7 @@ class CreateTestData extends Command
         
         // Create a test location for the technician
         \App\Models\TechnicianLocation::updateOrCreate(
-            ['technician_id' => $tech->id],
+            ['technician_id' => $techUser->id],
             [
                 'latitude' => 24.7136, // Riyadh
                 'longitude' => 46.6753,

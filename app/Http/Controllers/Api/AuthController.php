@@ -79,7 +79,10 @@ class AuthController extends Controller
             // Handle CR File Upload
             $crFilePath = null;
             if ($request->hasFile('commercial_record_file')) {
-                $crFilePath = $request->file('commercial_record_file')->store('commercial_records', 'public');
+                $file = $request->file('commercial_record_file');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('uploads/commercial_records'), $filename);
+                $crFilePath = 'uploads/commercial_records/' . $filename;
             }
 
             // Create MaintenanceCompany (as Provider/Company Account)
@@ -97,7 +100,10 @@ class AuthController extends Controller
             // Handle CR File Upload
             $crFilePath = null;
             if ($request->hasFile('commercial_record_file')) {
-                $crFilePath = $request->file('commercial_record_file')->store('commercial_records', 'public');
+                $file = $request->file('commercial_record_file');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('uploads/commercial_records'), $filename);
+                $crFilePath = 'uploads/commercial_records/' . $filename;
             }
 
             // Create CorporateCustomer (as Service Requester Company)
@@ -117,7 +123,7 @@ class AuthController extends Controller
             
             if ($request->filled('latitude') && $request->filled('longitude')) {
                 \App\Models\TechnicianLocation::create([
-                    'technician_id' => $technician->id,
+                    'technician_id' => $user->id,
                     'latitude' => $request->latitude,
                     'longitude' => $request->longitude,
                 ]);

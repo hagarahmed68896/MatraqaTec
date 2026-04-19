@@ -191,6 +191,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Availability
         Route::post('toggle-availability', [\App\Http\Controllers\Api\TechnicianProfileController::class, 'toggleAvailability']);
+
+        // Live Tracking Location Update
+        Route::post('update-location', [\App\Http\Controllers\Api\TrackingController::class, 'updateLocation']);
     });
     Route::apiResource('orders', OrderController::class);
     Route::apiResource('appointments', AppointmentController::class);

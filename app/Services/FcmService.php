@@ -44,6 +44,7 @@ class FcmService
         }
 
         try {
+            \Log::info("FCM: Attempting to send to user {$user->id} with token: " . substr($user->fcm_token, 0, 10) . "...");
             $messaging = app('firebase.messaging');
             $notification = Notification::create($title, $body);
 
@@ -54,9 +55,9 @@ class FcmService
                     'type' => $type
                 ]));
 
-            $messaging->send($message);
+            $response = $messaging->send($message);
             
-            \Log::info("FCM: Sent to user {$user->id}");
+            \Log::info("FCM: Sent successfully to user {$user->id}. Response: " . json_encode($response));
 
             if ($saveToDb) {
                 return $this->saveToDatabase($user, $type, $titleAr, $titleEn, $bodyAr, $bodyEn, $data, 'sent');
@@ -64,6 +65,7 @@ class FcmService
             return true;
         } catch (\Exception $e) {
             \Log::error("FCM Error for user {$user->id}: " . $e->getMessage());
+            \Log::error("FCM Trace: " . $e->getTraceAsString());
             if ($saveToDb) {
                 return $this->saveToDatabase($user, $type, $titleAr, $titleEn, $bodyAr, $bodyEn, $data, 'unsent');
             }

@@ -41,7 +41,7 @@ class Order extends Model
         'spare_parts_metadata' => 'array',
     ];
 
-    protected $appends = ['status_label', 'status_color', 'formatted_scheduled_date', 'formatted_scheduled_time', 'formatted_proposed_scheduled_date', 'formatted_proposed_scheduled_time', 'client_name', 'client_phone', 'technician_name', 'technician_avatar', 'acceptance_duration_minutes', 'acceptance_expiry_time', 'remaining_acceptance_seconds', 'client_signature_url', 'attachment_urls', 'image', 'can_reschedule'];
+    protected $appends = ['status_label', 'status_color', 'formatted_scheduled_date', 'formatted_scheduled_time', 'formatted_proposed_scheduled_date', 'formatted_proposed_scheduled_time', 'client_name', 'client_phone', 'technician_name', 'technician_phone', 'technician_avatar', 'acceptance_duration_minutes', 'acceptance_expiry_time', 'remaining_acceptance_seconds', 'client_signature_url', 'attachment_urls', 'image', 'can_reschedule', 'is_paid'];
 
     public function getClientSignatureUrlAttribute()
     {
@@ -51,6 +51,11 @@ class Order extends Model
         }
         // Since we now save directly to public/, asset() will link to it correctly
         return asset($this->client_signature);
+    }
+
+    public function getIsPaidAttribute()
+    {
+        return $this->payments()->where('status', 'completed')->exists();
     }
 
     public function getCanRescheduleAttribute()
@@ -138,6 +143,18 @@ class Order extends Model
         return $this->technician->user->name ?? ($this->technician->name ?? '');
     }
 
+    public function getTechnicianPhoneAttribute()
+    {
+        $tech = $this->technician;
+        if (!$tech) return '';
+        
+        if (is_array($tech)) {
+            return $tech['phone'] ?? ($tech['user']['phone'] ?? '');
+        }
+        
+        return $tech->user->phone ?? ($tech->phone ?? '');
+    }
+
     public function getTechnicianAvatarAttribute()
     {
         if (is_array($this->technician)) {
@@ -169,6 +186,20 @@ class Order extends Model
         return $this->proposed_scheduled_at->translatedFormat('h:i a');
     }
 
+    /**
+     * Bulk update overdue orders to 'expired' sub_status
+     */
+    public static function syncExpiredOrders()
+    {
+        return self::whereIn('status', ['new', 'scheduled', 'accepted'])
+            ->where('scheduled_at', '<', now())
+            ->where('status', '!=', 'expired')
+            ->update([
+                'status' => 'expired',
+                'sub_status' => 'expired'
+            ]);
+    }
+
     public function getStatusLabelAttribute()
     {
         $mainLabels = [
@@ -179,7 +210,13 @@ class Order extends Model
             'completed' => 'مكتملة',
             'rejected' => 'مرفوضة',
             'cancelled' => 'ملغية',
+            'expired' => 'منتهية / متأخرة',
         ];
+
+        // Handle expired sub-status or status for overdue appointments
+        if ($this->sub_status === 'expired' || $this->status === 'expired') {
+            return 'يحتاج لإعادة جدولة';
+        }
 
         // Sub-status labels for "in_progress" state
         if ($this->status === 'in_progress' && $this->sub_status) {
@@ -198,6 +235,10 @@ class Order extends Model
 
     public function getStatusColorAttribute()
     {
+        if ($this->sub_status === 'expired') {
+            return '#FF8C00'; // DarkOrange
+        }
+
         $colors = [
             'new' => '#FFA500', // Orange
             'accepted' => '#4CAF50', // Green
@@ -206,6 +247,7 @@ class Order extends Model
             'completed' => '#4CAF50', // Green
             'rejected' => '#F44336', // Red
             'cancelled' => '#9E9E9E', // Grey
+            'expired' => '#FF8C00', // DarkOrange
         ];
 
         return $colors[$this->status] ?? '#000000';

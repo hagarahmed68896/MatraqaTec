@@ -88,11 +88,22 @@ class ServiceController extends Controller
         // Handle Sub-services
         if ($request->has('children') && is_array($request->children)) {
             foreach ($request->children as $index => $childData) {
-                // If sub-service image is uploaded
+                // If sub-service image is uploaded (now passed as base64)
                 $childImagePath = null;
-                if ($request->hasFile("children.$index.image")) {
-                    $childImageName = time() . '_' . uniqid() . '.' . $request->file("children.$index.image")->getClientOriginalExtension();
-                    $request->file("children.$index.image")->move(public_path('uploads/services'), $childImageName);
+                if (!empty($childData['image_base64']) && str_starts_with($childData['image_base64'], 'data:image')) {
+                    $imageData = $childData['image_base64'];
+                    list($type, $imageData) = explode(';', $imageData);
+                    list(, $imageData) = explode(',', $imageData);
+                    $imageData = base64_decode($imageData);
+                    
+                    $extension = 'png';
+                    if (str_contains($type, 'jpeg')) $extension = 'jpg';
+                    elseif (str_contains($type, 'png')) $extension = 'png';
+                    elseif (str_contains($type, 'svg')) $extension = 'svg';
+                    elseif (str_contains($type, 'webp')) $extension = 'webp';
+
+                    $childImageName = time() . '_' . uniqid() . '.' . $extension;
+                    file_put_contents(public_path('uploads/services/' . $childImageName), $imageData);
                     $childImagePath = 'uploads/services/' . $childImageName;
                 }
 
@@ -210,9 +221,20 @@ class ServiceController extends Controller
 
             foreach ($request->children as $index => $childData) {
                 $childImagePath = null;
-                if ($request->hasFile("children.$index.image")) {
-                    $childImageName = time() . '_' . uniqid() . '.' . $request->file("children.$index.image")->getClientOriginalExtension();
-                    $request->file("children.$index.image")->move(public_path('uploads/services'), $childImageName);
+                if (!empty($childData['image_base64']) && str_starts_with($childData['image_base64'], 'data:image')) {
+                    $imageData = $childData['image_base64'];
+                    list($type, $imageData) = explode(';', $imageData);
+                    list(, $imageData) = explode(',', $imageData);
+                    $imageData = base64_decode($imageData);
+                    
+                    $extension = 'png';
+                    if (str_contains($type, 'jpeg')) $extension = 'jpg';
+                    elseif (str_contains($type, 'png')) $extension = 'png';
+                    elseif (str_contains($type, 'svg')) $extension = 'svg';
+                    elseif (str_contains($type, 'webp')) $extension = 'webp';
+
+                    $childImageName = time() . '_' . uniqid() . '.' . $extension;
+                    file_put_contents(public_path('uploads/services/' . $childImageName), $imageData);
                     $childImagePath = 'uploads/services/' . $childImageName;
                 }
 

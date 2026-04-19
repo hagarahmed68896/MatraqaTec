@@ -55,12 +55,30 @@ class Technician extends Model
 
     public function getImageUrlAttribute()
     {
-        return $this->image ? asset($this->image) : null;
+        if (!$this->image) return null;
+        if (str_starts_with($this->image, 'http')) return $this->image;
+        if (str_starts_with($this->image, 'uploads/')) return asset($this->image);
+        
+        // Check if exists in uploads directly (for paths missing 'uploads/')
+        if (file_exists(public_path('uploads/technicians/' . $this->image))) {
+            return asset('uploads/technicians/' . $this->image);
+        }
+
+        return asset('storage/' . $this->image);
     }
 
     public function getNationalIdImageUrlAttribute()
     {
-        return $this->national_id_image ? asset($this->national_id_image) : null;
+        if (!$this->national_id_image) return null;
+        if (str_starts_with($this->national_id_image, 'http')) return $this->national_id_image;
+        if (str_starts_with($this->national_id_image, 'uploads/')) return asset($this->national_id_image);
+
+        // Check if exists in uploads directly
+        if (file_exists(public_path('uploads/technicians/ids/' . $this->national_id_image))) {
+            return asset('uploads/technicians/ids/' . $this->national_id_image);
+        }
+
+        return asset('storage/' . $this->national_id_image);
     }
 
     public function getDistrictsAttribute($value)

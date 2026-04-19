@@ -270,6 +270,11 @@ class MaintenanceCompanyController extends Controller
             $tech->company_name = $locale == 'ar' ? ($tech->maintenanceCompany?->company_name_ar ?? $tech->maintenanceCompany?->name) : ($tech->maintenanceCompany?->company_name_en ?? $tech->maintenanceCompany?->name);
             $tech->specialty = $tech->category ? (__('Specialized in') . ' ' . ($locale == 'ar' ? $tech->category->name_ar : ($tech->category->name_en ?? $tech->category->name_ar))) : null;
             
+            // Fix avatar URL
+            if ($tech->user) {
+                $tech->user->avatar = $tech->user->avatar_url;
+            }
+
             $tech->makeHidden(['name_ar', 'name_en', 'maintenanceCompany', 'category']);
         });
 
@@ -345,12 +350,18 @@ class MaintenanceCompanyController extends Controller
         // Handle File Uploads
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('technician_requests/photos', 'public');
+            $file = $request->file('image');
+            $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9_\.]/', '', $file->getClientOriginalName());
+            $file->move(public_path('uploads/technician_requests/photos'), $filename);
+            $imagePath = 'uploads/technician_requests/photos/' . $filename;
         }
 
         $iqamaPath = null;
         if ($request->hasFile('iqama_photo')) {
-            $iqamaPath = $request->file('iqama_photo')->store('technician_requests/iqamas', 'public');
+            $file = $request->file('iqama_photo');
+            $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9_\.]/', '', $file->getClientOriginalName());
+            $file->move(public_path('uploads/technician_requests/iqamas'), $filename);
+            $iqamaPath = 'uploads/technician_requests/iqamas/' . $filename;
         }
 
         $techRequest = \App\Models\TechnicianRequest::create([
@@ -433,6 +444,11 @@ class MaintenanceCompanyController extends Controller
             $tech->company_name = $locale == 'ar' ? ($tech->maintenanceCompany?->company_name_ar ?? $tech->maintenanceCompany?->name) : ($tech->maintenanceCompany?->company_name_en ?? $tech->maintenanceCompany?->name);
             $tech->specialty = $tech->category ? (__('Specialized in') . ' ' . ($locale == 'ar' ? $tech->category->name_ar : ($tech->category->name_en ?? $tech->category->name_ar))) : null;
             
+            // Fix avatar URL
+            if ($tech->user) {
+                $tech->user->avatar = $tech->user->avatar_url;
+            }
+
             $tech->makeHidden(['name_ar', 'name_en', 'maintenanceCompany', 'category']);
         });
 
@@ -499,6 +515,11 @@ class MaintenanceCompanyController extends Controller
         $data['company_name'] = $locale == 'ar' ? ($technician->maintenanceCompany?->company_name_ar ?? $technician->maintenanceCompany?->name) : ($technician->maintenanceCompany?->company_name_en ?? $technician->maintenanceCompany?->name);
         $data['specialty'] = $technician->category ? (__('Specialized in') . ' ' . ($locale == 'ar' ? $technician->category->name_ar : ($technician->category->name_en ?? $technician->category->name_ar))) : null;
 
+        // Format technician's own avatar
+        if (isset($data['user'])) {
+            $data['user']['avatar'] = $technician->user?->avatar_url ?? null;
+        }
+
         // Format reviews
         $data['reviews'] = $technician->reviews->map(function($review) {
             return [
@@ -509,7 +530,7 @@ class MaintenanceCompanyController extends Controller
                 'user' => [
                     'id' => $review->user->id ?? null,
                     'name' => $review->user->name ?? 'Unknown',
-                    'avatar' => $review->user->avatar ?? null,
+                    'avatar' => $review->user?->avatar_url ?? null,
                 ],
                 'order_number' => $review->order->order_number ?? null,
             ];
@@ -563,6 +584,29 @@ class MaintenanceCompanyController extends Controller
             'name', 'name_ar', 'name_en', 'category_id', 'service_id', 
             'districts', 'availability_status'
         ]));
+
+        // Handle File Uploads
+        if ($request->hasFile('image')) {
+            if ($technician->image && file_exists(public_path($technician->image))) {
+                unlink(public_path($technician->image));
+            }
+            $file = $request->file('image');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/technicians'), $filename);
+            $technician->image = 'uploads/technicians/' . $filename;
+        }
+
+        if ($request->hasFile('iqama_photo')) {
+            if ($technician->national_id_image && file_exists(public_path($technician->national_id_image))) {
+                unlink(public_path($technician->national_id_image));
+            }
+            $file = $request->file('iqama_photo');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/technicians/ids'), $filename);
+            $technician->national_id_image = 'uploads/technicians/ids/' . $filename;
+        }
+
+        $technician->save();
 
         // Update user info if provided
         if ($technician->user && ($request->has('name') || $request->has('phone'))) {

@@ -57,7 +57,10 @@ class ContractPaymentReceiptController extends Controller
         try {
             $file = $request->file('receipt_file');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('contract_receipts', $filename, 'public');
+            $dir = public_path('uploads/contract_receipts');
+            if (!is_dir($dir)) mkdir($dir, 0775, true);
+            $file->move($dir, $filename);
+            $path = 'uploads/contract_receipts/' . $filename;
 
             ContractPaymentReceipt::create([
                 'contract_id' => $contractId,
@@ -99,8 +102,8 @@ class ContractPaymentReceiptController extends Controller
         $receipt = ContractPaymentReceipt::where('contract_id', $contractId)->findOrFail($id);
 
         try {
-            if (Storage::disk('public')->exists($receipt->receipt_file)) {
-                Storage::disk('public')->delete($receipt->receipt_file);
+            if ($receipt->receipt_file && file_exists(public_path($receipt->receipt_file))) {
+                unlink(public_path($receipt->receipt_file));
             }
 
             $contract = Contract::findOrFail($contractId);

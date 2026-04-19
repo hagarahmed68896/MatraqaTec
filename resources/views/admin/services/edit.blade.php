@@ -196,7 +196,7 @@
                             <input type="hidden" :name="`children[${index}][name_ar]`" :value="sub.name_ar">
                             <input type="hidden" :name="`children[${index}][name_en]`" :value="sub.name_en">
                             <input type="hidden" :name="`children[${index}][is_deleted]`" :value="sub.is_deleted">
-                            <input type="file" :name="`children[${index}][image]`" style="display:none" x-ref="subFile" @change="sub.file = $event.target.files[0]">
+                            <input type="hidden" :name="`children[${index}][image_base64]`" :value="sub.image_url && sub.image_url.startsWith('data:') ? sub.image_url : ''">
 
                             <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button type="button" @click="removeSubService(index)" class="p-2 text-slate-400 hover:text-red-500 transition-colors">

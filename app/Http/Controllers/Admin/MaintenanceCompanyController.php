@@ -132,7 +132,9 @@ class MaintenanceCompanyController extends Controller
 
         $filePath = null;
         if ($request->hasFile('commercial_record_file')) {
-            $filePath = $request->file('commercial_record_file')->store('maintenance/cr', 'public');
+            $fileName = time() . '_' . uniqid() . '.' . $request->file('commercial_record_file')->getClientOriginalExtension();
+            $request->file('commercial_record_file')->move(public_path('uploads/maintenance/cr'), $fileName);
+            $filePath = 'uploads/maintenance/cr/' . $fileName;
         }
 
         MaintenanceCompany::create([
@@ -277,7 +279,12 @@ class MaintenanceCompanyController extends Controller
         $data = $request->except(['email', 'password', 'phone', 'status', 'type', 'commercial_record_file']);
 
         if ($request->hasFile('commercial_record_file')) {
-            $data['commercial_record_file'] = $request->file('commercial_record_file')->store('maintenance/cr', 'public');
+            if ($company->commercial_record_file && file_exists(public_path($company->commercial_record_file))) {
+                unlink(public_path($company->commercial_record_file));
+            }
+            $fileName = time() . '_' . uniqid() . '.' . $request->file('commercial_record_file')->getClientOriginalExtension();
+            $request->file('commercial_record_file')->move(public_path('uploads/maintenance/cr'), $fileName);
+            $data['commercial_record_file'] = 'uploads/maintenance/cr/' . $fileName;
         }
 
         $company->update($data);

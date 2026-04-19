@@ -14,13 +14,20 @@ class OrderController extends Controller
 
     public function index(Request $request)
     {
+        \App\Models\Order::syncExpiredOrders();
+
         $user = $request->user();
         if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
 
         // Auto-detach expired unaccepted orders for all technicians before retrieving the list
         $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
         \App\Models\Order::whereNotNull('technician_id')
-            ->whereIn('status', ['new', 'scheduled'])
+            ->where(function($q) {
+                $q->where('status', 'scheduled') // Only scheduled (waiting for tech)
+                  ->orWhere(function($sq) {
+                      $sq->where('status', 'new')->whereNull('maintenance_company_id'); // Or new marketplace orders (independent)
+                  });
+            })
             ->where('assigned_at', '<', now()->subMinutes($duration))
             ->update([
                 'technician_id' => null,
@@ -37,6 +44,10 @@ class OrderController extends Controller
             $technician = \App\Models\Technician::where('user_id', $user->id)->first();
             if (!$technician) return response()->json(['status' => true, 'message' => 'No assigned orders', 'data' => []]);
             $query->where('technician_id', $technician->id);
+            // If technician belongs to a company, hide 'new' orders (waiting for company approval)
+            if ($technician->maintenance_company_id) {
+                $query->where('status', '!=', 'new');
+            }
         } elseif ($user->type === 'maintenance_company') {
             $company = \App\Models\MaintenanceCompany::where('user_id', $user->id)->first();
             if (!$company) return response()->json(['status' => false, 'message' => 'Company profile not found'], 404);
@@ -98,9 +109,16 @@ class OrderController extends Controller
             // Client/Technician tabs (existing logic)
             if ($request->tab === 'under_review') {
                 // قيد المراجعة - Pending admin approval or reschedule request
-                $query->where(function($q) {
-                    $q->where('status', 'new')
-                      ->orWhere('sub_status', 'reschedule_requested');
+                $query->where(function($q) use ($user) {
+                    $q->where(function($sub) use ($user) {
+                        $sub->where('status', 'new');
+                        // If it's a technician, only show 'new' orders if they DON'T belong to a company
+                        // (Assuming independent techs might use 'new' status, though current flow sets them to 'scheduled')
+                        if ($user->type === 'technician') {
+                            $sub->whereNull('maintenance_company_id');
+                        }
+                    })
+                    ->orWhere('sub_status', 'reschedule_requested');
                 });
             } elseif ($request->tab === 'previous') {
                 // السابقة - Completed/Cancelled/Rejected
@@ -337,12 +355,8 @@ class OrderController extends Controller
         $tax = $basePrice * 0.15;
         $data['total_price'] = $basePrice + $tax;
 
-        // Handle Wallet Payment Case
-        if ($request->payment_method === 'wallet') {
-            if ($user->wallet_balance < $data['total_price']) {
-                return response()->json(['status' => false, 'message' => 'Insufficient wallet balance'], 422);
-            }
-        }
+        // Initial Payment is now delayed until the end (Base Price + Spare Parts).
+        // Therefore, we do not deduct or check wallet balance here.
 
         if ($availableTech) {
             $data['technician_id'] = $availableTech->id;
@@ -525,6 +539,16 @@ class OrderController extends Controller
                     'type' => 'before'
                 ]);
             }
+
+            // Notify about Inspection photos
+            $this->sendNotification($order->user_id, [
+                'type' => \App\Models\Notification::TYPE_ORDER_PHOTOS,
+                'title_ar' => 'تم إضافة صور المعاينة',
+                'title_en' => 'Inspection photos added',
+                'body_ar' => 'قام الفني بإضافة صور المعاينة (قبل البدء) لطلبك رقم ' . $order->order_number,
+                'body_en' => 'The technician added inspection photos (before start) to your order #' . $order->order_number,
+                'data' => ['order_id' => $order->id, 'photo_type' => 'before']
+            ]);
         }
 
         // Note: Photo validation moved to workStarted (actual start of work) step.
@@ -539,12 +563,18 @@ class OrderController extends Controller
             $order->technician->update(['availability_status' => 'busy']);
         }
 
+        // Update previous notifications to remove old action buttons
+        $this->updateNotificationType($order->user_id, $order->id, \App\Models\Notification::TYPE_TECHNICIAN_ON_WAY, [
+            \App\Models\Notification::TYPE_ORDER_ACCEPTED,
+            \App\Models\Notification::TYPE_ORDER_RESCHEDULED
+        ]);
+
         $this->sendNotification($order->user_id, [
-            'type' => \App\Models\Notification::TYPE_WORK_STARTED,
+            'type' => \App\Models\Notification::TYPE_TECHNICIAN_ON_WAY,
             'title_ar' => 'الفني في الطريق',
             'title_en' => 'Technician on the way',
-            'body_ar' => 'الفني بدأ العمل وهو حالياً في الطريق إليك',
-            'body_en' => 'The technician has started work and is on the way to you',
+            'body_ar' => 'الفني بدأ المهمة وهو حالياً في الطريق إليك',
+            'body_en' => 'The technician has started the task and is on the way to you',
             'data' => ['order_id' => $order->id]
         ]);
 
@@ -596,6 +626,16 @@ class OrderController extends Controller
                     'type' => 'before' // Typically "before" covers everything up to work_started
                 ]);
             }
+
+            // Notify about new photos
+            $this->sendNotification($order->user_id, [
+                'type' => \App\Models\Notification::TYPE_ORDER_PHOTOS,
+                'title_ar' => 'تم إضافة صور جديدة',
+                'title_en' => 'New photos added',
+                'body_ar' => 'قام الفني بإضافة صور جديدة لمتابعة حالة طلبك رقم ' . $order->order_number,
+                'body_en' => 'The technician added new photos to follow up on your order #' . $order->order_number,
+                'data' => ['order_id' => $order->id, 'photo_type' => 'before']
+            ]);
         }
 
         $request->validate([
@@ -627,8 +667,12 @@ class OrderController extends Controller
         ];
 
         if (isset($notificationData[$request->sub_status])) {
+            $type = ($request->sub_status === 'arrived') 
+                    ? \App\Models\Notification::TYPE_TECHNICIAN_ARRIVED 
+                    : \App\Models\Notification::TYPE_WORK_STARTED;
+
             $this->sendNotification($order->user_id, [
-                'type' => \App\Models\Notification::TYPE_STATUS_UPDATE,
+                'type' => $type,
                 'title_ar' => $notificationData[$request->sub_status]['ar']['title'],
                 'title_en' => $notificationData[$request->sub_status]['en']['title'],
                 'body_ar' => $notificationData[$request->sub_status]['ar']['body'],
@@ -673,6 +717,16 @@ class OrderController extends Controller
 
         $order->update(['spare_parts_metadata' => $sparePartsMetadata]);
 
+        // Trigger Notification for Client to review spare parts invoice
+        $this->sendNotification($order->user_id, [
+            'type' => 'spare_parts_added',
+            'title_ar' => 'تم إضافة متطلبات وتحديث الفاتورة',
+            'title_en' => 'Requirements added and invoice updated',
+            'body_ar' => 'قام الفني بإضافة متطلبات وقطع غيار جديدة لطلبك. يرجى مراجعة الفاتورة.',
+            'body_en' => 'The technician added new requirements and spare parts to your order. Please review the invoice.',
+            'data' => ['order_id' => $order->id]
+        ]);
+
         return response()->json([
             'status' => true,
             'message' => __('Spare parts updated successfully'),
@@ -689,16 +743,26 @@ class OrderController extends Controller
         if (!$order) return response()->json(['status' => false, 'message' => __('Order not found')], 404);
 
         $request->validate([
-            'note' => 'nullable|string'
+            'note' => 'nullable|string',
+            'next_visit_time' => 'required|date|after:now',
         ]);
 
         $order->update([
+            'status' => 'scheduled', // Return to scheduled pool
             'sub_status' => 'additional_visit',
+            'proposed_scheduled_at' => $request->next_visit_time,
+            'reschedule_requested_by' => 'technician',
             'notes' => $request->note ? "Additional Visit Reason: " . $request->note : $order->notes
         ]);
 
-        $bodyAr = 'الفني يحتاج لزيارة إضافية لاستكمال العمل على طلبك رقم ' . $order->order_number;
-        $bodyEn = 'The technician needs an additional visit to complete work on your order #' . $order->order_number;
+        // Release technician availability
+        if ($order->technician) {
+            $order->technician->update(['availability_status' => 'available']);
+        }
+
+        $formattedTime = \Carbon\Carbon::parse($request->next_visit_time)->format('Y-m-d H:i');
+        $bodyAr = 'الفني يحتاج لزيارة إضافية لاستكمال العمل على طلبك رقم ' . $order->order_number . ". الموعد المقترح: $formattedTime";
+        $bodyEn = 'The technician needs an additional visit to complete work on your order #' . $order->order_number . ". Proposed time: $formattedTime";
 
         if ($request->note) {
             $bodyAr .= "\nالسبب: " . $request->note;
@@ -706,12 +770,12 @@ class OrderController extends Controller
         }
 
         $this->sendNotification($order->user_id, [
-            'type' => \App\Models\Notification::TYPE_STATUS_UPDATE,
-            'title_ar' => 'طلب زيارة إضافية',
-            'title_en' => 'Additional Visit Requested',
+            'type' => \App\Models\Notification::TYPE_ORDER_RESCHEDULED ?? 'order_rescheduled',
+            'title_ar' => 'طلب زيارة إضافية وموعد جديد',
+            'title_en' => 'Additional Visit & New Appointment Requested',
             'body_ar' => $bodyAr,
             'body_en' => $bodyEn,
-            'data' => ['order_id' => $order->id, 'note' => $request->note]
+            'data' => ['order_id' => $order->id, 'note' => $request->note, 'proposed_time' => $request->next_visit_time]
         ]);
 
         return response()->json([
@@ -784,6 +848,16 @@ class OrderController extends Controller
                     'type' => 'after'
                 ]);
             }
+
+            // Notify about Completion photos
+            $this->sendNotification($order->user_id, [
+                'type' => \App\Models\Notification::TYPE_ORDER_PHOTOS,
+                'title_ar' => 'تم إضافة صور إتمام العمل',
+                'title_en' => 'Completion photos added',
+                'body_ar' => 'قام الفني بإضافة صور إتمام العمل (بعد الإنتهاء) لطلبك رقم ' . $order->order_number,
+                'body_en' => 'The technician added completion photos (after finish) to your order #' . $order->order_number,
+                'data' => ['order_id' => $order->id, 'photo_type' => 'after']
+            ]);
         }
 
         $result = $this->validatePhotoCount($order, 'after');
@@ -803,6 +877,14 @@ class OrderController extends Controller
         $order = $this->getOrderIfAuthorized($id);
         if (!$order) return response()->json(['status' => false, 'message' => __('Order not found')], 404);
 
+        // Restriction: Ensure the invoice is paid before finishing
+        if (!$order->is_paid) {
+            return response()->json([
+                'status' => false, 
+                'message' => __('Please ensure the invoice is paid before finishing the work.')
+            ], 422);
+        }
+
         // Handle Attachments (After Photos)
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
@@ -812,6 +894,16 @@ class OrderController extends Controller
                     'type' => 'after'
                 ]);
             }
+
+            // Notify about Completion photos
+            $this->sendNotification($order->user_id, [
+                'type' => \App\Models\Notification::TYPE_ORDER_PHOTOS,
+                'title_ar' => 'تم إضافة صور إتمام العمل',
+                'title_en' => 'Completion photos added',
+                'body_ar' => 'قام الفني بإضافة صور إتمام العمل لطلبك رقم ' . $order->order_number,
+                'body_en' => 'The technician added completion photos for your order #' . $order->order_number,
+                'data' => ['order_id' => $order->id, 'photo_type' => 'after']
+            ]);
         }
 
         // Validate photo requirements (if mandatory 'after' photos)
@@ -1104,8 +1196,8 @@ class OrderController extends Controller
         $order = $this->getOrderIfAuthorized($id);
         if (!$order) return response()->json(['status' => false, 'message' => __('Order not found')], 404);
 
-        if ($order->sub_status !== 'reschedule_requested' || !$order->proposed_scheduled_at) {
-            return response()->json(['status' => false, 'message' => __('No pending reschedule request found for this order.')], 422);
+        if (!in_array($order->sub_status, ['reschedule_requested', 'additional_visit']) || !$order->proposed_scheduled_at) {
+            return response()->json(['status' => false, 'message' => __('No pending reschedule or additional visit request found for this order.')], 422);
         }
 
         $user = auth()->user();
@@ -1229,12 +1321,15 @@ class OrderController extends Controller
         $base = $grandTotal / 1.15;
         $tax = $grandTotal - $base;
 
+        $isPaid = $order->payments()->where('status', 'completed')->exists();
+
         return response()->json([
             'status' => true,
             'data' => [
                 'invoice_number' => 'INV-' . $order->order_number,
                 'date' => $order->created_at->format('Y-m-d'),
                 'client' => $order->user->name,
+                'is_paid' => $isPaid,
                 'service' => $order->service->name_ar ?? 'خدمة',
                 'service_amount' => number_format($serviceBase, 2),
                 'spare_parts_amount' => number_format($sparePartsTotal, 2),
@@ -1253,7 +1348,7 @@ class OrderController extends Controller
             return response()->json(['status' => false, 'message' => 'Technician not assigned'], 404);
         }
 
-        $loc = \App\Models\TechnicianLocation::where('technician_id', $order->technician_id)->first();
+        $loc = \App\Models\TechnicianLocation::where('technician_id', $order->technician->user_id)->first();
         if (!$loc) return response()->json(['status' => false, 'message' => 'Location unavailable'], 404);
 
         return response()->json([
@@ -1349,19 +1444,42 @@ class OrderController extends Controller
         $order->status = 'scheduled';
         if ($company) {
             $order->maintenance_company_id = $company->id;
+            
+            // Validate the technician: Must belong to THIS company
+            $requestedTechId = $request->technician_id ?? $order->technician_id;
+            if ($requestedTechId) {
+                $checkTech = \App\Models\Technician::where('id', $requestedTechId)
+                    ->where('maintenance_company_id', $company->id)
+                    ->first();
+                
+                if ($checkTech) {
+                    $order->technician_id = $checkTech->id;
+                    $order->assigned_at = now();
+                    
+                    // Sync with Appointment
+                    \App\Models\Appointment::where('order_id', $order->id)->update([
+                        'technician_id' => $checkTech->id,
+                        'appointment_date' => $request->scheduled_at ?? $order->scheduled_at,
+                        'status' => 'scheduled'
+                    ]);
+                } else {
+                    if ($request->has('technician_id')) {
+                        return response()->json(['status' => false, 'message' => 'Selected technician does not belong to your company'], 422);
+                    }
+                    $order->technician_id = null;
+                }
+            }
         }
+        
         if ($technician) {
             $order->technician_id = $technician->id;
+            $order->assigned_at = now();
         }
-
-        if ($request->technician_id && $company) {
-            $order->technician_id = $request->technician_id;
-            $order->assigned_at = now(); // Start the timer for the technician
 
             $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
         
             // Notify Technician
-            $tech = \App\Models\Technician::find($request->technician_id);
+            $tech = \App\Models\Technician::find($order->technician_id);
             if ($tech && $tech->user_id) {
                  $this->sendNotification($tech->user_id, [
                     'type' => \App\Models\Notification::TYPE_NEW_ORDER ?? 'new_order',
@@ -1372,7 +1490,6 @@ class OrderController extends Controller
                     'data' => ['order_id' => $order->id]
                 ]);
             }
-        }
         if ($request->scheduled_at) {
             $order->scheduled_at = $request->scheduled_at;
         }
@@ -1595,7 +1712,10 @@ class OrderController extends Controller
         // For companies that might provide this service
         $companies = \App\Models\MaintenanceCompany::whereHas('services', function($q) use ($order) {
             $q->where('services.id', $order->service_id);
-        })->where('city_id', $order->city_id)->get();
+        })->where('city_id', $order->city_id)->distinct()->get();
+
+        // Extra layer of protection in case of duplicate user_ids
+        $companies = $companies->unique('user_id');
 
         foreach ($companies as $company) {
             $this->sendNotification($company->user_id, [
@@ -1613,8 +1733,8 @@ class OrderController extends Controller
     {
         $user = \App\Models\User::find($userId);
         
-        if ($user && $user->notification_enabled) {
-            // Save to database for history
+        if ($user) {
+            // Always save to database for in-app notification history
             \App\Models\Notification::create([
                 'user_id' => $userId,
                 'type' => $details['type'],
@@ -1628,8 +1748,10 @@ class OrderController extends Controller
                 'is_read' => false
             ]);
 
-            // Send real-time FCM
-            $user->sendFcmNotification($details, false);
+            // Only send FCM push if user has a token AND has not disabled notifications
+            if ($user->fcm_token && $user->notification_enabled) {
+                $user->sendFcmNotification($details, false);
+            }
         }
     }
 
@@ -1695,6 +1817,16 @@ class OrderController extends Controller
                     'type' => $type
                 ]);
             }
+
+            // Notify Client
+            $this->sendNotification($order->user_id, [
+                'type' => \App\Models\Notification::TYPE_ORDER_PHOTOS,
+                'title_ar' => 'تم إضافة مرفقات جديدة',
+                'title_en' => 'New attachments added',
+                'body_ar' => 'قام الفني بإضافة مرفقات / صور جديدة لطلبك رقم ' . $order->order_number,
+                'body_en' => 'The technician added new attachments/photos to your order #' . $order->order_number,
+                'data' => ['order_id' => $order->id, 'attachment_type' => $type]
+            ]);
         }
 
         return response()->json([
@@ -1717,9 +1849,9 @@ class OrderController extends Controller
             return response()->json(['status' => false, 'message' => 'Attachment not found'], 404);
         }
 
-        // Delete from storage
-        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($attachment->file_path)) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($attachment->file_path);
+        // Delete from public folder
+        if ($attachment->file_path && file_exists(public_path($attachment->file_path))) {
+            unlink(public_path($attachment->file_path));
         }
 
         $attachment->delete();
@@ -1741,7 +1873,9 @@ class OrderController extends Controller
     private function uploadAttachment($file)
     {
         $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-        $file->move(public_path('order_attachments'), $filename);
-        return 'order_attachments/' . $filename;
+        $dir = public_path('uploads/order_attachments');
+        if (!is_dir($dir)) mkdir($dir, 0775, true);
+        $file->move($dir, $filename);
+        return 'uploads/order_attachments/' . $filename;
     }
 }

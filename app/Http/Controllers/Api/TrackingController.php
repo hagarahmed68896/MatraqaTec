@@ -39,7 +39,7 @@ class TrackingController extends Controller
         }
 
         $location = TechnicianLocation::updateOrCreate(
-            ['technician_id' => $technician->id],
+            ['technician_id' => $user->id],
             [
                 'latitude' => $request->latitude,
                 'longitude' => $request->longitude,

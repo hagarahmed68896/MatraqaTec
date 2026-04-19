@@ -67,15 +67,17 @@ class TechnicianProfileController extends Controller
         }
         
         if ($request->hasFile('avatar')) {
-             if ($user->avatar) {
-                 if (str_starts_with($user->avatar, 'uploads/')) {
-                     if (file_exists(public_path($user->avatar))) {
-                         unlink(public_path($user->avatar));
-                     }
-                 } else {
-                     \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
-                 }
-             }
+            if ($user->avatar) {
+                if (str_starts_with($user->avatar, 'uploads/')) {
+                    if (file_exists(public_path($user->avatar))) {
+                        unlink(public_path($user->avatar));
+                    }
+                } else {
+                    if (file_exists(public_path($user->avatar))) {
+                        unlink(public_path($user->avatar));
+                    }
+                }
+            }
             $fileName = time() . '_' . $request->file('avatar')->getClientOriginalName();
             $request->file('avatar')->move(public_path('uploads/avatars'), $fileName);
             $user->avatar = 'uploads/avatars/' . $fileName;
@@ -396,7 +398,12 @@ class TechnicianProfileController extends Controller
         // Auto-detach expired unaccepted orders for all technicians before retrieving the list
         $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
         \App\Models\Order::whereNotNull('technician_id')
-            ->whereIn('status', ['new', 'scheduled'])
+            ->where(function($q) {
+                $q->where('status', 'scheduled') // Only scheduled (waiting for tech)
+                  ->orWhere(function($sq) {
+                      $sq->where('status', 'new')->whereNull('maintenance_company_id'); // Or new marketplace orders (independent)
+                  });
+            })
             ->where('assigned_at', '<', now()->subMinutes($duration))
             ->update([
                 'technician_id' => null,
@@ -418,13 +425,15 @@ class TechnicianProfileController extends Controller
                       });
                 });
         } else {
-            $newOrdersQuery = (clone $assignedQuery)->where('status', 'new');
+            // For technicians belonging to a company, "New" orders are those already 
+            // reviewed and approved by the company (status = scheduled).
+            $newOrdersQuery = (clone $assignedQuery)->where('status', 'scheduled');
         }
 
         // Counts for tabs
         $data['counts'] = [
             'new' => (clone $newOrdersQuery)->count(),
-            'in_progress' => (clone $assignedQuery)->whereIn('status', ['accepted', 'scheduled', 'in_progress'])->count(),
+            'in_progress' => (clone $assignedQuery)->whereIn('status', ['accepted', 'in_progress'])->count(),
             'archived' => (clone $assignedQuery)->whereIn('status', ['completed', 'rejected', 'cancelled'])->count(),
         ];
         $data['counts']['all'] = $data['counts']['new'] + $data['counts']['in_progress'] + $data['counts']['archived'];

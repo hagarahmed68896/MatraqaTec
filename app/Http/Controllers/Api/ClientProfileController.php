@@ -119,14 +119,10 @@ class ClientProfileController extends Controller
         // Handle Avatar Upload
         if ($request->hasFile('avatar')) {
              if ($user->avatar) {
-                 if (str_starts_with($user->avatar, 'uploads/')) {
-                     if (file_exists(public_path($user->avatar))) {
-                         unlink(public_path($user->avatar));
-                     }
-                 } else {
-                     Storage::disk('public')->delete($user->avatar);
+                 if (file_exists(public_path($user->avatar))) {
+                     unlink(public_path($user->avatar));
                  }
-             }
+            }
             $file = $request->file('avatar');
             $fileName = time() . '_' . $file->getClientOriginalName();
             $file->move(public_path('uploads/avatars'), $fileName);

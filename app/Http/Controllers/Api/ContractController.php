@@ -276,7 +276,7 @@ class ContractController extends Controller
         $contract = $query->latest()->first();
 
         if (!$contract) {
-            return response()->json(['status' => false, 'message' => 'No contract found for this user'], 404);
+            return response()->json(['status' => true, 'message' => 'No contract found for this user', 'data' => null], 200);
         }
 
         return response()->json(['status' => true, 'data' => $contract]);

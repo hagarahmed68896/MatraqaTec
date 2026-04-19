@@ -35,12 +35,18 @@ class Service extends Model
 
     public function getImageUrlAttribute()
     {
-        return $this->image ? asset($this->image) : null;
+        if (!$this->image) return null;
+        if (str_starts_with($this->image, 'http')) return $this->image;
+        if (str_starts_with($this->image, 'uploads/')) return asset($this->image);
+        return asset($this->image); // Fallback to direct asset
     }
 
     public function getIconUrlAttribute()
     {
-        return $this->icon ? asset($this->icon) : null;
+        if (!$this->icon) return null;
+        if (str_starts_with($this->icon, 'http')) return $this->icon;
+        if (str_starts_with($this->icon, 'uploads/')) return asset($this->icon);
+        return asset($this->icon); // Fallback to direct asset
     }
 
     public function parent()

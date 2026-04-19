@@ -17,6 +17,8 @@ class OrderController extends Controller
 
     public function premium(Request $request)
     {
+        Order::syncExpiredOrders();
+
         $query = Order::with(['user', 'technician.user', 'maintenanceCompany.user', 'service.parent'])
             ->whereIn('status', ['scheduled', 'in_progress', 'completed']);
 
@@ -132,6 +134,8 @@ class OrderController extends Controller
 
     public function index(Request $request)
     {
+        Order::syncExpiredOrders();
+
         $query = Order::with(['user', 'technician.user', 'maintenanceCompany.user', 'service.parent']);
 
         // 1. Filter by tab/status
@@ -379,7 +383,9 @@ class OrderController extends Controller
         $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
         if ($order->technician_id) {
             $tech = \App\Models\Technician::find($order->technician_id);
-            if ($tech && $tech->user) {
+            // Only notify technician here if they are independent (don't belong to a company)
+            // Because if they belong to a company, the company must accept first.
+            if ($tech && $tech->user && !$tech->maintenance_company_id) {
                 $this->sendNotification($tech->user_id, [
                     'type' => \App\Models\Notification::TYPE_NEW_ORDER,
                     'title_ar' => 'مهمة جديدة',

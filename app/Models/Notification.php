@@ -23,6 +23,9 @@ class Notification extends Model
     const TYPE_STATUS_UPDATE = 'status_update';
     const TYPE_SUB_STATUS_UPDATE = 'sub_status_update';
     const TYPE_TECHNICIAN_ASSIGNED = 'technician_assigned';
+    const TYPE_TECHNICIAN_ARRIVED = 'technician_arrived';
+    const TYPE_TECHNICIAN_ON_WAY = 'technician_on_way';
+    const TYPE_ORDER_PHOTOS = 'order_photos';
 
     protected $fillable = [
         'user_id',

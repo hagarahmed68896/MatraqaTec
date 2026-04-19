@@ -18,16 +18,33 @@ class HandleExpiredOrders extends Command
     {
         $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
 
-        $expiredOrders = \App\Models\Order::where('status', 'scheduled')
-            ->where('updated_at', '<', now()->subMinutes($duration))
+        // 1. Handle Unaccepted Assignments (Existing logic)
+        $unacceptedOrders = \App\Models\Order::whereNotNull('technician_id')
+            ->whereIn('status', ['new', 'scheduled'])
+            ->where('assigned_at', '<', now()->subMinutes($duration))
             ->get();
 
-        foreach ($expiredOrders as $order) {
-            $this->info("Order #{$order->id} (ORD-{$order->order_number}) has expired based on global setting of {$duration} mins. Resetting.");
+        foreach ($unacceptedOrders as $order) {
+            $this->info("Order #{$order->id} (ORD-{$order->order_number}) acceptance timeout. Resetting to new.");
             $order->update([
                 'status' => 'new',
                 'technician_id' => null,
-                'maintenance_company_id' => null,
+                'maintenance_company_id' => $order->maintenance_company_id, // Keep company if it was assigned by admin to a company
+                'assigned_at' => null
+            ]);
+        }
+
+        // 2. Handle Overdue Appointments (New logic)
+        // Orders that are scheduled/accepted but the time has passed (e.g., by 1 hour) and work hasn't started.
+        $overdueOrders = \App\Models\Order::whereIn('status', ['scheduled', 'accepted'])
+            ->where('scheduled_at', '<', now()->subHours(1))
+            ->whereNull('sub_status') // Only if no work has started (no on_way, arrived, etc.)
+            ->get();
+
+        foreach ($overdueOrders as $order) {
+            $this->info("Order #{$order->id} (ORD-{$order->order_number}) is overdue. Marking as expired/needs reschedule.");
+            $order->update([
+                'sub_status' => 'expired'
             ]);
         }
     }

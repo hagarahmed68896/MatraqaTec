@@ -141,9 +141,20 @@ class HomeController extends Controller
                 ->withCount(['orders as completed_orders_count' => function($q) {
                     $q->where('status', 'completed');
                 }])
+                ->withAvg('reviews as average_rating', 'rating')
                 ->orderByDesc('completed_orders_count')
                 ->take(3)
-                ->get();
+                ->get()
+                ->map(function ($technician) {
+                    $technician->average_rating = $technician->average_rating
+                        ? round((float) $technician->average_rating, 2)
+                        : 0;
+                    // Fix avatar URL
+                    if ($technician->user) {
+                        $technician->user->avatar = $technician->user->avatar_url;
+                    }
+                    return $technician;
+                });
 
             $data['statistics'] = [
                 'orders_count' => $ordersCount,

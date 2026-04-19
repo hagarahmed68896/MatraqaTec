@@ -181,11 +181,11 @@
                <div class="relative  mx-auto flex justify-center">
                    
                    <!-- Phone Mockup Frame -->
-                   <div class="relative w-full overflow-hidden flex flex-col z-30 bg-white dark:bg-[#1A1A31] h-[450px] lg:h-[500px]">
+                   <div class="relative w-full flex flex-col z-30 bg-transparent h-[450px] lg:h-[500px]">
              
                        <!-- Image -->
                        <img src="{{ asset('assets/images/Group 28.png') }}" 
-                            class="w-full h-full object-cover object-top" 
+                            class="w-full h-full object-contain object-center" 
                             alt="App Preview">
                    </div>
 
@@ -345,12 +345,14 @@
                 <!-- Navigation Arrow (Left) -->
                 <button @click="prev()"
                         class="absolute left-2 md:-left-4 lg:-left-6 top-1/2 
-                        -translate-y-1/2 w-10 h-10 lg:w-14 lg:h-14 bg-white 
-                        border border-slate-100 dark:border-slate-700 rounded-full shadow-xl 
-                        flex items-center justify-center transition-all z-20 text-black
-                         active:scale-95"
+                        -translate-y-1/2 w-10 h-10 lg:w-14 lg:h-14 bg-white dark:bg-slate-800
+                        border border-slate-100 dark:border-slate-700 rounded-full shadow-2xl 
+                        flex items-center justify-center transition-all duration-300 z-30 text-[#1A1A31] dark:text-white
+                        hover:bg-[#1A1A31] hover:text-white dark:hover:bg-white dark:hover:text-[#1A1A31]
+                        cursor-pointer active:scale-90 group/btn-left"
                         style="left: 0.5rem; right: auto;">
-                    <svg class="w-6 h-6" fill="none" stroke="#1A1A31" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 transition-colors duration-300 group-hover/btn-left:stroke-white dark:group-hover/btn-left:stroke-[#1A1A31]" 
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
                 </button>
@@ -358,12 +360,14 @@
                 <!-- Navigation Arrow (Right) -->
                 <button @click="next()"
                         class="absolute right-2 md:-right-4 lg:-right-6 top-1/2 -translate-y-1/2 
-                        w-10 h-10 lg:w-14 lg:h-14 bg-white text-[#1A1A31] border
-                         border-slate-100 dark:border-slate-700 rounded-full shadow-xl
-                          flex items-center justify-center transition-all z-20
-                           hover:text-white  active:scale-95"
+                        w-10 h-10 lg:w-14 lg:h-14 bg-white dark:bg-slate-800
+                        border border-slate-100 dark:border-slate-700 rounded-full shadow-2xl
+                        flex items-center justify-center transition-all duration-300 z-30 text-[#1A1A31] dark:text-white
+                        hover:bg-[#1A1A31] hover:text-white dark:hover:bg-white dark:hover:text-[#1A1A31]
+                        cursor-pointer active:scale-90 group/btn-right"
                         style="right: 0.5rem; left: auto;">
-                    <svg class="w-6 h-6" fill="none" stroke="#1A1A31" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 transition-colors duration-300 group-hover/btn-right:stroke-white dark:group-hover/btn-right:stroke-[#1A1A31]" 
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                     </svg>
                 </button>

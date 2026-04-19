@@ -49,13 +49,23 @@ class User extends Authenticatable
             return null;
         }
         
+        // If it starts with 'http', it's already a full URL
+        if (str_starts_with($this->avatar, 'http')) {
+            return $this->avatar;
+        }
+
         // If it starts with 'uploads/', it's directly in the public folder
         if (str_starts_with($this->avatar, 'uploads/')) {
             return asset($this->avatar);
         }
         
-        // Otherwise it's stored in the storage disk
-        return asset('storage/' . $this->avatar);
+        // If it's stored in the storage disk (backward compatibility)
+        if (file_exists(public_path('storage/' . $this->avatar))) {
+            return asset('storage/' . $this->avatar);
+        }
+
+        // Default to uploads if path is just a filename
+        return asset('uploads/avatars/' . $this->avatar);
     }
 
     /**
