@@ -23,6 +23,13 @@ class AppointmentController extends Controller
             $technician = \App\Models\Technician::where('user_id', $user->id)->first();
             if (!$technician) return response()->json(['status' => true, 'message' => __('No appointments'), 'data' => []]);
             $query->where('technician_id', $technician->id);
+
+            // Hide appointments for orders still in 'new' status if part of a company
+            if ($technician->maintenance_company_id) {
+                $query->whereHas('order', function($o) {
+                    $o->where('status', '!=', 'new');
+                });
+            }
         } elseif ($user->type === 'maintenance_company') {
             $company = $user->maintenanceCompany;
             if (!$company) return response()->json(['status' => true, 'message' => __('No appointments'), 'data' => []]);

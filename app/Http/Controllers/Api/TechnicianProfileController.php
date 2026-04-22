@@ -412,6 +412,9 @@ class TechnicianProfileController extends Controller
             ]);
 
         $assignedQuery = Order::where('technician_id', $technician->id ?? null);
+        if ($technician && $technician->maintenance_company_id) {
+            $assignedQuery->where('status', '!=', 'new');
+        }
 
         // For independent technicians, "New" orders are those in their city/specialty not yet assigned
         if ($technician && !$technician->maintenance_company_id) {

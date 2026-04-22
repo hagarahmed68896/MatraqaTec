@@ -55,7 +55,14 @@ class Order extends Model
 
     public function getIsPaidAttribute()
     {
-        return $this->payments()->where('status', 'completed')->exists();
+        $totalPaid = (float) $this->payments()->where('status', 'completed')->sum('amount');
+        $totalRequired = (float) $this->total_price;
+        
+        if ($totalRequired <= 0) return false;
+
+        // Allow 1.0 SAR tolerance for small differences
+        $tolerance = 1.0; 
+        return (round($totalPaid, 2) >= round($totalRequired - $tolerance, 2));
     }
 
     public function getCanRescheduleAttribute()
@@ -194,11 +201,13 @@ class Order extends Model
         return self::whereIn('status', ['new', 'scheduled', 'accepted'])
             ->where('scheduled_at', '<', now())
             ->where('status', '!=', 'expired')
+            ->whereNotIn('sub_status', ['reschedule_requested', 'additional_visit', 'pending_tech_acceptance'])
             ->update([
                 'status' => 'expired',
                 'sub_status' => 'expired'
             ]);
     }
+
 
     public function getStatusLabelAttribute()
     {
@@ -216,6 +225,11 @@ class Order extends Model
         // Handle expired sub-status or status for overdue appointments
         if ($this->sub_status === 'expired' || $this->status === 'expired') {
             return 'يحتاج لإعادة جدولة';
+        }
+
+        // Sub-status label for pending tech acceptance
+        if ($this->sub_status === 'pending_tech_acceptance') {
+            return 'في انتظار قبول الفني';
         }
 
         // Sub-status labels for "in_progress" state
@@ -237,6 +251,10 @@ class Order extends Model
     {
         if ($this->sub_status === 'expired') {
             return '#FF8C00'; // DarkOrange
+        }
+
+        if ($this->sub_status === 'pending_tech_acceptance') {
+            return '#FF9800'; // Amber - awaiting tech
         }
 
         $colors = [

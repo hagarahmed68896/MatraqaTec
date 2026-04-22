@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use Kreait\Firebase\Messaging\CloudMessage;
-use Kreait\Firebase\Messaging\Notification;
 use App\Models\User;
 use App\Models\Notification as NotificationModel;
 
@@ -46,14 +45,25 @@ class FcmService
         try {
             \Log::info("FCM: Attempting to send to user {$user->id} with token: " . substr($user->fcm_token, 0, 10) . "...");
             $messaging = app('firebase.messaging');
-            $notification = Notification::create($title, $body);
+            
+            // Prepare data payload - Ensure all values are strings for FCM compatibility
+            $payloadData = array_merge($data, [
+                'title' => (string) $title,
+                'body' => (string) $body,
+                'type' => (string) $type,
+                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+            ]);
+
+            // Cast all values to strings recursively if needed, but here a simple map works for first level
+            $payloadData = array_map(function($val) {
+                return (is_array($val) || is_object($val)) ? json_encode($val) : (string)$val;
+            }, $payloadData);
 
             $message = CloudMessage::withTarget('token', $user->fcm_token)
-                ->withNotification($notification)
-                ->withData(array_merge($data, [
-                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                    'type' => $type
-                ]));
+                ->withData($payloadData)
+                ->withAndroidConfig([
+                    'priority' => 'high'
+                ]);
 
             $response = $messaging->send($message);
             
@@ -80,14 +90,24 @@ class FcmService
     {
         try {
             $messaging = app('firebase.messaging');
-            $notification = Notification::create($title, $body);
+            
+            // Prepare data payload - Ensure all values are strings
+            $payloadData = array_merge($data, [
+                'title' => (string) $title,
+                'body' => (string) $body,
+                'type' => (string) $type,
+                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+            ]);
+
+            $payloadData = array_map(function($val) {
+                return (is_array($val) || is_object($val)) ? json_encode($val) : (string)$val;
+            }, $payloadData);
 
             $message = CloudMessage::withTarget('topic', $topic)
-                ->withNotification($notification)
-                ->withData(array_merge($data, [
-                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                    'type' => $type
-                ]));
+                ->withData($payloadData)
+                ->withAndroidConfig([
+                    'priority' => 'high'
+                ]);
 
             $messaging->send($message);
             

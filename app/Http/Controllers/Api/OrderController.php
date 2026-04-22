@@ -21,18 +21,32 @@ class OrderController extends Controller
 
         // Auto-detach expired unaccepted orders for all technicians before retrieving the list
         $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
+        
+        // 1. Company-assigned orders whose technician timed out: remove technician, keep 'scheduled' under company
         \App\Models\Order::whereNotNull('technician_id')
+            ->whereNotNull('maintenance_company_id')
+            ->where('sub_status', 'pending_tech_acceptance')
+            ->where('assigned_at', '<', now()->subMinutes($duration))
+            ->update([
+                'technician_id' => null,
+                'assigned_at' => null,
+                'sub_status' => null,
+                // Keep status as 'scheduled' — company still owns it, just needs to re-assign
+            ]);
+
+        // 2. Independent (marketplace) orders whose technician timed out: reset fully to 'new'
+        \App\Models\Order::whereNotNull('technician_id')
+            ->whereNull('maintenance_company_id')
             ->where(function($q) {
-                $q->where('status', 'scheduled') // Only scheduled (waiting for tech)
-                  ->orWhere(function($sq) {
-                      $sq->where('status', 'new')->whereNull('maintenance_company_id'); // Or new marketplace orders (independent)
-                  });
+                $q->where('status', 'scheduled')
+                  ->orWhere('status', 'new');
             })
             ->where('assigned_at', '<', now()->subMinutes($duration))
             ->update([
                 'technician_id' => null,
                 'status' => 'new',
-                'assigned_at' => null
+                'assigned_at' => null,
+                'sub_status' => null,
             ]);
 
         $query = Order::with(['user', 'technician' => function($q) {
@@ -44,9 +58,13 @@ class OrderController extends Controller
             $technician = \App\Models\Technician::where('user_id', $user->id)->first();
             if (!$technician) return response()->json(['status' => true, 'message' => 'No assigned orders', 'data' => []]);
             $query->where('technician_id', $technician->id);
-            // If technician belongs to a company, hide 'new' orders (waiting for company approval)
+            // If technician belongs to a company, hide pure 'new' orders (waiting for company to accept first)
+            // Orders with 'pending_tech_acceptance' ARE shown (in the 'under_review/new' tab) so tech can respond
             if ($technician->maintenance_company_id) {
-                $query->where('status', '!=', 'new');
+                $query->where(function($q) {
+                    $q->where('status', '!=', 'new')
+                      ->orWhere('sub_status', 'pending_tech_acceptance');
+                });
             }
         } elseif ($user->type === 'maintenance_company') {
             $company = \App\Models\MaintenanceCompany::where('user_id', $user->id)->first();
@@ -107,31 +125,32 @@ class OrderController extends Controller
             }
         } else {
             // Client/Technician tabs (existing logic)
-            if ($request->tab === 'under_review') {
-                // قيد المراجعة - Pending admin approval or reschedule request
+            if ($request->tab === 'under_review' || $request->tab === 'new') {
+                // تاب "جديد" للفني:
+                // 1. الطلبات الجديدة المستقلة (status=new, بدون شركة)
+                // 2. الطلبات المُعيَّن له من شركة وفي انتظار قبوله (pending_tech_acceptance)
+                // 3. طلبات إعادة الجدولة المعلقة
                 $query->where(function($q) use ($user) {
-                    $q->where(function($sub) use ($user) {
-                        $sub->where('status', 'new');
-                        // If it's a technician, only show 'new' orders if they DON'T belong to a company
-                        // (Assuming independent techs might use 'new' status, though current flow sets them to 'scheduled')
-                        if ($user->type === 'technician') {
-                            $sub->whereNull('maintenance_company_id');
-                        }
-                    })
-                    ->orWhere('sub_status', 'reschedule_requested');
+                    $q->where('sub_status', 'pending_tech_acceptance') // ← جديد: معيّن من شركة
+                      ->orWhere('sub_status', 'reschedule_requested')  // طلب إعادة جدولة
+                      ->orWhere(function($sub) use ($user) {
+                          $sub->where('status', 'new');
+                          if ($user->type === 'technician') {
+                              $sub->whereNull('maintenance_company_id'); // independent only
+                          }
+                      });
                 });
             } elseif ($request->tab === 'previous') {
                 // السابقة - Completed/Cancelled/Rejected
                 $query->whereIn('status', ['completed', 'cancelled', 'rejected']);
             } else {
-                // Default to 'current' - الحالية
-                // في الطريق, وصل, مجدولة, بدأ العمل
-                // Maps to: accepted, scheduled, in_progress (and sub_status variations)
+                // Default to 'current' - الحالية (المجدول والمقبول وقيد التنفيذ)
+                // يُستثنى منها pending_tech_acceptance عشان ما يظهرش في المجدول
                 if (!$request->filled('status')) {
                     $query->whereIn('status', ['accepted', 'scheduled', 'in_progress'])
                           ->where(function($q) {
                               $q->whereNull('sub_status')
-                                ->orWhere('sub_status', '!=', 'reschedule_requested');
+                                ->orWhereNotIn('sub_status', ['reschedule_requested', 'pending_tech_acceptance']);
                           });
                 }
             }
@@ -703,19 +722,32 @@ class OrderController extends Controller
             'spare_parts.*.price' => 'required|numeric|min:0',
         ]);
 
+        $sparePartsTotal = 0;
         $sparePartsMetadata = [];
         foreach ($request->spare_parts as $part) {
             if ($part['qty'] > 0) {
+                $lineTotal = $part['qty'] * $part['price'];
+                $sparePartsTotal += $lineTotal;
                 $sparePartsMetadata[] = [
                     'name' => $part['name'],
                     'qty' => $part['qty'],
                     'price' => $part['price'],
-                    'total' => $part['qty'] * $part['price']
+                    'total' => $lineTotal
                 ];
             }
         }
 
-        $order->update(['spare_parts_metadata' => $sparePartsMetadata]);
+        // Calculate Grand Total (Service + Parts + Tax)
+        $basePrice = $order->service->price ?? 50;
+        $taxRate = (float) \App\Models\Setting::getByKey('vat_rate', 15) / 100;
+        $subTotal = $basePrice + $sparePartsTotal;
+        $tax = $subTotal * $taxRate;
+        $grandTotal = $subTotal + $tax;
+
+        $order->update([
+            'spare_parts_metadata' => $sparePartsMetadata,
+            'total_price' => $grandTotal
+        ]);
 
         // Trigger Notification for Client to review spare parts invoice
         $this->sendNotification($order->user_id, [
@@ -795,18 +827,19 @@ class OrderController extends Controller
 
         // Calculate current total
         $basePrice = $order->service->price ?? 50;
-        $tax = $basePrice * 0.15;
         $sparePartsTotal = 0;
-        
         if ($order->spare_parts_metadata) {
             foreach ($order->spare_parts_metadata as $part) {
                 $sparePartsTotal += ($part['qty'] * $part['price']);
             }
         }
 
-        $grandTotal = $basePrice + $tax + $sparePartsTotal;
+        $taxRate = (float) \App\Models\Setting::getByKey('vat_rate', 15) / 100;
+        $subTotal = $basePrice + $sparePartsTotal;
+        $tax = $subTotal * $taxRate;
+        $grandTotal = $subTotal + $tax;
 
-        // Optionally update total_price in DB now so client sees it
+        // Update total_price in DB now so client sees it
         $order->update(['total_price' => $grandTotal]);
 
         $this->sendNotification($order->user_id, [
@@ -937,11 +970,45 @@ class OrderController extends Controller
             }
         }
 
+        // Calculate Final Grand Total
+        $basePrice = $order->service->price ?? 50;
+        $taxRate = (float) \App\Models\Setting::getByKey('vat_rate', 15) / 100;
+        
+        // Sum up existing parts if not provided in request (or overwrite with new ones)
+        if (empty($sparePartsMetadata) && $order->spare_parts_metadata) {
+            $sparePartsMetadata = $order->spare_parts_metadata;
+            foreach ($sparePartsMetadata as $part) {
+                $sparePartsTotal += $part['total'];
+            }
+        }
+
+        $subTotal = $basePrice + $sparePartsTotal;
+        $tax = $subTotal * $taxRate;
+        $finalGrandTotal = $subTotal + $tax;
+
+        // Re-verify payment against the final calculated total
+        $totalPaid = $order->payments()->where('status', 'completed')->sum('amount');
+        
+        $roundedFinalTotal = round((float)$finalGrandTotal, 2);
+        $roundedTotalPaid = round((float)$totalPaid, 2);
+
+        $tolerance = 1.0;
+        if (round($roundedTotalPaid, 2) < round($roundedFinalTotal - $tolerance, 2)) {
+            \Illuminate\Support\Facades\Log::warning("Order #{$order->order_number} payment failure: Paid={$roundedTotalPaid}, Required={$roundedFinalTotal}");
+            return response()->json([
+                'status' => false, 
+                'message' => __('Please ensure the invoice is paid before finishing the work. Required: :total SAR, Paid: :paid SAR', [
+                    'total' => number_format($roundedFinalTotal, 2),
+                    'paid' => number_format($roundedTotalPaid, 2)
+                ])
+            ], 422);
+        }
+
         // Update Order
         $order->status = 'completed';
         $order->sub_status = null;
         $order->spare_parts_metadata = $sparePartsMetadata;
-        $order->total_price = $order->total_price + $sparePartsTotal; 
+        $order->total_price = $finalGrandTotal; 
         
         if ($request->filled('client_signature') && Str::startsWith($request->client_signature, 'data:image')) {
             $order->client_signature = $this->uploadBase64Image($request->client_signature, 'signatures');
@@ -1455,6 +1522,8 @@ class OrderController extends Controller
                 if ($checkTech) {
                     $order->technician_id = $checkTech->id;
                     $order->assigned_at = now();
+                    // Mark as waiting for technician's acceptance
+                    $order->sub_status = 'pending_tech_acceptance';
                     
                     // Sync with Appointment
                     \App\Models\Appointment::where('order_id', $order->id)->update([
@@ -1467,7 +1536,11 @@ class OrderController extends Controller
                         return response()->json(['status' => false, 'message' => 'Selected technician does not belong to your company'], 422);
                     }
                     $order->technician_id = null;
+                    $order->sub_status = null;
                 }
+            } else {
+                // Company accepted without assigning a technician yet
+                $order->sub_status = null;
             }
         }
         
@@ -1551,20 +1624,20 @@ class OrderController extends Controller
             return response()->json(['status' => false, 'message' => "Order request expired ($duration minutes limit)"], 422);
         }
 
-        if ($order->status !== 'scheduled') { // Assuming 'scheduled' is the state when assigned by company/admin
-             // Also handling 'new' if self-picking logic exists, but primary flow is Company -> Tech
+        if (!in_array($order->status, ['scheduled', 'new'])) {
              if ($order->status === 'accepted' || $order->status === 'in_progress') {
                  return response()->json(['status' => false, 'message' => 'Order already accepted'], 422);
              }
         }
 
-        $order->status = 'accepted'; // Or keep it 'scheduled' but mark as 'tech_accepted'? 
-        // For now, let's look at the Order status flow. 
-        // If Company assigns -> Status is 'scheduled'?
-        // The previous accept() method sets status to 'scheduled'.
-        // So here we might want to move it to 'accepted' or just confirm it. 
-        // Let's set it to 'accepted' which maps to 'مقبول' (Accepted) in getStatusLabelAttribute
-        $order->status = 'accepted'; 
+        // Only orders waiting for tech acceptance can be accepted here
+        if ($order->sub_status !== 'pending_tech_acceptance') {
+            return response()->json(['status' => false, 'message' => 'This order is not pending your acceptance'], 422);
+        }
+
+        // Technician accepted -> move to 'accepted' and clear the pending sub_status
+        $order->status = 'accepted';
+        $order->sub_status = null;
         $order->save();
 
         // Update the new_order notification type to hide action buttons in the app
@@ -1622,19 +1695,19 @@ class OrderController extends Controller
             'rejection_reason' => 'nullable|string|max:500',
         ]);
 
-        $order->technician_id = null; // Unassign
+        $order->technician_id = null; // Unassign technician
         $order->assigned_at = null;   // Clear assignment time
-        $order->status = 'new';       // Back to new? Or keep 'scheduled' but unassigned?
-        // If it was assigned by company, it should go back to company pool or remain assigned to company but no tech.
-        // Assuming status 'scheduled' meant confirmed visit. 
-        // If tech rejects, maybe we should notify company to re-assign.
-        $order->status = 'new'; // Let's reset to new or specific 'pending' status.
-        // If it belongs to a company, it stays with company.
-        
-        // If the order was originally just 'new' and picked up, this is fine.
-        // If it was 'scheduled' by admin, we might need a distinct status.
-        // For simplicity, reset to 'new' but keep company ownership if exists.
-        
+        $order->sub_status = null;    // Clear pending acceptance flag
+
+        // If the order belonged to a company, keep it 'scheduled' under the company
+        // so the company can re-assign another technician.
+        // If it was a standalone order (no company), reset it to 'new'.
+        if ($order->maintenance_company_id) {
+            $order->status = 'scheduled'; // Still accepted by company, needs re-assignment
+        } else {
+            $order->status = 'new';
+        }
+
         $order->save();
 
         // Update the new_order notification type to hide action buttons in the app
