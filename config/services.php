@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    // ── Taqnyat SMS Gateway ──────────────────────────────
+    // Fill TAQNYAT_SENDER and TAQNYAT_BEARER_TOKEN in .env
+    // once the client provides the credentials.
+    'taqnyat' => [
+        'sender'       => env('TAQNYAT_SENDER', ''),
+        'bearer_token' => env('TAQNYAT_BEARER_TOKEN', ''),
+    ],
+
 ];

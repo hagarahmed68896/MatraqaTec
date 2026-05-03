@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use App\Services\TaqnyatOTP;
 
 class AdminController extends Controller
 {
@@ -53,13 +54,13 @@ class AdminController extends Controller
             return redirect()->back()->with('error', __('Unauthorized access. Admin only.'))->withInput();
         }
 
-        // Generate Static OTP for testing
-        $otp = '0000';
+        $taqnyat = new TaqnyatOTP();
+        $otp = $taqnyat->generateOtp();
         $user->otp = $otp;
         $user->otp_expires_at = Carbon::now()->addMinutes(10);
         $user->save();
 
-        // In a real app, send SMA here. For now, log it.
+        $taqnyat->sendOTP($phone, $otp);
         \Log::info("Admin OTP for {$phone}: {$otp}");
         
         Session::put('pending_admin_phone', $phone);
@@ -94,10 +95,13 @@ class AdminController extends Controller
             return redirect()->back()->with('error', __('Admin phone not found.'))->withInput();
         }
 
-        $otp = '0000';
+        $taqnyat = new TaqnyatOTP();
+        $otp = $taqnyat->generateOtp();
         $user->otp = $otp;
         $user->otp_expires_at = Carbon::now()->addMinutes(10);
         $user->save();
+
+        $taqnyat->sendOTP($phone, $otp);
 
         Session::put('pending_admin_phone', $phone);
         Session::put('forgot_password_mode', true);

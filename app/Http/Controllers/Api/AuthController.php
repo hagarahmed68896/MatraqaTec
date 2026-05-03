@@ -8,6 +8,7 @@ use App\Models\IndividualCustomer;
 use App\Models\MaintenanceCompany;
 use App\Models\Technician;
 use App\Models\User;
+use App\Services\TaqnyatOTP;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -353,10 +354,7 @@ class AuthController extends Controller
 
         $user = User::where('phone', $request->phone)->first();
 
-    // TEMPORARY: Allow "0000" as a bypass for OTP verification during testing/development
-    $isTemporaryOtp = ($request->otp === "0000");
-
-    if (!$isTemporaryOtp && ($user->otp !== $request->otp || Carbon::now()->gt($user->otp_expires_at))) {
+    if ($user->otp !== $request->otp || Carbon::now()->gt($user->otp_expires_at)) {
         return response()->json([
                 'status' => false,
                 'message' => __('Invalid or expired OTP')
@@ -376,14 +374,14 @@ class AuthController extends Controller
 
     private function sendOtp($user)
     {
-        $otp = "0000";
-        $user->otp = $otp;
+        $taqnyat = new TaqnyatOTP();
+
+        $otp = $taqnyat->generateOtp(); // returns a random 4-digit code
+        $user->otp            = $otp;
         $user->otp_expires_at = Carbon::now()->addHours(24);
         $user->save();
 
-        //  may would integrate an SMS gateway here.
-        // For now, we will just log it.
-        \Log::info("OTP for user {$user->phone}: {$otp}");
+        $taqnyat->sendOTP($user->phone, $otp);
     }
 
     public function deleteAccount(Request $request)
