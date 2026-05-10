@@ -587,9 +587,9 @@
                 localStorage.setItem('theme', theme);
             }
 
-            // 4. Final fallback
+            // 4. Final fallback - Default to LIGHT instead of following system
             if (!theme) {
-                theme = isSystemDark ? 'dark' : 'light';
+                theme = 'light';
             }
             
             document.documentElement.classList.toggle('dark', theme === 'dark');

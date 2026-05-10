@@ -141,7 +141,7 @@
         const html = document.documentElement;
 
         const updateTheme = () => {
-            const isDark = localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            const isDark = localStorage.getItem('theme') === 'dark';
             if (isDark) {
                 html.classList.add('dark');
             } else {
