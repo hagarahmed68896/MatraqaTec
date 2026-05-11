@@ -10,6 +10,7 @@ class PlatformProfit extends Model
     use HasFactory;
 
     protected $fillable = [
+        'order_id',
         'fees',
         'amount',
     ];

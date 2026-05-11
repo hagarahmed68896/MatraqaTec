@@ -50,6 +50,14 @@ class AdminController extends Controller
             return redirect()->back()->with('error', __('Invalid credentials'))->withInput();
         }
 
+        // Check status
+        if ($user->status !== 'active') {
+            $message = $user->status === 'blocked' 
+                ? __('Your admin account has been blocked.') 
+                : __('Your admin account is inactive.');
+            return redirect()->back()->with('error', $message)->withInput();
+        }
+
         if (!in_array($user->type, ['supervisor', 'admin'])) {
             return redirect()->back()->with('error', __('Unauthorized access. Admin only.'))->withInput();
         }

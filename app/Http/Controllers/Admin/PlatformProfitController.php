@@ -10,17 +10,27 @@ class PlatformProfitController extends Controller
 {
     public function index()
     {
-        $fees = \App\Models\Setting::getByKey('platform_fees', 0);
-        $profit = \App\Models\Setting::getByKey('platform_profit_value', 0);
-        return view('admin.platform_profits.index', compact('fees', 'profit'));
+        $items = PlatformProfit::with('order.user')->latest()->paginate(10);
+        $commission_rate = \App\Models\Setting::getByKey('platform_commission', 15);
+        
+        $stats = [
+            'total_profit' => PlatformProfit::sum('amount'),
+            'orders_count' => PlatformProfit::count(),
+            'commission_rate' => $commission_rate
+        ];
+
+        return view('admin.platform_profits.index', compact('items', 'stats'));
     }
 
     public function store(Request $request)
     {
-        \App\Models\Setting::setByKey('platform_fees', $request->fees, 'platform');
-        \App\Models\Setting::setByKey('platform_profit_value', $request->amount, 'platform');
+        $request->validate([
+            'commission_rate' => 'required|numeric|min:0|max:100',
+        ]);
+
+        \App\Models\Setting::setByKey('platform_commission', $request->commission_rate, 'platform');
         
-        return redirect()->route('admin.platform-profits.index')->with('success', __('Settings saved successfully.'));
+        return redirect()->route('admin.platform-profits.index')->with('success', __('Commission rate updated successfully.'));
     }
 
     public function show($id)

@@ -26,7 +26,15 @@
     <!-- CONTROLS CONTAINER -->
     <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] border border-slate-50 dark:border-white/5 shadow-sm p-4">
         <div class="flex items-center justify-between {{ app()->getLocale() == 'ar' ? 'flex-row-reverse' : 'flex-row' }}">
-           
+          
+           <!-- Left Side: Smart Download -->
+            <div class="flex items-center gap-3">
+                <button @click="selectedRows.length > 0 ? downloadSelected() : window.location.href='{{ route('admin.refunds.download', request()->query()) }}'"
+                        class="h-11 px-6 flex items-center gap-3 bg-white dark:bg-[#1A1A31] border border-slate-100 dark:border-white/10 text-[#1A1A31] dark:text-white rounded-xl font-bold text-xs hover:bg-slate-50 dark:hover:bg-white/10 transition-all shadow-sm">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    <span x-text="selectedRows.length > 0 ? '{{ __('Download Selected') }}' : '{{ __('Download') }}'"></span>
+                </button>
+            </div>
            <!-- Right Side: Filter+Search OR Selection Bar -->
             <div class="flex items-center gap-3 flex-1 max-w-2xl px-2">
 
@@ -134,14 +142,7 @@
 
             </div>
 
-            <!-- Left Side: Smart Download -->
-            <div class="flex items-center gap-3">
-                <button @click="selectedRows.length > 0 ? downloadSelected() : window.location.href='{{ route('admin.refunds.download', request()->query()) }}'"
-                        class="h-11 px-6 flex items-center gap-3 bg-white dark:bg-[#1A1A31] border border-slate-100 dark:border-white/10 text-[#1A1A31] dark:text-white rounded-xl font-bold text-xs hover:bg-slate-50 dark:hover:bg-white/10 transition-all shadow-sm">
-                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    <span x-text="selectedRows.length > 0 ? '{{ __('Download Selected') }}' : '{{ __('Download') }}'"></span>
-                </button>
-            </div>
+         
 
          
         </div>

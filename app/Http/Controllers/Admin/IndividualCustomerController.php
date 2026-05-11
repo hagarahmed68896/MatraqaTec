@@ -300,11 +300,13 @@ class IndividualCustomerController extends Controller
     {
         $profile = IndividualCustomer::findOrFail($id);
         if ($profile->user) {
-            $profile->user->delete();
+            $profile->user->update(['status' => 'inactive']);
+            $message = __('Customer deactivated successfully.');
         } else {
             $profile->delete();
+            $message = __('Customer profile deleted successfully.');
         }
-        return redirect()->route('admin.individual-customers.index')->with('success', __('Customer deleted successfully.'));
+        return redirect()->route('admin.individual-customers.index')->with('success', $message);
     }
 
     public function toggleBlock($id)
@@ -313,9 +315,14 @@ class IndividualCustomerController extends Controller
         $user = $customer->user;
         
         $user->status = ($user->status == 'active') ? 'blocked' : 'active';
+        if ($user->status === 'active') {
+             $user->blocked_at = null;
+        } else {
+             $user->blocked_at = now();
+        }
         $user->save();
 
-        $message = ($user->status == 'blocked') ? __('Customer blocked successfully.') : __('Customer unblocked successfully.');
+        $message = ($user->status == 'blocked') ? __('Customer blocked successfully.') : __('Customer activated successfully.');
         return back()->with('success', $message);
     }
     

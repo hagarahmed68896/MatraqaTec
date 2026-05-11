@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
-    use \App\Traits\ValidatesOrderPhotos, \App\Traits\HasAutoAssignment, \App\Traits\HandlesLocation;
+    use \App\Traits\ValidatesOrderPhotos, \App\Traits\HasAutoAssignment, \App\Traits\HandlesLocation, \App\Traits\HandlesRejectionPenalty;
 
     public function index(Request $request)
     {
@@ -57,13 +57,33 @@ class OrderController extends Controller
         if ($user->type === 'technician') {
             $technician = \App\Models\Technician::where('user_id', $user->id)->first();
             if (!$technician) return response()->json(['status' => true, 'message' => 'No assigned orders', 'data' => []]);
-            $query->where('technician_id', $technician->id);
+            
+            $query->where(function($q) use ($technician, $request, $user) {
+                // 1. Orders directly assigned to this technician
+                $q->where('technician_id', $technician->id);
+                
+                // 2. Marketplace orders (new and unassigned) - Only if independent tech and looking at 'new' tab
+                if (!$technician->maintenance_company_id && ($request->tab === 'new' || $request->tab === 'under_review')) {
+                    $q->orWhere(function($sq) use ($user, $technician) {
+                        $sq->where('status', 'new')
+                           ->whereNull('technician_id')
+                           ->where('city_id', $user->city_id)
+                           ->where(function($sq2) use ($technician) {
+                               $sq2->where('service_id', $technician->service_id)
+                                   ->orWhereHas('service', function($q2) use ($technician) {
+                                       $q2->where('parent_id', $technician->category_id);
+                                   });
+                           });
+                    });
+                }
+            });
+
             // If technician belongs to a company, hide pure 'new' orders (waiting for company to accept first)
-            // Orders with 'pending_tech_acceptance' ARE shown (in the 'under_review/new' tab) so tech can respond
+            // unless they were specifically assigned to him.
             if ($technician->maintenance_company_id) {
                 $query->where(function($q) {
                     $q->where('status', '!=', 'new')
-                      ->orWhere('sub_status', 'pending_tech_acceptance');
+                      ->orWhereNotNull('technician_id'); // If tech_id is set, it's for him
                 });
             }
         } elseif ($user->type === 'maintenance_company') {
@@ -130,6 +150,7 @@ class OrderController extends Controller
                 // 1. الطلبات الجديدة المستقلة (status=new, بدون شركة)
                 // 2. الطلبات المُعيَّن له من شركة وفي انتظار قبوله (pending_tech_acceptance)
                 // 3. طلبات إعادة الجدولة المعلقة
+                // 4. طلبات التعيين التلقائي للفني المستقل (status=scheduled)
                 $query->where(function($q) use ($user) {
                     $q->where('sub_status', 'pending_tech_acceptance') // ← جديد: معيّن من شركة
                       ->orWhere('sub_status', 'reschedule_requested')  // طلب إعادة جدولة
@@ -138,6 +159,10 @@ class OrderController extends Controller
                           if ($user->type === 'technician') {
                               $sub->whereNull('maintenance_company_id'); // independent only
                           }
+                      })
+                      ->orWhere(function($sub) {
+                          $sub->where('status', 'scheduled')
+                              ->whereNull('sub_status'); // Auto-assigned independent
                       });
                 });
             } elseif ($request->tab === 'previous') {
@@ -262,7 +287,11 @@ class OrderController extends Controller
 
         $orders = $query->latest()->paginate(10);
         
-        $orders->getCollection()->transform(function ($order) {
+        $orders->getCollection()->transform(function ($order) use ($user) {
+            if ($user->type === 'technician' && $order->sub_status === 'pending_tech_acceptance') {
+                $order->status = 'new';
+            }
+
             if ($order->technician) {
                 $order->technician_data = $this->formatTechnicianData($order->technician);
                 // Keeping original technician for backward compatibility if needed, 
@@ -321,10 +350,10 @@ class OrderController extends Controller
         
         // Priority to sub_service_id if provided
         $targetServiceId = $request->sub_service_id ?? $request->service_id;
-        $availableTech = $this->findAvailableTechnician($targetServiceId, $cityId, $scheduledAt);
+        $availableTech = $this->findAvailableTechnician($targetServiceId, $cityId, $scheduledAt, $request->latitude, $request->longitude);
 
         if (!$availableTech && !$request->boolean('force')) {
-            $suggestedTime = $this->getSuggestedTime($targetServiceId, $cityId, $scheduledAt);
+            $suggestedTime = $this->getSuggestedTime($targetServiceId, $cityId, $scheduledAt, $request->latitude, $request->longitude);
             
             // If suggestedTime is null, it means there are NO technicians for this service at all
             if (!$suggestedTime) {
@@ -1027,13 +1056,23 @@ class OrderController extends Controller
             $order->technician->update(['availability_status' => 'available']);
         }
 
-        // --- Credit Company Wallet ---
+        // --- Calculate and Record Platform Profit ---
+        $commissionRate = (float) \App\Models\Setting::getByKey('platform_commission', 15);
+        $profitAmount = $order->total_price * ($commissionRate / 100);
+
+        if ($profitAmount > 0) {
+            \App\Models\PlatformProfit::create([
+                'order_id' => $order->id,
+                'fees'     => $commissionRate, // Percentage
+                'amount'   => round($profitAmount, 2),
+            ]);
+        }
+
+        // --- Credit Company/Technician Wallet ---
         if ($order->maintenance_company_id) {
             $company = \App\Models\MaintenanceCompany::find($order->maintenance_company_id);
             if ($company && $company->user_id && $order->total_price > 0) {
-                // Get platform commission rate from settings (default 15%)
-                $commissionRate = (float) \App\Models\Setting::getByKey('platform_commission', 15);
-                $companyShare = $order->total_price * (1 - ($commissionRate / 100));
+                $companyShare = $order->total_price - $profitAmount;
 
                 // Update company wallet balance
                 $companyUser = \App\Models\User::find($company->user_id);
@@ -1045,6 +1084,27 @@ class OrderController extends Controller
                 \App\Models\WalletTransaction::create([
                     'user_id'        => $company->user_id,
                     'amount'         => round($companyShare, 2),
+                    'type'           => 'deposit',
+                    'note'           => 'تحصيل دفعة للطلب رقم ' . $order->order_number,
+                    'reference_id'   => $order->id,
+                    'reference_type' => Order::class,
+                ]);
+            }
+        } elseif ($order->technician_id) {
+            // For independent technicians (not in a company)
+            $tech = \App\Models\Technician::find($order->technician_id);
+            if ($tech && $tech->user_id && $order->total_price > 0) {
+                $techShare = $order->total_price - $profitAmount;
+
+                $techUser = \App\Models\User::find($tech->user_id);
+                if ($techUser) {
+                    $techUser->wallet_balance = ($techUser->wallet_balance ?? 0) + $techShare;
+                    $techUser->save();
+                }
+
+                \App\Models\WalletTransaction::create([
+                    'user_id'        => $tech->user_id,
+                    'amount'         => round($techShare, 2),
                     'type'           => 'deposit',
                     'note'           => 'تحصيل دفعة للطلب رقم ' . $order->order_number,
                     'reference_id'   => $order->id,
@@ -1710,6 +1770,9 @@ class OrderController extends Controller
 
         $order->save();
 
+        // Check for penalties (Technician)
+        $this->handleRejectionPenalty($order, $user);
+
         // Update the new_order notification type to hide action buttons in the app
         $this->updateNotificationType($user->id, $order->id, \App\Models\Notification::TYPE_ORDER_REJECTED);
 
@@ -1755,6 +1818,9 @@ class OrderController extends Controller
         $order->status = 'rejected';
         $order->rejection_reason = $request->rejection_reason;
         $order->save();
+
+        // Check for penalties (Company)
+        $this->handleRejectionPenalty($order, $user);
 
         // Update the new_order notification type to hide action buttons in the app
         $this->updateNotificationType($user->id, $order->id, \App\Models\Notification::TYPE_ORDER_REJECTED);

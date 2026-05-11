@@ -382,11 +382,13 @@ class TechnicianController extends Controller
     {
         $technician = Technician::findOrFail($id);
         if ($technician->user) {
-            $technician->user->delete();
+            $technician->user->update(['status' => 'inactive']);
+            $message = __('Technician deactivated successfully.');
         } else {
             $technician->delete();
+            $message = __('Technician profile deleted successfully.');
         }
-        return redirect()->route('admin.technicians.index')->with('success', __('Technician deleted successfully.'));
+        return redirect()->route('admin.technicians.index')->with('success', $message);
     }
 
     public function bulkDestroy(Request $request)
@@ -399,13 +401,13 @@ class TechnicianController extends Controller
         $technicians = Technician::whereIn('id', $ids)->get();
         foreach ($technicians as $technician) {
             if ($technician->user) {
-                $technician->user->delete();
+                $technician->user->update(['status' => 'inactive']);
             } else {
                 $technician->delete();
             }
         }
 
-        return response()->json(['success' => true, 'message' => __('Selected technicians deleted successfully.')]);
+        return response()->json(['success' => true, 'message' => __('Selected technicians deactivated successfully.')]);
     }
 
     public function toggleBlock($id)
@@ -414,10 +416,10 @@ class TechnicianController extends Controller
         $user = $technician->user;
         
         if ($user) {
-             if ($user->status === 'blocked') {
+             if ($user->status === 'blocked' || $user->status === 'inactive') {
                 $user->status = 'active';
                 $user->blocked_at = null;
-                $message = __('Technician unblocked successfully');
+                $message = __('Technician activated successfully');
             } else {
                 $user->status = 'blocked';
                 $user->blocked_at = now();

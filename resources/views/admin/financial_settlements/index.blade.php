@@ -1,4 +1,4 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('title', __('Financial Settlements'))
 @section('page_title', __('Financial Settlements'))
@@ -12,7 +12,7 @@
     </div>
 
     <!-- Stats Cards Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         @php
             $cardStats = [
                 [
@@ -20,51 +20,74 @@
                     'value' => number_format($stats['total_payments']['value'], 0), 
                     'color' => '#10B981', 
                     'icon' => 'payments', 
-                    'trend' => '0.43%',
-                    'comparison' => __('compared to last week')
+                    'trend' => '+12%',
+                    'comparison' => __('Compared to last week')
                 ],
                 [
                     'label' => __('Total Settlements'), 
                     'value' => number_format($stats['total']['value'], 0), 
-                    'color' => '#10B981', 
+                    'color' => '#6366F1', 
                     'icon' => 'settlements', 
-                    'trend' => '0.43%',
-                    'comparison' => __('compared to last week')
+                    'trend' => '+8%',
+                    'comparison' => __('Compared to last week')
+                ],
+                [
+                    'label' => __('Pending'), 
+                    'value' => number_format($stats['pending']['value'], 0), 
+                    'color' => '#F59E0B', 
+                    'icon' => 'pending', 
+                    'trend' => '-3%',
+                    'comparison' => __('Compared to last week')
+                ],
+                [
+                    'label' => __('Transferred'), 
+                    'value' => number_format($stats['transferred']['value'], 0), 
+                    'color' => '#8B5CF6', 
+                    'icon' => 'transferred', 
+                    'trend' => '+15%',
+                    'comparison' => __('Compared to last week')
                 ],
             ];
         @endphp
 
         @foreach($cardStats as $index => $stat)
-        <div class="bg-white dark:bg-[#1A1A31] rounded-[2.5rem] p-10 shadow-sm border border-slate-50 dark:border-white/5 flex items-center justify-between h-56 relative overflow-hidden group hover:shadow-md transition-all">
-            <!-- Sparkline Background -->
-            <div class="absolute inset-y-0 left-0 w-1/2 opacity-20 group-hover:opacity-30 transition-opacity">
-                <canvas id="chart-{{ $index }}" class="w-full h-full"></canvas>
-            </div>
-
-            <div class="relative z-10 flex flex-col justify-center h-full space-y-4 {{ app()->getLocale() == 'ar' ? 'mr-auto' : 'ml-auto' }} text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
-                <p class="text-lg font-bold text-[#1A1A31] dark:text-white">{{ $stat['label'] }}</p>
-                
-                <div class="flex items-center gap-4">
+        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-6 border border-slate-100 dark:border-white/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-all h-44 flex flex-col justify-between z-0">
+            <div class="flex items-center justify-between relative z-10">
+                <div class="text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
+                    <p class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">{{ $stat['label'] }}</p>
                     <div class="flex items-baseline gap-2">
-                        <h3 class="text-4xl font-black text-[#1A1A31] dark:text-white">{{ $stat['value'] }}</h3>
-                        <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-5 h-5 opacity-40">
-                    </div>
-
-                    <div class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-green-50 text-green-500 text-[10px] font-black border border-green-100">
-                        <span>{{ $stat['trend'] }}</span>
-                        <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 15l7-7 7 7"></path></svg>
+                        <h3 class="text-2xl font-black text-slate-800 dark:text-white">{{ $stat['value'] }}</h3>
+                        <span class="text-[8px] font-black opacity-40">SAR</span>
                     </div>
                 </div>
-
-                <p class="text-xs font-bold text-slate-400 opacity-60">{{ $stat['comparison'] }}</p>
+                <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:scale-110 transition-transform">
+                    @if($stat['icon'] == 'payments')
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 022 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    @elseif($stat['icon'] == 'settlements')
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    @elseif($stat['icon'] == 'pending')
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    @else
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                    @endif
+                </div>
             </div>
 
-            <div class="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-300 shrink-0 relative z-10 group-hover:scale-110 transition-transform">
-                 @if($stat['icon'] == 'payments')
-                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                 @else
-                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                 @endif
+            <div class="relative z-10 flex items-center justify-between">
+                <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-lg {{ str_contains($stat['trend'], '+') ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500' }} text-[9px] font-black">
+                    <span>{{ $stat['trend'] }}</span>
+                    @if(str_contains($stat['trend'], '+'))
+                        <svg class="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 15l7-7 7 7"></path></svg>
+                    @else
+                        <svg class="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                    @endif
+                </div>
+                <p class="text-[9px] text-slate-400 font-medium">{{ $stat['comparison'] }}</p>
+            </div>
+
+            <!-- Sparkline Canvas -->
+            <div class="absolute bottom-0 left-0 right-0 h-12 opacity-20 group-hover:opacity-40 transition-opacity">
+                <canvas id="chart-{{ $index }}" class="w-full h-full"></canvas>
             </div>
         </div>
         @endforeach
@@ -72,40 +95,15 @@
 
     <!-- CONTROLS CONTAINER -->
     <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] border border-slate-50 dark:border-white/5 shadow-sm p-4">
-        <div class="flex items-center justify-between {{ app()->getLocale() == 'ar' ? 'flex-row' : 'flex-row-reverse' }}">
+        <div class="flex flex-col lg:flex-row items-center justify-between gap-4">
 
-            <!-- Left Side: Dropdown and Download -->
-            <div class="flex items-center gap-3">
-                <div class="relative" x-data="{ open: false }">
-                    <button @click="open = !open" 
-                            class="h-11 px-6 flex items-center gap-3 bg-[#1A1A31] text-white rounded-xl font-bold text-xs shadow-lg hover:scale-[1.02] transition-all">
-                        <span>{{ __('All Financial Settlements') }}</span>
-                        <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
-                    </button>
-                    <div x-show="open" @click.away="open = false" x-cloak
-                         class="absolute top-full mt-2 w-48 bg-white dark:bg-[#1A1A31] rounded-xl shadow-xl border border-slate-100 dark:border-white/10 z-[110] py-2 overflow-hidden">
-                        <a href="{{ route('admin.financial-settlements.index') }}" class="block px-6 py-3 text-xs font-bold text-[#1A1A31] dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-colors">{{ __('All Settlements') }}</a>
-                        <a href="{{ route('admin.financial-settlements.index', ['status' => 'pending']) }}" class="block px-6 py-3 text-xs font-bold text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-colors">{{ __('Pending') }}</a>
-                        <a href="{{ route('admin.financial-settlements.index', ['status' => 'transferred']) }}" class="block px-6 py-3 text-xs font-bold text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-colors">{{ __('Transferred') }}</a>
-                    </div>
-                </div>
-
-                <a href="{{ route('admin.financial-settlements.download', request()->query()) }}" 
-                   class="h-11 px-6 flex items-center gap-3 bg-white dark:bg-[#1A1A31] border border-slate-100 dark:border-white/10 text-[#1A1A31] dark:text-white rounded-xl font-bold text-xs hover:bg-slate-50 dark:hover:bg-white/10 transition-all">
-                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    <span>{{ __('Download') }}</span>
-                </a>
-            </div>
-
-            <!-- Right Side: Search and Filter -->
-            <div class="flex items-center gap-3 flex-1 max-w-2xl px-2">
-
-                <!-- Filter Icon Button -->
+            <!-- Search and Filter (Prioritized on the start side) -->
+            <div class="flex items-center gap-3 flex-1 w-full lg:max-w-xl">
+              <!-- Filter Icon Button -->
                 <div class="relative">
                     <button @click="showFilters = !showFilters" 
                             class="w-11 h-11 flex items-center justify-center bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 text-slate-400 dark:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all relative">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                        <!-- Active indicator -->
                         <div x-show="hasActiveFilters" x-cloak class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary border-2 border-white rounded-full"></div>
                     </button>
 
@@ -116,7 +114,6 @@
                          x-transition:enter-end="opacity-100 translate-y-0"
                          class="absolute top-full {{ app()->getLocale() == 'ar' ? 'right-0' : 'left-0' }} mt-2 w-80 bg-white dark:bg-[#1A1A31] rounded-[2rem] shadow-2xl border border-slate-100 dark:border-white/10 z-[100] p-6 space-y-6 text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
                         
-                        <!-- Filter form — submits on Apply button click -->
                         <form id="filterForm" action="{{ route('admin.financial-settlements.index') }}" method="GET" class="space-y-6">
                             <input type="hidden" name="search" value="{{ request('search') }}">
                             
@@ -191,12 +188,10 @@
                             </div>
                         </form>
                     </div>
-                </div>
-
-                <!-- Search -->
+                </div>  
+            <!-- Search -->
                 <div class="flex-1 relative group">
                     <form action="{{ route('admin.financial-settlements.index') }}" method="GET" id="searchForm">
-                        <!-- Preserve active filters when searching -->
                         @foreach(request()->except('search', '_token', 'page') as $key => $val)
                             <input type="hidden" name="{{ $key }}" value="{{ $val }}">
                         @endforeach
@@ -208,6 +203,31 @@
                         </div>
                     </form>
                 </div>
+
+              
+            </div>
+
+            <!-- Actions (Dropdown and Download on the end side) -->
+            <div class="flex items-center gap-3">
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" 
+                            class="h-11 px-6 flex items-center gap-3 bg-[#1A1A31] text-white rounded-xl font-bold text-xs shadow-lg hover:scale-[1.02] transition-all">
+                        <span>{{ __('All Financial Settlements') }}</span>
+                        <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div x-show="open" @click.away="open = false" x-cloak
+                         class="absolute top-full mt-2 w-48 bg-white dark:bg-[#1A1A31] rounded-xl shadow-xl border border-slate-100 dark:border-white/10 z-[110] py-2 overflow-hidden">
+                        <a href="{{ route('admin.financial-settlements.index') }}" class="block px-6 py-3 text-xs font-bold text-[#1A1A31] dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-colors">{{ __('All Settlements') }}</a>
+                        <a href="{{ route('admin.financial-settlements.index', ['status' => 'pending']) }}" class="block px-6 py-3 text-xs font-bold text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-colors">{{ __('Pending') }}</a>
+                        <a href="{{ route('admin.financial-settlements.index', ['status' => 'transferred']) }}" class="block px-6 py-3 text-xs font-bold text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-colors">{{ __('Transferred') }}</a>
+                    </div>
+                </div>
+
+                <a href="{{ route('admin.financial-settlements.download', request()->query()) }}" 
+                   class="h-11 px-6 flex items-center gap-3 bg-white dark:bg-[#1A1A31] border border-slate-100 dark:border-white/10 text-[#1A1A31] dark:text-white rounded-xl font-bold text-xs hover:bg-slate-50 dark:hover:bg-white/10 transition-all">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    <span>{{ __('Download') }}</span>
+                </a>
             </div>
         </div>
     </div>

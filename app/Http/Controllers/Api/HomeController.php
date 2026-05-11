@@ -184,13 +184,7 @@ class HomeController extends Controller
                 'wallet_balance' => $user->wallet_balance,
             ];
         } elseif ($userType === 'technician') {
-            return response()->json([
-                'status' => true,
-                'message' => __('Please use /api/technician/home for technician dashboard'),
-                'data' => [
-                    'redirect_to' => url('/api/technician/home')
-                ]
-            ]);
+            return app(\App\Http\Controllers\Api\TechnicianProfileController::class)->home($request);
         }
 
         return response()->json([

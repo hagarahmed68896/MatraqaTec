@@ -334,11 +334,13 @@ class CorporateCustomerController extends Controller
     {
         $profile = CorporateCustomer::findOrFail($id);
         if ($profile->user) {
-            $profile->user->delete();
+            $profile->user->update(['status' => 'inactive']);
+            $message = __('Customer deactivated successfully.');
         } else {
             $profile->delete();
+            $message = __('Customer profile deleted successfully.');
         }
-        return redirect()->route('admin.corporate-customers.index')->with('success', __('Customer deleted successfully.'));
+        return redirect()->route('admin.corporate-customers.index')->with('success', $message);
     }
 
     public function toggleBlock($id)
@@ -346,10 +348,15 @@ class CorporateCustomerController extends Controller
         $customer = CorporateCustomer::findOrFail($id);
         $user = $customer->user;
         
-        $user->status = ($user->status == 'active') ? 'inactive' : 'active';
+        $user->status = ($user->status == 'active') ? 'blocked' : 'active';
+        if ($user->status === 'active') {
+            $user->blocked_at = null;
+        } else {
+            $user->blocked_at = now();
+        }
         $user->save();
 
-        $message = ($user->status == 'inactive') ? __('Account deactivated successfully.') : __('Account activated successfully.');
+        $message = ($user->status == 'blocked') ? __('Account blocked successfully.') : __('Account activated successfully.');
         return back()->with('success', $message);
     }
     

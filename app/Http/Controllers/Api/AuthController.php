@@ -46,6 +46,7 @@ class AuthController extends Controller
             // Location (Optional but recommended for map-based features)
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
+            'city_id' => 'nullable|exists:cities,id',
         ]);
 
         if ($validator->fails()) {
@@ -63,6 +64,7 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
             'type' => $request->type,
             'phone' => $request->phone,
+            'city_id' => $request->city_id,
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
             'address' => $request->address,
@@ -184,6 +186,19 @@ class AuthController extends Controller
         }
 
         $user = Auth::user();
+
+        // Check if account is active
+        if ($user->status !== 'active') {
+            Auth::logout();
+            $message = $user->status === 'blocked' 
+                ? __('Your account has been blocked. Please contact support.') 
+                : __('Your account is deactivated. Please contact support to reactivate.');
+            
+            return response()->json([
+                'status' => false,
+                'message' => $message
+            ], 403);
+        }
 
         // Check if user type matches the required type if provided
         if ($request->filled('required_type')) {
@@ -391,28 +406,13 @@ class AuthController extends Controller
         // Revoke all tokens
         $user->tokens()->delete();
 
-        // Delete type-specific profile
-        switch ($user->type) {
-            case 'individual':
-                $user->individualCustomer?->delete();
-                break;
-            case 'corporate_customer':
-                $user->corporateCustomer?->delete();
-                break;
-            case 'maintenance_company':
-                $user->maintenanceCompany?->delete();
-                break;
-            case 'technician':
-                $user->technician?->delete();
-                break;
-        }
-
-        // Delete the user
-        $user->delete();
+        // Instead of physical deletion, set status to inactive
+        $user->status = 'inactive';
+        $user->save();
 
         return response()->json([
             'status'  => true,
-            'message' => __('Account deleted successfully'),
+            'message' => __('Account deleted successfully. Your data is preserved but you can no longer login.'),
         ]);
     }
 

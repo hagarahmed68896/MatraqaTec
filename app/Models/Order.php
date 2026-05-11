@@ -32,6 +32,7 @@ class Order extends Model
         'longitude',
         'proposed_scheduled_at',
         'reschedule_requested_by',
+        'rejected_by_user_id',
     ];
 
     protected $casts = [
@@ -229,7 +230,17 @@ class Order extends Model
 
         // Sub-status label for pending tech acceptance
         if ($this->sub_status === 'pending_tech_acceptance') {
-            return 'في انتظار قبول الفني';
+            return 'جديد';
+        }
+
+        // Sub-status for additional visit request
+        if ($this->sub_status === 'additional_visit') {
+            return 'في انتظار تأكيد العميل (زيارة إضافية)';
+        }
+
+        // Sub-status for general reschedule request
+        if ($this->sub_status === 'reschedule_requested') {
+            return 'في انتظار تأكيد الموعد الجديد';
         }
 
         // Sub-status labels for "in_progress" state
@@ -238,7 +249,6 @@ class Order extends Model
                 'on_way' => 'في الطريق',
                 'arrived' => 'وصل',
                 'work_started' => 'بدأ العمل',
-                'additional_visit' => 'زيارة إضافية',
             ];
             
             return $subLabels[$this->sub_status] ?? $mainLabels['in_progress'];
@@ -253,8 +263,8 @@ class Order extends Model
             return '#FF8C00'; // DarkOrange
         }
 
-        if ($this->sub_status === 'pending_tech_acceptance') {
-            return '#FF9800'; // Amber - awaiting tech
+        if (in_array($this->sub_status, ['pending_tech_acceptance', 'additional_visit', 'reschedule_requested'])) {
+            return '#FF9800'; // Amber - awaiting action/confirmation
         }
 
         $colors = [

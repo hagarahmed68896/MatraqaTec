@@ -52,7 +52,7 @@ class UserController extends Controller
             'phone' => 'required|string|unique:users,phone',
             'password' => 'required|string|min:8',
             'type' => 'required|in:customer,technician,maintenance_company',
-            'status' => 'required|in:active,blocked,pending',
+            'status' => 'required|in:active,blocked,pending,inactive',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
@@ -83,7 +83,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,' . $user->id,
             'phone' => 'required|string|unique:users,phone,' . $user->id,
             'type' => 'required|in:customer,technician,maintenance_company',
-            'status' => 'required|in:active,blocked,pending',
+            'status' => 'required|in:active,blocked,pending,inactive',
         ]);
 
         if ($request->filled('password')) {
@@ -101,9 +101,9 @@ class UserController extends Controller
     public function destroy($id)
     {
         $user = User::findOrFail($id);
-        // Prevent deleting self if needed or check logic
-        $user->delete();
-        return redirect()->route('admin.users.index')->with('success', __('User deleted successfully.'));
+        // Soft delete: set status to inactive
+        $user->update(['status' => 'inactive']);
+        return redirect()->route('admin.users.index')->with('success', __('User deactivated successfully.'));
     }
 
     // Extra Actions
@@ -112,10 +112,10 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
 
-        if ($user->status === 'blocked') {
+        if ($user->status === 'blocked' || $user->status === 'inactive') {
             $user->status = 'active';
             $user->blocked_at = null;
-            $message = __('User unblocked successfully');
+            $message = __('User activated successfully');
         } else {
             $user->status = 'blocked';
             $user->blocked_at = now();

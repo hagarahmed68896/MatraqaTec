@@ -416,27 +416,49 @@ class TechnicianProfileController extends Controller
             $assignedQuery->where('status', '!=', 'new');
         }
 
-        // For independent technicians, "New" orders are those in their city/specialty not yet assigned
+        // For independent technicians, "New" orders are:
+        // 1. Marketplace orders (status=new, no company, no tech, matching city/specialty)
+        // 2. Auto-assigned orders (status=scheduled, assigned to THIS tech)
         if ($technician && !$technician->maintenance_company_id) {
-            $newOrdersQuery = Order::where('status', 'new')
-                ->where('city_id', $user->city_id)
-                ->whereNull('technician_id') // Ensure it's not already assigned to someone else
-                ->where(function($q) use ($technician) {
-                    $q->where('service_id', $technician->service_id)
-                      ->orWhereHas('service', function($q2) use ($technician) {
-                          $q2->where('parent_id', $technician->category_id);
-                      });
+            $newOrdersQuery = Order::where(function($q) use ($user, $technician) {
+                // Scenario 1: Pure New Marketplace Orders
+                $q->where(function($sq) use ($user, $technician) {
+                    $sq->where('status', 'new')
+                       ->where('city_id', $user->city_id)
+                       ->whereNull('technician_id')
+                       ->where(function($sq2) use ($technician) {
+                           $sq2->where('service_id', $technician->service_id)
+                               ->orWhereHas('service', function($q2) use ($technician) {
+                                   $q2->where('parent_id', $technician->category_id);
+                               });
+                       });
+                })
+                // Scenario 2: Orders auto-assigned to this technician but not yet accepted
+                ->orWhere(function($sq) use ($technician) {
+                    $sq->where('technician_id', $technician->id)
+                       ->where('status', 'scheduled')
+                       ->whereNull('sub_status'); // Not in progress yet
                 });
+            });
         } else {
             // For technicians belonging to a company, "New" orders are those already 
-            // reviewed and approved by the company (status = scheduled).
-            $newOrdersQuery = (clone $assignedQuery)->where('status', 'scheduled');
+            // reviewed and approved by the company (status = scheduled) and assigned to him (pending_tech_acceptance).
+            $newOrdersQuery = (clone $assignedQuery)->where(function($q) {
+                $q->where('sub_status', 'pending_tech_acceptance')
+                  ->orWhere(function($sq) {
+                      $sq->where('status', 'new')->whereNotNull('technician_id');
+                  });
+            });
         }
 
         // Counts for tabs
         $data['counts'] = [
             'new' => (clone $newOrdersQuery)->count(),
-            'in_progress' => (clone $assignedQuery)->whereIn('status', ['accepted', 'in_progress'])->count(),
+            'in_progress' => (clone $assignedQuery)->whereIn('status', ['accepted', 'scheduled', 'in_progress'])
+                ->where(function($q) {
+                    $q->whereNull('sub_status')
+                      ->orWhereNotIn('sub_status', ['pending_tech_acceptance', 'reschedule_requested']);
+                })->count(),
             'archived' => (clone $assignedQuery)->whereIn('status', ['completed', 'rejected', 'cancelled'])->count(),
         ];
         $data['counts']['all'] = $data['counts']['new'] + $data['counts']['in_progress'] + $data['counts']['archived'];
@@ -446,7 +468,11 @@ class TechnicianProfileController extends Controller
         } else {
             $query = clone $assignedQuery;
             if ($statusTab === 'in_progress') {
-                $query->whereIn('status', ['accepted', 'scheduled', 'in_progress']);
+                $query->whereIn('status', ['accepted', 'scheduled', 'in_progress'])
+                      ->where(function($q) {
+                          $q->whereNull('sub_status')
+                            ->orWhereNotIn('sub_status', ['pending_tech_acceptance', 'reschedule_requested']);
+                      });
             } elseif ($statusTab === 'archived') {
                 $query->whereIn('status', ['completed', 'rejected', 'cancelled']);
             }
@@ -455,6 +481,13 @@ class TechnicianProfileController extends Controller
         $orders = $query->with(['user', 'service.parent', 'city'])
             ->latest()
             ->paginate($request->per_page ?? 10);
+
+        $orders->getCollection()->transform(function($order) {
+            if ($order->sub_status === 'pending_tech_acceptance') {
+                $order->status = 'new';
+            }
+            return $order;
+        });
 
         $data['orders'] = $orders;
         

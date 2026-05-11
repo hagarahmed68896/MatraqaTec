@@ -320,6 +320,9 @@
                     <th class="py-4 px-6">{{ __('Primary Service') }}</th>
                     <th class="py-4 px-6">{{ __('Service Type') }}</th>
                     <th class="py-4 px-6 text-center">{{ __('Experience') }}</th>
+                    @if(request('status') === 'rejected')
+                    <th class="py-4 px-6">{{ __('Rejection Reason') }}</th>
+                    @endif
                     <th class="py-4 px-6">{{ __('Date') }}</th>
                     @if(request('status') !== 'accepted' && request('status') !== 'rejected')
                     <th class="py-4 px-6 text-center">{{ __('Actions') }}</th>
@@ -362,8 +365,17 @@
                             <span class="text-slate-600 dark:text-slate-400">{{ $item->service->name_ar ?? '-' }}</span>
                         </td>
                         <td class="py-4 px-6 text-center">
-                            <span class="px-2 py-1 rounded-lg bg-indigo-50 dark:bg-[#1A1A31] text-indigo-600 dark:text-indigo-400 font-black">{{ $item->years_experience }} {{ __('Years') }}</span>
+                            <span class="inline-flex items-center px-2 py-1 rounded-lg bg-indigo-50 dark:bg-[#1A1A31] text-indigo-600 dark:text-indigo-400 font-black whitespace-nowrap">
+                                {{ $item->years_experience }} {{ __('Years') }}
+                            </span>
                         </td>
+                        @if(request('status') === 'rejected')
+                        <td class="py-4 px-6">
+                            <p class="text-[11px] text-red-500 font-bold bg-red-50 dark:bg-red-500/10 px-3 py-2 rounded-xl border border-red-100 dark:border-red-500/20 max-w-[200px] line-clamp-2" title="{{ $item->rejection_reason }}">
+                                {{ $item->rejection_reason ?? '-' }}
+                            </p>
+                        </td>
+                        @endif
                          <td class="py-4 px-6 opacity-50 text-[12px] whitespace-nowrap">{{ $item->created_at->format('d/m/Y') }}</td>
                         @if(request('status') !== 'accepted' && request('status') !== 'rejected')
                         <td class="py-4 px-6 text-center" @click.stop anchor="top">

@@ -296,11 +296,13 @@ class MaintenanceCompanyController extends Controller
     {
         $company = MaintenanceCompany::findOrFail($id);
         if ($company->user) {
-            $company->user->delete();
+            $company->user->update(['status' => 'inactive']);
+            $message = __('Company deactivated successfully.');
         } else {
             $company->delete();
+            $message = __('Company profile deleted successfully.');
         }
-        return redirect()->route('admin.maintenance-companies.index')->with('success', __('Company deleted successfully.'));
+        return redirect()->route('admin.maintenance-companies.index')->with('success', $message);
     }
 
     public function toggleBlock($id)
@@ -309,10 +311,10 @@ class MaintenanceCompanyController extends Controller
         $user = $company->user;
         
         if ($user) {
-             if ($user->status === 'blocked') {
+             if ($user->status === 'blocked' || $user->status === 'inactive') {
                 $user->status = 'active';
                 $user->blocked_at = null;
-                $message = __('Company unblocked successfully');
+                $message = __('Company activated successfully');
             } else {
                 $user->status = 'blocked';
                 $user->blocked_at = now();

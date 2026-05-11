@@ -261,105 +261,146 @@
         @endif
     </div>
 
-    <!-- Detail Modal (Matching Screenshot 2) -->
-    <div x-show="showDetailModal" x-cloak class="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-        <!-- Backdrop -->
-        <div x-show="showDetailModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" @click="showDetailModal = false" 
-        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+    <!-- Detail Modal -->
+    <div x-show="showDetailModal" 
+         x-cloak 
+         class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto">
         
-        <!-- Modal Content -->
-        <div x-show="showDetailModal" x-transition:enter="ease-out duration-300" 
-        x-transition:enter-start="opacity-0 translate-y-8 scale-95"
-         x-transition:enter-end="opacity-100 translate-y-0 scale-100" 
-         class="relative bg-white dark:bg-[#1A1A31] w-full max-w-lg rounded-[2.5rem] shadow-2xl border
-          border-slate-100 dark:border-white/10 flex flex-col" style="height: 500px;" dir="rtl">
-            <!-- Modal Header (Dark) -->
-            <div class=" p-8 h-20 shrink-0 relative rounded-t-[2.5rem]">
-                <button @click="showDetailModal = false" class="absolute top-6 left-6 text-white/50 hover:text-white transition-all">
-                    <svg class="w-8 h-8 font-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
+        <!-- Backdrop with blur -->
+        <div x-show="showDetailModal" 
+             x-transition:enter="ease-out duration-300" 
+             x-transition:enter-start="opacity-0" 
+             x-transition:enter-end="opacity-100" 
+             @click="showDetailModal = false" 
+             class="fixed inset-0 bg-slate-900/40 backdrop-blur-md"></div>
+        
+        <!-- Modal Content Container -->
+        <div x-show="showDetailModal" 
+             x-transition:enter="ease-out duration-300" 
+             x-transition:enter-start="opacity-0 translate-y-8 scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 scale-100" 
+             class="relative bg-white dark:bg-[#1A1A31] w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20 dark:border-white/5 flex flex-col" 
+             dir="rtl">
+            
+            <!-- Dynamic Modal Header (Gradient) -->
+            <div class="h-32 bg-gradient-to-br from-[#1A1A31] via-[#2A2A4D] to-primary shrink-0 relative p-6">
+                <div class="flex justify-between items-start">
+                    <button @click="showDetailModal = false" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 text-white hover:bg-white/20 transition-all border border-white/10">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                    <div class="text-white/80">
+                        <h3 class="text-xl font-black">{{ __('Supervisor Profile') }}</h3>
+                        <p class="text-[10px] opacity-60 uppercase tracking-widest">{{ __('Administrative Access') }}</p>
+                    </div>
+                </div>
             </div>
             
-            <!-- Profile Info Overlap (Scrollable Container) -->
-            <div class="flex-1 relative px-8 pt-16 pb-12 overflow-y-auto custom-scrollbar">
-                <!-- Profile Image -->
-                <div class=" left-1/2 -translate-x-1/2" style="top: 0px;">
-                    <div class="w-32 h-32 rounded-full border-[6px] border-white
-                     dark:border-[#1A1A31] shadow-2xl overflow-hidden 
-                     bg-white  shadow-primary/20 flex items-center justify-center">
-                        <template x-if="selectedSupervisor && selectedSupervisor.image">
-                            <img :src="'/storage/' + selectedSupervisor.image" class="w-full h-full object-cover">
-                        </template>
-                        <template x-if="!(selectedSupervisor && selectedSupervisor.image)">
-                            <span class="text-4xl text-white font-black" x-text="selectedSupervisor ? selectedSupervisor.name.substring(0,1) : ''"></span>
-                        </template>
+            <!-- Profile Content Area -->
+            <div class="flex-1 relative px-8 pb-10">
+                
+                <!-- Floating Avatar Overlap -->
+                <div class="absolute -top-16 left-8">
+                    <div class="relative">
+                        <div class="w-32 h-32 rounded-3xl border-[6px] border-white dark:border-[#1A1A31] shadow-2xl overflow-hidden bg-gradient-to-br from-primary to-primary-light flex items-center justify-center ring-1 ring-black/5">
+                            <template x-if="selectedSupervisor && selectedSupervisor.image">
+                                <img :src="'/storage/' + selectedSupervisor.image" class="w-full h-full object-cover">
+                            </template>
+                            <template x-if="!(selectedSupervisor && selectedSupervisor.image)">
+                                <span class="text-5xl text-white font-black drop-shadow-lg" x-text="selectedSupervisor ? selectedSupervisor.name.substring(0,1) : ''"></span>
+                            </template>
+                        </div>
+                        <!-- Status Indicator on Avatar -->
+                        <div class="absolute bottom-0 -right-2 w-10 h-10 rounded-2xl border-4 border-white dark:border-[#1A1A31] shadow-lg flex items-center justify-center"
+                             :class="selectedSupervisor && selectedSupervisor.status === 'active' ? 'bg-green-500' : 'bg-red-500'">
+                            <template x-if="selectedSupervisor && selectedSupervisor.status === 'active'">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </template>
+                            <template x-if="selectedSupervisor && selectedSupervisor.status !== 'active'">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </template>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Attributes List -->
-                <div class="space-y-6 mt-4">
-                    <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-slate-200 dark:bg-white/5 flex items-center justify-center text-slate-500 dark:text-white">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                            </div>
-                            <span class="text-sm font-black text-slate-800 dark:text-white">{{ __('الاسم:') }}</span>
-                        </div>
-                        <span class="text-sm font-bold text-slate-500 dark:text-slate-400" x-text="selectedSupervisor ? selectedSupervisor.name : ''"></span>
+                <!-- Name & Title section -->
+                <div class="pt-20 mb-8">
+                    <h4 class="text-2xl font-black text-slate-900 dark:text-white mb-1" x-text="selectedSupervisor ? selectedSupervisor.name : ''"></h4>
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center px-3 py-1 rounded-lg bg-primary/10 text-primary text-xs font-black uppercase tracking-widest" 
+                              x-text="selectedSupervisor && selectedSupervisor.roles.length > 0 ? selectedSupervisor.roles[0].name_ar || selectedSupervisor.roles[0].name : '{{ __('Supervisor') }}'"></span>
+                        <div class="w-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-white/10"></div>
+                        <span class="text-[11px] text-slate-400 font-bold" x-text="'ID: #' + (selectedSupervisor ? selectedSupervisor.id : '')"></span>
                     </div>
+                </div>
 
-                    <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-slate-200 dark:bg-white/5 flex items-center justify-center text-slate-500 dark:text-white">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            </div>
-                            <span class="text-sm font-black text-slate-800 dark:text-white">{{ __('نوع الحساب:') }}</span>
-                        </div>
-                        <span class="text-sm font-bold text-slate-500 dark:text-slate-400" x-text="selectedSupervisor && selectedSupervisor.roles.length > 0 ? selectedSupervisor.roles[0].name_ar || selectedSupervisor.roles[0].name : '{{ __('Supervisor') }}'"></span>
-                    </div>
-
-                    <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-slate-200 dark:bg-white/5 flex items-center justify-center text-slate-500 dark:text-white">
+                <!-- Details Grid -->
+                <div class="grid grid-cols-1 gap-4 overflow-y-auto max-h-[300px] pr-2 custom-scrollbar">
+                    
+                    <!-- Phone -->
+                    <div class="group flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-transparent hover:border-primary/20 transition-all duration-300">
+                        <div class="flex items-center gap-4">
+                            <div class="w-11 h-11 rounded-xl bg-white dark:bg-white/10 shadow-sm flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
                             </div>
-                            <span class="text-sm font-black text-slate-800 dark:text-white">{{ __('رقم الجوال:') }}</span>
+                            <div>
+                                <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-0.5">{{ __('Phone Number') }}</p>
+                                <p class="text-sm font-black text-slate-800 dark:text-white font-mono" x-text="selectedSupervisor ? selectedSupervisor.phone : ''" dir="ltr"></p>
+                            </div>
                         </div>
-                        <span class="text-sm font-bold text-slate-500 dark:text-slate-400 font-mono" x-text="selectedSupervisor ? selectedSupervisor.phone : ''" dir="ltr"></span>
                     </div>
 
-                    <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-slate-200 dark:bg-white/5 flex items-center justify-center text-slate-500 dark:text-white">
+                    <!-- Email -->
+                    <div class="group flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-transparent hover:border-primary/20 transition-all duration-300">
+                        <div class="flex items-center gap-4">
+                            <div class="w-11 h-11 rounded-xl bg-white dark:bg-white/10 shadow-sm flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                             </div>
-                            <span class="text-sm font-black text-slate-800 dark:text-white">{{ __('البريد الإلكتروني:') }}</span>
-                        </div>
-                        <span class="text-sm font-bold text-slate-500 dark:text-slate-400" x-text="selectedSupervisor ? selectedSupervisor.email : ''"></span>
-                    </div>
-
-                    <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-slate-200 dark:bg-white/5 flex items-center justify-center text-slate-500 dark:text-white">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div>
+                                <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-0.5">{{ __('Email Address') }}</p>
+                                <p class="text-sm font-black text-slate-800 dark:text-white" x-text="selectedSupervisor ? selectedSupervisor.email : ''"></p>
                             </div>
-                            <span class="text-sm font-black text-slate-800 dark:text-white">{{ __('الحالة:') }}</span>
                         </div>
-                        <span class="px-3 py-1 rounded-full text-[10px]  uppercase tracking-wider" 
-                              :class="selectedSupervisor && selectedSupervisor.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'"
-                              x-text="selectedSupervisor && selectedSupervisor.status === 'active' ? '{{ __('Active') }}' : '{{ __('Blocked') }}'"></span>
                     </div>
 
-                    <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-slate-200 dark:bg-white/5 flex items-center justify-center text-slate-500 dark:text-white">
+                    <!-- Joined Date -->
+                    <div class="group flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-transparent hover:border-primary/20 transition-all duration-300">
+                        <div class="flex items-center gap-4">
+                            <div class="w-11 h-11 rounded-xl bg-white dark:bg-white/10 shadow-sm flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                             </div>
-                            <span class="text-sm font-black text-slate-800 dark:text-white">{{ __('التاريخ:') }}</span>
+                            <div>
+                                <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-0.5">{{ __('Joined Date') }}</p>
+                                <p class="text-sm font-black text-slate-800 dark:text-white" x-text="selectedSupervisor ? new Date(selectedSupervisor.created_at).toLocaleDateString('en-GB') : ''"></p>
+                            </div>
                         </div>
-                        <span class="text-sm font-bold text-slate-500 dark:text-slate-400" x-text="selectedSupervisor ? new Date(selectedSupervisor.created_at).toLocaleDateString('en-GB') : ''"></span>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="group flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-transparent hover:border-primary/20 transition-all duration-300">
+                        <div class="flex items-center gap-4">
+                            <div class="w-11 h-11 rounded-xl bg-white dark:bg-white/10 shadow-sm flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-0.5">{{ __('Current Status') }}</p>
+                                <span class="px-3 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest" 
+                                      :class="selectedSupervisor && selectedSupervisor.status === 'active' ? 'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400' : 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400'"
+                                      x-text="selectedSupervisor && selectedSupervisor.status === 'active' ? '{{ __('Active') }}' : '{{ __('Blocked') }}'"></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Modal Footer (Action Buttons) -->
+            <div class="px-8 py-6 bg-slate-50 dark:bg-white/5 border-t border-slate-100 dark:border-white/5 flex gap-3">
+                <a :href="'{{ route('admin.supervisors.edit', '') }}/' + (selectedSupervisor ? selectedSupervisor.id : '')" 
+                   class="flex-1 py-3.5 bg-primary text-white text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 text-center">
+                    {{ __('Edit Supervisor') }}
+                </a>
+                <button @click="showDetailModal = false" class="flex-1 py-3.5 bg-white dark:bg-white/5 text-slate-500 dark:text-white text-[11px] font-black uppercase tracking-widest rounded-2xl border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 transition-all">
+                    {{ __('Close Details') }}
+                </button>
             </div>
         </div>
     </div>
