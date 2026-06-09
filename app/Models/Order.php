@@ -86,6 +86,11 @@ class Order extends Model
             return false;
         }
 
+        // Must only allow rescheduling after the scheduled time has passed
+        if ($this->scheduled_at && $this->scheduled_at->isFuture()) {
+            return false;
+        }
+
         // Removed time restrictions for technicians. 
         // Since we now use a Request & Approval system, anyone can *request* a reschedule at any time, 
         // and the other party can simply accept or reject it.

@@ -134,7 +134,7 @@
                         </td>
                         <td class="py-6 px-6">
                             @if($item->image)
-                                <img src="{{ asset('storage/' . $item->image) }}" class="w-10 h-10 rounded-xl object-cover shadow-sm group-hover:scale-110 transition-transform duration-300" alt="{{ $item->name }}">
+                                <img src="{{ $item->image_url }}" class="w-10 h-10 rounded-xl object-cover shadow-sm group-hover:scale-110 transition-transform duration-300" alt="{{ $item->name }}">
                             @else
                                 <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black text-md shadow-sm group-hover:scale-110 transition-transform duration-300">
                                     {{ mb_substr($item->name ?? $item->name_ar, 0, 1) }}

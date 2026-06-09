@@ -63,11 +63,35 @@ class ContractController extends Controller
             $query->orderBy('created_at', 'desc');
         }
 
+        $totalContracts = Contract::count();
+        $totalContractsLastWeek = Contract::where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
+        $totalContractsGrowth = $totalContractsLastWeek > 0 ? (($totalContracts - $totalContractsLastWeek) / $totalContractsLastWeek) * 100 : ($totalContracts > 0 ? 100 : 0);
+
+        $totalCompanies = Contract::distinct('maintenance_company_id')->count();
+        $totalCompaniesLastWeek = Contract::where('created_at', '<', \Carbon\Carbon::now()->subWeek())->distinct('maintenance_company_id')->count();
+        $totalCompaniesGrowth = $totalCompaniesLastWeek > 0 ? (($totalCompanies - $totalCompaniesLastWeek) / $totalCompaniesLastWeek) * 100 : ($totalCompanies > 0 ? 100 : 0);
+
+        $collectedAmount = Contract::sum('paid_amount');
+        $collectedAmountLastWeek = Contract::where('created_at', '<', \Carbon\Carbon::now()->subWeek())->sum('paid_amount');
+        $collectedAmountGrowth = $collectedAmountLastWeek > 0 ? (($collectedAmount - $collectedAmountLastWeek) / $collectedAmountLastWeek) * 100 : ($collectedAmount > 0 ? 100 : 0);
+
+        $expiredContracts = Contract::where('status', 'expired')->orWhereDate('end_date', '<', now())->count();
+        $expiredContractsLastWeek = Contract::where('created_at', '<', \Carbon\Carbon::now()->subWeek())->where(function($q) { $q->where('status', 'expired')->orWhereDate('end_date', '<', now()); })->count();
+        $expiredContractsGrowth = $expiredContractsLastWeek > 0 ? (($expiredContracts - $expiredContractsLastWeek) / $expiredContractsLastWeek) * 100 : ($expiredContracts > 0 ? 100 : 0);
+
         $stats = [
-            'total_contracts'   => Contract::count(),
-            'total_companies'   => Contract::distinct('maintenance_company_id')->count(),
-            'collected_amount'  => Contract::sum('paid_amount'),
-            'expired_contracts' => Contract::where('status', 'expired')->orWhereDate('end_date', '<', now())->count(),
+            'total_contracts'   => $totalContracts,
+            'total_contracts_trend' => ($totalContractsGrowth >= 0 ? '+' : '') . number_format($totalContractsGrowth, 2) . '%',
+            'total_contracts_trend_value' => $totalContractsGrowth,
+            'total_companies'   => $totalCompanies,
+            'total_companies_trend' => ($totalCompaniesGrowth >= 0 ? '+' : '') . number_format($totalCompaniesGrowth, 2) . '%',
+            'total_companies_trend_value' => $totalCompaniesGrowth,
+            'collected_amount'  => $collectedAmount,
+            'collected_amount_trend' => ($collectedAmountGrowth >= 0 ? '+' : '') . number_format($collectedAmountGrowth, 2) . '%',
+            'collected_amount_trend_value' => $collectedAmountGrowth,
+            'expired_contracts' => $expiredContracts,
+            'expired_contracts_trend' => ($expiredContractsGrowth >= 0 ? '+' : '') . number_format($expiredContractsGrowth, 2) . '%',
+            'expired_contracts_trend_value' => $expiredContractsGrowth,
         ];
 
         $items = $query->paginate(15);
@@ -91,7 +115,7 @@ class ContractController extends Controller
             'start_date'             => 'nullable|date',
             'end_date'               => 'nullable|date|after:start_date',
             'status'                 => 'required|in:active,expired,completed',
-            'contract_file'          => 'nullable|file|mimes:pdf|max:5120',
+            'contract_file'          => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
             'contact_numbers'        => 'nullable|array',
             'contact_numbers.*'      => 'nullable|string|max:30',
         ]);
@@ -154,7 +178,7 @@ class ContractController extends Controller
             'start_date'             => 'nullable|date',
             'end_date'               => 'nullable|date|after:start_date',
             'status'                 => 'required|in:active,expired,completed',
-            'contract_file'          => 'nullable|file|mimes:pdf|max:5120',
+            'contract_file'          => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
             'contact_numbers'        => 'nullable|array',
             'contact_numbers.*'      => 'nullable|string|max:30',
         ]);

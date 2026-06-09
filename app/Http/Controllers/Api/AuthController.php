@@ -40,7 +40,7 @@ class AuthController extends Controller
             // Company Specific Validations (Both Maintenance and Corporate)
             'company_name' => 'required_if:type,maintenance_company,corporate_customer|nullable|string|max:255',
             'commercial_record_number' => 'required_if:type,maintenance_company,corporate_customer|nullable|string|max:255',
-            'commercial_record_file' => 'required_if:type,maintenance_company,corporate_customer|nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'commercial_record_file' => 'required_if:type,maintenance_company,corporate_customer|nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
             'tax_number' => 'required_if:type,maintenance_company,corporate_customer|nullable|string|max:255',
             'address' => 'nullable|string|max:255',
             // Location (Optional but recommended for map-based features)
@@ -391,12 +391,32 @@ class AuthController extends Controller
     {
         $taqnyat = new TaqnyatOTP();
 
-        $otp = $taqnyat->generateOtp(); // returns a random 4-digit code
+        // --- التعديل المؤقت للتيست: جعل الكود 0000 للكل ---
+        $otp = '0000';
+        Log::info("[TestOTP] OTP set to 0000 for user: {$user->phone} (Global Test Mode)");
+
+        /* الكود الأصلي (تم تهميشه مؤقتاً)
+        $testNumbers = [
+            '555555555', // Admin
+        ];
+
+        if (in_array($user->phone, $testNumbers)) {
+            $otp = '0000';
+            Log::info("[TestOTP] Static OTP 0000 set for test number: {$user->phone}");
+        } else {
+            $otp = $taqnyat->generateOtp();
+        }
+        */
+
         $user->otp            = $otp;
         $user->otp_expires_at = Carbon::now()->addHours(24);
         $user->save();
 
-        $taqnyat->sendOTP($user->phone, $otp);
+        /* إرسال SMS (تم تهميشه عشان ميرسلش رسايل حقيقية أثناء التيست للكل)
+        if (!in_array($user->phone, $testNumbers)) {
+            $taqnyat->sendOTP($user->phone, $otp);
+        }
+        */
     }
 
     public function deleteAccount(Request $request)

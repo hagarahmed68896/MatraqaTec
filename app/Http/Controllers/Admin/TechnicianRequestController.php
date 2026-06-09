@@ -121,6 +121,8 @@ class TechnicianRequestController extends Controller
 
         $request->validate([
             'password' => 'required|string|min:8',
+        ], [
+            'password.min' => __('The password is too short. It must be at least 8 characters.'),
         ]);
 
         // 2. Acceptance Logic

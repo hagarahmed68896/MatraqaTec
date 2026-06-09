@@ -11,8 +11,9 @@ use App\Models\Payment;
 use App\Models\Invoice;
 use App\Models\Review;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
@@ -70,12 +71,36 @@ class IndividualCustomerController extends Controller
 
         $items = $query->paginate(15);
 
-        // Stats
+        // Stats with growth compared to last week
+        $totalCustomers = User::whereIn('type', ['individual', 'corporate_customer'])->count();
+        $totalCustomersLastWeek = User::whereIn('type', ['individual', 'corporate_customer'])->where('created_at', '<', Carbon::now()->subWeek())->count();
+        $totalCustomersGrowth = $totalCustomersLastWeek > 0 ? (($totalCustomers - $totalCustomersLastWeek) / $totalCustomersLastWeek) * 100 : ($totalCustomers > 0 ? 100 : 0);
+
+        $totalIndividual = User::where('type', 'individual')->count();
+        $totalIndividualLastWeek = User::where('type', 'individual')->where('created_at', '<', Carbon::now()->subWeek())->count();
+        $totalIndividualGrowth = $totalIndividualLastWeek > 0 ? (($totalIndividual - $totalIndividualLastWeek) / $totalIndividualLastWeek) * 100 : ($totalIndividual > 0 ? 100 : 0);
+
+        $totalInactive = User::whereIn('type', ['individual', 'corporate_customer'])->whereIn('status', ['blocked', 'inactive'])->count();
+        $totalInactiveLastWeek = User::whereIn('type', ['individual', 'corporate_customer'])->whereIn('status', ['blocked', 'inactive'])->where('created_at', '<', Carbon::now()->subWeek())->count();
+        $totalInactiveGrowth = $totalInactiveLastWeek > 0 ? (($totalInactive - $totalInactiveLastWeek) / $totalInactiveLastWeek) * 100 : ($totalInactive > 0 ? 100 : 0);
+
+        $totalCorporate = User::where('type', 'corporate_customer')->count();
+        $totalCorporateLastWeek = User::where('type', 'corporate_customer')->where('created_at', '<', Carbon::now()->subWeek())->count();
+        $totalCorporateGrowth = $totalCorporateLastWeek > 0 ? (($totalCorporate - $totalCorporateLastWeek) / $totalCorporateLastWeek) * 100 : ($totalCorporate > 0 ? 100 : 0);
+
         $stats = [
-            'total_all' => User::whereIn('type', ['individual', 'corporate_customer'])->count(),
-            'total_individual' => IndividualCustomer::count(),
-            'total_corporate' => CorporateCustomer::count(),
-            'total_inactive' => User::whereIn('type', ['individual', 'corporate_customer'])->whereIn('status', ['blocked', 'inactive'])->count(),
+            'total_all' => $totalCustomers,
+            'total_all_trend' => ($totalCustomersGrowth >= 0 ? '+' : '') . number_format($totalCustomersGrowth, 2) . '%',
+            'total_all_trend_value' => $totalCustomersGrowth,
+            'total_individual' => $totalIndividual,
+            'total_individual_trend' => ($totalIndividualGrowth >= 0 ? '+' : '') . number_format($totalIndividualGrowth, 2) . '%',
+            'total_individual_trend_value' => $totalIndividualGrowth,
+            'total_inactive' => $totalInactive,
+            'total_inactive_trend' => ($totalInactiveGrowth >= 0 ? '+' : '') . number_format($totalInactiveGrowth, 2) . '%',
+            'total_inactive_trend_value' => $totalInactiveGrowth,
+            'total_corporate' => $totalCorporate,
+            'total_corporate_trend' => ($totalCorporateGrowth >= 0 ? '+' : '') . number_format($totalCorporateGrowth, 2) . '%',
+            'total_corporate_trend_value' => $totalCorporateGrowth,
         ];
         
         return view('admin.customers.index', compact('items', 'stats'))->with('type', 'individual');
@@ -88,6 +113,20 @@ class IndividualCustomerController extends Controller
 
     public function store(Request $request)
     {
+        // 1. Phone Normalization
+        $phone = $request->input('phone');
+        if ($phone) {
+            $phone = preg_replace('/\D/', '', $phone);
+            if (str_starts_with($phone, '00966')) {
+                $phone = substr($phone, 5);
+            }
+            if (str_starts_with($phone, '966')) {
+                $phone = substr($phone, 3);
+            }
+            $phone = ltrim($phone, '0');
+            $request->merge(['phone' => $phone]);
+        }
+
         $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -110,28 +149,43 @@ class IndividualCustomerController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
-        $password = Str::random(10);
-        $name = $request->name;
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            $password = Str::random(10);
+            $name = $request->name;
+            $status = $request->filled('status') ? $request->status : 'active';
 
-        $user = User::create([
-            'name' => $name,
-            'email' => $request->email,
-            'password' => Hash::make($password),
-            'type' => 'individual',
-            'phone' => $request->phone,
-            'status' => $request->status ?? 'active',
-        ]);
+            $user = User::create([
+                'name' => $name,
+                'email' => $request->email,
+                'password' => Hash::make($password),
+                'type' => 'individual',
+                'phone' => $request->phone,
+                'status' => $status,
+            ]);
 
-        IndividualCustomer::create([
-            'user_id' => $user->id,
-            'first_name_en' => $name, // Simple mapping for now
-            'first_name_ar' => $name,
-            'last_name_en' => '',
-            'last_name_ar' => '',
-            'address' => '',
-        ]);
+            IndividualCustomer::create([
+                'user_id' => $user->id,
+                'first_name_en' => $name, // Simple mapping for now
+                'first_name_ar' => $name,
+                'last_name_en' => '',
+                'last_name_ar' => '',
+                'address' => '',
+            ]);
 
-        return redirect()->route('admin.individual-customers.index')->with('success', __('Customer created successfully.'));
+            \Illuminate\Support\Facades\DB::commit();
+
+            return redirect()->route('admin.individual-customers.index')->with('success', __('Customer created successfully.'));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+
+            Log::error('Error creating individual customer: ' . $e->getMessage(), [
+                'exception' => $e,
+                'request' => $request->except(['password'])
+            ]);
+
+            return back()->with('error', __('An error occurred while creating the individual customer: ') . $e->getMessage())->withInput();
+        }
     }
 
     public function show(Request $request, $id)
@@ -204,6 +258,20 @@ class IndividualCustomerController extends Controller
     {
         $profile = IndividualCustomer::with('user')->findOrFail($id);
         
+        // 1. Phone Normalization
+        $phone = $request->input('phone');
+        if ($phone) {
+            $phone = preg_replace('/\D/', '', $phone);
+            if (str_starts_with($phone, '00966')) {
+                $phone = substr($phone, 5);
+            }
+            if (str_starts_with($phone, '966')) {
+                $phone = substr($phone, 3);
+            }
+            $phone = ltrim($phone, '0');
+            $request->merge(['phone' => $phone]);
+        }
+
         $rules = [
             'email' => 'required|string|email|max:255|unique:users,email,'.$profile->user_id,
             'phone' => ['required', 'string', 'unique:users,phone,'.$profile->user_id, 'regex:/^[0-9]{9}$/'],
@@ -226,21 +294,37 @@ class IndividualCustomerController extends Controller
              return back()->withErrors($validator)->withInput();
         }
         
-        $user = $profile->user;
-        if ($user) {
-            $user->email = $request->email;
-            $user->phone = $request->phone;
-            $user->status = $request->status;
-            $user->name = $request->name;
-            $user->save();
-        }
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            $user = $profile->user;
+            if ($user) {
+                $user->email = $request->email;
+                $user->phone = $request->phone;
+                if ($request->filled('status')) {
+                    $user->status = $request->status;
+                }
+                $user->name = $request->name;
+                $user->save();
+            }
 
-        $profile->update([
-            'first_name_en' => $request->name,
-            'first_name_ar' => $request->name,
-        ]);
-        
-        return redirect()->route('admin.individual-customers.index')->with('success', __('Customer updated successfully.'));
+            $profile->update([
+                'first_name_en' => $request->name,
+                'first_name_ar' => $request->name,
+            ]);
+            
+            \Illuminate\Support\Facades\DB::commit();
+
+            return redirect()->route('admin.individual-customers.index')->with('success', __('Customer updated successfully.'));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+
+            Log::error('Error updating individual customer: ' . $e->getMessage(), [
+                'exception' => $e,
+                'request' => $request->all()
+            ]);
+
+            return back()->with('error', __('An error occurred while updating the individual customer: ') . $e->getMessage())->withInput();
+        }
     }
 
     public function download(Request $request)
@@ -311,19 +395,43 @@ class IndividualCustomerController extends Controller
 
     public function toggleBlock($id)
     {
-        $customer = IndividualCustomer::findOrFail($id);
-        $user = $customer->user;
-        
-        $user->status = ($user->status == 'active') ? 'blocked' : 'active';
-        if ($user->status === 'active') {
-             $user->blocked_at = null;
+        // First, attempt to locate the user directly by the provided ID.
+        $user = User::find($id);
+        if ($user) {
+            // Found a user record, proceed to toggle its status.
         } else {
-             $user->blocked_at = now();
+            // If not a user, treat the ID as an IndividualCustomer ID.
+            $customer = IndividualCustomer::with('user')->find($id);
+            if ($customer && $customer->user) {
+                $user = $customer->user;
+            } else {
+                // As a last resort, attempt to locate the user via the customer record's user_id.
+                if ($customer) {
+                    $user = User::find($customer->user_id);
+                }
+            }
         }
-        $user->save();
 
-        $message = ($user->status == 'blocked') ? __('Customer blocked successfully.') : __('Customer activated successfully.');
-        return back()->with('success', $message);
+        if (!$user) {
+            return back()->with('error', __('User record not found'));
+        }
+
+        // Toggle status between active, blocked, and inactive.
+        if ($user->status === 'blocked' || $user->status === 'inactive') {
+            $user->status = 'active';
+            $user->blocked_at = null;
+            $message = __('Customer activated successfully');
+        } else {
+            $user->status = 'blocked';
+            $user->blocked_at = now();
+            $message = __('Customer blocked successfully');
+        }
+
+        $user->save();
+        $user->refresh();
+        // logger()->info('Individual customer status toggled', ['account_id' => $user->id, 'new_status' => $user->status]);
+        logger()->info('Individual customer status toggled', ['account_id' => $user->id, 'new_status' => $user->status]);
+        return redirect()->route('admin.individual-customers.index')->with('success', $message);
     }
     
     public function bulkBlock(Request $request)

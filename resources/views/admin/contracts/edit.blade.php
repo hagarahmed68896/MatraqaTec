@@ -81,7 +81,7 @@
                     </div>
                     <div class="flex items-center gap-2">
                         @if($item->contract_file)
-                        <a href="{{ asset('storage/' . $item->contract_file) }}" target="_blank"
+                        <a href="{{ $item->contract_file_url }}" target="_blank"
                            class="w-9 h-9 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-[#1A1A31] dark:hover:text-white hover:border-slate-300 dark:hover:border-white/20 transition-all"
                            title="{{ __('View File') }}">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

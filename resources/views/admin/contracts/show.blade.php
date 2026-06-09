@@ -31,7 +31,7 @@
                 {{ __('Edit') }}
             </a>
             @if($item->contract_file)
-            <a href="{{ asset('storage/' . $item->contract_file) }}" target="_blank"
+            <a href="{{ $item->contract_file_url }}" target="_blank"
                class="px-6 py-3 bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] rounded-xl font-black text-xs shadow-lg shadow-[#1A1A31]/20 dark:shadow-white/5 hover:scale-[1.02] transition-all uppercase tracking-widest flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
@@ -213,7 +213,7 @@
                                     <span class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ __($receipt->payment_method) }}</span>
                                 </td>
                                 <td class="py-4 px-4 text-center">
-                                    <a href="{{ asset('storage/' . $receipt->receipt_file) }}" target="_blank" class="text-primary dark:text-white font-black text-xs hover:underline uppercase tracking-widest">
+                                    <a href="{{ $receipt->receipt_url }}" target="_blank" class="text-primary dark:text-white font-black text-xs hover:underline uppercase tracking-widest">
                                         {{ __('View Receipt') }}
                                     </a>
                                 </td>

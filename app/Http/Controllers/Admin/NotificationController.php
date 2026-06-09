@@ -65,12 +65,8 @@ class NotificationController extends Controller
         // Statistics
         $lastWeek = Carbon::now()->subWeek();
         $getStats = function ($status = null) use ($lastWeek) {
-            $query = Notification::query();
-            if ($status) {
-                $query->where('status', $status);
-            }
-            $currentCount = $query->count();
-            $previousCount = $query->where('created_at', '<=', $lastWeek)->count();
+            $currentCount = Notification::when($status, fn($q) => $q->where('status', $status))->count();
+            $previousCount = Notification::when($status, fn($q) => $q->where('status', $status))->where('created_at', '<', $lastWeek)->count();
 
             $percentage = 0;
             if ($previousCount > 0) {
@@ -81,7 +77,8 @@ class NotificationController extends Controller
 
             return [
                 'count' => $currentCount,
-                'percentage' => round($percentage, 2)
+                'percentage' => ($percentage >= 0 ? '+' : '') . number_format($percentage, 2) . '%',
+                'percentage_val' => $percentage
             ];
         };
 

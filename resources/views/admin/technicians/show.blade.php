@@ -1,4 +1,4 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('title', __('Technician Profile') . ' - ' . $item->{'name_'.app()->getLocale()})
 
@@ -113,7 +113,7 @@
                         <!-- Profile Photo -->
                         <div class="w-24 h-24 rounded-[2rem] bg-slate-100 dark:bg-white/10 mx-auto overflow-hidden border-4 border-white dark:border-[#1A1A31] shadow-2xl transition-transform group-hover:scale-105 flex items-center justify-center text-4xl font-black text-primary">
                             @if($item->image)
-                                <img src="{{ asset('storage/'.$item->image) }}" class="w-full h-full object-cover">
+                                <img src="{{ $item->image_url }}" class="w-full h-full object-cover">
                             @else
                                 {{ mb_substr($item->{'name_'.app()->getLocale()} ?? 'T', 0, 1) }}
                             @endif

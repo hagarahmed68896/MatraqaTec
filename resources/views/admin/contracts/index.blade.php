@@ -16,10 +16,10 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         @php
             $cardStats = [
-                ['label' => 'Total Contracts', 'value' => $stats['total_contracts'], 'color' => '#10B981', 'trend' => '0.43%', 'icon' => 'contract', 'prefix' => ''],
-                ['label' => 'Total Companies', 'value' => $stats['total_companies'], 'color' => '#10B981', 'trend' => '8.43%', 'icon' => 'company', 'prefix' => ''],
-                ['label' => 'Expired Contracts', 'value' => $stats['expired_contracts'], 'color' => '#EF4444', 'trend' => '8.43%', 'icon' => 'expired', 'prefix' => ''],
-                ['label' => 'Collected Amounts', 'value' => number_format($stats['collected_amount']), 'color' => '#10B981', 'trend' => '0.41%', 'icon' => 'money', 'prefix' => '<img src="' . asset('assets/images/Vector (1).svg') . '" alt="SAR" class="inline-block w-4 h-4 align-middle">'],
+                ['label' => 'Total Contracts', 'value' => $stats['total_contracts'], 'color' => '#10B981', 'trend_str' => $stats['total_contracts_trend'] ?? '+0.00%', 'trend_val' => $stats['total_contracts_trend_value'] ?? 0, 'icon' => 'contract', 'prefix' => ''],
+                ['label' => 'Total Companies', 'value' => $stats['total_companies'], 'color' => '#10B981', 'trend_str' => $stats['total_companies_trend'] ?? '+0.00%', 'trend_val' => $stats['total_companies_trend_value'] ?? 0, 'icon' => 'company', 'prefix' => ''],
+                ['label' => 'Expired Contracts', 'value' => $stats['expired_contracts'], 'color' => '#EF4444', 'trend_str' => $stats['expired_contracts_trend'] ?? '+0.00%', 'trend_val' => $stats['expired_contracts_trend_value'] ?? 0, 'icon' => 'expired', 'prefix' => ''],
+                ['label' => 'Collected Amounts', 'value' => number_format($stats['collected_amount']), 'color' => '#10B981', 'trend_str' => $stats['collected_amount_trend'] ?? '+0.00%', 'trend_val' => $stats['collected_amount_trend_value'] ?? 0, 'icon' => 'money', 'prefix' => '<img src="' . asset('assets/images/Vector (1).svg') . '" alt="SAR" class="inline-block w-4 h-4 align-middle">'],
             ];
         @endphp
 
@@ -43,8 +43,8 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-2 mt-2">
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ $stat['trend'] > 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600' }} border border-current opacity-60">
-                            {{ $stat['trend'] }}
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ ($stat['trend_val'] ?? 0) >= 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600' }} border border-current opacity-60">
+                            {{ $stat['trend_str'] ?? '+0.00%' }}
                         </span>
                         <span class="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">{{ __('Compared to last week') }}</span>
                     </div>

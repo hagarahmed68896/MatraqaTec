@@ -243,7 +243,7 @@
                         <div class="relative">
                             <div class="w-16 h-16 rounded-2xl bg-indigo-600 overflow-hidden flex items-center justify-center text-white text-xl font-black shadow-lg shadow-indigo-500/30 transform group-hover:scale-105 group-hover:rotate-3 transition-all duration-500">
                                 @if($tech->image)
-                                <img src="{{ asset('storage/'.$tech->image) }}" class="w-full h-full object-cover">
+                                <img src="{{ $tech->image_url }}" class="w-full h-full object-cover">
                                 @else
                                 <span>{{ mb_substr($tech->{'name_'.app()->getLocale()} ?? 'F', 0, 1) }}</span>
                                 @endif

@@ -37,7 +37,16 @@ trait HasAutoAssignment
         $techQuery = Technician::whereHas('user', function($q) use ($cityId, $lat, $lng) {
             $q->where('status', 'active');
             if ($lat && $lng) {
-                $q->whereRaw("( 6371 * acos( cos( radians(?) ) * cos( radians(latitude) ) * cos( radians(longitude) - radians(?) ) + sin( radians(?) ) * sin( radians(latitude) ) ) ) < 50", [$lat, $lng, $lat]);
+                $q->where(function($sub) use ($lat, $lng, $cityId) {
+                    $sub->whereRaw("( 6371 * acos( cos( radians(?) ) * cos( radians(latitude) ) * cos( radians(longitude) - radians(?) ) + sin( radians(?) ) * sin( radians(latitude) ) ) ) < 50", [$lat, $lng, $lat])
+                        ->orWhere(function($inner) use ($cityId) {
+                            $inner->whereNull('latitude')
+                                  ->whereNull('longitude')
+                                  ->when($cityId, function($cQ) use ($cityId) {
+                                      $cQ->where('city_id', $cityId);
+                                  });
+                        });
+                });
             } else {
                 $q->where('city_id', $cityId);
             }
@@ -65,13 +74,14 @@ trait HasAutoAssignment
             ->join('users', 'technicians.user_id', '=', 'users.id')
             ->where('technicians.availability_status', 'available')
             ->where('users.status', 'active')
-            ->where('users.is_online', true)
             ->where(function($q) use ($serviceId, $categoryId) {
                 $q->where('technicians.service_id', $serviceId)
-                  ->orWhere('technicians.category_id', $categoryId);
+                  ->orWhere('technicians.category_id', $categoryId)
+                  ->orWhereJsonContains('technicians.service_ids', (int)$serviceId)
+                  ->orWhereJsonContains('technicians.service_ids', (string)$serviceId);
             })
             ->whereDoesntHave('orders', function($q) use ($start, $end) {
-                $q->whereIn('status', ['accepted', 'scheduled', 'in_progress'])
+                $q->whereIn('status', ['new', 'accepted', 'scheduled', 'in_progress'])
                   ->whereBetween('scheduled_at', [$start, $end]);
             })
             ->whereDoesntHave('appointments', function($q) use ($start, $end) {
@@ -81,8 +91,17 @@ trait HasAutoAssignment
 
         // Location filtering: Use distance if coords provided, else city
         if ($lat && $lng) {
-            $query->selectRaw("technicians.*, ( 6371 * acos( cos( radians(?) ) * cos( radians(users.latitude) ) * cos( radians(users.longitude) - radians(?) ) + sin( radians(?) ) * sin( radians(users.latitude) ) ) ) AS distance", [$lat, $lng, $lat])
-                  ->having('distance', '<', 50) // 50km radius
+            $query->where(function($q) use ($lat, $lng, $cityId) {
+                $q->whereRaw("( 6371 * acos( cos( radians(?) ) * cos( radians(users.latitude) ) * cos( radians(users.longitude) - radians(?) ) + sin( radians(?) ) * sin( radians(users.latitude) ) ) ) < 50", [$lat, $lng, $lat])
+                  ->orWhere(function($sub) use ($cityId) {
+                      $sub->whereNull('users.latitude')
+                          ->whereNull('users.longitude')
+                          ->when($cityId, function($cQ) use ($cityId) {
+                              $cQ->where('users.city_id', $cityId);
+                          });
+                  });
+            });
+            $query->selectRaw("technicians.*, (CASE WHEN users.latitude IS NOT NULL AND users.longitude IS NOT NULL THEN ( 6371 * acos( cos( radians(?) ) * cos( radians(users.latitude) ) * cos( radians(users.longitude) - radians(?) ) + sin( radians(?) ) * sin( radians(users.latitude) ) ) ) ELSE 9999 END) AS distance", [$lat, $lng, $lat])
                   ->orderBy('distance');
         } else {
             $query->where('users.city_id', $cityId)
@@ -105,14 +124,24 @@ trait HasAutoAssignment
 
         $hasAnyTechQuery = Technician::join('users', 'technicians.user_id', '=', 'users.id')
             ->where('users.status', 'active')
-            ->where('users.is_online', true)
             ->where(function($q) use ($serviceId, $categoryId) {
                 $q->where('technicians.service_id', $serviceId)
-                  ->orWhere('technicians.category_id', $categoryId);
+                  ->orWhere('technicians.category_id', $categoryId)
+                  ->orWhereJsonContains('technicians.service_ids', (int)$serviceId)
+                  ->orWhereJsonContains('technicians.service_ids', (string)$serviceId);
             });
 
         if ($lat && $lng) {
-            $hasAnyTechQuery->whereRaw("( 6371 * acos( cos( radians(?) ) * cos( radians(users.latitude) ) * cos( radians(users.longitude) - radians(?) ) + sin( radians(?) ) * sin( radians(users.latitude) ) ) ) < 50", [$lat, $lng, $lat]);
+            $hasAnyTechQuery->where(function($q) use ($lat, $lng, $cityId) {
+                $q->whereRaw("( 6371 * acos( cos( radians(?) ) * cos( radians(users.latitude) ) * cos( radians(users.longitude) - radians(?) ) + sin( radians(?) ) * sin( radians(users.latitude) ) ) ) < 50", [$lat, $lng, $lat])
+                  ->orWhere(function($sub) use ($cityId) {
+                      $sub->whereNull('users.latitude')
+                          ->whereNull('users.longitude')
+                          ->when($cityId, function($cQ) use ($cityId) {
+                              $cQ->where('users.city_id', $cityId);
+                          });
+                  });
+            });
         } else {
             $hasAnyTechQuery->where('users.city_id', $cityId);
         }
@@ -129,5 +158,119 @@ trait HasAutoAssignment
             $attempts++;
         }
         return $requestedTime->addDay(); 
+    }
+
+    /**
+     * Get diagnostic information for matching technicians.
+     */
+    protected function getDiagnostics($serviceId, $cityId, $time, $lat = null, $lng = null)
+    {
+        $service = Service::find($serviceId);
+        if (!$service) {
+            return ["error" => "Service ID {$serviceId} not found"];
+        }
+        $categoryId = $service->parent_id ?? $service->id;
+
+        $start = (clone $time)->subHours(1)->addMinute();
+        $end = (clone $time)->addHours(1)->subMinute();
+
+        $techs = Technician::with('user')->get();
+        $details = [];
+
+        foreach ($techs as $tech) {
+            $user = $tech->user;
+            if (!$user) {
+                $details[] = "Tech ID {$tech->id}: No associated User record";
+                continue;
+            }
+
+            $rejectionReasons = [];
+
+            if ($user->status !== 'active') {
+                $rejectionReasons[] = "User status is not active (is: {$user->status})";
+            }
+
+            if ($tech->availability_status !== 'available') {
+                $rejectionReasons[] = "Availability status is not available (is: {$tech->availability_status})";
+            }
+
+            $serviceMatch = ($tech->service_id == $serviceId || 
+                             $tech->category_id == $categoryId || 
+                             (is_array($tech->service_ids) && in_array($serviceId, $tech->service_ids)) ||
+                             (is_array($tech->service_ids) && in_array((string)$serviceId, $tech->service_ids)));
+
+            if (!$serviceMatch) {
+                $rejectionReasons[] = "Service ID {$serviceId} or Category ID {$categoryId} not matching tech service_id (" . ($tech->service_id ?? 'NULL') . "), category_id (" . ($tech->category_id ?? 'NULL') . "), or service_ids (" . json_encode($tech->service_ids) . ")";
+            }
+
+            $locationMatch = false;
+            $locReason = "";
+            if ($lat && $lng) {
+                if ($user->latitude !== null && $user->longitude !== null) {
+                    $theta = $lng - $user->longitude;
+                    $dist = sin(deg2rad($lat)) * sin(deg2rad($user->latitude)) +  cos(deg2rad($lat)) * cos(deg2rad($user->latitude)) * cos(deg2rad($theta));
+                    $dist = acos(min(max($dist, -1.0), 1.0)); // prevent NaN
+                    $dist = rad2deg($dist);
+                    $miles = $dist * 60 * 1.1515;
+                    $km = $miles * 1.609344;
+                    
+                    if ($km < 50) {
+                        $locationMatch = true;
+                    } else {
+                        $locReason = "Too far (KM: " . round($km, 2) . " > 50km limit)";
+                    }
+                } else {
+                    if ($cityId && $user->city_id == $cityId) {
+                        $locationMatch = true;
+                    } else {
+                        $locReason = "Tech coords NULL and City ID mismatch (User City ID: " . ($user->city_id ?? 'NULL') . ", Booking City ID: {$cityId})";
+                    }
+                }
+            } else {
+                if ($user->city_id == $cityId) {
+                    $locationMatch = true;
+                } else {
+                    $locReason = "City ID mismatch (User City ID: " . ($user->city_id ?? 'NULL') . ", Booking City ID: {$cityId})";
+                }
+            }
+
+            if (!$locationMatch) {
+                $rejectionReasons[] = "Location mismatch: " . $locReason;
+            }
+
+            $hasOrderConflict = Order::where('technician_id', $tech->id)
+                ->whereIn('status', ['new', 'accepted', 'scheduled', 'in_progress'])
+                ->whereBetween('scheduled_at', [$start, $end])
+                ->exists();
+            if ($hasOrderConflict) {
+                $rejectionReasons[] = "Has conflicting order between {$start->toDateTimeString()} and {$end->toDateTimeString()}";
+            }
+
+            $hasAppointmentConflict = \App\Models\Appointment::where('technician_id', $tech->id)
+                ->whereIn('status', ['scheduled', 'in_progress'])
+                ->whereBetween('appointment_date', [$start, $end])
+                ->exists();
+            if ($hasAppointmentConflict) {
+                $rejectionReasons[] = "Has conflicting appointment between {$start->toDateTimeString()} and {$end->toDateTimeString()}";
+            }
+
+            if (empty($rejectionReasons)) {
+                $details[] = "Tech ID {$tech->id} ({$user->name}): AVAILABLE";
+            } else {
+                $details[] = "Tech ID {$tech->id} ({$user->name}): REJECTED because: " . implode(" AND ", $rejectionReasons);
+            }
+        }
+
+        return [
+            "booking_parameters" => [
+                "service_id" => $serviceId,
+                "category_id" => $categoryId,
+                "city_id" => $cityId,
+                "latitude" => $lat,
+                "longitude" => $lng,
+                "scheduled_at" => $time->toDateTimeString(),
+            ],
+            "technicians_diagnostics" => $details
+        ];
     }
 }

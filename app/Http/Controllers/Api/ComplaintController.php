@@ -59,7 +59,7 @@ class ComplaintController extends Controller
                 'exists:orders,id',
                 Rule::requiredIf(fn() => in_array($request->type, ['complaint_technician', 'complaint_customer', 'payment_issue'])),
             ],
-            'attachment' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:2048',
+            'attachment' => 'nullable|file|mimes:jpeg,png,jpg,pdf,doc,docx|max:10240',
         ]);
 
         if ($validator->fails()) {
@@ -69,7 +69,9 @@ class ComplaintController extends Controller
         // Handle File Upload
         $attachmentPath = null;
         if ($request->hasFile('attachment')) {
-            $attachmentPath = $request->file('attachment')->store('complaints', 'public');
+            $fileName = time() . '_' . uniqid() . '.' . $request->file('attachment')->getClientOriginalExtension();
+            $request->file('attachment')->move(public_path('uploads/complaints'), $fileName);
+            $attachmentPath = 'uploads/complaints/' . $fileName;
         }
 
         // Determine Account Type

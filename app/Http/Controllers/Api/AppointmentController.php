@@ -163,17 +163,22 @@ class AppointmentController extends Controller
 
         // Auto-assign if no technician provided
         if (!$technicianId) {
-            $availableTech = $this->findAvailableTechnician($order->service_id, $order->city_id, $appointmentDate);
+            $availableTech = $this->findAvailableTechnician($order->service_id, $order->city_id, $appointmentDate, $order->latitude, $order->longitude);
             if ($availableTech) {
                 $technicianId = $availableTech->id;
             } else {
-                $suggestedTime = $this->getSuggestedTime($order->service_id, $order->city_id, $appointmentDate);
-                return response()->json([
+                $suggestedTime = $this->getSuggestedTime($order->service_id, $order->city_id, $appointmentDate, $order->latitude, $order->longitude);
+                $debugDiagnostics = config('app.debug') 
+                    ? $this->getDiagnostics($order->service_id, $order->city_id, $appointmentDate, $order->latitude, $order->longitude) 
+                    : null;
+
+                return response()->json(array_filter([
                     'status' => false,
                     'message' => __('The selected time is currently fully booked.'),
-                    'suggested_time' => $suggestedTime->toDateTimeString(),
-                    'suggestion_message' => __('لا يتوفر فني في الموعد الذي اخترته، ولكن نقترح عليك أقرب موعد متاح.')
-                ], 422);
+                    'suggested_time' => $suggestedTime ? $suggestedTime->toDateTimeString() : null,
+                    'suggestion_message' => __('لا يتوفر فني في الموعد الذي اخترته، ولكن نقترح عليك أقرب موعد متاح.'),
+                    'debug_diagnostics' => $debugDiagnostics
+                ]), 422);
             }
         }
 

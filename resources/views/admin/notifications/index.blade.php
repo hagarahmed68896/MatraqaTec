@@ -12,10 +12,10 @@
 
     @php
         $cardStats = [
-            ['label' => __('Total Notifications'), 'value' => $statistics['total']['count'], 'percentage' => $statistics['total']['percentage'], 'color' => '#6366f1', 'icon' => 'total'],
-            ['label' => __('Sent Notifications'), 'value' => $statistics['sent']['count'], 'percentage' => $statistics['sent']['percentage'], 'color' => '#10B981', 'icon' => 'sent'],
-            ['label' => __('Scheduled Notifications'), 'value' => $statistics['scheduled']['count'], 'percentage' => $statistics['scheduled']['percentage'], 'color' => '#3b82f6', 'icon' => 'scheduled'],
-            ['label' => __('Unsent Notifications'), 'value' => $statistics['unsent']['count'], 'percentage' => $statistics['unsent']['percentage'], 'color' => '#ef4444', 'icon' => 'unsent'],
+            ['label' => __('Total Notifications'), 'value' => $statistics['total']['count'], 'percentage' => $statistics['total']['percentage'], 'percentage_val' => $statistics['total']['percentage_val'] ?? 0, 'color' => '#6366f1', 'icon' => 'total'],
+            ['label' => __('Sent Notifications'), 'value' => $statistics['sent']['count'], 'percentage' => $statistics['sent']['percentage'], 'percentage_val' => $statistics['sent']['percentage_val'] ?? 0, 'color' => '#10B981', 'icon' => 'sent'],
+            ['label' => __('Scheduled Notifications'), 'value' => $statistics['scheduled']['count'], 'percentage' => $statistics['scheduled']['percentage'], 'percentage_val' => $statistics['scheduled']['percentage_val'] ?? 0, 'color' => '#3b82f6', 'icon' => 'scheduled'],
+            ['label' => __('Unsent Notifications'), 'value' => $statistics['unsent']['count'], 'percentage' => $statistics['unsent']['percentage'], 'percentage_val' => $statistics['unsent']['percentage_val'] ?? 0, 'color' => '#ef4444', 'icon' => 'unsent'],
         ];
     @endphp
 
@@ -28,9 +28,8 @@
                     <p class="text-xs font-bold text-[#1A1A31] dark:text-slate-400 opacity-60">{{ $stat['label'] }}</p>
                     <div class="flex items-baseline gap-2">
                         <h3 class="text-3xl font-black text-[#1A1A31] dark:text-white">{{ $stat['value'] }}</h3>
-                        <span class="text-[10px] px-2 py-0.5 rounded-full font-bold border" 
-                              style="background-color: {{ $stat['color'] }}10; color: {{ $stat['color'] }}; border-color: {{ $stat['color'] }}20;">
-                            {{ $stat['percentage'] }}%+
+                        <span class="text-[10px] px-2 py-0.5 rounded-full font-bold border {{ ($stat['percentage_val'] ?? 0) >= 0 ? 'bg-green-50 text-green-600 border-green-200' : 'bg-red-50 text-red-600 border-red-200' }} opacity-80">
+                            {{ $stat['percentage'] }}
                         </span>
                     </div>
                 </div>

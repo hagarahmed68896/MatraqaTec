@@ -72,18 +72,36 @@ class MaintenanceCompanyController extends Controller
             return $company;
         });
 
-        // Statistics for Index Page
+        // Statistics for Index Page with growth compared to last week
+        $totalCompanies = MaintenanceCompany::count();
+        $totalCompaniesLastWeek = MaintenanceCompany::where('created_at', '<', Carbon::now()->subWeek())->count();
+        $totalCompaniesGrowth = $totalCompaniesLastWeek > 0 ? (($totalCompanies - $totalCompaniesLastWeek) / $totalCompaniesLastWeek) * 100 : ($totalCompanies > 0 ? 100 : 0);
+
+        $totalTechs = \App\Models\Technician::whereNotNull('maintenance_company_id')->count();
+        $totalTechsLastWeek = \App\Models\Technician::whereNotNull('maintenance_company_id')->where('created_at', '<', Carbon::now()->subWeek())->count();
+        $totalTechsGrowth = $totalTechsLastWeek > 0 ? (($totalTechs - $totalTechsLastWeek) / $totalTechsLastWeek) * 100 : ($totalTechs > 0 ? 100 : 0);
+
+        $totalServicesOffered = \App\Models\Technician::whereNotNull('maintenance_company_id')->distinct('service_id')->count('service_id');
+        $totalServicesOfferedLastWeek = \App\Models\Technician::whereNotNull('maintenance_company_id')->where('created_at', '<', Carbon::now()->subWeek())->distinct('service_id')->count('service_id');
+        $totalServicesOfferedGrowth = $totalServicesOfferedLastWeek > 0 ? (($totalServicesOffered - $totalServicesOfferedLastWeek) / $totalServicesOfferedLastWeek) * 100 : ($totalServicesOffered > 0 ? 100 : 0);
+
+        $totalOrders = Order::whereNotNull('maintenance_company_id')->count();
+        $totalOrdersLastWeek = Order::whereNotNull('maintenance_company_id')->where('created_at', '<', Carbon::now()->subWeek())->count();
+        $totalOrdersGrowth = $totalOrdersLastWeek > 0 ? (($totalOrders - $totalOrdersLastWeek) / $totalOrdersLastWeek) * 100 : ($totalOrders > 0 ? 100 : 0);
+
         $stats = [
-            'total_companies' => MaintenanceCompany::count(),
-            'total_technicians' => \App\Models\Technician::count(), // Assuming global technicians count, or relation based
-            // To be more precise based on companies relation:
-            // 'total_technicians' => MaintenanceCompany::withCount('technicians')->get()->sum('technicians_count'), 
-            // Better query:
-            'total_technicians_companies' => \App\Models\Technician::whereNotNull('maintenance_company_id')->count(), 
-            'total_services' => \App\Models\Service::count(), // Total services in system
-             // Or unique services offered by companies:
-            'total_services_offered' => \App\Models\Technician::whereNotNull('maintenance_company_id')->distinct('service_id')->count('service_id'),
-            'total_orders' => Order::whereNotNull('maintenance_company_id')->count(),
+            'total_companies' => $totalCompanies,
+            'total_companies_trend' => ($totalCompaniesGrowth >= 0 ? '+' : '') . number_format($totalCompaniesGrowth, 2) . '%',
+            'total_companies_trend_value' => $totalCompaniesGrowth,
+            'total_technicians_companies' => $totalTechs,
+            'total_technicians_companies_trend' => ($totalTechsGrowth >= 0 ? '+' : '') . number_format($totalTechsGrowth, 2) . '%',
+            'total_technicians_companies_trend_value' => $totalTechsGrowth,
+            'total_services_offered' => $totalServicesOffered,
+            'total_services_offered_trend' => ($totalServicesOfferedGrowth >= 0 ? '+' : '') . number_format($totalServicesOfferedGrowth, 2) . '%',
+            'total_services_offered_trend_value' => $totalServicesOfferedGrowth,
+            'total_orders' => $totalOrders,
+            'total_orders_trend' => ($totalOrdersGrowth >= 0 ? '+' : '') . number_format($totalOrdersGrowth, 2) . '%',
+            'total_orders_trend_value' => $totalOrdersGrowth,
         ];
 
         return view('admin.maintenance_companies.index', compact('items', 'stats'));
@@ -96,65 +114,123 @@ class MaintenanceCompanyController extends Controller
 
     public function store(Request $request)
     {
+        // 1. Phone Normalization
+        $phone = $request->input('phone');
+        if ($phone) {
+            $phone = preg_replace('/\D/', '', $phone);
+            if (str_starts_with($phone, '00966')) {
+                $phone = substr($phone, 5);
+            }
+            if (str_starts_with($phone, '966')) {
+                $phone = substr($phone, 3);
+            }
+            $phone = ltrim($phone, '0');
+            $request->merge(['phone' => $phone]);
+        }
+
+        // 2. IBAN Normalization
+        $iban = $request->input('iban');
+        if ($iban) {
+            $iban = strtoupper(str_replace(' ', '', $iban));
+            $request->merge(['iban' => $iban]);
+        }
+
         $locale = app()->getLocale();
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'nullable|string|min:8',
-            'phone' => ['required', 'string', 'unique:users', 'regex:/^[0-9]{9}$/'],
-            'tax_number' => 'nullable|string|max:255',
-            'commercial_record_number' => 'nullable|string|max:255',
-            'commercial_record_file' => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:2048',
-            'bank_name' => 'nullable|string|max:255',
-            'account_name' => 'nullable|string|max:255',
-            'account_number' => 'nullable|string|max:255',
-            'iban' => 'nullable|string|max:255',
-            'swift_code' => 'nullable|string|max:255',
-            'bank_address' => 'nullable|string|max:255',
+            'name'                      => 'required|string|max:255|unique:maintenance_companies,name|unique:maintenance_companies,company_name_ar|unique:maintenance_companies,company_name_en',
+            'email'                     => 'required|string|email|max:255|unique:users',
+            'password'                  => 'nullable|string|min:8',
+            'phone'                     => ['required', 'string', 'unique:users', 'regex:/^[0-9]{9}$/'],
+            'tax_number'                => 'nullable|digits_between:1,20|unique:maintenance_companies,tax_number',
+            'commercial_record_number'  => 'required|digits_between:1,20|unique:maintenance_companies,commercial_record_number',
+            'commercial_record_file'    => 'required|file|mimes:pdf,jpg,png,jpeg,doc,docx|max:10240',
+            'bank_name'                 => 'nullable|string|max:255',
+            'account_name'              => 'nullable|string|max:255',
+            'account_number'            => 'nullable|string|max:255',
+            'iban'                      => ['nullable', 'string', 'regex:/^SA[0-9]{22}$/'],
+            'swift_code'               => 'nullable|string|max:255',
+            'bank_address'             => 'nullable|string|max:255',
+        ], [
+            'password.min'                          => __('The password is too short. It must be at least 8 characters.'),
+            'iban.regex'                            => __('The IBAN must start with SA and be exactly 24 characters long (e.g., SAXXXXXXXXXXXXXXXXXXXXXX).'),
+            'name.required'                         => 'يجب إدخال اسم الشركة',
+            'name.unique'                           => 'اسم الشركة مسجل مسبقاً في النظام',
+            'email.required'                        => 'يجب إدخال البريد الإلكتروني',
+            'email.email'                           => 'يرجى إدخال بريد إلكتروني صحيح',
+            'email.unique'                          => 'هذا البريد الإلكتروني مسجل مسبقاً',
+            'phone.required'                        => 'يجب إدخال رقم الجوال',
+            'phone.unique'                          => 'رقم الجوال مسجل مسبقاً',
+            'phone.regex'                           => 'يجب أن يتكون رقم الجوال من 9 أرقام بدون مفتاح الدولة (مثل: 501234567)',
+            'tax_number.digits_between'             => 'الرقم الضريبي يجب أن يحتوي على أرقام فقط',
+            'tax_number.unique'                     => 'الرقم الضريبي مسجل مسبقاً في النظام',
+            'commercial_record_number.required'     => 'يجب إدخال رقم السجل التجاري',
+            'commercial_record_number.digits_between' => 'رقم السجل التجاري يجب أن يحتوي على أرقام فقط',
+            'commercial_record_number.unique'       => 'رقم السجل التجاري مسجل مسبقاً في النظام',
+            'commercial_record_file.required'       => 'يجب رفع صورة السجل التجاري',
+            'commercial_record_file.mimes'          => 'يجب أن يكون الملف بصيغة PDF أو صورة (JPG, PNG) أو مستند Word (doc, docx)',
+            'commercial_record_file.max'            => 'حجم الملف يجب ألا يتجاوز 10 ميجابايت',
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
 
-        $password = $request->password ?? Str::random(10);
-        // Use Arabic name as main name if not specified otherwise
-        $name = $request->company_name_ar;
-
-        $user = User::create([
-            'name' => $name,
-            'email' => $request->email,
-            'password' => Hash::make($password),
-            'type' => 'maintenance_company',
-            'phone' => $request->phone,
-            'status' => $request->status ?? 'active',
-        ]);
-
+        \Illuminate\Support\Facades\DB::beginTransaction();
         $filePath = null;
-        if ($request->hasFile('commercial_record_file')) {
-            $fileName = time() . '_' . uniqid() . '.' . $request->file('commercial_record_file')->getClientOriginalExtension();
-            $request->file('commercial_record_file')->move(public_path('uploads/maintenance/cr'), $fileName);
-            $filePath = 'uploads/maintenance/cr/' . $fileName;
+        try {
+            $password = $request->password ?? Str::random(10);
+            $name = $request->company_name_ar ?? $request->name;
+            $status = $request->filled('status') ? $request->status : 'active';
+
+            $user = User::create([
+                'name' => $name,
+                'email' => $request->email,
+                'password' => Hash::make($password),
+                'type' => 'maintenance_company',
+                'phone' => $request->phone,
+                'status' => $status,
+            ]);
+
+            if ($request->hasFile('commercial_record_file')) {
+                $fileName = time() . '_' . uniqid() . '.' . $request->file('commercial_record_file')->getClientOriginalExtension();
+                $request->file('commercial_record_file')->move(public_path('uploads/maintenance/cr'), $fileName);
+                $filePath = 'uploads/maintenance/cr/' . $fileName;
+            }
+
+            MaintenanceCompany::create([
+                'user_id' => $user->id,
+                'name' => $request->name,
+                'company_name_en' => $request->name,
+                'company_name_ar' => $request->name,
+                'commercial_record_number' => $request->commercial_record_number,
+                'commercial_record_file' => $filePath,
+                'tax_number' => $request->tax_number,
+                'address' => $request->address,
+                'bank_name' => $request->bank_name,
+                'account_name' => $request->account_name,
+                'account_number' => $request->account_number,
+                'iban' => $request->iban,
+                'swift_code' => $request->swift_code,
+                'bank_address' => $request->bank_address,
+            ]);
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            return redirect()->route('admin.maintenance-companies.index')->with('success', __('Company created successfully.'));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+
+            if ($filePath && file_exists(public_path($filePath))) {
+                @unlink(public_path($filePath));
+            }
+
+            \Illuminate\Support\Facades\Log::error('Error creating maintenance company: ' . $e->getMessage(), [
+                'exception' => $e,
+                'request' => $request->except(['password', 'commercial_record_file'])
+            ]);
+
+            return back()->with('error', __('An error occurred while creating the company: ') . $e->getMessage())->withInput();
         }
-
-        MaintenanceCompany::create([
-            'user_id' => $user->id,
-            'name' => $request->name,
-            'company_name_en' => $request->name,
-            'company_name_ar' => $request->name,
-            'commercial_record_number' => $request->commercial_record_number,
-            'commercial_record_file' => $filePath,
-            'tax_number' => $request->tax_number,
-            'address' => $request->address,
-            'bank_name' => $request->bank_name,
-            'account_name' => $request->account_name,
-            'account_number' => $request->account_number,
-            'iban' => $request->iban,
-            'swift_code' => $request->swift_code,
-            'bank_address' => $request->bank_address,
-        ]);
-
-        return redirect()->route('admin.maintenance-companies.index')->with('success', __('Company created successfully.'));
     }
 
     public function show(Request $request, $id)
@@ -247,84 +323,161 @@ class MaintenanceCompanyController extends Controller
     {
         $company = MaintenanceCompany::findOrFail($id);
         
+        // 1. Phone Normalization
+        $phone = $request->input('phone');
+        if ($phone) {
+            $phone = preg_replace('/\D/', '', $phone);
+            if (str_starts_with($phone, '00966')) {
+                $phone = substr($phone, 5);
+            }
+            if (str_starts_with($phone, '966')) {
+                $phone = substr($phone, 3);
+            }
+            $phone = ltrim($phone, '0');
+            $request->merge(['phone' => $phone]);
+        }
+
+        // 2. IBAN Normalization
+        $iban = $request->input('iban');
+        if ($iban) {
+            $iban = strtoupper(str_replace(' ', '', $iban));
+            $request->merge(['iban' => $iban]);
+        }
+
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,'.$company->user_id,
-            'phone' => ['required', 'string', 'unique:users,phone,'.$company->user_id, 'regex:/^[0-9]{9}$/'],
-            'tax_number' => 'nullable|string|max:255',
-            'commercial_record_number' => 'nullable|string|max:255',
-            'commercial_record_file' => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:2048',
-            'bank_name' => 'nullable|string|max:255',
-            'account_name' => 'nullable|string|max:255',
-            'account_number' => 'nullable|string|max:255',
-            'iban' => 'nullable|string|max:255',
-            'swift_code' => 'nullable|string|max:255',
-            'bank_address' => 'nullable|string|max:255',
+            'name'                      => 'required|string|max:255|unique:maintenance_companies,name,'.$company->id.'|unique:maintenance_companies,company_name_ar,'.$company->id.'|unique:maintenance_companies,company_name_en,'.$company->id,
+            'email'                     => 'required|string|email|max:255|unique:users,email,'.$company->user_id,
+            'password'                  => 'nullable|string|min:8',
+            'phone'                     => ['required', 'string', 'unique:users,phone,'.$company->user_id, 'regex:/^[0-9]{9}$/'],
+            'tax_number'                => 'nullable|digits_between:1,20|unique:maintenance_companies,tax_number,'.$company->id,
+            'commercial_record_number'  => 'required|digits_between:1,20|unique:maintenance_companies,commercial_record_number,'.$company->id,
+            'commercial_record_file'    => 'nullable|file|mimes:pdf,jpg,png,jpeg,doc,docx|max:10240',
+            'bank_name'                 => 'nullable|string|max:255',
+            'account_name'              => 'nullable|string|max:255',
+            'account_number'            => 'nullable|string|max:255',
+            'iban'                      => ['nullable', 'string', 'regex:/^SA[0-9]{22}$/'],
+            'swift_code'               => 'nullable|string|max:255',
+            'bank_address'             => 'nullable|string|max:255',
+        ], [
+            'password.min'                          => __('The password is too short. It must be at least 8 characters.'),
+            'iban.regex'                            => __('The IBAN must start with SA and be exactly 24 characters long (e.g., SAXXXXXXXXXXXXXXXXXXXXXX).'),
+            'name.required'                         => 'يجب إدخال اسم الشركة',
+            'name.unique'                           => 'اسم الشركة مسجل مسبقاً في النظام',
+            'email.required'                        => 'يجب إدخال البريد الإلكتروني',
+            'email.email'                           => 'يرجى إدخال بريد إلكتروني صحيح',
+            'email.unique'                          => 'هذا البريد الإلكتروني مسجل مسبقاً',
+            'phone.required'                        => 'يجب إدخال رقم الجوال',
+            'phone.unique'                          => 'رقم الجوال مسجل مسبقاً',
+            'phone.regex'                           => 'يجب أن يتكون رقم الجوال من 9 أرقام بدون مفتاح الدولة (مثل: 501234567)',
+            'tax_number.digits_between'             => 'الرقم الضريبي يجب أن يحتوي على أرقام فقط',
+            'tax_number.unique'                     => 'الرقم الضريبي مسجل مسبقاً في النظام',
+            'commercial_record_number.required'     => 'يجب إدخال رقم السجل التجاري',
+            'commercial_record_number.digits_between' => 'رقم السجل التجاري يجب أن يحتوي على أرقام فقط',
+            'commercial_record_number.unique'       => 'رقم السجل التجاري مسجل مسبقاً في النظام',
+            'commercial_record_file.mimes'          => 'يجب أن يكون الملف بصيغة PDF أو صورة (JPG, PNG) أو مستند Word (doc, docx)',
+            'commercial_record_file.max'            => 'حجم الملف يجب ألا يتجاوز 10 ميجابايت',
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
 
-        $user = $company->user;
-        if ($user) {
-            $user->email = $request->email;
-            if ($request->filled('password')) $user->password = Hash::make($request->password);
-            if ($request->has('phone')) $user->phone = $request->phone;
-            if ($request->has('name')) $user->name = $request->name;
-            if ($request->has('status')) $user->status = $request->status;
-            $user->save();
-        }
-
-        $data = $request->except(['email', 'password', 'phone', 'status', 'type', 'commercial_record_file']);
-
-        if ($request->hasFile('commercial_record_file')) {
-            if ($company->commercial_record_file && file_exists(public_path($company->commercial_record_file))) {
-                unlink(public_path($company->commercial_record_file));
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        $newFilePath = null;
+        try {
+            $user = $company->user;
+            if ($user) {
+                $user->email = $request->email;
+                if ($request->filled('password')) $user->password = Hash::make($request->password);
+                if ($request->has('phone')) $user->phone = $request->phone;
+                if ($request->has('name')) $user->name = $request->name;
+                if ($request->has('status')) $user->status = $request->status;
+                $user->save();
             }
-            $fileName = time() . '_' . uniqid() . '.' . $request->file('commercial_record_file')->getClientOriginalExtension();
-            $request->file('commercial_record_file')->move(public_path('uploads/maintenance/cr'), $fileName);
-            $data['commercial_record_file'] = 'uploads/maintenance/cr/' . $fileName;
+
+            $data = $request->except(['email', 'password', 'phone', 'status', 'type', 'commercial_record_file']);
+
+            if ($request->hasFile('commercial_record_file')) {
+                $fileName = time() . '_' . uniqid() . '.' . $request->file('commercial_record_file')->getClientOriginalExtension();
+                $request->file('commercial_record_file')->move(public_path('uploads/maintenance/cr'), $fileName);
+                $newFilePath = 'uploads/maintenance/cr/' . $fileName;
+                $data['commercial_record_file'] = $newFilePath;
+            }
+
+            $oldFilePath = $company->commercial_record_file;
+
+            $company->update($data);
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            if ($newFilePath && $oldFilePath && file_exists(public_path($oldFilePath))) {
+                @unlink(public_path($oldFilePath));
+            }
+
+            return redirect()->route('admin.maintenance-companies.index')->with('success', __('Company updated successfully.'));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+
+            if ($newFilePath && file_exists(public_path($newFilePath))) {
+                @unlink(public_path($newFilePath));
+            }
+
+            \Illuminate\Support\Facades\Log::error('Error updating maintenance company: ' . $e->getMessage(), [
+                'exception' => $e,
+                'request' => $request->except(['password', 'commercial_record_file'])
+            ]);
+
+            return back()->with('error', __('An error occurred while updating the company: ') . $e->getMessage())->withInput();
         }
-
-        $company->update($data);
-
-        return redirect()->route('admin.maintenance-companies.index')->with('success', __('Company updated successfully.'));
     }
 
     public function destroy($id)
     {
-        $company = MaintenanceCompany::findOrFail($id);
-        if ($company->user) {
+        // Try to find a maintenance company first
+        $company = MaintenanceCompany::find($id);
+        if ($company && $company->user) {
             $company->user->update(['status' => 'inactive']);
             $message = __('Company deactivated successfully.');
         } else {
-            $company->delete();
-            $message = __('Company profile deleted successfully.');
+            // Fallback: treat the id as a direct user id and deactivate the user
+            $user = User::findOrFail($id);
+            $user->update(['status' => 'inactive']);
+            $message = __('User deactivated successfully.');
         }
         return redirect()->route('admin.maintenance-companies.index')->with('success', $message);
     }
 
     public function toggleBlock($id)
     {
-        $company = MaintenanceCompany::findOrFail($id);
-        $user = $company->user;
-        
-        if ($user) {
-             if ($user->status === 'blocked' || $user->status === 'inactive') {
-                $user->status = 'active';
-                $user->blocked_at = null;
-                $message = __('Company activated successfully');
-            } else {
-                $user->status = 'blocked';
-                $user->blocked_at = now();
-                $message = __('Company blocked successfully');
-            }
-            $user->save();
-             return back()->with('success', $message);
+        // Try to find a maintenance company first
+        $company = MaintenanceCompany::find($id);
+        $user = null;
+        if ($company && $company->user) {
+            $user = $company->user;
+        } else {
+            // Fallback: treat the id as a direct user id
+            $user = User::find($id);
         }
 
-        return back()->with('error', __('User record not found'));
+        if (!$user) {
+            return back()->with('error', __('User record not found'));
+        }
+
+        // Toggle status between active, blocked, and inactive
+        // NOTE: إذا تم تعطيل حساب (status = 'inactive'), يجب إظهار الحالة "معطل" في الواجهة.
+        if ($user->status === 'blocked' || $user->status === 'inactive') {
+            $user->status = 'active';
+            $user->blocked_at = null;
+            $message = __('Account activated successfully');
+        } else {
+            $user->status = 'blocked';
+            $user->blocked_at = now();
+            $message = __('Account blocked successfully');
+        }
+        $user->save();
+        // Optionally log for support
+        // logger()->info('Account status toggled', ['account_id' => $user->id, 'new_status' => $user->status]);
+        return back()->with('success', $message);
     }
 
     public function bulkBlock(Request $request)

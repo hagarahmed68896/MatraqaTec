@@ -101,12 +101,36 @@ class TechnicianController extends Controller
         $categories = \App\Models\Service::whereNull('parent_id')->get();
         $services = \App\Models\Service::whereNotNull('parent_id')->get();
 
-        // Statistics for Index Page
+        // Statistics for Index Page with growth compared to last week
+        $totalTechs = Technician::count();
+        $totalTechsLastWeek = Technician::where('created_at', '<', Carbon::now()->subWeek())->count();
+        $totalTechsGrowth = $totalTechsLastWeek > 0 ? (($totalTechs - $totalTechsLastWeek) / $totalTechsLastWeek) * 100 : ($totalTechs > 0 ? 100 : 0);
+
+        $activeTechs = Technician::whereHas('user', function($q) { $q->where('status', 'active'); })->count();
+        $activeTechsLastWeek = Technician::whereHas('user', function($q) { $q->where('status', 'active'); })->where('created_at', '<', Carbon::now()->subWeek())->count();
+        $activeTechsGrowth = $activeTechsLastWeek > 0 ? (($activeTechs - $activeTechsLastWeek) / $activeTechsLastWeek) * 100 : ($activeTechs > 0 ? 100 : 0);
+
+        $completedOrders = Order::where('status', 'completed')->whereNotNull('technician_id')->count();
+        $completedOrdersLastWeek = Order::where('status', 'completed')->whereNotNull('technician_id')->where('created_at', '<', Carbon::now()->subWeek())->count();
+        $completedOrdersGrowth = $completedOrdersLastWeek > 0 ? (($completedOrders - $completedOrdersLastWeek) / $completedOrdersLastWeek) * 100 : ($completedOrders > 0 ? 100 : 0);
+
+        $avgRating = Review::avg('rating') ?? 0;
+        $avgRatingLastWeek = Review::where('created_at', '<', Carbon::now()->subWeek())->avg('rating') ?? 0;
+        $avgRatingGrowth = $avgRatingLastWeek > 0 ? (($avgRating - $avgRatingLastWeek) / $avgRatingLastWeek) * 100 : ($avgRating > 0 ? 100 : 0);
+
         $stats = [
-            'total_technicians' => Technician::count(),
-            'active_technicians' => Technician::whereHas('user', function($q) { $q->where('status', 'active'); })->count(),
-            'total_completed_orders' => Order::where('status', 'completed')->whereNotNull('technician_id')->count(),
-            'average_rating' => Review::avg('rating') ?? 0,
+            'total_technicians' => $totalTechs,
+            'total_technicians_trend' => ($totalTechsGrowth >= 0 ? '+' : '') . number_format($totalTechsGrowth, 2) . '%',
+            'total_technicians_trend_value' => $totalTechsGrowth,
+            'active_technicians' => $activeTechs,
+            'active_technicians_trend' => ($activeTechsGrowth >= 0 ? '+' : '') . number_format($activeTechsGrowth, 2) . '%',
+            'active_technicians_trend_value' => $activeTechsGrowth,
+            'total_completed_orders' => $completedOrders,
+            'total_completed_orders_trend' => ($completedOrdersGrowth >= 0 ? '+' : '') . number_format($completedOrdersGrowth, 2) . '%',
+            'total_completed_orders_trend_value' => $completedOrdersGrowth,
+            'average_rating' => $avgRating,
+            'average_rating_trend' => ($avgRatingGrowth >= 0 ? '+' : '') . number_format($avgRatingGrowth, 2) . '%',
+            'average_rating_trend_value' => $avgRatingGrowth,
         ];
         
         return view('admin.technicians.index', compact('items', 'stats', 'categories', 'services'));
@@ -182,7 +206,9 @@ class TechnicianController extends Controller
             'districts.*' => 'exists:districts,id',
         ];
 
-        $request->validate($rules);
+        $request->validate($rules, [
+            'password.min' => __('The password is too short. It must be at least 8 characters.'),
+        ]);
 
         $password = $request->password ?? Str::random(10);
         
@@ -322,6 +348,7 @@ class TechnicianController extends Controller
             'name_ar' => 'required|string|max:255',
             'name_en' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.$technician->user_id,
+            'password' => 'nullable|string|min:8',
             'phone' => 'nullable|string|unique:users,phone,'.$technician->user_id,
             'image' => 'nullable|image|max:2048',
             'national_id_image' => 'nullable|image|max:2048',
@@ -336,7 +363,9 @@ class TechnicianController extends Controller
             'districts.*' => 'exists:districts,id',
         ];
 
-        $request->validate($rules);
+        $request->validate($rules, [
+            'password.min' => __('The password is too short. It must be at least 8 characters.'),
+        ]);
         
         $user = $technician->user;
         if ($user) {

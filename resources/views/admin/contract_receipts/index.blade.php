@@ -1,4 +1,4 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('title', __('Contract Receipts'))
 @section('page_title', __('Contract Receipts'))
@@ -48,7 +48,7 @@
                         <td class="py-4 px-6 uppercase text-[10px]">{{ __($item->payment_method) }}</td>
                         <td class="py-4 px-6 opacity-70">{{ $item->reference_number ?? '---' }}</td>
                         <td class="py-4 px-6 text-center">
-                            <a href="{{ asset('storage/' . $item->receipt_file) }}" target="_blank" class="inline-flex items-center gap-1 text-primary hover:underline">
+                            <a href="{{ $item->receipt_url }}" target="_blank" class="inline-flex items-center gap-1 text-primary hover:underline">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                                 {{ __('View') }}
                             </a>

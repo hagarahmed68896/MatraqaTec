@@ -286,7 +286,7 @@
                         <td class="py-6 px-4 text-center" @click.stop>
                             @if($item->attachment)
                             <div class="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 mx-auto border-2 border-white shadow-sm ring-1 ring-slate-100 group-hover:scale-110 transition-all cursor-zoom-in">
-                                <img src="{{ asset('storage/' . $item->attachment) }}" class="w-full h-full object-cover">
+                                <img src="{{ $item->attachment_url }}" class="w-full h-full object-cover">
                             </div>
                             @else
                             <span class="text-slate-200">-</span>

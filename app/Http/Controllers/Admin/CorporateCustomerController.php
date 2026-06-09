@@ -69,12 +69,36 @@ class CorporateCustomerController extends Controller
 
         $items = $query->paginate(15);
         
-        // Stats
+        // Stats with growth compared to last week
+        $totalCustomers = User::whereIn('type', ['individual', 'corporate_customer'])->count();
+        $totalCustomersLastWeek = User::whereIn('type', ['individual', 'corporate_customer'])->where('created_at', '<', Carbon::now()->subWeek())->count();
+        $totalCustomersGrowth = $totalCustomersLastWeek > 0 ? (($totalCustomers - $totalCustomersLastWeek) / $totalCustomersLastWeek) * 100 : ($totalCustomers > 0 ? 100 : 0);
+
+        $totalIndividual = User::where('type', 'individual')->count();
+        $totalIndividualLastWeek = User::where('type', 'individual')->where('created_at', '<', Carbon::now()->subWeek())->count();
+        $totalIndividualGrowth = $totalIndividualLastWeek > 0 ? (($totalIndividual - $totalIndividualLastWeek) / $totalIndividualLastWeek) * 100 : ($totalIndividual > 0 ? 100 : 0);
+
+        $totalInactive = User::whereIn('type', ['individual', 'corporate_customer'])->whereIn('status', ['blocked', 'inactive'])->count();
+        $totalInactiveLastWeek = User::whereIn('type', ['individual', 'corporate_customer'])->whereIn('status', ['blocked', 'inactive'])->where('created_at', '<', Carbon::now()->subWeek())->count();
+        $totalInactiveGrowth = $totalInactiveLastWeek > 0 ? (($totalInactive - $totalInactiveLastWeek) / $totalInactiveLastWeek) * 100 : ($totalInactive > 0 ? 100 : 0);
+
+        $totalCorporate = User::where('type', 'corporate_customer')->count();
+        $totalCorporateLastWeek = User::where('type', 'corporate_customer')->where('created_at', '<', Carbon::now()->subWeek())->count();
+        $totalCorporateGrowth = $totalCorporateLastWeek > 0 ? (($totalCorporate - $totalCorporateLastWeek) / $totalCorporateLastWeek) * 100 : ($totalCorporate > 0 ? 100 : 0);
+
         $stats = [
-            'total_all' => User::whereIn('type', ['individual', 'corporate_customer'])->count(),
-            'total_individual' => IndividualCustomer::count(),
-            'total_corporate' => CorporateCustomer::count(),
-            'total_inactive' => User::whereIn('type', ['individual', 'corporate_customer'])->whereIn('status', ['blocked', 'inactive'])->count(),
+            'total_all' => $totalCustomers,
+            'total_all_trend' => ($totalCustomersGrowth >= 0 ? '+' : '') . number_format($totalCustomersGrowth, 2) . '%',
+            'total_all_trend_value' => $totalCustomersGrowth,
+            'total_individual' => $totalIndividual,
+            'total_individual_trend' => ($totalIndividualGrowth >= 0 ? '+' : '') . number_format($totalIndividualGrowth, 2) . '%',
+            'total_individual_trend_value' => $totalIndividualGrowth,
+            'total_inactive' => $totalInactive,
+            'total_inactive_trend' => ($totalInactiveGrowth >= 0 ? '+' : '') . number_format($totalInactiveGrowth, 2) . '%',
+            'total_inactive_trend_value' => $totalInactiveGrowth,
+            'total_corporate' => $totalCorporate,
+            'total_corporate_trend' => ($totalCorporateGrowth >= 0 ? '+' : '') . number_format($totalCorporateGrowth, 2) . '%',
+            'total_corporate_trend_value' => $totalCorporateGrowth,
         ];
         
         return view('admin.customers.index', compact('items', 'stats'))->with('type', 'corporate');
@@ -87,25 +111,46 @@ class CorporateCustomerController extends Controller
 
     public function store(Request $request)
     {
+        // 1. Phone Normalization
+        $phone = $request->input('phone');
+        if ($phone) {
+            $phone = preg_replace('/\D/', '', $phone);
+            if (str_starts_with($phone, '00966')) {
+                $phone = substr($phone, 5);
+            }
+            if (str_starts_with($phone, '966')) {
+                $phone = substr($phone, 3);
+            }
+            $phone = ltrim($phone, '0');
+            $request->merge(['phone' => $phone]);
+        }
+
         $rules = [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'phone' => ['required', 'string', 'unique:users', 'regex:/^[0-9]{9}$/'],
-            'tax_number' => 'nullable|string|max:255',
-            'commercial_record_number' => 'nullable|string|max:255',
-            'commercial_record_file' => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:2048',
+            'name'                      => 'required|string|max:255|unique:corporate_customers,company_name_ar|unique:corporate_customers,company_name_en',
+            'email'                     => 'required|string|email|max:255|unique:users',
+            'phone'                     => ['required', 'string', 'unique:users', 'regex:/^[0-9]{9}$/'],
+            'tax_number'                => 'nullable|digits_between:1,20|unique:corporate_customers,tax_number',
+            'commercial_record_number'  => 'required|digits_between:1,20|unique:corporate_customers,commercial_record_number',
+            'commercial_record_file'    => 'required|file|mimes:pdf,jpg,png,jpeg,doc,docx|max:10240',
         ];
 
         $messages = [
-            'name.required' => 'يجب إدخال اسم الشركة',
-            'email.required' => 'يجب إدخال البريد الإلكتروني',
-            'email.email' => 'يرجى إدخال بريد إلكتروني صحيح',
-            'email.unique' => 'هذا البريد الإلكتروني مسجل مسبقاً',
-            'phone.required' => 'يجب إدخال رقم الجوال',
-            'phone.unique' => 'رقم الجوال مسجل مسبقاً',
-            'phone.regex' => 'يجب أن يتكون رقم الجوال من 9 أرقام بدون مفتاح الدولة (مثل: 501234567)',
-            'commercial_record_file.mimes' => 'يجب أن يكون الملف بصيغة PDF أو صورة (JPG, PNG)',
-            'commercial_record_file.max' => 'حجم الملف يجب ألا يتجاوز 2 ميجابايت',
+            'name.required'                         => 'يجب إدخال اسم الشركة',
+            'name.unique'                           => 'اسم الشركة مسجل مسبقاً في النظام',
+            'email.required'                        => 'يجب إدخال البريد الإلكتروني',
+            'email.email'                           => 'يرجى إدخال بريد إلكتروني صحيح',
+            'email.unique'                          => 'هذا البريد الإلكتروني مسجل مسبقاً',
+            'phone.required'                        => 'يجب إدخال رقم الجوال',
+            'phone.unique'                          => 'رقم الجوال مسجل مسبقاً',
+            'phone.regex'                           => 'يجب أن يتكون رقم الجوال من 9 أرقام بدون مفتاح الدولة (مثل: 501234567)',
+            'tax_number.digits_between'             => 'الرقم الضريبي يجب أن يحتوي على أرقام فقط',
+            'tax_number.unique'                     => 'الرقم الضريبي مسجل مسبقاً في النظام',
+            'commercial_record_number.required'     => 'يجب إدخال رقم السجل التجاري',
+            'commercial_record_number.digits_between' => 'رقم السجل التجاري يجب أن يحتوي على أرقام فقط',
+            'commercial_record_number.unique'       => 'رقم السجل التجاري مسجل مسبقاً في النظام',
+            'commercial_record_file.required'       => 'يجب رفع صورة السجل التجاري',
+            'commercial_record_file.mimes'          => 'يجب أن يكون الملف بصيغة PDF أو صورة (JPG, PNG) أو مستند Word (doc, docx)',
+            'commercial_record_file.max'            => 'حجم الملف يجب ألا يتجاوز 10 ميجابايت',
         ];
 
         $validator = Validator::make($request->all(), $rules, $messages);
@@ -116,33 +161,53 @@ class CorporateCustomerController extends Controller
 
         $password = Str::random(10);
         
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($password),
-            'type' => 'corporate_customer',
-            'phone' => $request->phone,
-            'status' => $request->status ?? 'active',
-        ]);
-
+        \Illuminate\Support\Facades\DB::beginTransaction();
         $filePath = null;
-        if ($request->hasFile('commercial_record_file')) {
-            $fileName = time() . '_' . uniqid() . '.' . $request->file('commercial_record_file')->getClientOriginalExtension();
-            $request->file('commercial_record_file')->move(public_path('uploads/corporate/cr'), $fileName);
-            $filePath = 'uploads/corporate/cr/' . $fileName;
+        try {
+            $status = $request->filled('status') ? $request->status : 'active';
+
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($password),
+                'type' => 'corporate_customer',
+                'phone' => $request->phone,
+                'status' => $status,
+            ]);
+
+            if ($request->hasFile('commercial_record_file')) {
+                $fileName = time() . '_' . uniqid() . '.' . $request->file('commercial_record_file')->getClientOriginalExtension();
+                $request->file('commercial_record_file')->move(public_path('uploads/corporate/cr'), $fileName);
+                $filePath = 'uploads/corporate/cr/' . $fileName;
+            }
+
+            CorporateCustomer::create([
+                'user_id' => $user->id,
+                'company_name_ar' => $request->name,
+                'company_name_en' => $request->name,
+                'commercial_record_number' => $request->commercial_record_number,
+                'commercial_record_file' => $filePath,
+                'tax_number' => $request->tax_number,
+                'address' => '',
+            ]);
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            return redirect()->route('admin.corporate-customers.index')->with('success', __('Customer created successfully.'));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+
+            if ($filePath && file_exists(public_path($filePath))) {
+                @unlink(public_path($filePath));
+            }
+
+            \Illuminate\Support\Facades\Log::error('Error creating corporate customer: ' . $e->getMessage(), [
+                'exception' => $e,
+                'request' => $request->except(['password', 'commercial_record_file'])
+            ]);
+
+            return back()->with('error', __('An error occurred while creating the corporate customer: ') . $e->getMessage())->withInput();
         }
-
-        CorporateCustomer::create([
-            'user_id' => $user->id,
-            'company_name_ar' => $request->name,
-            'company_name_en' => $request->name,
-            'commercial_record_number' => $request->commercial_record_number,
-            'commercial_record_file' => $filePath,
-            'tax_number' => $request->tax_number,
-            'address' => '',
-        ]);
-
-        return redirect()->route('admin.corporate-customers.index')->with('success', __('Customer created successfully.'));
     }
 
     public function show(Request $request, $id)
@@ -218,25 +283,45 @@ class CorporateCustomerController extends Controller
     {
         $profile = CorporateCustomer::with('user')->findOrFail($id);
         
+        // 1. Phone Normalization
+        $phone = $request->input('phone');
+        if ($phone) {
+            $phone = preg_replace('/\D/', '', $phone);
+            if (str_starts_with($phone, '00966')) {
+                $phone = substr($phone, 5);
+            }
+            if (str_starts_with($phone, '966')) {
+                $phone = substr($phone, 3);
+            }
+            $phone = ltrim($phone, '0');
+            $request->merge(['phone' => $phone]);
+        }
+
         $rules = [
-            'email' => 'required|string|email|max:255|unique:users,email,'.$profile->user_id,
-            'phone' => ['required', 'string', 'unique:users,phone,'.$profile->user_id, 'regex:/^[0-9]{9}$/'],
-            'name' => 'required|string|max:255',
-            'tax_number' => 'nullable|string|max:255',
-            'commercial_record_number' => 'nullable|string|max:255',
-            'commercial_record_file' => 'nullable|file|mimes:pdf,jpg,png,jpeg|max:2048',
+            'email'                     => 'required|string|email|max:255|unique:users,email,'.$profile->user_id,
+            'phone'                     => ['required', 'string', 'unique:users,phone,'.$profile->user_id, 'regex:/^[0-9]{9}$/'],
+            'name'                      => 'required|string|max:255|unique:corporate_customers,company_name_ar,'.$profile->id.'|unique:corporate_customers,company_name_en,'.$profile->id,
+            'tax_number'                => 'nullable|digits_between:1,20|unique:corporate_customers,tax_number,'.$profile->id,
+            'commercial_record_number'  => 'required|digits_between:1,20|unique:corporate_customers,commercial_record_number,'.$profile->id,
+            'commercial_record_file'    => 'nullable|file|mimes:pdf,jpg,png,jpeg,doc,docx|max:10240',
         ];
 
         $messages = [
-            'name.required' => 'يجب إدخال اسم الشركة',
-            'email.required' => 'يجب إدخال البريد الإلكتروني',
-            'email.email' => 'يرجى إدخال بريد إلكتروني صحيح',
-            'email.unique' => 'هذا البريد الإلكتروني مسجل مسبقاً',
-            'phone.required' => 'يجب إدخال رقم الجوال',
-            'phone.unique' => 'رقم الجوال مسجل مسبقاً',
-            'phone.regex' => 'يجب أن يتكون رقم الجوال من 9 أرقام بدون مفتاح الدولة (مثل: 501234567)',
-            'commercial_record_file.mimes' => 'يجب أن يكون الملف بصيغة PDF أو صورة (JPG, PNG)',
-            'commercial_record_file.max' => 'حجم الملف يجب ألا يتجاوز 2 ميجابايت',
+            'name.required'                             => 'يجب إدخال اسم الشركة',
+            'name.unique'                               => 'اسم الشركة مسجل مسبقاً في النظام',
+            'email.required'                            => 'يجب إدخال البريد الإلكتروني',
+            'email.email'                               => 'يرجى إدخال بريد إلكتروني صحيح',
+            'email.unique'                              => 'هذا البريد الإلكتروني مسجل مسبقاً',
+            'phone.required'                            => 'يجب إدخال رقم الجوال',
+            'phone.unique'                              => 'رقم الجوال مسجل مسبقاً',
+            'phone.regex'                               => 'يجب أن يتكون رقم الجوال من 9 أرقام بدون مفتاح الدولة (مثل: 501234567)',
+            'tax_number.digits_between'                 => 'الرقم الضريبي يجب أن يحتوي على أرقام فقط',
+            'tax_number.unique'                         => 'الرقم الضريبي مسجل مسبقاً في النظام',
+            'commercial_record_number.required'         => 'يجب إدخال رقم السجل التجاري',
+            'commercial_record_number.digits_between'   => 'رقم السجل التجاري يجب أن يحتوي على أرقام فقط',
+            'commercial_record_number.unique'           => 'رقم السجل التجاري مسجل مسبقاً في النظام',
+            'commercial_record_file.mimes'              => 'يجب أن يكون الملف بصيغة PDF أو صورة (JPG, PNG) أو مستند Word (doc, docx)',
+            'commercial_record_file.max'                => 'حجم الملف يجب ألا يتجاوز 10 ميجابايت',
         ];
 
         $validator = Validator::make($request->all(), $rules, $messages);
@@ -245,34 +330,59 @@ class CorporateCustomerController extends Controller
              return back()->withErrors($validator)->withInput();
         }
 
-        $user = $profile->user;
-        if ($user) {
-            $user->email = $request->email;
-            $user->phone = $request->phone;
-            $user->status = $request->status;
-            $user->name = $request->name;
-            $user->save();
-        }
-
-        $data = [
-            'company_name_ar' => $request->name,
-            'company_name_en' => $request->name,
-            'tax_number' => $request->tax_number,
-            'commercial_record_number' => $request->commercial_record_number,
-        ];
-
-        if ($request->hasFile('commercial_record_file')) {
-            if ($profile->commercial_record_file && file_exists(public_path($profile->commercial_record_file))) {
-                unlink(public_path($profile->commercial_record_file));
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        $newFilePath = null;
+        try {
+            $user = $profile->user;
+            if ($user) {
+                $user->email = $request->email;
+                $user->phone = $request->phone;
+                if ($request->filled('status')) {
+                    $user->status = $request->status;
+                }
+                $user->name = $request->name;
+                $user->save();
             }
-            $fileName = time() . '_' . uniqid() . '.' . $request->file('commercial_record_file')->getClientOriginalExtension();
-            $request->file('commercial_record_file')->move(public_path('uploads/corporate/cr'), $fileName);
-            $data['commercial_record_file'] = 'uploads/corporate/cr/' . $fileName;
-        }
 
-        $profile->update($data);
-        
-        return redirect()->route('admin.corporate-customers.index')->with('success', __('Customer updated successfully.'));
+            $data = [
+                'company_name_ar' => $request->name,
+                'company_name_en' => $request->name,
+                'tax_number' => $request->tax_number,
+                'commercial_record_number' => $request->commercial_record_number,
+            ];
+
+            if ($request->hasFile('commercial_record_file')) {
+                $fileName = time() . '_' . uniqid() . '.' . $request->file('commercial_record_file')->getClientOriginalExtension();
+                $request->file('commercial_record_file')->move(public_path('uploads/corporate/cr'), $fileName);
+                $newFilePath = 'uploads/corporate/cr/' . $fileName;
+                $data['commercial_record_file'] = $newFilePath;
+            }
+
+            $oldFilePath = $profile->commercial_record_file;
+
+            $profile->update($data);
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            if ($newFilePath && $oldFilePath && file_exists(public_path($oldFilePath))) {
+                @unlink(public_path($oldFilePath));
+            }
+
+            return redirect()->route('admin.corporate-customers.index')->with('success', __('Customer updated successfully.'));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+
+            if ($newFilePath && file_exists(public_path($newFilePath))) {
+                @unlink(public_path($newFilePath));
+            }
+
+            \Illuminate\Support\Facades\Log::error('Error updating corporate customer: ' . $e->getMessage(), [
+                'exception' => $e,
+                'request' => $request->except(['commercial_record_file'])
+            ]);
+
+            return back()->with('error', __('An error occurred while updating the corporate customer: ') . $e->getMessage())->withInput();
+        }
     }
 
     public function download(Request $request)
@@ -345,19 +455,34 @@ class CorporateCustomerController extends Controller
 
     public function toggleBlock($id)
     {
-        $customer = CorporateCustomer::findOrFail($id);
-        $user = $customer->user;
-        
-        $user->status = ($user->status == 'active') ? 'blocked' : 'active';
-        if ($user->status === 'active') {
-            $user->blocked_at = null;
+        // Attempt to locate a corporate customer with its related user.
+        $customer = CorporateCustomer::with('user')->find($id);
+        $user = null;
+        if ($customer && $customer->user) {
+            $user = $customer->user;
         } else {
-            $user->blocked_at = now();
+            // Fallback: treat the supplied id as a direct user id.
+            $user = User::find($id);
         }
-        $user->save();
 
-        $message = ($user->status == 'blocked') ? __('Account blocked successfully.') : __('Account activated successfully.');
-        return back()->with('success', $message);
+        if (!$user) {
+            return back()->with('error', __('User record not found'));
+        }
+
+        // Toggle status between active, blocked, and inactive.
+        if ($user->status === 'blocked' || $user->status === 'inactive') {
+            $user->status = 'active';
+            $user->blocked_at = null;
+            $message = __('Account activated successfully');
+        } else {
+            $user->status = 'blocked';
+            $user->blocked_at = now();
+            $message = __('Account blocked successfully');
+        }
+
+        $user->save();
+        // logger()->info('Corporate customer status toggled', ['account_id' => $user->id, 'new_status' => $user->status]);
+        return redirect()->route('admin.corporate-customers.index')->with('success', $message);
     }
     
     public function bulkBlock(Request $request)

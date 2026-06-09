@@ -153,9 +153,9 @@
             <h2 class="text-[15px] font-black text-[#1A1A31] dark:text-white text-right">{{ __('Issue Image') }}</h2>
         </div>
         <div class="p-8 flex justify-end">
-            <a href="{{ asset('storage/' . $item->attachment) }}" target="_blank" class="group">
+            <a href="{{ $item->attachment_url }}" target="_blank" class="group">
                 <div class="w-20 h-20 rounded-2xl overflow-hidden border-2 border-slate-100 dark:border-white/10 shadow-sm group-hover:scale-105 transition-transform">
-                    <img src="{{ asset('storage/' . $item->attachment) }}" alt="{{ __('Issue Image') }}" class="w-full h-full object-cover">
+                    <img src="{{ $item->attachment_url }}" alt="{{ __('Issue Image') }}" class="w-full h-full object-cover">
                 </div>
             </a>
         </div>

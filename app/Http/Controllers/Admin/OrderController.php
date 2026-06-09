@@ -118,11 +118,35 @@ class OrderController extends Controller
 
         $items = $query->paginate(25);
         
+        $totalPremium = Order::whereIn('status', ['scheduled', 'in_progress', 'completed'])->count();
+        $totalPremiumLastWeek = Order::whereIn('status', ['scheduled', 'in_progress', 'completed'])->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
+        $totalPremiumGrowth = $totalPremiumLastWeek > 0 ? (($totalPremium - $totalPremiumLastWeek) / $totalPremiumLastWeek) * 100 : ($totalPremium > 0 ? 100 : 0);
+
+        $scheduledPremium = Order::where('status', 'scheduled')->count();
+        $scheduledPremiumLastWeek = Order::where('status', 'scheduled')->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
+        $scheduledPremiumGrowth = $scheduledPremiumLastWeek > 0 ? (($scheduledPremium - $scheduledPremiumLastWeek) / $scheduledPremiumLastWeek) * 100 : ($scheduledPremium > 0 ? 100 : 0);
+
+        $inProgressPremium = Order::where('status', 'in_progress')->count();
+        $inProgressPremiumLastWeek = Order::where('status', 'in_progress')->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
+        $inProgressPremiumGrowth = $inProgressPremiumLastWeek > 0 ? (($inProgressPremium - $inProgressPremiumLastWeek) / $inProgressPremiumLastWeek) * 100 : ($inProgressPremium > 0 ? 100 : 0);
+
+        $completedPremium = Order::where('status', 'completed')->count();
+        $completedPremiumLastWeek = Order::where('status', 'completed')->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
+        $completedPremiumGrowth = $completedPremiumLastWeek > 0 ? (($completedPremium - $completedPremiumLastWeek) / $completedPremiumLastWeek) * 100 : ($completedPremium > 0 ? 100 : 0);
+
         $stats = [
-            'total' => Order::whereIn('status', ['scheduled', 'in_progress', 'completed'])->count(),
-            'scheduled' => Order::where('status', 'scheduled')->count(),
-            'in_progress' => Order::where('status', 'in_progress')->count(),
-            'completed' => Order::where('status', 'completed')->count(),
+            'total' => $totalPremium,
+            'total_trend' => ($totalPremiumGrowth >= 0 ? '+' : '') . number_format($totalPremiumGrowth, 2) . '%',
+            'total_trend_value' => $totalPremiumGrowth,
+            'scheduled' => $scheduledPremium,
+            'scheduled_trend' => ($scheduledPremiumGrowth >= 0 ? '+' : '') . number_format($scheduledPremiumGrowth, 2) . '%',
+            'scheduled_trend_value' => $scheduledPremiumGrowth,
+            'in_progress' => $inProgressPremium,
+            'in_progress_trend' => ($inProgressPremiumGrowth >= 0 ? '+' : '') . number_format($inProgressPremiumGrowth, 2) . '%',
+            'in_progress_trend_value' => $inProgressPremiumGrowth,
+            'completed' => $completedPremium,
+            'completed_trend' => ($completedPremiumGrowth >= 0 ? '+' : '') . number_format($completedPremiumGrowth, 2) . '%',
+            'completed_trend_value' => $completedPremiumGrowth,
         ];
 
         // Get categories and services for filters
@@ -233,13 +257,49 @@ class OrderController extends Controller
 
         $items = $query->paginate(25);
         
+        $totalOrders = Order::count();
+        $totalOrdersLastWeek = Order::where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
+        $totalOrdersGrowth = $totalOrdersLastWeek > 0 ? (($totalOrders - $totalOrdersLastWeek) / $totalOrdersLastWeek) * 100 : ($totalOrders > 0 ? 100 : 0);
+
+        $scheduledOrders = Order::where('status', 'scheduled')->count();
+        $scheduledOrdersLastWeek = Order::where('status', 'scheduled')->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
+        $scheduledOrdersGrowth = $scheduledOrdersLastWeek > 0 ? (($scheduledOrders - $scheduledOrdersLastWeek) / $scheduledOrdersLastWeek) * 100 : ($scheduledOrders > 0 ? 100 : 0);
+
+        $inProgressOrders = Order::where('status', 'in_progress')->count();
+        $inProgressOrdersLastWeek = Order::where('status', 'in_progress')->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
+        $inProgressOrdersGrowth = $inProgressOrdersLastWeek > 0 ? (($inProgressOrders - $inProgressOrdersLastWeek) / $inProgressOrdersLastWeek) * 100 : ($inProgressOrders > 0 ? 100 : 0);
+
+        $completedOrders = Order::where('status', 'completed')->count();
+        $completedOrdersLastWeek = Order::where('status', 'completed')->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
+        $completedOrdersGrowth = $completedOrdersLastWeek > 0 ? (($completedOrders - $completedOrdersLastWeek) / $completedOrdersLastWeek) * 100 : ($completedOrders > 0 ? 100 : 0);
+
+        $rejectedOrders = Order::where('status', 'rejected')->count();
+        $rejectedOrdersLastWeek = Order::where('status', 'rejected')->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
+        $rejectedOrdersGrowth = $rejectedOrdersLastWeek > 0 ? (($rejectedOrders - $rejectedOrdersLastWeek) / $rejectedOrdersLastWeek) * 100 : ($rejectedOrders > 0 ? 100 : 0);
+
+        $newOrders = Order::where('status', 'new')->count();
+        $newOrdersLastWeek = Order::where('status', 'new')->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
+        $newOrdersGrowth = $newOrdersLastWeek > 0 ? (($newOrders - $newOrdersLastWeek) / $newOrdersLastWeek) * 100 : ($newOrders > 0 ? 100 : 0);
+
         $stats = [
-            'total' => Order::count(),
-            'scheduled' => Order::where('status', 'scheduled')->count(),
-            'in_progress' => Order::where('status', 'in_progress')->count(),
-            'completed' => Order::where('status', 'completed')->count(),
-            'rejected' => Order::where('status', 'rejected')->count(),
-            'new' => Order::where('status', 'new')->count(),
+            'total' => $totalOrders,
+            'total_trend' => ($totalOrdersGrowth >= 0 ? '+' : '') . number_format($totalOrdersGrowth, 2) . '%',
+            'total_trend_value' => $totalOrdersGrowth,
+            'scheduled' => $scheduledOrders,
+            'scheduled_trend' => ($scheduledOrdersGrowth >= 0 ? '+' : '') . number_format($scheduledOrdersGrowth, 2) . '%',
+            'scheduled_trend_value' => $scheduledOrdersGrowth,
+            'in_progress' => $inProgressOrders,
+            'in_progress_trend' => ($inProgressOrdersGrowth >= 0 ? '+' : '') . number_format($inProgressOrdersGrowth, 2) . '%',
+            'in_progress_trend_value' => $inProgressOrdersGrowth,
+            'completed' => $completedOrders,
+            'completed_trend' => ($completedOrdersGrowth >= 0 ? '+' : '') . number_format($completedOrdersGrowth, 2) . '%',
+            'completed_trend_value' => $completedOrdersGrowth,
+            'rejected' => $rejectedOrders,
+            'rejected_trend' => ($rejectedOrdersGrowth >= 0 ? '+' : '') . number_format($rejectedOrdersGrowth, 2) . '%',
+            'rejected_trend_value' => $rejectedOrdersGrowth,
+            'new' => $newOrders,
+            'new_trend' => ($newOrdersGrowth >= 0 ? '+' : '') . number_format($newOrdersGrowth, 2) . '%',
+            'new_trend_value' => $newOrdersGrowth,
         ];
 
         $categories = Service::whereNull('parent_id')->with('children')->get();
@@ -506,7 +566,7 @@ class OrderController extends Controller
                 return [
                     'id' => $tech->id,
                     'name' => $tech->user->name,
-                    'avatar' => $tech->user->avatar ? asset('storage/' . $tech->user->avatar) : null,
+                    'avatar' => $tech->user->avatar_url,
                     'specialty' => __('Specialist in maintenance services'),
                     'service_name' => $tech->service->name_ar ?? __('Technician'),
                     'rating' => round($tech->reviews_avg_rating ?? 0, 1),
@@ -560,7 +620,7 @@ class OrderController extends Controller
                 return [
                     'id' => $comp->id,
                     'name' => $comp->company_name_ar ?? $comp->user->name,
-                    'avatar' => $comp->user->avatar ? asset('storage/' . $comp->user->avatar) : null,
+                    'avatar' => $comp->user->avatar_url,
                     'specialty' => __('Certified Maintenance Company'),
                     'rating' => 4.5,
                     'district' => $comp->city->name_ar ?? __('Riyadh District'),

@@ -70,6 +70,24 @@
                     </div>
                 </div>
 
+                <!-- Password Section -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Password -->
+                    <div class="space-y-3">
+                        <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">{{ __('Password') }}</label>
+                        <input type="password" name="password" required placeholder="{{ __('Enter password') }}"
+                               class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none @error('password') border-red-500 @enderror">
+                        @error('password') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <!-- Password Confirmation (Optional but good practice) -->
+                    <div class="space-y-3">
+                        <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">{{ __('Confirm Password') }}</label>
+                        <input type="password" name="password_confirmation" required placeholder="{{ __('Confirm password') }}"
+                               class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none">
+                    </div>
+                </div>
+
                 <!-- Permissions (Roles) -->
                 <div class="space-y-4">
                     <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">{{ __('Permissions & Roles') }}</label>

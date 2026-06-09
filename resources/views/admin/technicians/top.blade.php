@@ -50,7 +50,7 @@
         <div class="flex items-start justify-between mb-4">
              <div class="w-16 h-16 rounded-2xl overflow-hidden ring-4 ring-slate-50 dark:ring-white/5 shadow-lg transform group-hover:scale-105 transition-transform duration-300">
                 @if($item->image)
-                    <img src="{{ asset('storage/'.$item->image) }}" class="w-full h-full object-cover">
+                    <img src="{{ $item->image_url }}" class="w-full h-full object-cover">
                 @else
                     <div class="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-xl">
                         {{ mb_substr(app()->getLocale() == 'ar' ? $item->name_ar : $item->name_en, 0, 1) }}
@@ -152,7 +152,7 @@
                             <div class="flex items-center gap-3">
                                 <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary-light flex items-center justify-center text-white font-black overflow-hidden group-hover:ring-4 ring-primary/20 transition-all shadow-md shadow-primary/20">
                                     @if($item->image)
-                                        <img src="{{ asset('storage/'.$item->image) }}" class="w-full h-full object-cover">
+                                        <img src="{{ $item->image_url }}" class="w-full h-full object-cover">
                                     @else
                                         <span class="text-lg">{{ mb_substr(app()->getLocale() == 'ar' ? $item->name_ar : $item->name_en, 0, 1) }}</span>
                                     @endif

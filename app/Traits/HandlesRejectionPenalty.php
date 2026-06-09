@@ -15,6 +15,19 @@ trait HandlesRejectionPenalty
      * @param Order $order
      * @param User $user The user who rejected the order (Technician or Company User)
      */
+    /**
+     * Check if user is allowed to reject orders (Max 5 rejections in last 30 days).
+     */
+    protected function checkRejectionLimit(User $user)
+    {
+        $blockThreshold = (int) Setting::getByKey('rejection_block_threshold', 5);
+        $rejectionCount = Order::where('rejected_by_user_id', $user->id)
+            ->where('updated_at', '>=', now()->subDays(30))
+            ->count();
+
+        return $rejectionCount < $blockThreshold;
+    }
+
     protected function handleRejectionPenalty(Order $order, User $user)
     {
         // 1. Record the rejection on the order
@@ -25,8 +38,8 @@ trait HandlesRejectionPenalty
             ->where('updated_at', '>=', now()->subDays(30))
             ->count();
 
-        $warningThreshold = (int) Setting::getByKey('rejection_warning_threshold', 10);
-        $blockThreshold = (int) Setting::getByKey('rejection_block_threshold', 15);
+        $warningThreshold = (int) Setting::getByKey('rejection_warning_threshold', 3);
+        $blockThreshold = (int) Setting::getByKey('rejection_block_threshold', 5);
 
         // 3. Logic for Penalties
         if ($rejectionCount == $warningThreshold) {

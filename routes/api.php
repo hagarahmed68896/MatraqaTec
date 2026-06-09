@@ -95,6 +95,16 @@ Route::apiResource('districts', DistrictController::class)->only(['index', 'show
 Route::apiResource('services', ServiceController::class)->only(['index', 'show']);
 Route::apiResource('contents', ContentController::class)->only(['index', 'show']);
 
+// Informational Resources (Smart filtering via SupportController - Public optional authentication)
+Route::get('terms', [SupportController::class, 'terms']);
+Route::get('privacy-policies', [SupportController::class, 'privacy']);
+Route::get('faqs', [SupportController::class, 'faqs']);
+Route::get('support', [SupportController::class, 'index']);
+Route::apiResource('social-links', SocialLinkController::class)->only(['index', 'show']);
+
+Route::get('contact_us', [SupportController::class, 'index']); // Alias
+Route::get('privacy_terms', [SupportController::class, 'privacy']); // Alias for app
+
 Route::post('/technician-requests', [TechnicianRequestController::class, 'store']); // Public Apply
 
 // Payment Webhooks / Callbacks (Must be public)
@@ -106,16 +116,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/account', [AuthController::class, 'deleteAccount']);
     Route::get('/profile', [AuthController::class, 'profile']); // Generic profile info
     Route::get('/home', [\App\Http\Controllers\Api\HomeController::class, 'index']);
-
-    // Informational Resources (Smart filtering via SupportController)
-    Route::get('terms', [SupportController::class, 'terms']);
-    Route::get('privacy-policies', [SupportController::class, 'privacy']);
-    Route::get('faqs', [SupportController::class, 'faqs']);
-    Route::get('support', [SupportController::class, 'index']);
-    Route::apiResource('social-links', SocialLinkController::class)->only(['index', 'show']);
-    
-    Route::get('contact_us', [SupportController::class, 'index']); // Alias
-    Route::get('privacy_terms', [SupportController::class, 'privacy']); // Alias for app
     
     Route::apiResource('reviews', ReviewController::class)->only(['index', 'show']); // Often public
 

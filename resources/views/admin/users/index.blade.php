@@ -106,7 +106,7 @@
                                 <a href="{{ route('admin.users.edit', $user->id) }}" class="p-2 rounded-lg hover:bg-yellow-50 dark:hover:bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 transition-all" title="{{ __('Edit') }}">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                 </a>
-                                <form action="{{ route('admin.users.toggle-block', $user->id) }}" method="POST" class="inline">
+                                <form action="{{ route('admin.users.toggle-block', $user->id) }}" method="POST" class="inline" @click.stop onsubmit="event.stopPropagation()">
                                     @csrf
                                     <button type="submit" class="p-2 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-500/10 text-orange-600 dark:text-orange-400 transition-all" title="{{ $user->status == 'active' ? __('Block') : __('Unblock') }}">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>

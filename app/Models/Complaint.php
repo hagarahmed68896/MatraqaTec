@@ -21,6 +21,22 @@ class Complaint extends Model
         'status',
     ];
 
+    protected $appends = ['attachment_url'];
+
+    public function getAttachmentUrlAttribute()
+    {
+        if (!$this->attachment) {
+            return null;
+        }
+        if (str_starts_with($this->attachment, 'http')) {
+            return $this->attachment;
+        }
+        if (str_starts_with($this->attachment, 'uploads/')) {
+            return asset($this->attachment);
+        }
+        return asset('storage/' . $this->attachment);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

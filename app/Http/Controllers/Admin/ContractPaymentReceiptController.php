@@ -42,7 +42,7 @@ class ContractPaymentReceiptController extends Controller
         $contract = Contract::findOrFail($contractId);
 
         $validator = Validator::make($request->all(), [
-            'receipt_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'receipt_file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
             'amount' => 'required|numeric|min:0',
             'payment_date' => 'required|date',
             'payment_method' => 'required|in:bank_transfer,cash,check,other',

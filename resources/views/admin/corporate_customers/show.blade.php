@@ -1,4 +1,4 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('title', __('Corporate Profile') . ' - ' . $item->user->name)
 
@@ -281,7 +281,7 @@
                                 </div>
                                 <span class="text-xs font-black text-slate-700 dark:text-white/80">{{ __('Commercial Record') }}</span>
                             </div>
-                            <a href="{{ asset('storage/'.$item->commercial_record_file) }}" target="_blank" class="text-[10px] font-black text-indigo-600 hover:underline">{{ __('View') }}</a>
+                            <a href="{{ $item->commercial_record_url }}" target="_blank" class="text-[10px] font-black text-indigo-600 hover:underline">{{ __('View') }}</a>
                         </div>
                         @endif
                     </div>
@@ -577,7 +577,7 @@
                                 <td class="py-5 px-2 text-slate-800 dark:text-white font-black">#{{ $contract->contract_number ?? '-' }}</td>
                                 <td class="py-5 px-2">
                                     @if($contract->contract_file)
-                                    <a href="{{ asset('storage/' . $contract->contract_file) }}" target="_blank" class="text-primary hover:underline">
+                                    <a href="{{ $contract->contract_file_url }}" target="_blank" class="text-primary hover:underline">
                                         {{ __('View') }}
                                     </a>
                                     @else

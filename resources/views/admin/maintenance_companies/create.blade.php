@@ -32,10 +32,12 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <!-- Company Name -->
                 <div class="space-y-3">
-                    <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">{{ __('Company Name') }}</label>
+                    <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">
+                        {{ __('Company Name') }} <span class="text-red-500">*</span>
+                    </label>
                     <input type="text" name="name" value="{{ old('name') }}" required 
-                           class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none @error('name') border-red-500 @enderror">
-                    @error('name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                           class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none @error('name') border-red-500 bg-red-50 dark:bg-red-500/5 @enderror">
+                    @error('name') <p class="text-red-500 text-xs mt-1 font-bold">⚠ {{ $message }}</p> @enderror
                 </div>
 
                 <!-- Phone -->
@@ -79,26 +81,48 @@
             <div class="space-y-8">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="space-y-3">
-                        <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">{{ __('Tax Number') }}</label>
-                        <input type="text" name="tax_number" value="{{ old('tax_number') }}" 
-                               class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none">
+                        <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">
+                            {{ __('Tax Number') }}
+                            <span class="text-xs text-slate-400 font-normal">({{ __('أرقام فقط') }})</span>
+                        </label>
+                        <input type="text" name="tax_number" value="{{ old('tax_number') }}"
+                               inputmode="numeric"
+                               pattern="[0-9]*"
+                               oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                               class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none @error('tax_number') border-red-500 bg-red-50 dark:bg-red-500/5 @enderror">
+                        @error('tax_number') <p class="text-red-500 text-xs mt-1 font-bold">⚠ {{ $message }}</p> @enderror
                     </div>
                     <div class="space-y-3">
-                        <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">{{ __('Commercial Record Number') }}</label>
-                        <input type="text" name="commercial_record_number" value="{{ old('commercial_record_number') }}" 
-                               class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none">
+                        <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">
+                            {{ __('Commercial Record Number') }} <span class="text-red-500">*</span>
+                            <span class="text-xs text-slate-400 font-normal">({{ __('أرقام فقط') }})</span>
+                        </label>
+                        <input type="text" name="commercial_record_number" value="{{ old('commercial_record_number') }}"
+                               inputmode="numeric"
+                               pattern="[0-9]*"
+                               oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                               class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none @error('commercial_record_number') border-red-500 bg-red-50 dark:bg-red-500/5 @enderror">
+                        @error('commercial_record_number') <p class="text-red-500 text-xs mt-1 font-bold">⚠ {{ $message }}</p> @enderror
                     </div>
                 </div>
 
-                <div class="space-y-3" x-data="{ fileName: '' }">
-                    <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">{{ __('Commercial Register File') }}</label>
+                <div class="space-y-3" x-data="{ fileName: '', hasFile: false }">
+                    <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">
+                        {{ __('Commercial Register File') }} <span class="text-red-500">*</span>
+                    </label>
                     <div class="flex gap-4">
-                        <div class="flex-1 bg-slate-50 dark:bg-white/5 border border-transparent rounded-2xl px-6 py-4 text-sm font-bold text-slate-400 truncate" x-text="fileName || '{{ __('No file selected') }}'"></div>
-                        <label class="px-8 py-4 bg-slate-900 dark:bg-white/10 text-white rounded-2xl font-black hover:bg-black transition-all text-xs uppercase tracking-widest cursor-pointer whitespace-nowrap">
+                        <div class="flex-1 border rounded-2xl px-6 py-4 text-sm font-bold truncate"
+                             :class="hasFile ? 'border-green-400 bg-green-50 dark:bg-green-500/5 text-green-600 dark:text-green-400' : '@error('commercial_record_file') border-red-400 bg-red-50 dark:bg-red-500/5 text-red-400 @else bg-slate-50 dark:bg-white/5 border-transparent text-slate-400 @enderror'"
+                             x-text="fileName || '{{ __('No file selected') }}'">
+                        </div>
+                        <label class="px-8 py-4 bg-slate-900 dark:bg-white/10 text-white rounded-2xl font-black hover:bg-black transition-all text-xs uppercase tracking-widest cursor-pointer whitespace-nowrap flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                             {{ __('Choose File') }}
-                            <input type="file" name="commercial_record_file" class="hidden" @change="fileName = $event.target.files[0].name">
+                            <input type="file" name="commercial_record_file" class="hidden"
+                                   @change="fileName = $event.target.files[0]?.name ?? ''; hasFile = !!$event.target.files[0]">
                         </label>
                     </div>
+                    @error('commercial_record_file') <p class="text-red-500 text-xs mt-1 font-bold">⚠ {{ $message }}</p> @enderror
                 </div>
             </div>
         </div>

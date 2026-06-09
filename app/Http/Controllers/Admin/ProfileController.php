@@ -110,7 +110,19 @@ class ProfileController extends Controller
     {
         $request->validate([
             'current_password' => 'required|current_password',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                function ($attribute, $value, $fail) use ($request) {
+                    if (Hash::check($value, $request->user()->password)) {
+                        $fail(__('The new password must be different from the old password.'));
+                    }
+                },
+            ],
+        ], [
+            'password.min' => __('The password is too short. It must be at least 8 characters.'),
         ]);
 
         $user = $request->user();

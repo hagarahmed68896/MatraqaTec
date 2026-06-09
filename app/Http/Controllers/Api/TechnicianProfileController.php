@@ -15,6 +15,8 @@ use Illuminate\Validation\Rules\Password;
 
 class TechnicianProfileController extends Controller
 {
+    use \App\Traits\HandlesLocation;
+
     /**
      * Get basic profile data
      */
@@ -40,6 +42,12 @@ class TechnicianProfileController extends Controller
     {
         $user = $request->user();
         
+        // Normalize IBAN if present
+        if ($request->filled('iban')) {
+            $iban = strtoupper(str_replace(' ', '', $request->iban));
+            $request->merge(['iban' => $iban]);
+        }
+
         $request->validate([
             'name' => 'nullable|string|max:255',
             'phone' => 'nullable|string|unique:users,phone,' . $user->id,
@@ -50,8 +58,15 @@ class TechnicianProfileController extends Controller
             'account_name' => 'nullable|string',
             'account_number' => 'nullable|string',
             'bank_address' => 'nullable|string',
-            'iban' => 'nullable|string',
+            'iban' => ['nullable', 'string', 'regex:/^SA[0-9]{22}$/'],
             'swift_code' => 'nullable|string',
+            'address' => 'nullable|string|max:255',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'lat' => 'nullable|numeric|between:-90,90',
+            'lng' => 'nullable|numeric|between:-180,180',
+        ], [
+            'iban.regex' => __('The IBAN must start with SA and be exactly 24 characters long (e.g., SAXXXXXXXXXXXXXXXXXXXXXX).'),
         ]);
 
         // Update User
@@ -82,6 +97,37 @@ class TechnicianProfileController extends Controller
             $request->file('avatar')->move(public_path('uploads/avatars'), $fileName);
             $user->avatar = 'uploads/avatars/' . $fileName;
         }
+
+        // Update Location if provided
+        $latitude = $request->latitude ?? $request->lat;
+        $longitude = $request->longitude ?? $request->lng;
+        
+        if ($latitude !== null && $longitude !== null) {
+            $user->latitude = $latitude;
+            $user->longitude = $longitude;
+
+            // Auto-detect City and verify against DB
+            $locationData = $this->getLocationDataFromCoords($latitude, $longitude);
+            if ($locationData) {
+                if (!$request->filled('address') && !empty($locationData['display_name'])) {
+                    $user->address = $locationData['display_name'];
+                }
+                if (!empty($locationData['city_name'])) {
+                    $cityName = $locationData['city_name'];
+                    $city = \App\Models\City::where('name_ar', 'LIKE', "%{$cityName}%")
+                                            ->orWhere('name_en', 'LIKE', "%{$cityName}%")
+                                            ->first();
+                    if ($city) {
+                        $user->city_id = $city->id;
+                    }
+                }
+            }
+        }
+
+        if ($request->filled('address')) {
+            $user->address = $request->address;
+        }
+
         $user->save();
 
         // Update Profile (Technician or Maintenance Company)
@@ -426,6 +472,10 @@ class TechnicianProfileController extends Controller
                     $sq->where('status', 'new')
                        ->where('city_id', $user->city_id)
                        ->whereNull('technician_id')
+                       ->where(function($q_rej) use ($user) {
+                           $q_rej->whereNull('rejected_by_user_id')
+                                 ->orWhere('rejected_by_user_id', '!=', $user->id);
+                       })
                        ->where(function($sq2) use ($technician) {
                            $sq2->where('service_id', $technician->service_id)
                                ->orWhereHas('service', function($q2) use ($technician) {

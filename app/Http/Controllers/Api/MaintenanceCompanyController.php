@@ -58,6 +58,12 @@ class MaintenanceCompanyController extends Controller
         $company = MaintenanceCompany::where('user_id', $user->id)->first();
         if (!$company) return response()->json(['status' => false, 'message' => 'Company not found'], 404);
         
+        // Normalize IBAN if present
+        if ($request->filled('iban')) {
+            $iban = strtoupper(str_replace(' ', '', $request->iban));
+            $request->merge(['iban' => $iban]);
+        }
+
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|email|unique:users,email,' . $user->id,
@@ -67,7 +73,7 @@ class MaintenanceCompanyController extends Controller
             'account_name' => 'sometimes|string|max:255',
             'account_number' => 'sometimes|string|max:255',
             'bank_address' => 'sometimes|string|max:500',
-            'iban' => 'sometimes|string|max:50',
+            'iban' => ['sometimes', 'string', 'regex:/^SA[0-9]{22}$/'],
             'swift_code' => 'sometimes|string|max:20',
             'city_id' => 'sometimes|exists:cities,id',
             'address' => 'sometimes|string',
@@ -76,6 +82,8 @@ class MaintenanceCompanyController extends Controller
             'lat' => 'sometimes|numeric',
             'lng' => 'sometimes|numeric',
             'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:5120',
+        ], [
+            'iban.regex' => __('The IBAN must start with SA and be exactly 24 characters long (e.g., SAXXXXXXXXXXXXXXXXXXXXXX).'),
         ]);
 
         if ($validator->fails()) {

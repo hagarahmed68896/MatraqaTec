@@ -89,7 +89,7 @@
 
             {{-- Footer Actions --}}
             <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-50 dark:border-white/5">
-                <form action="{{ route('admin.contents.destroy', $content->id) }}" method="POST" onsubmit="return confirm('{{ __('Are you sure?') }}')">
+                <form action="{{ route('admin.contents.destroy', $content->id) }}" method="POST" class="delete-content-form">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="px-8 h-12 flex items-center justify-center gap-3 bg-gray-200 dark:bg-white/5 text-slate-500 dark:text-white hover:text-red-500 rounded-2xl font-black text-sm transition-all whitespace-nowrap">
@@ -121,4 +121,45 @@
     </div>
     @endif
 </div>
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteForms = document.querySelectorAll('.delete-content-form');
+    deleteForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const isDark = document.documentElement.classList.contains('dark');
+            
+            Swal.fire({
+                title: "{{ __('Are you sure?') }}",
+                text: "{{ __('Are you sure you want to delete this item?') }}",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: "{{ __('Delete') }}",
+                cancelButtonText: "{{ __('Cancel') }}",
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-2xl p-8',
+                    title: 'text-xl font-black text-slate-800 dark:text-white pt-4',
+                    htmlContainer: 'text-sm font-bold text-slate-500 dark:text-slate-400 mt-2',
+                    confirmButton: 'px-8 py-3.5 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-black text-sm transition-all mx-2 cursor-pointer shadow-lg shadow-red-500/20',
+                    cancelButton: 'px-8 py-3.5 bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 rounded-2xl font-black text-sm hover:bg-slate-200 dark:hover:bg-white/20 transition-all mx-2 cursor-pointer'
+                },
+                background: isDark ? '#1A1A31' : '#ffffff',
+                color: isDark ? '#ffffff' : '#1e293b',
+                iconColor: '#ef4444',
+                heightAuto: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+});
+</script>
 @endsection

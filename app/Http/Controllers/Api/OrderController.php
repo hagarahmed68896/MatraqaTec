@@ -68,6 +68,10 @@ class OrderController extends Controller
                         $sq->where('status', 'new')
                            ->whereNull('technician_id')
                            ->where('city_id', $user->city_id)
+                           ->where(function($q_rej) use ($user) {
+                               $q_rej->whereNull('rejected_by_user_id')
+                                     ->orWhere('rejected_by_user_id', '!=', $user->id);
+                           })
                            ->where(function($sq2) use ($technician) {
                                $sq2->where('service_id', $technician->service_id)
                                    ->orWhereHas('service', function($q2) use ($technician) {
@@ -355,21 +359,27 @@ class OrderController extends Controller
         if (!$availableTech && !$request->boolean('force')) {
             $suggestedTime = $this->getSuggestedTime($targetServiceId, $cityId, $scheduledAt, $request->latitude, $request->longitude);
             
+            $debugDiagnostics = config('app.debug') 
+                ? $this->getDiagnostics($targetServiceId, $cityId, $scheduledAt, $request->latitude, $request->longitude) 
+                : null;
+
             // If suggestedTime is null, it means there are NO technicians for this service at all
             if (!$suggestedTime) {
-                return response()->json([
+                return response()->json(array_filter([
                     'status' => false,
                     'message' => 'No technician available for this service in your area currently.',
-                    'suggestion_message' => 'عذراً، لا يوجد فني متاح لهذه الخدمة في منطقتك حالياً، سنعمل على توفيرها قريباً.'
-                ], 200);
+                    'suggestion_message' => 'عذراً، لا يوجد فني متاح لهذه الخدمة في منطقتك حالياً، سنعمل على توفيرها قريباً.',
+                    'debug_diagnostics' => $debugDiagnostics
+                ]), 200);
             }
 
-            return response()->json([
+            return response()->json(array_filter([
                 'status' => false,
                 'message' => 'The selected time is currently fully booked.',
                 'suggested_time' => $suggestedTime->toDateTimeString(),
-                'suggestion_message' => 'لا يتوفر فني في الموعد الذي اخترته، ولكن نقترح عليك أقرب موعد متاح.'
-            ], 200);
+                'suggestion_message' => 'لا يتوفر فني في الموعد الذي اخترته، ولكن نقترح عليك أقرب موعد متاح.',
+                'debug_diagnostics' => $debugDiagnostics
+            ]), 200);
         }
 
         // 2. Create Order
@@ -1491,6 +1501,10 @@ class OrderController extends Controller
     public function accept(Request $request, $id)
     {
         $user = auth()->user();
+        if ($user && $user->type === 'technician') {
+            return $this->technicianAccept($request, $id);
+        }
+
         $technician = null;
         $company = null;
 
@@ -1571,10 +1585,9 @@ class OrderController extends Controller
         $order->status = 'scheduled';
         if ($company) {
             $order->maintenance_company_id = $company->id;
-            
-            // Validate the technician: Must belong to THIS company
-            $requestedTechId = $request->technician_id ?? $order->technician_id;
-            if ($requestedTechId) {
+            // Validate the technician: Must belong to THIS company (if explicitly provided)
+            if ($request->filled('technician_id')) {
+                $requestedTechId = $request->technician_id;
                 $checkTech = \App\Models\Technician::where('id', $requestedTechId)
                     ->where('maintenance_company_id', $company->id)
                     ->first();
@@ -1592,15 +1605,19 @@ class OrderController extends Controller
                         'status' => 'scheduled'
                     ]);
                 } else {
-                    if ($request->has('technician_id')) {
-                        return response()->json(['status' => false, 'message' => 'Selected technician does not belong to your company'], 422);
-                    }
-                    $order->technician_id = null;
-                    $order->sub_status = null;
+                    return response()->json(['status' => false, 'message' => 'Selected technician does not belong to your company'], 422);
                 }
             } else {
-                // Company accepted without assigning a technician yet
+                // Company accepted without assigning a technician yet (clear auto-assigned tech)
+                $order->technician_id = null;
                 $order->sub_status = null;
+
+                // Sync with Appointment
+                \App\Models\Appointment::where('order_id', $order->id)->update([
+                    'technician_id' => null,
+                    'appointment_date' => $request->scheduled_at ?? $order->scheduled_at,
+                    'status' => 'scheduled'
+                ]);
             }
         }
         
@@ -1748,6 +1765,14 @@ class OrderController extends Controller
             return response()->json(['status' => false, 'message' => 'Order not found'], 404);
         }
 
+        if (!$this->checkRejectionLimit($user)) {
+            $limit = (int) \App\Models\Setting::getByKey('rejection_block_threshold', 5);
+            return response()->json([
+                'status' => false,
+                'message' => __('You have reached the maximum allowed limit for rejecting orders (:limit orders). You cannot reject this order. Please contact support.', ['limit' => $limit])
+            ], 422);
+        }
+
         // 15-minute expiration check (Still relevant? If expired, can they refuse? Yes, to clear it.)
         // But maybe we don't block refusal if expired.
 
@@ -1758,6 +1783,7 @@ class OrderController extends Controller
         $order->technician_id = null; // Unassign technician
         $order->assigned_at = null;   // Clear assignment time
         $order->sub_status = null;    // Clear pending acceptance flag
+        $order->rejection_reason = $request->rejection_reason;
 
         // If the order belonged to a company, keep it 'scheduled' under the company
         // so the company can re-assign another technician.
@@ -1769,6 +1795,11 @@ class OrderController extends Controller
         }
 
         $order->save();
+
+        // Sync with Appointment (clear technician)
+        \App\Models\Appointment::where('order_id', $order->id)->update([
+            'technician_id' => null,
+        ]);
 
         // Check for penalties (Technician)
         $this->handleRejectionPenalty($order, $user);
@@ -1809,6 +1840,14 @@ class OrderController extends Controller
 
         if (!$order) {
             return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+        }
+
+        if (!$this->checkRejectionLimit($user)) {
+            $limit = (int) \App\Models\Setting::getByKey('rejection_block_threshold', 5);
+            return response()->json([
+                'status' => false,
+                'message' => __('You have reached the maximum allowed limit for rejecting orders (:limit orders). You cannot reject this order. Please contact support.', ['limit' => $limit])
+            ], 422);
         }
 
         $request->validate([

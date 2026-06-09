@@ -62,14 +62,18 @@ class AdminController extends Controller
             return redirect()->back()->with('error', __('Unauthorized access. Admin only.'))->withInput();
         }
 
+        // --- التعديل المؤقت للتيست: جعل الكود 0000 للأدمن ---
+        $otp = '0000';
+        /*
         $taqnyat = new TaqnyatOTP();
         $otp = $taqnyat->generateOtp();
+        */
         $user->otp = $otp;
         $user->otp_expires_at = Carbon::now()->addMinutes(10);
         $user->save();
 
-        $taqnyat->sendOTP($phone, $otp);
-        \Log::info("Admin OTP for {$phone}: {$otp}");
+        // $taqnyat->sendOTP($phone, $otp);
+        \Log::info("Admin OTP for {$phone}: {$otp} (Global Test Mode)");
         
         Session::put('pending_admin_phone', $phone);
         Session::put('admin_remember', $request->has('remember'));
@@ -103,13 +107,17 @@ class AdminController extends Controller
             return redirect()->back()->with('error', __('Admin phone not found.'))->withInput();
         }
 
+        // --- التعديل المؤقت للتيست: جعل الكود 0000 للأدمن ---
+        $otp = '0000';
+        /*
         $taqnyat = new TaqnyatOTP();
         $otp = $taqnyat->generateOtp();
+        */
         $user->otp = $otp;
         $user->otp_expires_at = Carbon::now()->addMinutes(10);
         $user->save();
 
-        $taqnyat->sendOTP($phone, $otp);
+        // $taqnyat->sendOTP($phone, $otp);
 
         Session::put('pending_admin_phone', $phone);
         Session::put('forgot_password_mode', true);

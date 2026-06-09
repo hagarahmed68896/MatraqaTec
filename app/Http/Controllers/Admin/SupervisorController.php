@@ -75,11 +75,13 @@ class SupervisorController extends Controller
             'first_name' => 'required|string|max:100',
             'last_name' => 'required|string|max:100',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'nullable|string|min:8',
+            'password' => 'required|string|min:8|confirmed',
             'phone' => 'required|string|unique:users',
             'roles' => 'required|array',
             'roles.*' => 'exists:roles,id',
             'status' => 'required|in:active,blocked',
+        ], [
+            'password.min' => __('The password is too short. It must be at least 8 characters.'),
         ]);
 
         if ($validator->fails()) {
@@ -124,10 +126,13 @@ class SupervisorController extends Controller
             'first_name' => 'required|string|max:100',
             'last_name' => 'required|string|max:100',
             'email' => 'required|string|email|max:255|unique:users,email,' . $id,
+            'password' => 'nullable|string|min:8|confirmed',
             'phone' => 'required|string|unique:users,phone,' . $id,
             'roles' => 'required|array',
             'roles.*' => 'exists:roles,id',
             'status' => 'required|in:active,blocked',
+        ], [
+            'password.min' => __('The password is too short. It must be at least 8 characters.'),
         ]);
 
         if ($validator->fails()) {

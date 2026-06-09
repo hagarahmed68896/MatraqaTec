@@ -5,8 +5,8 @@
 
 @section('content')
 <div class="max-w-4xl mx-auto pb-20" x-data="{ 
-    profileImage: '{{ $item->image ? asset('storage/' . $item->image) : null }}',
-    residenceImage: '{{ $item->national_id_image ? asset('storage/' . $item->national_id_image) : null }}',
+    profileImage: '{{ $item->image_url }}',
+    residenceImage: '{{ $item->national_id_image_url }}',
     selectedCity: '{{ $item->user->city_id ?? '' }}',
     selectedCategory: '{{ $item->category_id ?? '' }}',
     previewImage(event, type) {

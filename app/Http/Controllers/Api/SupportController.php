@@ -40,7 +40,7 @@ class SupportController extends Controller
      */
     public function faqs(Request $request)
     {
-        $user = $request->user();
+        $user = $request->user('sanctum') ?? auth('sanctum')->user();
         $type = $user ? $user->type : 'client';
         if ($type === 'individual') $type = 'client';
 
@@ -65,7 +65,7 @@ class SupportController extends Controller
      */
     public function terms(Request $request)
     {
-        $user = $request->user();
+        $user = $request->user('sanctum') ?? auth('sanctum')->user();
         $type = $user ? $user->type : 'client';
         if ($type === 'individual') $type = 'client';
 
@@ -89,7 +89,7 @@ class SupportController extends Controller
      */
     public function privacy(Request $request)
     {
-        $user = $request->user();
+        $user = $request->user('sanctum') ?? auth('sanctum')->user();
         $type = $user ? $user->type : 'client';
         if ($type === 'individual') $type = 'client';
 

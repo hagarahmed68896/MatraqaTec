@@ -59,10 +59,24 @@ class FcmService
                 return (is_array($val) || is_object($val)) ? json_encode($val) : (string)$val;
             }, $payloadData);
 
+            $notification = \Kreait\Firebase\Messaging\Notification::create($title, $body);
+
             $message = CloudMessage::withTarget('token', $user->fcm_token)
+                ->withNotification($notification)
                 ->withData($payloadData)
                 ->withAndroidConfig([
                     'priority' => 'high'
+                ])
+                ->withApnsConfig([
+                    'payload' => [
+                        'aps' => [
+                            'alert' => [
+                                'title' => $title,
+                                'body' => $body,
+                            ],
+                            'sound' => 'default',
+                        ],
+                    ],
                 ]);
 
             $response = $messaging->send($message);
@@ -103,10 +117,24 @@ class FcmService
                 return (is_array($val) || is_object($val)) ? json_encode($val) : (string)$val;
             }, $payloadData);
 
+            $notification = \Kreait\Firebase\Messaging\Notification::create($title, $body);
+
             $message = CloudMessage::withTarget('topic', $topic)
+                ->withNotification($notification)
                 ->withData($payloadData)
                 ->withAndroidConfig([
                     'priority' => 'high'
+                ])
+                ->withApnsConfig([
+                    'payload' => [
+                        'aps' => [
+                            'alert' => [
+                                'title' => $title,
+                                'body' => $body,
+                            ],
+                            'sound' => 'default',
+                        ],
+                    ],
                 ]);
 
             $messaging->send($message);

@@ -177,9 +177,12 @@
                 </div>
             </div>
 
-            <div class="pt-6 border-t border-slate-50 dark:border-white/5">
-                <button type="button" @click="addItem()" class="w-full py-5 bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] rounded-2xl font-black shadow-xl shadow-[#1A1A31]/10 dark:shadow-white/5 hover:scale-[0.99] transition-all">
+            <div class="pt-6 border-t border-slate-50 dark:border-white/5 flex gap-4">
+                <button type="button" @click="addItem()" class="flex-1 py-5 bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] rounded-2xl font-black shadow-xl shadow-[#1A1A31]/10 dark:shadow-white/5 hover:scale-[0.99] transition-all" x-text="editingIndex !== null ? '{{ __('Update Content Item') }}' : '{{ __('Add Content Item') }}'">
                     {{ __('Add Content Item') }}
+                </button>
+                <button type="button" x-show="editingIndex !== null" @click="cancelEdit()" class="px-8 py-5 bg-gray-200 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-2xl font-black transition-all hover:bg-red-50 hover:text-red-500" x-cloak>
+                    {{ __('Cancel') }}
                 </button>
             </div>
         </div>
@@ -190,7 +193,11 @@
             
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <template x-for="(item, index) in items" :key="index">
-                    <div class="relative group rounded-3xl overflow-hidden bg-slate-50 dark:bg-white/5 h-48 shadow-sm border border-slate-100 dark:border-white/5 transition-all hover:shadow-xl">
+                    <div class="relative group rounded-3xl overflow-hidden bg-slate-50 dark:bg-white/5 h-48 shadow-sm border border-slate-100 dark:border-white/5 transition-all hover:shadow-xl" :class="editingIndex === index ? 'ring-4 ring-[#1A1A31] dark:ring-white' : ''">
+                        <div x-show="editingIndex === index" class="absolute top-4 right-4 bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] px-3 py-1 rounded-xl text-[10px] font-black z-10 shadow-lg" x-cloak>
+                            {{ __('Editing') }}
+                        </div>
+                        
                         {{-- Image Display Fix --}}
                         <div class="absolute inset-0 w-full h-full bg-slate-100 dark:bg-white/5 flex items-center justify-center">
                             <svg x-show="!item.imagePreview" class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -236,6 +243,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('contentManager', (initialItems, isVisible) => ({
         is_visible: isVisible,
         items: initialItems,
+        editingIndex: null,
         currentItem: {
             title_ar: '',
             title_en: '',
@@ -281,8 +289,12 @@ document.addEventListener('alpine:init', () => {
 
             if (hasError) return;
 
-            // Create a fresh copy of currentItem
-            this.items.push({...this.currentItem});
+            if (this.editingIndex !== null) {
+                this.items[this.editingIndex] = {...this.currentItem};
+                this.editingIndex = null;
+            } else {
+                this.items.push({...this.currentItem});
+            }
             
             // Reset currentItem
             this.currentItem = {
@@ -302,16 +314,54 @@ document.addEventListener('alpine:init', () => {
         },
         
         removeItem(index) {
+            if (this.editingIndex === index) {
+                this.editingIndex = null;
+                this.currentItem = {
+                    title_ar: '',
+                    title_en: '',
+                    description_ar: '',
+                    description_en: '',
+                    button_text_ar: '',
+                    button_text_en: '',
+                    show_button: true,
+                    imagePreview: null
+                };
+            } else if (this.editingIndex > index) {
+                this.editingIndex--;
+            }
             this.items.splice(index, 1);
         },
         
         editItem(index) {
             this.currentItem = {...this.items[index]};
-            this.items.splice(index, 1);
+            this.editingIndex = index;
+        },
+
+        cancelEdit() {
+            this.editingIndex = null;
+            this.currentItem = {
+                title_ar: '',
+                title_en: '',
+                description_ar: '',
+                description_en: '',
+                button_text_ar: '',
+                button_text_en: '',
+                show_button: true,
+                imagePreview: null
+            };
+            this.errors.title_ar = '';
+            this.errors.image = '';
+            const fileInput = document.getElementById('item_image');
+            if (fileInput) fileInput.value = '';
         },
 
         submitForm(event) {
             const form = event.target;
+            if (this.editingIndex !== null) {
+                if (this.currentItem.title_ar && this.currentItem.imagePreview) {
+                    this.items[this.editingIndex] = {...this.currentItem};
+                }
+            }
             this.$refs.itemsJsonField.value = JSON.stringify(this.items);
             form.submit();
         }

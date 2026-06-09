@@ -88,7 +88,7 @@ class ContractController extends Controller
         }
 
         $request->validate([
-            'receipt_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'receipt_file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
             'amount'       => 'required|numeric|min:0',
             'payment_date' => 'required|date',
             'notes'        => 'nullable|string',
@@ -143,7 +143,7 @@ class ContractController extends Controller
         }
 
         $request->validate([
-            'contract_file' => 'required|file|mimes:pdf|max:10240',
+            'contract_file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
         ]);
 
         $file = $request->file('contract_file');
@@ -188,9 +188,9 @@ class ContractController extends Controller
             'project_value'   => 'nullable|numeric|min:0',
             'contact_numbers' => 'nullable|array',
             'contact_numbers.*' => 'nullable|string|max:30',
-            'contract_file'   => 'nullable|file|mimes:pdf|max:10240',
+            'contract_file'   => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
             // Optional Payment Receipt within the same update
-            'receipt_file'    => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'receipt_file'    => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
             'receipt_amount'  => 'required_with:receipt_file|numeric|min:0',
             'receipt_date'    => 'required_with:receipt_file|date',
             'receipt_notes'   => 'nullable|string',

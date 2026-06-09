@@ -53,6 +53,8 @@ class UserController extends Controller
             'password' => 'required|string|min:8',
             'type' => 'required|in:customer,technician,maintenance_company',
             'status' => 'required|in:active,blocked,pending,inactive',
+        ], [
+            'password.min' => __('The password is too short. It must be at least 8 characters.'),
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
@@ -89,6 +91,8 @@ class UserController extends Controller
         if ($request->filled('password')) {
             $request->validate([
                 'password' => 'string|min:8',
+            ], [
+                'password.min' => __('The password is too short. It must be at least 8 characters.'),
             ]);
             $validated['password'] = Hash::make($request->password);
         }

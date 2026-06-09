@@ -302,10 +302,10 @@
                 <div class="absolute -top-16 left-8">
                     <div class="relative">
                         <div class="w-32 h-32 rounded-3xl border-[6px] border-white dark:border-[#1A1A31] shadow-2xl overflow-hidden bg-gradient-to-br from-primary to-primary-light flex items-center justify-center ring-1 ring-black/5">
-                            <template x-if="selectedSupervisor && selectedSupervisor.image">
-                                <img :src="'/storage/' + selectedSupervisor.image" class="w-full h-full object-cover">
+                            <template x-if="selectedSupervisor && selectedSupervisor.avatar_url">
+                                <img :src="selectedSupervisor.avatar_url" class="w-full h-full object-cover">
                             </template>
-                            <template x-if="!(selectedSupervisor && selectedSupervisor.image)">
+                            <template x-if="!(selectedSupervisor && selectedSupervisor.avatar_url)">
                                 <span class="text-5xl text-white font-black drop-shadow-lg" x-text="selectedSupervisor ? selectedSupervisor.name.substring(0,1) : ''"></span>
                             </template>
                         </div>

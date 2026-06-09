@@ -210,7 +210,7 @@
                             'id' => $app->id,
                             'order_number' => $app->order->order_number ?? '---',
                             'tech_name' => $app->technician->user->name ?? ($app->technician->name ?? __('Unknown')),
-                            'tech_avatar' => $app->technician->user->avatar ?? null,
+                            'tech_avatar' => $app->technician->user->avatar_url ?? null,
                             'service_name' => $app->order->service->name_ar ?? ($app->order->service->name_en ?? '---'),
                             'customer_name' => $app->order->user->name ?? '---',
                             'customer_phone' => $app->order->user->phone ?? '---',
@@ -226,7 +226,7 @@
                             <div class="flex items-center gap-2">
                                 <div class="w-6 h-6 rounded-full overflow-hidden bg-slate-200 border-2 border-white dark:border-white/10 flex-shrink-0">
                                     @if($app->technician && $app->technician->user->avatar)
-                                        <img src="{{ asset('storage/' . $app->technician->user->avatar) }}" class="w-full h-full object-cover">
+                                        <img src="{{ $app->technician->user->avatar_url }}" class="w-full h-full object-cover">
                                     @else
                                         <div class="w-full h-full flex items-center justify-center bg-primary text-[8px] text-white">
                                             {{ mb_substr($app->technician->user->name ?? 'T', 0, 1) }}
@@ -274,7 +274,7 @@
                 <div class="flex items-center gap-4">
                     <div class="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                         <template x-if="selectedAppointment && selectedAppointment.tech_avatar">
-                            <img :src="'/storage/' + selectedAppointment.tech_avatar" class="w-full h-full rounded-2xl object-cover">
+                            <img :src="selectedAppointment.tech_avatar" class="w-full h-full rounded-2xl object-cover">
                         </template>
                         <template x-if="!selectedAppointment || !selectedAppointment.tech_avatar">
                             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>

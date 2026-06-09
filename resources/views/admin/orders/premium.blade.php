@@ -14,10 +14,10 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         @php
             $cardStats = [
-                ['label' => 'Total Orders', 'value' => $stats['total'], 'color' => '#10B981', 'trend' => '8.43%', 'icon' => 'orders'],
-                ['label' => 'Scheduled', 'value' => $stats['scheduled'], 'color' => '#10B981', 'trend' => '0.43%', 'icon' => 'accepted'],
-                ['label' => 'In Progress', 'value' => $stats['in_progress'], 'color' => '#EF4444', 'trend' => '8.43%', 'icon' => 'rejected'],
-                ['label' => 'Completed', 'value' => $stats['completed'], 'color' => '#64748B', 'trend' => '0.43%', 'icon' => 'review'],
+                ['label' => 'Total Orders', 'value' => $stats['total'], 'color' => '#10B981', 'trend_str' => $stats['total_trend'] ?? '+0.00%', 'trend_val' => $stats['total_trend_value'] ?? 0, 'icon' => 'orders'],
+                ['label' => 'Scheduled', 'value' => $stats['scheduled'], 'color' => '#10B981', 'trend_str' => $stats['scheduled_trend'] ?? '+0.00%', 'trend_val' => $stats['scheduled_trend_value'] ?? 0, 'icon' => 'accepted'],
+                ['label' => 'In Progress', 'value' => $stats['in_progress'], 'color' => '#EF4444', 'trend_str' => $stats['in_progress_trend'] ?? '+0.00%', 'trend_val' => $stats['in_progress_trend_value'] ?? 0, 'icon' => 'rejected'],
+                ['label' => 'Completed', 'value' => $stats['completed'], 'color' => '#64748B', 'trend_str' => $stats['completed_trend'] ?? '+0.00%', 'trend_val' => $stats['completed_trend_value'] ?? 0, 'icon' => 'review'],
             ];
         @endphp
 
@@ -33,8 +33,8 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-2 mt-2">
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ $stat['trend'] > 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600' }} border border-current opacity-60">
-                            {{ $stat['trend'] }}
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold {{ ($stat['trend_val'] ?? 0) >= 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600' }} border border-current opacity-60">
+                            {{ $stat['trend_str'] ?? '+0.00%' }}
                         </span>
                         <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{{ __('Compared to last week') }}</span>
                     </div>

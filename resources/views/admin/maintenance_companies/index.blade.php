@@ -6,18 +6,7 @@
 @section('content')
 <div class="space-y-6" x-data="{ 
     selectedIds: [], 
-    showFilters: false,
-    
-    // Block Modal State
-    showBlockModal: false,
-    blockTargetId: null,
-    blockAction: '',
-    
-    confirmBlock(id, currentStatus) {
-        this.blockTargetId = id;
-        this.blockAction = (currentStatus === 'active') ? '{{ __('Block') }}' : '{{ __('Unblock') }}';
-        this.showBlockModal = true;
-    }
+    showFilters: false
 }">
     <div class="flex items-center justify-between">
         <div>
@@ -33,7 +22,7 @@
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Total Companies') }}</p>
                     <div class="flex items-baseline gap-2">
                         <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total_companies'] ?? 0) }}</h3>
-                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 font-bold border border-green-500/20">0.43%+</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full {{ ($stats['total_companies_trend_value'] ?? 0) >= 0 ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20' }} font-bold border">{{ $stats['total_companies_trend'] ?? '+0.00%' }}</span>
                     </div>
                     <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium mt-1">{{ __('Compared to last week') }}</p>
                 </div>
@@ -50,7 +39,7 @@
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Total Technicians') }}</p>
                     <div class="flex items-baseline gap-2">
                         <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total_technicians_companies'] ?? 0) }}</h3>
-                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-500 font-bold border border-indigo-500/20">0.43%+</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full {{ ($stats['total_technicians_companies_trend_value'] ?? 0) >= 0 ? 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20' }} font-bold border">{{ $stats['total_technicians_companies_trend'] ?? '+0.00%' }}</span>
                     </div>
                     <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium mt-1">{{ __('Compared to last week') }}</p>
                 </div>
@@ -67,7 +56,7 @@
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Total Services') }}</p>
                     <div class="flex items-baseline gap-2">
                         <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total_services_offered'] ?? 0) }}</h3>
-                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 font-bold border border-blue-500/20">0.43%+</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full {{ ($stats['total_services_offered_trend_value'] ?? 0) >= 0 ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20' }} font-bold border">{{ $stats['total_services_offered_trend'] ?? '+0.00%' }}</span>
                     </div>
                     <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium mt-1">{{ __('Compared to last week') }}</p>
                 </div>
@@ -84,7 +73,7 @@
                     <p class="text-xs font-bold text-slate-400 dark:text-slate-300 mb-1">{{ __('Total Orders') }}</p>
                     <div class="flex items-baseline gap-2">
                         <h3 class="text-3xl font-black text-slate-800 dark:text-white">{{ number_format($stats['total_orders'] ?? 0) }}</h3>
-                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-bold border border-emerald-500/20">0.43%+</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full {{ ($stats['total_orders_trend_value'] ?? 0) >= 0 ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20' }} font-bold border">{{ $stats['total_orders_trend'] ?? '+0.00%' }}</span>
                     </div>
                     <p class="text-[10px] text-slate-400 dark:text-slate-300 font-medium mt-1">{{ __('Compared to last week') }}</p>
                 </div>
@@ -213,7 +202,7 @@
 
                                 <div class="flex gap-2 pt-2">
                                     <button type="submit" class="flex-1 py-3 bg-[#1A1A31] text-white border border-slate-100 dark:border-white/5 text-sm font-bold rounded-xl hover:bg-black transition-all shadow-lg">{{ __('Apply') }}</button>
-                                    <a href="{{ url()->current() }}" class="px-4 py-3 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-sm font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all text-center">{{ __('Reset') }}</a>
+                                    <button type="button" @click="window.location.href = '{{ url()->current() }}'" class="px-4 py-3 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-sm font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all text-center">{{ __('Reset') }}</button>
                                 </div>
                             </form>
                         </div>
@@ -325,25 +314,32 @@
                         <td class="py-4 px-6 text-center">
                             <span class="px-3 py-1 rounded-full text-[11px] uppercase
                                 {{ ($item->user->status ?? '') == 'active' ? 'bg-green-100 text-green-600 dark:bg-green-500/10 dark:text-green-400' : 'bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400' }}">
-                                {{ __($item->user->status ?? 'active') }}
+                                @if(($item->user->status ?? '') == 'inactive')
+                                    {{ __('معطل') }}
+                                @else
+                                    {{ __($item->user->status ?? 'active') }}
+                                @endif
                             </span>
                         </td>
                                      <td class="px-6 py-4 text-end" @click.stop>
-    <div class="flex items-center justify-end gap-1">
-        <button type="button" @click.stop="confirmBlock({{ $item->id }}, '{{ $item->user->status ?? 'active' }}')" 
-                class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-all">
-            
-            @if(($item->user->status ?? 'active') == 'active')
-                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-5 h-5" viewBox="0 0 16 16">
-                    <path d="M13.879 10.414a2.501 2.501 0 0 0-3.465 3.465zm.707.707-3.465 3.465a2.501 2.501 0 0 0 3.465-3.465m-4.56-1.096a3.5 3.5 0 1 1 4.949 4.95 3.5 3.5 0 0 1-4.95-4.95ZM11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0M8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4m.256 7a4.5 4.5 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10q.39 0 .74.025c.226-.341.496-.65.804-.918Q8.844 9.002 8 9c-5 0-6 3-6 4s1 1 1 1z"/>
-                </svg>
-            @else
-                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-5 h-5" viewBox="0 0 16 16">
-                    <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m1.679-4.493-1.335 2.226a.75.75 0 0 1-1.174.144l-.774-.773a.5.5 0 0 1 .708-.708l.547.548 1.17-1.951a.5.5 0 1 1 .858.514M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
-                    <path d="M2 13c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4"/>
-                </svg>
-            @endif
-        </button>
+        <form action="{{ route('admin.maintenance-companies.toggle-block', $item->id) }}" method="POST" class="inline" @click.stop onsubmit="event.stopPropagation()">
+            @csrf
+            <button type="submit" 
+                    class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-all"
+                    title="{{ ($item->user->status ?? 'active') == 'active' ? __('Block') : __('Unblock') }}">
+                
+                @if(($item->user->status ?? 'active') == 'active')
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-5 h-5" viewBox="0 0 16 16">
+                        <path d="M13.879 10.414a2.501 2.501 0 0 0-3.465 3.465zm.707.707-3.465 3.465a2.501 2.501 0 0 0 3.465-3.465m-4.56-1.096a3.5 3.5 0 1 1 4.949 4.95 3.5 3.5 0 0 1-4.95-4.95ZM11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0M8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4m.256 7a4.5 4.5 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10q.39 0 .74.025c.226-.341.496-.65.804-.918Q8.844 9.002 8 9c-5 0-6 3-6 4s1 1 1 1z"/>
+                    </svg>
+                @else
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-5 h-5" viewBox="0 0 16 16">
+                        <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m1.679-4.493-1.335 2.226a.75.75 0 0 1-1.174.144l-.774-.773a.5.5 0 0 1 .708-.708l.547.548 1.17-1.951a.5.5 0 1 1 .858.514M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+                        <path d="M2 13c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4"/>
+                    </svg>
+                @endif
+            </button>
+        </form>
 
         <a href="{{ route('admin.maintenance-companies.edit', $item->id) }}" 
            class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-all">
@@ -372,52 +368,6 @@
             {{ $items->links() }}
         </div>
         @endif
-    </div>
-
-    <!-- Block Confirmation Modal -->
-    <div x-show="showBlockModal" 
-         x-cloak
-         class="fixed inset-0 z-[999] flex items-center justify-center p-4"
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0">
-        
-        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showBlockModal = false"></div>
-        
-        <div @click.away="showBlockModal = false"
-             class="bg-white dark:bg-[#1A1A31] w-full max-w-md rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-100 dark:border-white/10 relative z-10"
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0 translate-y-8 scale-95"
-             x-transition:enter-end="opacity-100 translate-y-0 scale-100">
-            
-            <div class="p-8 text-center">
-                <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-500/10 text-red-500 mb-6">
-                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                </div>
-                
-                <h3 class="text-2xl font-black text-slate-800 dark:text-white mb-2" x-text="blockAction + ' {{ __('Company') }}'"></h3>
-                <p class="text-slate-500 dark:text-slate-400 font-bold mb-8">
-                    {{ __('Are you sure you want to change the status of this company?') }}
-                </p>
-                
-                <div class="flex flex-col gap-3">
-                    <form :action="'{{ url('admin/maintenance-companies') }}/' + blockTargetId + '/toggle-block'" method="POST">
-                        @csrf
-                        <button type="submit" 
-                                class="w-full py-4 bg-red-500 text-white rounded-2xl font-black hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 uppercase tracking-widest text-sm">
-                            <span x-text="'{{ __('Confirm') }} ' + blockAction"></span>
-                        </button>
-                    </form>
-                    <button type="button" @click="showBlockModal = false" 
-                            class="w-full py-4 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-2xl font-black hover:bg-slate-200 dark:hover:bg-white/10 transition-all uppercase tracking-widest text-sm">
-                        {{ __('Cancel') }}
-                    </button>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
