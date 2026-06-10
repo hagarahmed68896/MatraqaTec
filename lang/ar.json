@@ -1152,5 +1152,9 @@
     "Supervisor created successfully": "تم إنشاء المشرف بنجاح",
     "The new password must be different from the old password.": "يجب أن تكون كلمة المرور الجديدة مختلفة عن كلمة المرور القديمة.",
     "The password is too short. It must be at least 8 characters.": "كلمة المرور قصيرة جداً، يجب ألا تقل عن 8 أحرف.",
-    "The IBAN must start with SA and be exactly 24 characters long (e.g., SAXXXXXXXXXXXXXXXXXXXXXX).": "يجب أن يبدأ رقم الآيبان بـ SA ويتكون من 24 خانة (مثل: SAXXXXXXXXXXXXXXXXXXXXXX)"
+    "The IBAN must start with SA and be exactly 24 characters long (e.g., SAXXXXXXXXXXXXXXXXXXXXXX).": "يجب أن يبدأ رقم الآيبان بـ SA ويتكون من 24 خانة (مثل: SAXXXXXXXXXXXXXXXXXXXXXX)",
+    "Home": "الرئيسية",
+    "Technicians": "الفنيين",
+    "Matraqa": "مطرقة",
+    "We care about your privacy. Read our policy details to understand how we protect and handle your personal data.": "نحن نهتم بخصوصيتك. يرجى قراءة تفاصيل السياسة لفهم كيفية حماية بياناتك الشخصية والتعامل معها."
 }

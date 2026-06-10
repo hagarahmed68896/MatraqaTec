@@ -50,6 +50,14 @@ Route::get('/', function () {
     return view('welcome', compact('reviews', 'services', 'happy_customers_count', 'average_rating', 'sample_avatars', 'social_links'));
 });
 
+Route::get('/privacy-policy', function () {
+    $policies = \App\Models\PrivacyPolicy::where('status', 'active')
+        ->whereIn('target_group', ['all', 'both'])
+        ->get();
+    $social_links = \App\Models\SocialLink::all();
+    return view('privacy-policy', compact('policies', 'social_links'));
+})->name('privacy-policy');
+
 Route::prefix('admin')->group(function () {
     Route::get('/login', [AdminController::class, 'login'])->name('admin.login');
     Route::post('/login', [AdminController::class, 'postLogin'])->name('admin.post-login');
