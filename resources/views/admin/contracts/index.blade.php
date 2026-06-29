@@ -121,16 +121,31 @@
                         <div class="space-y-4">
                             <h4 class="text-xs font-black text-[#1A1A31] dark:text-white opacity-60 uppercase tracking-widest text-right">{{ __('Status:') }}</h4>
                             <div class="space-y-3">
-                                @foreach(['' => __('All'), 'active' => __('Active'), 'expired' => __('Expired')] as $val => $label)
+                                @php
+                                    $statuses = [
+                                        '' => __('All'),
+                                        'pending' => __('Pending'),
+                                        'under_review' => __('Under Review'),
+                                        'offer_sent' => __('Offer Sent'),
+                                        'offer_accepted' => __('Offer Accepted'),
+                                        'offer_rejected' => __('Offer Rejected'),
+                                        'awaiting_signed_contract' => __('Awaiting Signed Contract'),
+                                        'awaiting_payment_proof' => __('Awaiting Payment Proof'),
+                                        'active' => __('Active'),
+                                        'completed' => __('Completed'),
+                                        'expired' => __('Expired')
+                                    ];
+                                @endphp
+                                @foreach($statuses as $val => $label)
                                 <label class="flex items-center justify-between cursor-pointer group">
-                                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 transition-colors">{{ $label }}</span>
-                                        <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
-                                             :class="status == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-300 dark:border-white/20'">
-                                            <input type="radio" name="status" value="{{ $val }}" x-model="status" class="hidden">
-                                            <template x-if="status == '{{ $val }}'">
-                                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
-                                            </template>
-                                        </div>
+                                         <span class="text-xs font-bold text-slate-500 dark:text-slate-400 transition-colors">{{ $label }}</span>
+                                         <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
+                                              :class="status == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-300 dark:border-white/20'">
+                                             <input type="radio" name="status" value="{{ $val }}" x-model="status" class="hidden">
+                                             <template x-if="status == '{{ $val }}'">
+                                                 <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
+                                             </template>
+                                         </div>
                                 </label>
                                 @endforeach
                             </div>
@@ -160,12 +175,8 @@
             </div>
         </div>
 
-        <!-- Add/Download Buttons (Visible when no rows selected) -->
+        <!-- Download Button (Visible when no rows selected) -->
         <div x-show="selectedRows.length === 0" class="flex items-center gap-4">
-            <a href="{{ route('admin.contracts.create') }}" class="px-6 py-4 bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] rounded-2xl font-black text-xs shadow-lg shadow-[#1A1A31]/20 hover:scale-[1.02] transition-all flex items-center gap-2 uppercase tracking-widest">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-                {{ __('Add Contract') }}
-            </a>
             <a href="{{ route('admin.contracts.download') }}" class="px-6 py-4 bg-white dark:bg-[#1A1A31] text-[#1A1A31] dark:text-white rounded-2xl font-black text-xs border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-all flex items-center gap-2 uppercase tracking-widest">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                 {{ __('Download') }}
@@ -173,6 +184,32 @@
         </div>
     </div>
     
+    {{-- Tabs --}}
+    @php
+        $activeTab = request('tab', '');
+    @endphp
+    <div class="flex flex-wrap items-center gap-2 pb-4 mb-6 border-b border-slate-100 dark:border-white/10" dir="rtl">
+        <a href="{{ route('admin.contracts.index', array_filter(array_merge(request()->only(['search', 'sort_by']), ['tab' => '']))) }}" 
+           class="px-5 py-3 rounded-2xl text-xs font-black transition-all {{ $activeTab === '' ? 'bg-[#1A1A31] text-white dark:bg-white dark:text-[#1A1A31]' : 'bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10' }}">
+            {{ __('All') }}
+        </a>
+        <a href="{{ route('admin.contracts.index', array_filter(array_merge(request()->only(['search', 'sort_by']), ['tab' => 'requests']))) }}" 
+           class="px-5 py-3 rounded-2xl text-xs font-black transition-all {{ $activeTab === 'requests' ? 'bg-[#1A1A31] text-white dark:bg-white dark:text-[#1A1A31]' : 'bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10' }}">
+            {{ __('Quotation Requests') }}
+        </a>
+        <a href="{{ route('admin.contracts.index', array_filter(array_merge(request()->only(['search', 'sort_by']), ['tab' => 'awaiting']))) }}" 
+           class="px-5 py-3 rounded-2xl text-xs font-black transition-all {{ $activeTab === 'awaiting' ? 'bg-[#1A1A31] text-white dark:bg-white dark:text-[#1A1A31]' : 'bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10' }}">
+            {{ __('Awaiting Action') }}
+        </a>
+        <a href="{{ route('admin.contracts.index', array_filter(array_merge(request()->only(['search', 'sort_by']), ['tab' => 'active']))) }}" 
+           class="px-5 py-3 rounded-2xl text-xs font-black transition-all {{ $activeTab === 'active' ? 'bg-[#1A1A31] text-white dark:bg-white dark:text-[#1A1A31]' : 'bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10' }}">
+            {{ __('Active Contracts') }}
+        </a>
+        <a href="{{ route('admin.contracts.index', array_filter(array_merge(request()->only(['search', 'sort_by']), ['tab' => 'archived']))) }}" 
+           class="px-5 py-3 rounded-2xl text-xs font-black transition-all {{ $activeTab === 'archived' ? 'bg-[#1A1A31] text-white dark:bg-white dark:text-[#1A1A31]' : 'bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10' }}">
+            {{ __('Completed & Expired') }}
+        </a>
+    </div>
 
     <!-- Contracts Table Section -->
     <div class="bg-white dark:bg-[#1A1A31] rounded-[2.5rem] shadow-sm overflow-hidden border border-transparent dark:border-white/5">
@@ -229,7 +266,7 @@
                         <td class="py-6 px-4">
                             <div class="flex items-center gap-1">
                                 <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-4 h-4 align-middle">
-                                <span class="text-md font-black text-[#1A1A31] dark:text-white">{{ number_format($item->project_value) }}</span>
+                                <span class="text-md font-black text-[#1A1A31] dark:text-white">{{ $item->project_value !== null ? number_format($item->project_value) : '-' }}</span>
                             </div>
                         </td>
                         <td class="py-6 px-4">
@@ -241,18 +278,32 @@
                          <td class="py-6 px-4">
                             <div class="flex items-center gap-1">
                                 <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-4 h-4 align-middle">
-                                <span class="text-md font-black text-[#1A1A31] dark:text-white">{{ number_format($item->remaining_amount) }}</span>
+                                <span class="text-md font-black text-[#1A1A31] dark:text-white">{{ $item->project_value !== null ? number_format($item->remaining_amount) : '-' }}</span>
                             </div>
                         </td>
                         <td class="py-6 px-4">
-                             <span class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ $item->contact_numbers ?? '-' }}</span>
+                             <span class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ $item->contact_numbers ?: ($item->contact_number ?? '-') }}</span>
                         </td>
                         <td class="py-6 px-4 text-center">
                             <span class="px-3 py-1 bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-white rounded-lg text-xs font-black">{{ $item->paymentReceipts->count() }}</span>
                         </td>
                         <td class="py-6 px-4">
-                            <span class="px-3 py-1 rounded-lg text-[10px] font-bold uppercase
-                                {{ $item->status == 'active' ? 'bg-green-50 text-green-600 dark:bg-green-500/10' : ($item->status == 'expired' ? 'bg-red-50 text-red-600 dark:bg-red-500/10' : 'bg-blue-50 text-blue-600 dark:bg-blue-500/10') }}">
+                            @php
+                                $statusColors = [
+                                    'pending' => 'bg-amber-50 text-amber-600 dark:bg-amber-500/10',
+                                    'under_review' => 'bg-amber-50 text-amber-600 dark:bg-amber-500/10',
+                                    'offer_sent' => 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10',
+                                    'offer_accepted' => 'bg-blue-50 text-blue-600 dark:bg-blue-500/10',
+                                    'offer_rejected' => 'bg-red-50 text-red-600 dark:bg-red-500/10',
+                                    'awaiting_signed_contract' => 'bg-purple-50 text-purple-600 dark:bg-purple-500/10',
+                                    'awaiting_payment_proof' => 'bg-orange-50 text-orange-600 dark:bg-orange-500/10',
+                                    'active' => 'bg-green-50 text-green-600 dark:bg-green-500/10',
+                                    'completed' => 'bg-teal-50 text-teal-600 dark:bg-teal-500/10',
+                                    'expired' => 'bg-red-50 text-red-600 dark:bg-red-500/10',
+                                ];
+                                $colorClass = $statusColors[$item->status] ?? 'bg-slate-50 text-slate-600 dark:bg-white/5';
+                            @endphp
+                            <span class="px-3 py-1 rounded-lg text-[10px] font-bold uppercase {{ $colorClass }}">
                                 {{ __($item->status) }}
                             </span>
                         </td>
@@ -260,9 +311,13 @@
                             <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500">{{ $item->created_at->format('Y/m/d') }}</span>
                         </td>
                         <td class="py-6 px-8 text-center" onclick="event.stopPropagation()">
+                            @if(!in_array($item->status, ['pending', 'under_review']))
                             <a href="{{ route('admin.contracts.edit', $item->id) }}" class="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-slate-50 dark:bg-white/5 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-white/20 hover:text-[#1A1A31] dark:hover:text-white transition-all">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </a>
+                            @else
+                            <span class="text-slate-300 dark:text-slate-600 font-bold">-</span>
+                            @endif
                         </td>
                     </tr>
                     @empty

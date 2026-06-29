@@ -11,6 +11,7 @@
     <link href="https://fonts.cdnfonts.com/css/dubai-font" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
+        html { scroll-behavior: smooth; }
         body { font-family: 'Dubai', 'Tajawal', sans-serif; overflow-x: hidden; }
         .hero-bg { background-color: #C8C9E0; }
     </style>
@@ -65,7 +66,7 @@
 </div>
 
                 <!-- Download App (Hidden on Mobile) -->
-                <a href="#" class="hidden md:flex h-10 px-6 items-center justify-center border border-slate-200 
+                <a href="#download-section" class="hidden md:flex h-10 px-6 items-center justify-center border border-slate-200 
                 dark:border-slate-700 rounded-xl bg-[#1A1A31] dark:bg-[#1A1A31] text-white dark:text-slate-300 text-sm font-bold transition-all hover:bg-opacity-90 active:scale-95">
                     {{ __('Download App') }}
                 </a>
@@ -97,9 +98,9 @@
                 </p>
                 
                 <div class="pt-6 flex">
-                    <button class="px-8 py-4 bg-[#1A1A31] dark:bg-[#1A1A31] text-white rounded-xl font-bold hover:bg-opacity-90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 active:scale-95">
+                    <a href="#download-section" class="px-8 py-4 bg-[#1A1A31] dark:bg-[#1A1A31] text-white rounded-xl font-bold hover:bg-opacity-90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 active:scale-95 flex items-center justify-center">
                         {{ __('Download App Now') }}
-                    </button>
+                    </a>
                 </div>
             </div>
              
@@ -427,107 +428,106 @@
         </div>
     </section>
 
- <section class="bg-white mb-8 dark:bg-[#1A1A31] transition-colors duration-300 py-12">
+ <section id="download-section" class="bg-white mb-8 dark:bg-[#1A1A31] transition-colors duration-300 py-16 scroll-mt-24">
     <div class="max-w-7xl mx-auto px-6">
-        <div class="hero-bg dark:bg-[#111122] rounded-[3rem] relative border-4 border-white dark:border-slate-800 shadow-2xl">
+        <!-- Header -->
+        <div class="text-center mb-16 space-y-4">
+            <span class="inline-block px-5 py-2 bg-slate-100 dark:bg-slate-800 text-[#1A1A31] dark:text-slate-300 font-bold text-sm rounded-full tracking-wide">
+                {{ __('Download Our Apps') }}
+            </span>
+            <h2 class="text-3xl lg:text-5xl font-black text-[#1A1A31] dark:text-white leading-tight">
+                {{ __('Select the app that fits your needs') }}
+            </h2>
+            <p class="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed text-base lg:text-lg">
+                {{ __('We provide specialized applications for customers, maintenance companies, and professional technicians.') }}
+            </p>
+        </div>
 
-           
-            {{-- ═══════════════════════════════════════ --}}
-            {{-- MOBILE LAYOUT: Modern Tilted Design     --}}
-            {{-- ═══════════════════════════════════════ --}}
-            <div class="flex lg:hidden  flex-col items-center py-8  overflow-hidden rounded-[3rem] relative">
-                
-                {{-- Decorative Glow Background --}}
-                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-500/20 blur-[100px] rounded-full pointer-events-none"></div>
-
-                {{-- Text Content --}}
-                <div class="px-6 text-center space-y-6 z-50 relative">
-                    <h2 class="text-3xl font-black text-[#1A1A31] dark:text-white leading-tight">
-                        {{ __('One App to Book Fast and Reliable Home Services') }}
-                    </h2>
-                    <p class="text-base text-[#4A4A5C] dark:text-slate-400 leading-relaxed max-w-xs mx-auto font-medium">
-                        {{ __('Find trusted technicians for cleaning, plumbing, electricity, and general repairs.') }}
+        <!-- Grid of 3 Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Client App Card -->
+            <div class="group relative bg-[#F8F9FC] dark:bg-[#111122] border border-slate-100 dark:border-slate-800/80 rounded-[2.5rem] p-8 lg:p-10 flex flex-col justify-between shadow-[0_10px_30px_rgba(0,0,0,0.02)] dark:shadow-none hover:shadow-[0_20px_50px_rgba(26,26,49,0.08)] dark:hover:shadow-[0_20px_50px_rgba(0,0,0,0.25)] hover:-translate-y-2 transition-all duration-500">
+                <div class="absolute inset-0 bg-gradient-to-tr from-indigo-500/5 to-transparent rounded-[2.5rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                <div class="relative z-10">
+                    <!-- Icon Container -->
+                    <div class="w-16 h-16 rounded-3xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform duration-500">
+                        📱
+                    </div>
+                    <!-- App Title -->
+                    <h3 class="text-2xl font-black text-[#1A1A31] dark:text-white mb-4 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                        {{ __('Matraqa Tech') }} <span class="text-sm font-bold text-slate-400 block mt-1">({{ __('For Customers') }})</span>
+                    </h3>
+                    <!-- App Description -->
+                    <p class="text-slate-500 dark:text-slate-400 text-sm leading-[1.7] mb-8 min-h-[50px]">
+                        {{ __('Book home maintenance services easily, choose from trusted professionals, and track your requests.') }}
                     </p>
-                    <div class="flex gap-4 justify-center pt-2">
-                        <a href="#" class="shadow-xl hover:scale-105 transition-transform active:scale-95">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store" class="h-10">
-                        </a>
-                        <a href="#" class="shadow-xl hover:scale-105 transition-transform active:scale-95">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" class="h-10">
-                        </a>
-                    </div>
                 </div>
-
-                <!-- {{-- Modern Tilted Graphics Section --}}
-                <div class="relative w-full h-[380px] mt-16 flex justify-center">
-                    
-                    {{-- Secondary Phone (Back/Tilted) --}}
-                    <div class="absolute left-[5%] bottom-0 w-48 z-10 transform -rotate-[15deg] translate-y-20 opacity-60 blur-[1px]">
-                        <div class="h-80 rounded-[2.5rem] border-[10px] border-[#1A1A31] dark:border-slate-800 overflow-hidden shadow-2xl bg-[#C8C9E0]">
-                            <img src="{{ asset('assets/images/iphone13 (2).png') }}"
-                                 class="w-full h-full object-cover object-top" alt="App Preview Back">
-                        </div>
-                    </div>
-
-                    {{-- Main Phone (Front/Straight) --}}
-                    <div class="absolute left-1/2 -translate-x-1/2 bottom-0 w-52 z-20 transform translate-y-4">
-                        <div class="h-80 rounded-[3rem] border-[12px] border-[#1A1A31] dark:border-slate-800 overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] bg-white">
-                            <img src="{{ asset('assets/images/iphone13 (1).png') }}"
-                                 class="w-full h-full object-cover object-top" alt="App Preview Front">
-                        </div>
-                    </div>
-
-                    {{-- Subtle Right Element (Optional Glow/Accent) --}}
-                    <div class="absolute right-[5%] bottom-1/2 translate-y-1/2 w-32 h-32 bg-indigo-400/10 rounded-full blur-3xl"></div>
-                </div> -->
-
+                <!-- Badges / Links -->
+                <div class="relative z-10 space-y-4">
+                    <a href="https://apps.apple.com/app/matraqa-tech/id6766811584" target="_blank" class="flex items-center justify-center h-14 bg-[#1A1A31] hover:bg-[#252544] dark:bg-[#1C1C36] dark:hover:bg-[#2D2D54] text-white rounded-2xl shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all duration-300">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store" class="h-9">
+                    </a>
+                    <a href="https://play.google.com/store/apps/details?id=com.isky.matraqa&pcampaignid=web_share" target="_blank" class="flex items-center justify-center h-14 bg-[#1A1A31] hover:bg-[#252544] dark:bg-[#1C1C36] dark:hover:bg-[#2D2D54] text-white rounded-2xl shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all duration-300">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" class="h-9">
+                    </a>
+                </div>
             </div>
 
-            {{-- ═══════════════════════════════════════════════════════ --}}
-            {{-- DESKTOP LAYOUT: text left + staggered phones right     --}}
-            {{-- ═══════════════════════════════════════════════════════ --}}
-            <div class="hidden overflow-hidden lg:flex flex-row items-center justify-between px-8 "
-             style="height: 400px;">
-
-                {{-- Text side --}}
-                <div class="flex-1 text-right relative z-10 space-y-8 py-12">
-                    <h2 class="text-3xl lg:text-4xl font-black text-[#1A1A31] dark:text-white leading-[1.3]">
-                        {{ __('One App to Book Fast and Reliable Home Services') }}
-                    </h2>
-                    <p class="text-xl text-[#4A4A5C] dark:text-slate-400 leading-relaxed">
-                        {{ __('Find trusted technicians for cleaning, plumbing, electricity, and general repairs.') }}
+            <!-- Company App Card -->
+            <div class="group relative bg-[#F8F9FC] dark:bg-[#111122] border border-slate-100 dark:border-slate-800/80 rounded-[2.5rem] p-8 lg:p-10 flex flex-col justify-between shadow-[0_10px_30px_rgba(0,0,0,0.02)] dark:shadow-none hover:shadow-[0_20px_50px_rgba(26,26,49,0.08)] dark:hover:shadow-[0_20px_50px_rgba(0,0,0,0.25)] hover:-translate-y-2 transition-all duration-500">
+                <div class="absolute inset-0 bg-gradient-to-tr from-emerald-500/5 to-transparent rounded-[2.5rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                <div class="relative z-10">
+                    <!-- Icon Container -->
+                    <div class="w-16 h-16 rounded-3xl bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform duration-500">
+                        🏢
+                    </div>
+                    <!-- App Title -->
+                    <h3 class="text-2xl font-black text-[#1A1A31] dark:text-white mb-4 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                        {{ __('Matraqa Company') }} <span class="text-sm font-bold text-slate-400 block mt-1">({{ __('For Companies') }})</span>
+                    </h3>
+                    <!-- App Description -->
+                    <p class="text-slate-500 dark:text-slate-400 text-sm leading-[1.7] mb-8 min-h-[50px]">
+                        {{ __('For maintenance companies to manage orders, contracts, technicians, and platform operations efficiently.') }}
                     </p>
-                    <div class="flex gap-6">
-                        <a href="#" class="h-10 opacity-70 hover:opacity-100 transition-opacity">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store" class="h-10">
-                        </a>
-                        <a href="#" class="h-10 opacity-70 hover:opacity-100 transition-opacity">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" class="h-10">
-                        </a>
-                    </div>
                 </div>
-
-                {{-- Staggered phones --}}
-                <div class="flex-1 rtl:mr-4 justify-end" style="position: relative; ">
-                    {{-- Phone 1: rises above the card (uses -translate-y so it pops above) --}}
-                    <div style="position: absolute; left: 0;  width: 270px; z-index: 10;">
-                        <div class="overflow-hidden h-full bg-[#C8C9E0]">
-                            <img src="{{ asset('assets/images/iphone13 (2).png') }}"
-                                 class="w-full h-full object-cover object-top" alt="App Preview Top">
-                        </div>
-                    </div>
-                    {{-- Phone 2: sits at bottom edge --}}
-                    <div style="position: absolute; bottom: 0;
-                     right: 0; width: 270px; height: full; z-index: 20;">
-                        <div class="overflow-hidden h-full bg-[#C8C9E0]">
-                            <img src="{{ asset('assets/images/iphone13 (1).png') }}"
-                                 class="w-full h-full object-cover object-top" alt="App Preview Bottom">
-                        </div>
-                    </div>
+                <!-- Badges / Links -->
+                <div class="relative z-10 space-y-4">
+                    <a href="https://apps.apple.com/app/matraqa-company/id6766896302" target="_blank" class="flex items-center justify-center h-14 bg-[#1A1A31] hover:bg-[#252544] dark:bg-[#1C1C36] dark:hover:bg-[#2D2D54] text-white rounded-2xl shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all duration-300">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store" class="h-9">
+                    </a>
+                    <a href="https://play.google.com/store/apps/details?id=com.isky.matraqa.company&pcampaignid=web_share" target="_blank" class="flex items-center justify-center h-14 bg-[#1A1A31] hover:bg-[#252544] dark:bg-[#1C1C36] dark:hover:bg-[#2D2D54] text-white rounded-2xl shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all duration-300">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" class="h-9">
+                    </a>
                 </div>
-
             </div>
 
+            <!-- Technician App Card -->
+            <div class="group relative bg-[#F8F9FC] dark:bg-[#111122] border border-slate-100 dark:border-slate-800/80 rounded-[2.5rem] p-8 lg:p-10 flex flex-col justify-between shadow-[0_10px_30px_rgba(0,0,0,0.02)] dark:shadow-none hover:shadow-[0_20px_50px_rgba(26,26,49,0.08)] dark:hover:shadow-[0_20px_50px_rgba(0,0,0,0.25)] hover:-translate-y-2 transition-all duration-500">
+                <div class="absolute inset-0 bg-gradient-to-tr from-amber-500/5 to-transparent rounded-[2.5rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                <div class="relative z-10">
+                    <!-- Icon Container -->
+                    <div class="w-16 h-16 rounded-3xl bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform duration-500">
+                        🛠️
+                    </div>
+                    <!-- App Title -->
+                    <h3 class="text-2xl font-black text-[#1A1A31] dark:text-white mb-4 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                        {{ __('Matraqa Technician') }} <span class="text-sm font-bold text-slate-400 block mt-1">({{ __('For Technicians') }})</span>
+                    </h3>
+                    <!-- App Description -->
+                    <p class="text-slate-500 dark:text-slate-400 text-sm leading-[1.7] mb-8 min-h-[50px]">
+                        {{ __('For professional technicians to receive tasks, navigate to locations, and manage maintenance work.') }}
+                    </p>
+                </div>
+                <!-- Badges / Links -->
+                <div class="relative z-10 space-y-4">
+                    <a href="https://apps.apple.com/app/matraqa-technician/id6766959106" target="_blank" class="flex items-center justify-center h-14 bg-[#1A1A31] hover:bg-[#252544] dark:bg-[#1C1C36] dark:hover:bg-[#2D2D54] text-white rounded-2xl shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all duration-300">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store" class="h-9">
+                    </a>
+                    <a href="https://play.google.com/store/apps/details?id=com.isky.matraqa.technician&pcampaignid=web_share" target="_blank" class="flex items-center justify-center h-14 bg-[#1A1A31] hover:bg-[#252544] dark:bg-[#1C1C36] dark:hover:bg-[#2D2D54] text-white rounded-2xl shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all duration-300">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" class="h-9">
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 </section>
@@ -542,10 +542,10 @@
                 </p>
                 <!-- Quick App Downloads in Footer -->
                 <div class="flex gap-6 mb-6">
-                    <a href="#" class="h-10 opacity-70 hover:opacity-100 transition-opacity">
+                    <a href="#download-section" class="h-10 opacity-70 hover:opacity-100 transition-opacity">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store" class="h-10">
                     </a>
-                    <a href="#" class="h-10 opacity-70 hover:opacity-100 transition-opacity">
+                    <a href="#download-section" class="h-10 opacity-70 hover:opacity-100 transition-opacity">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" class="h-10">
                     </a>
                 </div>

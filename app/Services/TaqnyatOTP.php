@@ -52,4 +52,48 @@ class TaqnyatOTP
 
         return $response->successful();
     }
+
+    /**
+     * Send general SMS via Taqnyat gateway.
+     */
+    public function sendSMS(string $phone, string $body): bool
+    {
+        $phone = ltrim(trim($phone), '+');
+
+        Log::info("[TaqnyatOTP] Sending SMS to: {$phone}");
+
+        // Get test numbers from configuration
+        $testNumbersStr = config('services.taqnyat.test_numbers', '555555555,0555555555,966555555555');
+        $testNumbers = array_map('trim', explode(',', $testNumbersStr));
+        $cleanPhone = ltrim(trim($phone), '+');
+
+        $isTestNumber = false;
+        foreach ($testNumbers as $testNum) {
+            if ($testNum !== '' && str_ends_with($cleanPhone, $testNum)) {
+                $isTestNumber = true;
+                break;
+            }
+        }
+
+        if ($isTestNumber) {
+            Log::info("[TaqnyatOTP] Static Test Mode - message simulated: {$body}");
+            return true;
+        }
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->bearerToken,
+            'Content-Type'  => 'application/json',
+        ])
+        ->withoutVerifying()
+        ->post('https://api.taqnyat.sa/v1/messages', [
+            'recipients' => [$phone],
+            'body'       => $body,
+            'sender'     => $this->sender,
+            'priority'   => 'high',
+        ]);
+
+        Log::info("[TaqnyatOTP] API Response: " . $response->body());
+
+        return $response->successful();
+    }
 }

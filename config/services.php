@@ -41,6 +41,7 @@ return [
     'taqnyat' => [
         'sender'       => env('TAQNYAT_SENDER', ''),
         'bearer_token' => env('TAQNYAT_BEARER_TOKEN', ''),
+        'test_numbers' => env('OTP_TEST_NUMBERS', '555555555,0555555555,966555555555'),
     ],
 
 ];

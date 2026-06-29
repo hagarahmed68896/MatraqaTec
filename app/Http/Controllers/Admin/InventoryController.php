@@ -11,10 +11,10 @@ class InventoryController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Inventory::query();
+        $query = Inventory::query()->with('maintenanceCompany');
 
         // Search by name_ar or name_en
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name_ar', 'like', "%{$search}%")
@@ -27,13 +27,28 @@ class InventoryController extends Controller
             $query->where('status', $request->status);
         }
 
+        // Owner Type Filter
+        if ($request->filled('owner_type')) {
+            if ($request->owner_type === 'platform') {
+                $query->whereNull('maintenance_company_id');
+            } elseif ($request->owner_type === 'company') {
+                $query->whereNotNull('maintenance_company_id');
+                if ($request->filled('maintenance_company_id')) {
+                    $query->where('maintenance_company_id', $request->maintenance_company_id);
+                }
+            }
+        }
+
         // Default sorting
         $query->orderBy('created_at', 'desc');
 
         // Paginate
         $items = $query->paginate($request->per_page ?? 12);
 
-        return view('admin.inventory.index', compact('items'));
+        // Fetch all maintenance companies for filters
+        $companies = \App\Models\MaintenanceCompany::all();
+
+        return view('admin.inventory.index', compact('items', 'companies'));
     }
 
     public function create()

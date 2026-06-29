@@ -62,18 +62,35 @@ class AdminController extends Controller
             return redirect()->back()->with('error', __('Unauthorized access. Admin only.'))->withInput();
         }
 
-        // --- التعديل المؤقت للتيست: جعل الكود 0000 للأدمن ---
-        $otp = '0000';
-        /*
         $taqnyat = new TaqnyatOTP();
-        $otp = $taqnyat->generateOtp();
-        */
+
+        // Get test numbers from configuration
+        $testNumbersStr = config('services.taqnyat.test_numbers', '555555555,0555555555,966555555555');
+        $testNumbers = array_map('trim', explode(',', $testNumbersStr));
+
+        // Clean phone number for test numbers check
+        $cleanPhone = ltrim(trim($phone), '+');
+
+        $isTestNumber = false;
+        foreach ($testNumbers as $testNum) {
+            if ($testNum !== '' && str_ends_with($cleanPhone, $testNum)) {
+                $isTestNumber = true;
+                break;
+            }
+        }
+
+        if ($isTestNumber) {
+            $otp = '0000';
+            \Log::info("Admin OTP for {$phone}: {$otp} (Static Test Mode)");
+        } else {
+            $otp = $taqnyat->generateOtp();
+            $taqnyat->sendOTP($phone, $otp);
+            \Log::info("Admin OTP for {$phone}: {$otp} (Real SMS Sent)");
+        }
+
         $user->otp = $otp;
         $user->otp_expires_at = Carbon::now()->addMinutes(10);
         $user->save();
-
-        // $taqnyat->sendOTP($phone, $otp);
-        \Log::info("Admin OTP for {$phone}: {$otp} (Global Test Mode)");
         
         Session::put('pending_admin_phone', $phone);
         Session::put('admin_remember', $request->has('remember'));
@@ -107,17 +124,35 @@ class AdminController extends Controller
             return redirect()->back()->with('error', __('Admin phone not found.'))->withInput();
         }
 
-        // --- التعديل المؤقت للتيست: جعل الكود 0000 للأدمن ---
-        $otp = '0000';
-        /*
         $taqnyat = new TaqnyatOTP();
-        $otp = $taqnyat->generateOtp();
-        */
+
+        // Get test numbers from configuration
+        $testNumbersStr = config('services.taqnyat.test_numbers', '555555555,0555555555,966555555555');
+        $testNumbers = array_map('trim', explode(',', $testNumbersStr));
+
+        // Clean phone number for test numbers check
+        $cleanPhone = ltrim(trim($phone), '+');
+
+        $isTestNumber = false;
+        foreach ($testNumbers as $testNum) {
+            if ($testNum !== '' && str_ends_with($cleanPhone, $testNum)) {
+                $isTestNumber = true;
+                break;
+            }
+        }
+
+        if ($isTestNumber) {
+            $otp = '0000';
+            \Log::info("Admin Reset OTP for {$phone}: {$otp} (Static Test Mode)");
+        } else {
+            $otp = $taqnyat->generateOtp();
+            $taqnyat->sendOTP($phone, $otp);
+            \Log::info("Admin Reset OTP for {$phone}: {$otp} (Real SMS Sent)");
+        }
+
         $user->otp = $otp;
         $user->otp_expires_at = Carbon::now()->addMinutes(10);
         $user->save();
-
-        // $taqnyat->sendOTP($phone, $otp);
 
         Session::put('pending_admin_phone', $phone);
         Session::put('forgot_password_mode', true);

@@ -255,6 +255,15 @@ class TechnicianController extends Controller
             'availability_status' => 'available',
         ]);
 
+        // Send SMS credentials to the technician
+        try {
+            $taqnyat = new \App\Services\TaqnyatOTP();
+            $message = "مرحباً {$user->name}، تم إنشاء حساب فني لك في تطبيق مطرقة بنجاح.\nبيانات الدخول:\nرقم الجوال: {$user->phone}\nكلمة المرور: {$password}";
+            $taqnyat->sendSMS($user->phone, $message);
+        } catch (\Exception $e) {
+            \Log::error('[TechnicianController] Failed to send SMS: ' . $e->getMessage());
+        }
+
         return redirect()->route('admin.technicians.index')->with('success', __('Technician created successfully.'));
     }
 

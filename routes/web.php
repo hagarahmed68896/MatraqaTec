@@ -218,6 +218,10 @@ Route::prefix('admin')->group(function () {
                     Route::post('/{id}/send', [$controller, 'send'])->name('send');
                 }
 
+                if (method_exists($controller, 'sendSms')) {
+                    Route::post('/{id}/send-sms', [$controller, 'sendSms'])->name('send-sms');
+                }
+
                 if (method_exists($controller, 'bulkChangeStatus')) {
                     Route::post('/bulk-status', [$controller, 'bulkChangeStatus'])->name('bulk-status');
                 }

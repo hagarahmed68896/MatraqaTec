@@ -17,8 +17,7 @@
             </div>
         </a>
         <div>
-        <h1 class="text-2xl font-black text-[#1A1A31] dark:text-white">{{ __('Edit Contract Data') }}
-        </h1>
+            <h1 class="text-2xl font-black text-[#1A1A31] dark:text-white">{{ __('Edit Contract Data') }}</h1>
         </div>
     </div>
 
@@ -36,7 +35,7 @@
     </div>
     @endif
 
-    <form action="{{ route('admin.contracts.update', $item->id) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+    <form action="{{ route('admin.contracts.update', $item->id) }}" method="POST" enctype="multipart/form-data" class="space-y-6" x-data="{ status: '{{ old('status', $item->status) }}' }">
         @csrf
         @method('PUT')
 
@@ -47,12 +46,12 @@
                 <div class="w-12 h-12 rounded-2xl bg-[#1A1A31]/5 dark:bg-white/5 flex items-center justify-center">
                     <svg class="w-6 h-6 text-[#1A1A31] dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                     </svg>
                 </div>
                 <div>
                     <h3 class="text-lg font-black text-[#1A1A31] dark:text-white">{{ __('Edit Contract Data') }}</h3>
-                    <p class="text-xs text-slate-400 dark:text-slate-500 font-bold mt-0.5">{{ __('Edit contract details') }}</p>
+                    <p class="text-xs text-slate-400 dark:text-slate-500 font-bold mt-0.5">{{ __('Edit contract details, terms and status') }}</p>
                 </div>
             </div>
 
@@ -70,37 +69,37 @@
                 {{-- Existing File Display --}}
                 <div x-show="hasExisting && !deleteFile && !newFileName"
                      class="flex items-center gap-4 p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 transition-all">
-                    <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center flex-shrink-0">
-                        <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/>
-                        </svg>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-black text-[#1A1A31] dark:text-white truncate" x-text="existingFile"></p>
-                        <p class="text-xs text-slate-400 dark:text-slate-500 font-bold">{{ __('Current File') }}</p>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        @if($item->contract_file)
-                        <a href="{{ $item->contract_file_url }}" target="_blank"
-                           class="w-9 h-9 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-[#1A1A31] dark:hover:text-white hover:border-slate-300 dark:hover:border-white/20 transition-all"
-                           title="{{ __('View File') }}">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                            </svg>
-                        </a>
-                        @endif
-                        <button type="button" @click="deleteFile = true; hasExisting = false"
-                                class="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-500 hover:bg-red-100 dark:hover:bg-red-500/20 transition-all"
-                                title="{{ __('Delete File') }}">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                            </svg>
-                        </button>
-                    </div>
+                     <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                         <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/>
+                         </svg>
+                     </div>
+                     <div class="flex-1 min-w-0 text-right">
+                         <p class="text-sm font-black text-[#1A1A31] dark:text-white truncate" x-text="existingFile"></p>
+                         <p class="text-xs text-slate-400 dark:text-slate-500 font-bold">{{ __('Current File') }}</p>
+                     </div>
+                     <div class="flex items-center gap-2">
+                         @if($item->contract_file)
+                         <a href="{{ $item->contract_file_url }}" target="_blank"
+                            class="w-9 h-9 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-[#1A1A31] dark:hover:text-white hover:border-slate-300 dark:hover:border-white/20 transition-all"
+                            title="{{ __('View File') }}">
+                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                       d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                       d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                             </svg>
+                         </a>
+                         @endif
+                         <button type="button" @click="deleteFile = true; hasExisting = false"
+                                 class="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-500 hover:bg-red-100 dark:hover:bg-red-500/20 transition-all"
+                                 title="{{ __('Delete File') }}">
+                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                       d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                             </svg>
+                         </button>
+                     </div>
                 </div>
 
                 {{-- Upload New File Area --}}
@@ -109,88 +108,175 @@
                      @dragleave.prevent="isDragging = false"
                      @drop.prevent="isDragging = false; newFileName = $event.dataTransfer.files[0]?.name; $refs.fileInput.files = $event.dataTransfer.files">
 
-                    <label :class="isDragging ? 'border-primary bg-primary/5' : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-100 dark:hover:bg-white/10'"
-                           class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-2xl cursor-pointer transition-all">
-                        <input type="file" name="contract_file" accept=".pdf" x-ref="fileInput"
-                               @change="newFileName = $event.target.files[0]?.name; deleteFile = false"
-                               class="hidden">
+                     <label :class="isDragging ? 'border-primary bg-primary/5' : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-100 dark:hover:bg-white/10'"
+                            class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-2xl cursor-pointer transition-all">
+                         <input type="file" name="contract_file" accept=".pdf" x-ref="fileInput"
+                                @change="newFileName = $event.target.files[0]?.name; deleteFile = false"
+                                class="hidden">
 
-                        <template x-if="!newFileName">
-                            <div class="flex flex-col items-center gap-2 text-center px-6">
-                                <div class="w-10 h-10 rounded-xl bg-white dark:bg-white/5 shadow-sm border border-slate-100 dark:border-white/10 flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-black text-slate-600 dark:text-gray-300">{{ __('Choose file or drag here') }}</p>
-                                    <p class="text-xs text-slate-400 dark:text-slate-500 font-bold mt-0.5">{{ __('PDF format up to 5MB') }}</p>
-                                </div>
-                                <span class="px-4 py-1.5 bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-black text-slate-600 dark:text-white hover:bg-slate-50 dark:hover:bg-white/20 transition-all shadow-sm">
-                                    {{ __('Browse File') }}
-                                </span>
-                            </div>
-                        </template>
+                         <template x-if="!newFileName">
+                             <div class="flex flex-col items-center gap-2 text-center px-6">
+                                 <div class="w-10 h-10 rounded-xl bg-white dark:bg-white/5 shadow-sm border border-slate-100 dark:border-white/10 flex items-center justify-center">
+                                     <svg class="w-5 h-5 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                               d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                     </svg>
+                                 </div>
+                                 <div>
+                                     <p class="text-sm font-black text-slate-600 dark:text-gray-300">{{ __('Choose file or drag here') }}</p>
+                                     <p class="text-xs text-slate-400 dark:text-slate-500 font-bold mt-0.5">{{ __('PDF format up to 10MB') }}</p>
+                                 </div>
+                                 <span class="px-4 py-1.5 bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-black text-slate-600 dark:text-white hover:bg-slate-50 dark:hover:bg-white/20 transition-all shadow-sm">
+                                     {{ __('Browse File') }}
+                                 </span>
+                             </div>
+                         </template>
 
-                        <template x-if="newFileName">
-                            <div class="flex items-center gap-3 px-6">
-                                <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center flex-shrink-0">
-                                    <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/>
-                                    </svg>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-black text-[#1A1A31] dark:text-white truncate" x-text="newFileName"></p>
-                                    <p class="text-xs text-green-500 font-bold">{{ __('New File') }}</p>
-                                </div>
-                                <button type="button"
-                                        @click.prevent="newFileName = ''; $refs.fileInput.value = ''; hasExisting = {{ $item->contract_file ? 'true' : 'false' }}; deleteFile = false"
-                                        class="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-500 hover:bg-red-100 dark:hover:bg-red-500/20 transition-all flex-shrink-0">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        </template>
-                    </label>
+                         <template x-if="newFileName">
+                             <div class="flex items-center gap-3 px-6 w-full justify-between">
+                                 <div class="flex items-center gap-3 min-w-0">
+                                     <div class="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                                         <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/>
+                                         </svg>
+                                     </div>
+                                     <div class="text-right min-w-0">
+                                         <p class="text-sm font-black text-[#1A1A31] dark:text-white truncate" x-text="newFileName"></p>
+                                         <p class="text-xs text-green-500 font-bold">{{ __('New File') }}</p>
+                                     </div>
+                                 </div>
+                                 <button type="button"
+                                         @click.prevent="newFileName = ''; $refs.fileInput.value = ''; hasExisting = {{ $item->contract_file ? 'true' : 'false' }}; deleteFile = false"
+                                         class="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-500 hover:bg-red-100 dark:hover:bg-red-500/20 transition-all flex-shrink-0">
+                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                     </svg>
+                                 </button>
+                             </div>
+                         </template>
+                     </label>
                 </div>
 
                 {{-- Hidden input to signal file deletion --}}
                 <input type="hidden" name="delete_contract_file" :value="deleteFile ? '1' : '0'">
 
                 @error('contract_file')
-                    <p class="text-red-500 text-xs font-bold">{{ $message }}</p>
+                    <p class="text-red-500 text-xs font-bold text-right">{{ $message }}</p>
                 @enderror
             </div>
 
-            {{-- Company + Project Value --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {{-- Price Offer File --}}
+            <div class="space-y-3"
+                 x-data="{
+                     hasExisting: {{ $item->price_offer_file ? 'true' : 'false' }},
+                     existingFile: '{{ $item->price_offer_file ? basename($item->price_offer_file) : '' }}',
+                     newFileName: '',
+                     deleteFile: false,
+                     isDragging: false
+                 }">
+                <label class="block text-sm font-black text-[#1A1A31] dark:text-white text-right">{{ __('Price Offer File') }}</label>
 
-                {{-- Company --}}
-                <div class="space-y-3">
-                    <label class="block text-sm font-black text-[#1A1A31] dark:text-white text-right">{{ __('Maintenance Company') }}</label>
-                    <div class="relative">
-                        <select name="maintenance_company_id"
-                                class="w-full px-5 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary dark:focus:border-white/20 focus:bg-white dark:focus:bg-white/10 rounded-2xl text-sm font-bold transition-all outline-none appearance-none text-right @error('maintenance_company_id') border-red-400 @enderror dark:text-white">
-                            <option value="">{{ __('Select Company') }}</option>
-                            @foreach($companies as $company)
-                                <option value="{{ $company->id }}"
-                                    {{ (old('maintenance_company_id', $item->maintenance_company_id) == $company->id) ? 'selected' : '' }} class="dark:bg-[#1A1A31]">
-                                    {{ $company->company_name_ar ?? $company->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <div class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-slate-500">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </div>
-                    </div>
-                    @error('maintenance_company_id')
-                        <p class="text-red-500 text-xs font-bold">{{ $message }}</p>
-                    @enderror
+                {{-- Existing File Display --}}
+                <div x-show="hasExisting && !deleteFile && !newFileName"
+                     class="flex items-center gap-4 p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 transition-all">
+                     <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
+                         <svg class="w-5 h-5 text-indigo-500" fill="currentColor" viewBox="0 0 24 24">
+                             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/>
+                         </svg>
+                     </div>
+                     <div class="flex-1 min-w-0 text-right">
+                         <p class="text-sm font-black text-[#1A1A31] dark:text-white truncate" x-text="existingFile"></p>
+                         <p class="text-xs text-slate-400 dark:text-slate-500 font-bold">{{ __('Current File') }}</p>
+                     </div>
+                     <div class="flex items-center gap-2">
+                         @if($item->price_offer_file)
+                         <a href="{{ $item->price_offer_file_url }}" target="_blank"
+                            class="w-9 h-9 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-[#1A1A31] dark:hover:text-white hover:border-slate-300 dark:hover:border-white/20 transition-all"
+                            title="{{ __('View File') }}">
+                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                       d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                       d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                             </svg>
+                         </a>
+                         @endif
+                         <button type="button" @click="deleteFile = true; hasExisting = false"
+                                 class="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-500 hover:bg-red-100 dark:hover:bg-red-500/20 transition-all"
+                                 title="{{ __('Delete File') }}">
+                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                       d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                             </svg>
+                         </button>
+                     </div>
                 </div>
+
+                {{-- Upload New File Area --}}
+                <div x-show="!hasExisting || deleteFile || newFileName"
+                     @dragover.prevent="isDragging = true"
+                     @dragleave.prevent="isDragging = false"
+                     @drop.prevent="isDragging = false; newFileName = $event.dataTransfer.files[0]?.name; $refs.priceFileInput.files = $event.dataTransfer.files">
+
+                     <label :class="isDragging ? 'border-primary bg-primary/5' : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-100 dark:hover:bg-white/10'"
+                            class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-2xl cursor-pointer transition-all">
+                         <input type="file" name="price_offer_file" accept=".pdf,image/*" x-ref="priceFileInput"
+                                @change="newFileName = $event.target.files[0]?.name; deleteFile = false"
+                                class="hidden">
+
+                         <template x-if="!newFileName">
+                             <div class="flex flex-col items-center gap-2 text-center px-6">
+                                 <div class="w-10 h-10 rounded-xl bg-white dark:bg-white/5 shadow-sm border border-slate-100 dark:border-white/10 flex items-center justify-center">
+                                     <svg class="w-5 h-5 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                               d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                     </svg>
+                                 </div>
+                                 <div>
+                                     <p class="text-sm font-black text-slate-600 dark:text-gray-300">{{ __('Choose file or drag here') }}</p>
+                                     <p class="text-xs text-slate-400 dark:text-slate-500 font-bold mt-0.5">{{ __('PDF or Image format up to 10MB') }}</p>
+                                 </div>
+                                 <span class="px-4 py-1.5 bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-black text-slate-600 dark:text-white hover:bg-slate-50 dark:hover:bg-white/20 transition-all shadow-sm">
+                                     {{ __('Browse File') }}
+                                 </span>
+                             </div>
+                         </template>
+
+                         <template x-if="newFileName">
+                             <div class="flex items-center gap-3 px-6 w-full justify-between">
+                                 <div class="flex items-center gap-3 min-w-0">
+                                     <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
+                                         <svg class="w-5 h-5 text-indigo-500" fill="currentColor" viewBox="0 0 24 24">
+                                             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/>
+                                         </svg>
+                                     </div>
+                                     <div class="text-right min-w-0">
+                                         <p class="text-sm font-black text-[#1A1A31] dark:text-white truncate" x-text="newFileName"></p>
+                                         <p class="text-xs text-green-500 font-bold">{{ __('New File') }}</p>
+                                     </div>
+                                 </div>
+                                 <button type="button"
+                                         @click.prevent="newFileName = ''; $refs.priceFileInput.value = ''; hasExisting = {{ $item->price_offer_file ? 'true' : 'false' }}; deleteFile = false"
+                                         class="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center text-red-500 hover:bg-red-100 dark:hover:bg-red-500/20 transition-all flex-shrink-0">
+                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                     </svg>
+                                 </button>
+                             </div>
+                         </template>
+                     </label>
+                </div>
+
+                {{-- Hidden input to signal file deletion --}}
+                <input type="hidden" name="delete_price_offer_file" :value="deleteFile ? '1' : '0'">
+
+                @error('price_offer_file')
+                    <p class="text-red-500 text-xs font-bold text-right">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Row: Project Value, Start Date, End Date --}}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
                 {{-- Project Value --}}
                 <div class="space-y-3">
@@ -199,21 +285,45 @@
                         <input type="number" name="project_value"
                                value="{{ old('project_value', $item->project_value) }}"
                                placeholder="{{ __('Enter project value') }}"
-                               class="w-full pl-14 pr-5 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary dark:focus:border-white/20 focus:bg-white dark:focus:bg-white/10 rounded-2xl text-sm font-bold transition-all outline-none text-right dark:text-white @error('project_value') border-red-400 @enderror">
-                        <div class="absolute left-0 top-0 bottom-0 w-12 flex items-center justify-center bg-slate-100 dark:bg-white/5 rounded-r-2xl border-r border-slate-200 dark:border-white/10">
-                            <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-5 h-5">
+                               class="w-full pl-12 pr-5 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary dark:focus:border-white/20 focus:bg-white dark:focus:bg-white/10 rounded-2xl text-sm font-bold transition-all outline-none text-right dark:text-white @error('project_value') border-red-400 @enderror">
+                        <div class="absolute left-0 top-0 bottom-0 px-4 flex items-center justify-center bg-slate-100 dark:bg-white/5 rounded-l-2xl border-l border-slate-200 dark:border-white/10">
+                            <span class="text-xs font-black text-slate-500 dark:text-slate-400">ر.س</span>
                         </div>
                     </div>
                     @error('project_value')
-                        <p class="text-red-500 text-xs font-bold">{{ $message }}</p>
+                        <p class="text-red-500 text-xs font-bold text-right">{{ $message }}</p>
                     @enderror
                 </div>
+
+                {{-- Start Date --}}
+                <div class="space-y-3">
+                    <label class="block text-sm font-black text-[#1A1A31] dark:text-white text-right">{{ __('Start Date') }}</label>
+                    <input type="date" name="start_date"
+                           value="{{ old('start_date', $item->start_date ? $item->start_date->format('Y-m-d') : '') }}"
+                           class="w-full px-5 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary dark:focus:border-white/20 focus:bg-white dark:focus:bg-white/10 rounded-2xl text-sm font-bold transition-all outline-none text-right dark:text-white @error('start_date') border-red-400 @enderror">
+                    @error('start_date')
+                        <p class="text-red-500 text-xs font-bold text-right">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- End Date --}}
+                <div class="space-y-3">
+                    <label class="block text-sm font-black text-[#1A1A31] dark:text-white text-right">{{ __('End Date') }}</label>
+                    <input type="date" name="end_date"
+                           value="{{ old('end_date', $item->end_date ? $item->end_date->format('Y-m-d') : '') }}"
+                           class="w-full px-5 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary dark:focus:border-white/20 focus:bg-white dark:focus:bg-white/10 rounded-2xl text-sm font-bold transition-all outline-none text-right dark:text-white @error('end_date') border-red-400 @enderror">
+                    @error('end_date')
+                        <p class="text-red-500 text-xs font-bold text-right">{{ $message }}</p>
+                    @enderror
+                </div>
+
             </div>
 
             {{-- Contact Numbers --}}
             @php
-                $existingPhones = $item->contact_numbers
-                    ? (is_array($item->contact_numbers) ? $item->contact_numbers : explode(',', $item->contact_numbers))
+                $phonesSource = $item->contact_numbers ?: $item->contact_number;
+                $existingPhones = $phonesSource
+                    ? (is_array($phonesSource) ? $phonesSource : explode(',', $phonesSource))
                     : [''];
                 $phonesJson = json_encode(array_values(array_filter($existingPhones)) ?: ['']);
             @endphp
@@ -252,11 +362,19 @@
             <div class="space-y-3">
                 <label class="block text-sm font-black text-[#1A1A31] dark:text-white text-right">{{ __('Contract Status') }}</label>
                 <div class="relative">
-                    <select name="status"
+                    <select name="status" x-model="status"
                             class="w-full px-5 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary dark:focus:border-white/20 focus:bg-white dark:focus:bg-white/10 rounded-2xl text-sm font-bold transition-all outline-none appearance-none text-right @error('status') border-red-400 @enderror dark:text-white">
                         <option value="">{{ __('Select Status') }}</option>
-                        <option value="active" {{ old('status', $item->status) == 'active' ? 'selected' : '' }} class="dark:bg-[#1A1A31]">{{ __('active') }}</option>
-                        <option value="expired" {{ old('status', $item->status) == 'expired' ? 'selected' : '' }} class="dark:bg-[#1A1A31]">{{ __('expired') }}</option>
+                        <option value="pending" class="dark:bg-[#1A1A31]">{{ __('Pending') }}</option>
+                        <option value="under_review" class="dark:bg-[#1A1A31]">{{ __('Under Review') }}</option>
+                        <option value="offer_sent" class="dark:bg-[#1A1A31]">{{ __('Offer Sent') }}</option>
+                        <option value="offer_accepted" class="dark:bg-[#1A1A31]">{{ __('Offer Accepted') }}</option>
+                        <option value="offer_rejected" class="dark:bg-[#1A1A31]">{{ __('Offer Rejected') }}</option>
+                        <option value="awaiting_signed_contract" class="dark:bg-[#1A1A31]">{{ __('Awaiting Signed Contract') }}</option>
+                        <option value="awaiting_payment_proof" class="dark:bg-[#1A1A31]">{{ __('Awaiting Payment Proof') }}</option>
+                        <option value="active" class="dark:bg-[#1A1A31]">{{ __('Active') }}</option>
+                        <option value="completed" class="dark:bg-[#1A1A31]">{{ __('Completed') }}</option>
+                        <option value="expired" class="dark:bg-[#1A1A31]">{{ __('Expired') }}</option>
                     </select>
                     <div class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-slate-500">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -265,7 +383,18 @@
                     </div>
                 </div>
                 @error('status')
-                    <p class="text-red-500 text-xs font-bold">{{ $message }}</p>
+                    <p class="text-red-500 text-xs font-bold text-right">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Rejection Reason --}}
+            <div class="space-y-3" x-show="status === 'offer_rejected'" x-cloak>
+                <label class="block text-sm font-black text-[#1A1A31] dark:text-white text-right">{{ __('Rejection Reason') }}</label>
+                <textarea name="rejection_reason" rows="3"
+                          placeholder="{{ __('Enter rejection reason') }}"
+                          class="w-full px-5 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary dark:focus:border-white/20 focus:bg-white dark:focus:bg-white/10 rounded-2xl text-sm font-bold transition-all outline-none text-right dark:text-white @error('rejection_reason') border-red-400 @enderror">{{ old('rejection_reason', $item->rejection_reason) }}</textarea>
+                @error('rejection_reason')
+                    <p class="text-red-500 text-xs font-bold text-right">{{ $message }}</p>
                 @enderror
             </div>
 

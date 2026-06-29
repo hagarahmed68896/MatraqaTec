@@ -44,6 +44,33 @@ class Order extends Model
 
     protected $appends = ['status_label', 'status_color', 'formatted_scheduled_date', 'formatted_scheduled_time', 'formatted_proposed_scheduled_date', 'formatted_proposed_scheduled_time', 'client_name', 'client_phone', 'technician_name', 'technician_phone', 'technician_avatar', 'acceptance_duration_minutes', 'acceptance_expiry_time', 'remaining_acceptance_seconds', 'client_signature_url', 'attachment_urls', 'image', 'can_reschedule', 'is_paid'];
 
+    protected static function booted()
+    {
+        static::saved(function ($order) {
+            if ($order->status === 'completed' && $order->total_price > 0) {
+                $hasCompletedPayment = $order->payments()->where('status', 'completed')->exists();
+                if ($hasCompletedPayment) {
+                    $invoiceNumber = 'INV-' . $order->order_number;
+                    $total = $order->total_price;
+                    $amount = round($total / 1.15, 2);
+                    $tax = round($total - $amount, 2);
+
+                    \App\Models\Invoice::updateOrCreate(
+                        ['order_id' => $order->id],
+                        [
+                            'invoice_number' => $invoiceNumber,
+                            'issue_date' => now(),
+                            'status' => 'not_sent',
+                            'amount' => $amount,
+                            'tax' => $tax,
+                            'total' => $total,
+                        ]
+                    );
+                }
+            }
+        });
+    }
+
     public function getClientSignatureUrlAttribute()
     {
         if (!$this->client_signature) return null;

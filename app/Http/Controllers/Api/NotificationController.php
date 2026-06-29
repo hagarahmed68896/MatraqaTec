@@ -34,7 +34,13 @@ class NotificationController extends Controller
                             ->where('created_at', '>=', $user->created_at);
                       });
             })
-            ->where('status', 'sent')
+            ->where(function ($query) use ($user) {
+                $query->where('status', 'sent')
+                      ->orWhere(function ($q) use ($user) {
+                          $q->where('user_id', $user->id)
+                            ->where('status', 'unsent');
+                      });
+            })
             ->whereDoesntHave('userActions', function ($q) use ($user) {
                 $q->where('user_id', $user->id)
                   ->where('is_deleted', true);

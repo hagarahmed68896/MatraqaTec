@@ -137,6 +137,34 @@ class InvoiceController extends Controller
         return back()->with('success', __('Invoice sent successfully.'));
     }
 
+    public function sendSms($id)
+    {
+        $invoice = Invoice::with(['order.user'])->findOrFail($id);
+
+        if ($invoice->order && $invoice->order->user && $invoice->order->user->phone) {
+            try {
+                $user = $invoice->order->user;
+                $phone = $user->phone;
+                $orderNumber = $invoice->order->order_number ?? $invoice->order_id;
+                $amount = number_format($invoice->total, 2);
+
+                $taqnyat = new \App\Services\TaqnyatOTP();
+                $message = "مرحباً {$user->name}، تم إصدار الفاتورة رقم INV-{$orderNumber} لطلبكم رقم #{$orderNumber} بقيمة {$amount} ريال (شامل ضريبة القيمة المضافة). شكراً لاختياركم مطرقة تك.";
+                
+                $taqnyat->sendSMS($phone, $message);
+                
+                $invoice->update(['status' => 'sent']);
+                
+                return back()->with('success', __('Invoice sent via SMS successfully.'));
+            } catch (\Exception $e) {
+                \Log::error('[InvoiceController] Failed to send SMS: ' . $e->getMessage());
+                return back()->with('error', __('Failed to send invoice via SMS: ') . $e->getMessage());
+            }
+        }
+
+        return back()->with('error', __('Customer phone number is missing.'));
+    }
+
     private function filterQuery(Request $request)
     {
         $query = Invoice::select('invoices.*')

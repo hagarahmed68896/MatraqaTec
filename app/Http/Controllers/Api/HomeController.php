@@ -13,41 +13,48 @@ class HomeController extends Controller
 {
     public function index(Request $request)
     {
-        $user = $request->user();
-        $userType = $user->type;
+        $user = $request->user('sanctum') ?? auth('sanctum')->user();
+        $userType = $user ? $user->type : 'individual';
         
         $audienceType = 'all';
-        switch ($user->type) {
-            case 'individual':
-            case 'corporate_customer': $audienceType = 'clients'; break;
-            case 'technician': $audienceType = 'technicians'; break;
-            case 'maintenance_company': $audienceType = 'companies'; break;
+        if ($user) {
+            switch ($user->type) {
+                case 'individual':
+                case 'corporate_customer': $audienceType = 'clients'; break;
+                case 'technician': $audienceType = 'technicians'; break;
+                case 'maintenance_company': $audienceType = 'companies'; break;
+            }
+        } else {
+            $audienceType = 'clients';
         }
 
-        $unreadCount = Notification::where(function ($query) use ($user, $audienceType) {
-                $query->where('user_id', $user->id)
-                      ->orWhereIn('target_audience', [$audienceType, 'all']);
-            })
-            ->where('status', 'sent')
-            ->whereDoesntHave('userActions', function ($q) use ($user) {
-                $q->where('user_id', $user->id)
-                  ->where(function($query) {
-                      $query->where('is_deleted', true)->orWhere('is_read', true);
-                  });
-            })
-            ->where(function($query) {
-                $query->where('is_read', false)->orWhereNull('user_id'); // If individual, must be unread. If broadcast, rely on userActions (handled above)
-            })
-            ->count();
+        $unreadCount = 0;
+        if ($user) {
+            $unreadCount = Notification::where(function ($query) use ($user, $audienceType) {
+                    $query->where('user_id', $user->id)
+                          ->orWhereIn('target_audience', [$audienceType, 'all']);
+                })
+                ->where('status', 'sent')
+                ->whereDoesntHave('userActions', function ($q) use ($user) {
+                    $q->where('user_id', $user->id)
+                      ->where(function($query) {
+                          $query->where('is_deleted', true)->orWhere('is_read', true);
+                      });
+                })
+                ->where(function($query) {
+                    $query->where('is_read', false)->orWhereNull('user_id'); // If individual, must be unread. If broadcast, rely on userActions (handled above)
+                })
+                ->count();
+        }
             
         $data = [
-            'user' => [
+            'user' => $user ? [
                 'id' => $user->id,
                 'name' => $user->name,
                 'type' => $user->type,
                 'avatar' => $user->avatar_url,
                 'city' => $user->city ? $user->city->name_ar : null,
-            ],
+            ] : null,
             'unread_notifications_count' => $unreadCount,
             'contents' => Content::with('items')->where('is_visible', true)->get(),
         ];
@@ -56,11 +63,14 @@ class HomeController extends Controller
             // Customer Home - Return 3 main keys
             
             // 1. Follow Request - Latest active order
-            $activeOrder = Order::with(['technician.user', 'service', 'city'])
-                ->where('user_id', $user->id)
-                ->whereIn('status', ['new', 'accepted', 'assigned', 'scheduled', 'in_progress'])
-                ->latest()
-                ->first();
+            $activeOrder = null;
+            if ($user) {
+                $activeOrder = Order::with(['technician.user', 'service', 'city'])
+                    ->where('user_id', $user->id)
+                    ->whereIn('status', ['new', 'accepted', 'assigned', 'scheduled', 'in_progress'])
+                    ->latest()
+                    ->first();
+            }
             
             // Fetch Favorite IDs once
             $userFavorites = $user ? $user->favorites()->pluck('service_id')->toArray() : [];

@@ -6,7 +6,7 @@
 @section('content')
 <div class="space-y-8 pb-20" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
     <!-- PAGE HEADER -->
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between no-print">
         <div class="flex items-center gap-4">
             <a href="{{ route('admin.invoices.index') }}" class="w-10 h-10 flex items-center justify-center bg-white dark:bg-[#1A1A31] border border-slate-100 dark:border-white/10 rounded-xl text-slate-400 hover:text-primary dark:hover:text-white transition-all shadow-sm">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="{{ app()->getLocale() == 'ar' ? 'M9 5l7 7-7 7' : 'M15 19l-7-7 7-7' }}"></path></svg>
@@ -18,22 +18,24 @@
             </span>
         </div>
         <div class="flex items-center gap-3">
-            <a href="{{ route('admin.invoices.download', ['ids' => $item->id]) }}" class="h-11 px-6 flex items-center gap-2 border border-slate-200 dark:border-white/10 text-[#1A1A31] dark:text-white rounded-xl font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/10 transition-all shadow-sm">
+            <button onclick="printInvoice()" class="h-11 px-6 flex items-center gap-2 bg-[#1A1A31] dark:bg-primary text-white rounded-xl font-bold text-sm hover:scale-[1.02] transition-all shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                <span>{{ __('Download') }}</span>
-            </a>
-            <form action="{{ route('admin.invoices.send', $item->id) }}" method="POST">
+                <span>{{ __('Download as PDF') }}</span>
+            </button>
+            @if($item->order && $item->order->user && $item->order->user->phone)
+            <form action="{{ route('admin.invoices.send-sms', $item->id) }}" method="POST">
                 @csrf
                 <button type="submit" class="h-11 px-6 flex items-center gap-2 bg-white dark:bg-[#1A1A31] border border-slate-200 dark:border-white/10 text-[#1A1A31] dark:text-white rounded-xl font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/10 transition-all shadow-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                    <span>{{ $item->status == 'sent' ? __('Resend via Email') : __('Send via Email') }}</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                    <span>{{ $item->status == 'sent' ? __('Resend via SMS') : __('Send via SMS') }}</span>
                 </button>
             </form>
+            @endif
         </div>
     </div>
 
     <!-- INVOICE CARD -->
-    <div class="bg-white dark:bg-[#1A1A31] rounded-[2.5rem] border border-slate-50 dark:border-white/5 shadow-xl overflow-hidden relative">
+    <div id="print-area" class="bg-white dark:bg-[#1A1A31] rounded-[2.5rem] border border-slate-50 dark:border-white/5 shadow-xl overflow-hidden relative">
         <div class="p-12 relative z-10">
             <!-- Header Section -->
             <div class="flex justify-between items-start border-b border-slate-100 dark:border-white/5 pb-10 mb-10">
@@ -103,13 +105,13 @@
                             <td class="py-6 px-4 text-center text-slate-400">{{ $detail['quantity'] == 1 ? '-' : $detail['quantity'] }}</td>
                             <td class="py-6 px-8 text-center">
                                 <div class="flex items-center justify-center gap-1.5 ml-2">
-                                    <span class="text-sm font-black text-[#1A1A31] dark:text-white">{{ number_format($detail['price'], 0) }}</span>
+                                    <span class="text-sm font-black text-[#1A1A31] dark:text-white">{{ number_format($detail['price'], 2) }}</span>
                                     <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-3.5 h-3.5 opacity-40">
                                 </div>
                             </td>
                             <td class="py-6 px-10 text-right">
                                 <div class="flex items-center justify-end gap-1.5">
-                                    <span class="text-sm font-black text-[#1A1A31] dark:text-white">{{ number_format($detail['total'], 0) }}</span>
+                                    <span class="text-sm font-black text-[#1A1A31] dark:text-white">{{ number_format($detail['total'], 2) }}</span>
                                     <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-3.5 h-3.5 opacity-40">
                                 </div>
                             </td>
@@ -125,22 +127,22 @@
                     <div class="flex items-center justify-between text-xs font-bold">
                         <span class="text-slate-400">{{ __('Subtotal') }}</span>
                         <div class="flex items-center gap-2">
-                            <span class="text-[#1A1A31] dark:text-white font-black">{{ number_format($item->amount, 0) }}</span>
+                            <span class="text-[#1A1A31] dark:text-white font-black">{{ number_format($item->amount, 2) }}</span>
                             <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-4 h-4 opacity-40">
                         </div>
                     </div>
                     <div class="flex items-center justify-between text-xs font-bold">
-                        <span class="text-slate-400">{{ __('Fees') }}</span>
+                        <span class="text-slate-400">{{ __('VAT (15%)') }}</span>
                         <div class="flex items-center gap-2">
-                            <span class="text-[#1A1A31] dark:text-white font-black">0</span>
-                            <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-4 h-4 opacity-20">
+                            <span class="text-[#1A1A31] dark:text-white font-black">{{ number_format($item->tax, 2) }}</span>
+                            <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-4 h-4 opacity-40">
                         </div>
                     </div>
                     <div class="h-px bg-slate-100 dark:bg-white/5 my-2"></div>
                     <div class="flex items-center justify-between">
                         <span class="text-sm font-black text-[#1A1A31] dark:text-white">{{ __('Grand Total') }}</span>
                         <div class="flex items-center gap-2">
-                            <span class="text-2xl font-black text-primary">{{ number_format($item->amount, 0) }}</span>
+                            <span class="text-2xl font-black text-primary">{{ number_format($item->total, 2) }}</span>
                             <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-6 h-6">
                         </div>
                     </div>
@@ -149,4 +151,46 @@
         </div>
     </div>
 </div>
+
+<style>
+@media print {
+    /* Hide layout elements like sidebar, navbar, and headers */
+    header, footer, nav, aside, .no-print, button, a {
+        display: none !important;
+    }
+    /* Hide body background colors */
+    body {
+        background: white !important;
+        color: black !important;
+        visibility: hidden;
+    }
+    /* Show only the print area card and its contents */
+    #print-area, #print-area * {
+        visibility: visible;
+    }
+    #print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: none !important;
+        border: none !important;
+        background: white !important;
+        color: black !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    /* Force colors to print in high quality */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}
+</style>
+
+<script>
+function printInvoice() {
+    window.print();
+}
+</script>
 @endsection

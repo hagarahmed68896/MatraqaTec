@@ -65,6 +65,262 @@ class ContractController extends Controller
     }
 
     /**
+     * Store a new Contract Tendering Request
+     */
+    public function store(Request $request)
+    {
+        $user = auth()->user();
+        if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+
+        $request->validate([
+            'company_name'             => 'required|string|max:255',
+            'commercial_record_number' => 'required|string|max:255',
+            'head_office'              => 'required|string|max:255',
+            'contact_number'           => 'required|string|max:255',
+            'service_description'      => 'required|string',
+            'boq_file'                 => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx,zip,rar|max:10240',
+            'drawings_file'            => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,zip,rar|max:10240',
+            'other_docs_file'          => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,zip,rar|max:10240',
+        ]);
+
+        // Check if the corporate customer already has a pending or under review request
+        $hasPending = Contract::where('corporate_customer_id', $user->corporateCustomer?->id)
+            ->whereIn('status', ['pending', 'under_review'])
+            ->exists();
+
+        if ($hasPending) {
+            return response()->json([
+                'status' => false,
+                'message' => 'لديك طلب تعاقد قيد المراجعة بالفعل. يرجى انتظار رد الإدارة قبل تقديم طلب جديد.'
+            ], 422);
+        }
+
+        $data = $request->only([
+            'company_name',
+            'commercial_record_number',
+            'head_office',
+            'contact_number',
+            'service_description'
+        ]);
+
+        // Upload attachments
+        if ($request->hasFile('boq_file')) {
+            $file = $request->file('boq_file');
+            $filename = time() . '_boq_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/contracts/attachments'), $filename);
+            $data['boq_file'] = 'uploads/contracts/attachments/' . $filename;
+        }
+
+        if ($request->hasFile('drawings_file')) {
+            $file = $request->file('drawings_file');
+            $filename = time() . '_drawings_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/contracts/attachments'), $filename);
+            $data['drawings_file'] = 'uploads/contracts/attachments/' . $filename;
+        }
+
+        if ($request->hasFile('other_docs_file')) {
+            $file = $request->file('other_docs_file');
+            $filename = time() . '_other_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/contracts/attachments'), $filename);
+            $data['other_docs_file'] = 'uploads/contracts/attachments/' . $filename;
+        }
+
+        $data['contract_number'] = 'CNT-REQ-' . strtoupper(uniqid());
+        $data['status'] = 'pending';
+        $data['user_id'] = $user->id;
+        $data['corporate_customer_id'] = $user->corporateCustomer?->id;
+        $data['project_value'] = null;
+        $data['paid_amount'] = 0;
+        $data['remaining_amount'] = 0;
+
+        $contract = Contract::create($data);
+
+        // Notify Admins
+        try {
+            $admins = \App\Models\User::where('type', 'admin')->get();
+            foreach ($admins as $admin) {
+                $admin->sendFcmNotification([
+                    'type' => 'new_contract_request',
+                    'title_ar' => 'طلب تعاقد جديد',
+                    'title_en' => 'New Contract Request',
+                    'body_ar' => 'تم استلام طلب تعاقد جديد من شركة ' . $contract->company_name,
+                    'body_en' => 'A new contract request has been received from company ' . $contract->company_name,
+                    'data' => ['contract_id' => $contract->id]
+                ], true);
+            }
+        } catch (\Exception $e) {
+            \Log::error('FCM Error (new_contract_request): ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Contract request submitted successfully',
+            'data' => $contract
+        ], 201);
+    }
+
+    /**
+     * Accept Price Offer
+     */
+    public function acceptOffer($id)
+    {
+        $user = auth()->user();
+        if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+
+        $contract = Contract::find($id);
+        if (!$contract) return response()->json(['status' => false, 'message' => 'Contract not found'], 404);
+
+        // Authorization check
+        if ($contract->user_id != $user->id && $contract->corporate_customer_id != $user->corporateCustomer?->id) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        if ($contract->status !== 'offer_sent') {
+            return response()->json(['status' => false, 'message' => 'Offer cannot be accepted in this state'], 422);
+        }
+
+        $contract->status = 'offer_accepted';
+        $contract->save();
+
+        // Notify Admins
+        try {
+            $admins = \App\Models\User::where('type', 'admin')->get();
+            foreach ($admins as $admin) {
+                $admin->sendFcmNotification([
+                    'type' => 'contract_offer_accepted',
+                    'title_ar' => 'قبول عرض السعر',
+                    'title_en' => 'Price Offer Accepted',
+                    'body_ar' => 'تم قبول عرض السعر للعقد رقم ' . $contract->contract_number,
+                    'body_en' => 'The price offer for contract #' . $contract->contract_number . ' has been accepted.',
+                    'data' => ['contract_id' => $contract->id]
+                ], true);
+            }
+        } catch (\Exception $e) {
+            \Log::error('FCM Error (contract_offer_accepted): ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Price offer accepted successfully',
+            'data' => $contract
+        ]);
+    }
+
+    /**
+     * Reject Price Offer
+     */
+    public function rejectOffer(Request $request, $id)
+    {
+        $user = auth()->user();
+        if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+
+        $contract = Contract::find($id);
+        if (!$contract) return response()->json(['status' => false, 'message' => 'Contract not found'], 404);
+
+        // Authorization check
+        if ($contract->user_id != $user->id && $contract->corporate_customer_id != $user->corporateCustomer?->id) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        if ($contract->status !== 'offer_sent') {
+            return response()->json(['status' => false, 'message' => 'Offer cannot be rejected in this state'], 422);
+        }
+
+        $request->validate([
+            'rejection_reason' => 'required|string|min:5',
+        ]);
+
+        $contract->status = 'offer_rejected';
+        $contract->rejection_reason = $request->rejection_reason;
+        $contract->save();
+
+        // Notify Admins
+        try {
+            $admins = \App\Models\User::where('type', 'admin')->get();
+            foreach ($admins as $admin) {
+                $admin->sendFcmNotification([
+                    'type' => 'contract_offer_rejected',
+                    'title_ar' => 'رفض عرض السعر',
+                    'title_en' => 'Price Offer Rejected',
+                    'body_ar' => 'تم رفض عرض السعر للعقد رقم ' . $contract->contract_number,
+                    'body_en' => 'The price offer for contract #' . $contract->contract_number . ' has been rejected.',
+                    'data' => ['contract_id' => $contract->id]
+                ], true);
+            }
+        } catch (\Exception $e) {
+            \Log::error('FCM Error (contract_offer_rejected): ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Price offer rejected',
+            'data' => $contract
+        ]);
+    }
+
+    /**
+     * Upload Signed Contract Copy
+     */
+    public function uploadSignedContract(Request $request, $id)
+    {
+        $user = auth()->user();
+        if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+
+        $contract = Contract::find($id);
+        if (!$contract) return response()->json(['status' => false, 'message' => 'Contract not found'], 404);
+
+        // Authorization check
+        if ($contract->user_id != $user->id && $contract->corporate_customer_id != $user->corporateCustomer?->id) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        if (!in_array($contract->status, ['offer_accepted', 'awaiting_signed_contract', 'awaiting_payment_proof'])) {
+            return response()->json(['status' => false, 'message' => 'Contract cannot be signed in this state'], 422);
+        }
+
+        $request->validate([
+            'signed_contract_file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
+        ]);
+
+        $file = $request->file('signed_contract_file');
+        $filename = time() . '_signed_' . $file->getClientOriginalName();
+        $file->move(public_path('uploads/contracts/signed'), $filename);
+        $contract->signed_contract_file = 'uploads/contracts/signed/' . $filename;
+
+        // Transition status
+        if ($contract->paymentReceipts()->exists()) {
+            $contract->status = 'active'; // contracting completed
+        } else {
+            $contract->status = 'awaiting_payment_proof';
+        }
+
+        $contract->save();
+
+        // Notify Admins
+        try {
+            $admins = \App\Models\User::where('type', 'admin')->get();
+            foreach ($admins as $admin) {
+                $admin->sendFcmNotification([
+                    'type' => 'contract_signed_uploaded',
+                    'title_ar' => 'عقد موقع جديد',
+                    'title_en' => 'Signed Contract Uploaded',
+                    'body_ar' => 'قام العميل برفع النسخة الموقعة من العقد رقم ' . $contract->contract_number,
+                    'body_en' => 'The customer uploaded the signed copy of contract #' . $contract->contract_number,
+                    'data' => ['contract_id' => $contract->id]
+                ], true);
+            }
+        } catch (\Exception $e) {
+            \Log::error('FCM Error (contract_signed_uploaded): ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Signed contract copy uploaded successfully',
+            'data' => $contract
+        ]);
+    }
+
+    /**
      * Upload Payment Receipt
      */
     public function uploadReceipt(Request $request, $id)
@@ -103,14 +359,39 @@ class ContractController extends Controller
             'receipt_file' => $filePath,
             'amount'       => $request->amount,
             'payment_date' => $request->payment_date,
-            'payment_method' => 'bank_transfer', // Default or from request
+            'payment_method' => 'bank_transfer',
             'notes'        => $request->notes,
         ]);
 
-        // Update contract paid_amount and remaining_amount
+        // Update financial totals
         $contract->paid_amount += $request->amount;
-        $contract->remaining_amount = max(0, $contract->project_value - $contract->paid_amount);
+        $contract->remaining_amount = max(0, ($contract->project_value ?? 0) - $contract->paid_amount);
+
+        // Transition status
+        if ($contract->signed_contract_file) {
+            $contract->status = 'active'; // Contracting completed
+        } else {
+            $contract->status = 'awaiting_signed_contract';
+        }
+
         $contract->save();
+
+        // Notify Admins
+        try {
+            $admins = \App\Models\User::where('type', 'admin')->get();
+            foreach ($admins as $admin) {
+                $admin->sendFcmNotification([
+                    'type' => 'contract_receipt_uploaded',
+                    'title_ar' => 'إثبات سداد عقد',
+                    'title_en' => 'Contract Payment Receipt Uploaded',
+                    'body_ar' => 'قام العميل برفع إثبات سداد دفعة للعقد رقم ' . $contract->contract_number,
+                    'body_en' => 'The customer uploaded a payment receipt for contract #' . $contract->contract_number,
+                    'data' => ['contract_id' => $contract->id]
+                ], true);
+            }
+        } catch (\Exception $e) {
+            \Log::error('FCM Error (contract_receipt_uploaded): ' . $e->getMessage());
+        }
 
         return response()->json([
             'status' => true,
@@ -120,7 +401,7 @@ class ContractController extends Controller
     }
 
     /**
-     * Upload Contract File (Main PDF)
+     * Upload Contract File (Main PDF template from Admin)
      */
     public function uploadContractFile(Request $request, $id)
     {
@@ -137,6 +418,7 @@ class ContractController extends Controller
         $canUpload = false;
         if ($user->type === 'maintenance_company' && $contract->maintenance_company_id == $user->maintenanceCompany?->id) $canUpload = true;
         if ($user->type === 'corporate_customer' && ($contract->corporate_customer_id == $user->corporateCustomer?->id || $contract->user_id == $user->id)) $canUpload = true;
+        if ($user->type === 'admin') $canUpload = true;
 
         if (!$canUpload) {
             return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
@@ -234,7 +516,7 @@ class ContractController extends Controller
         }
 
         // 4. Recalculate remaining amount and save
-        $contract->remaining_amount = max(0, $contract->project_value - $contract->paid_amount);
+        $contract->remaining_amount = max(0, ($contract->project_value ?? 0) - $contract->paid_amount);
         $contract->save();
 
         return response()->json([
@@ -314,7 +596,7 @@ class ContractController extends Controller
         if (!$contract) {
             $contractData = [
                 'contract_number' => 'CNT-DRFT-' . strtoupper(uniqid()),
-                'project_value'   => 0, // Mandatory field
+                'project_value'   => 0,
                 'status'          => 'active',
                 'user_id'         => $user->id
             ];

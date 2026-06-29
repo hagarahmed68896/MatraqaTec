@@ -34,8 +34,26 @@ class ContractController extends Controller
         }
 
         // Filter by status
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
+        }
+
+        // Filter by tab
+        if ($request->filled('tab')) {
+            switch ($request->tab) {
+                case 'requests':
+                    $query->whereIn('status', ['pending', 'under_review', 'offer_sent', 'offer_rejected']);
+                    break;
+                case 'awaiting':
+                    $query->whereIn('status', ['offer_accepted', 'awaiting_signed_contract', 'awaiting_payment_proof']);
+                    break;
+                case 'active':
+                    $query->where('status', 'active');
+                    break;
+                case 'archived':
+                    $query->whereIn('status', ['completed', 'expired']);
+                    break;
+            }
         }
 
         // Filter by maintenance company
@@ -108,35 +126,76 @@ class ContractController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'contract_number'        => 'nullable|string|unique:contracts',
-            'maintenance_company_id' => 'required|exists:maintenance_companies,id',
-            'corporate_customer_id'  => 'nullable|exists:corporate_customers,id',
-            'project_value'          => 'required|numeric|min:0',
-            'start_date'             => 'nullable|date',
-            'end_date'               => 'nullable|date|after:start_date',
-            'status'                 => 'required|in:active,expired,completed',
-            'contract_file'          => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
-            'contact_numbers'        => 'nullable|array',
-            'contact_numbers.*'      => 'nullable|string|max:30',
+            'contract_number'          => 'nullable|string|unique:contracts',
+            'maintenance_company_id'   => 'nullable|exists:maintenance_companies,id',
+            'corporate_customer_id'    => 'nullable|exists:corporate_customers,id',
+            'project_value'            => 'nullable|numeric|min:0',
+            'start_date'               => 'nullable|date',
+            'end_date'                 => 'nullable|date|after:start_date',
+            'status'                   => 'required|in:pending,under_review,offer_sent,offer_accepted,offer_rejected,awaiting_signed_contract,awaiting_payment_proof,active,completed,expired',
+            'contract_file'            => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
+            'price_offer_file'         => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
+            'contact_numbers'          => 'nullable|array',
+            'contact_numbers.*'        => 'nullable|string|max:30',
+            // Request fields
+            'company_name'             => 'nullable|string|max:255',
+            'commercial_record_number' => 'nullable|string|max:255',
+            'head_office'              => 'nullable|string|max:255',
+            'contact_number'           => 'nullable|string|max:255',
+            'service_description'      => 'nullable|string',
+            'boq_file'                 => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx,zip,rar|max:10240',
+            'drawings_file'            => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,zip,rar|max:10240',
+            'other_docs_file'          => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,zip,rar|max:10240',
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
 
-        $data = $request->except(['contract_file', 'contact_numbers']);
+        $data = $request->except([
+            'contract_file', 'price_offer_file', 'contact_numbers',
+            'boq_file', 'drawings_file', 'other_docs_file'
+        ]);
 
         // Auto-generate contract number if not provided
         if (empty($data['contract_number'])) {
             $data['contract_number'] = 'CNT-' . strtoupper(uniqid());
         }
 
-        // Handle file upload
+        // Handle file uploads
         if ($request->hasFile('contract_file')) {
             $file = $request->file('contract_file');
             $filename = time() . '_' . $file->getClientOriginalName();
             $file->move(public_path('uploads/contracts'), $filename);
             $data['contract_file'] = 'uploads/contracts/' . $filename;
+        }
+
+        if ($request->hasFile('price_offer_file')) {
+            $file = $request->file('price_offer_file');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/contracts/price_offers'), $filename);
+            $data['price_offer_file'] = 'uploads/contracts/price_offers/' . $filename;
+        }
+
+        if ($request->hasFile('boq_file')) {
+            $file = $request->file('boq_file');
+            $filename = time() . '_boq_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/contracts/attachments'), $filename);
+            $data['boq_file'] = 'uploads/contracts/attachments/' . $filename;
+        }
+
+        if ($request->hasFile('drawings_file')) {
+            $file = $request->file('drawings_file');
+            $filename = time() . '_drawings_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/contracts/attachments'), $filename);
+            $data['drawings_file'] = 'uploads/contracts/attachments/' . $filename;
+        }
+
+        if ($request->hasFile('other_docs_file')) {
+            $file = $request->file('other_docs_file');
+            $filename = time() . '_other_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/contracts/attachments'), $filename);
+            $data['other_docs_file'] = 'uploads/contracts/attachments/' . $filename;
         }
 
         // Serialize contact numbers
@@ -145,8 +204,9 @@ class ContractController extends Controller
             $data['contact_numbers'] = implode(',', $phones);
         }
 
-        DB::transaction(function () use ($data) {
-            Contract::create($data);
+        $contract = null;
+        DB::transaction(function () use ($data, &$contract) {
+            $contract = Contract::create($data);
         });
 
         return redirect()->route('admin.contracts.index')->with('success', __('Contract created successfully.'));
@@ -154,7 +214,7 @@ class ContractController extends Controller
 
     public function show($id)
     {
-        $item = Contract::with(['maintenanceCompany', 'corporateCustomer', 'paymentReceipts'])->findOrFail($id);
+        $item = Contract::with(['maintenanceCompany', 'corporateCustomer', 'paymentReceipts', 'user'])->findOrFail($id);
         return view('admin.contracts.show', compact('item'));
     }
 
@@ -171,30 +231,43 @@ class ContractController extends Controller
         $contract = Contract::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'contract_number'        => 'nullable|string|unique:contracts,contract_number,' . $id,
-            'maintenance_company_id' => 'required|exists:maintenance_companies,id',
-            'corporate_customer_id'  => 'nullable|exists:corporate_customers,id',
-            'project_value'          => 'required|numeric|min:0',
-            'start_date'             => 'nullable|date',
-            'end_date'               => 'nullable|date|after:start_date',
-            'status'                 => 'required|in:active,expired,completed',
-            'contract_file'          => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
-            'contact_numbers'        => 'nullable|array',
-            'contact_numbers.*'      => 'nullable|string|max:30',
+            'contract_number'          => 'nullable|string|unique:contracts,contract_number,' . $id,
+            'maintenance_company_id'   => 'nullable|exists:maintenance_companies,id',
+            'corporate_customer_id'    => 'nullable|exists:corporate_customers,id',
+            'project_value'            => 'nullable|numeric|min:0',
+            'start_date'               => 'nullable|date',
+            'end_date'                 => 'nullable|date|after:start_date',
+            'status'                   => 'required|in:pending,under_review,offer_sent,offer_accepted,offer_rejected,awaiting_signed_contract,awaiting_payment_proof,active,completed,expired',
+            'contract_file'            => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
+            'price_offer_file'         => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
+            'contact_numbers'          => 'nullable|array',
+            'contact_numbers.*'        => 'nullable|string|max:30',
+            // Request fields
+            'company_name'             => 'nullable|string|max:255',
+            'commercial_record_number' => 'nullable|string|max:255',
+            'head_office'              => 'nullable|string|max:255',
+            'contact_number'           => 'nullable|string|max:255',
+            'service_description'      => 'nullable|string',
+            'rejection_reason'         => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
 
-        $data = $request->except(['contract_file', 'contact_numbers', 'delete_contract_file']);
+        $oldStatus = $contract->status;
+
+        $data = $request->except([
+            'contract_file', 'price_offer_file', 'contact_numbers', 
+            'delete_contract_file', 'delete_price_offer_file'
+        ]);
 
         // Keep existing contract number if not submitted
         if (empty($data['contract_number'])) {
             $data['contract_number'] = $contract->contract_number;
         }
 
-        // Handle file deletion request
+        // Handle file deletion requests
         if ($request->input('delete_contract_file') == '1' && $contract->contract_file) {
             $oldPath = public_path($contract->contract_file);
             if (file_exists($oldPath)) {
@@ -203,7 +276,15 @@ class ContractController extends Controller
             $data['contract_file'] = null;
         }
 
-        // Handle new file upload (replaces old one)
+        if ($request->input('delete_price_offer_file') == '1' && $contract->price_offer_file) {
+            $oldPath = public_path($contract->price_offer_file);
+            if (file_exists($oldPath)) {
+                unlink($oldPath);
+            }
+            $data['price_offer_file'] = null;
+        }
+
+        // Handle new file uploads
         if ($request->hasFile('contract_file')) {
             if ($contract->contract_file) {
                 $oldPath = public_path($contract->contract_file);
@@ -215,6 +296,24 @@ class ContractController extends Controller
             $filename = time() . '_' . $file->getClientOriginalName();
             $file->move(public_path('uploads/contracts'), $filename);
             $data['contract_file'] = 'uploads/contracts/' . $filename;
+            
+            // If admin uploads a contract template, status becomes awaiting_signed_contract
+            if ($data['status'] === 'offer_accepted') {
+                $data['status'] = 'awaiting_signed_contract';
+            }
+        }
+
+        if ($request->hasFile('price_offer_file')) {
+            if ($contract->price_offer_file) {
+                $oldPath = public_path($contract->price_offer_file);
+                if (file_exists($oldPath)) {
+                    unlink($oldPath);
+                }
+            }
+            $file = $request->file('price_offer_file');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/contracts/price_offers'), $filename);
+            $data['price_offer_file'] = 'uploads/contracts/price_offers/' . $filename;
         }
 
         // Serialize contact numbers
@@ -227,6 +326,43 @@ class ContractController extends Controller
             $contract->update($data);
         });
 
+        // Trigger Notifications on Status Changes
+        $newStatus = $contract->status;
+        if ($oldStatus !== $newStatus && $contract->user) {
+            try {
+                if ($newStatus === 'offer_sent') {
+                    $contract->user->sendFcmNotification([
+                        'type' => 'contract_offer_sent',
+                        'title_ar' => 'عرض سعر جديد',
+                        'title_en' => 'New Price Offer',
+                        'body_ar' => 'تم إرسال عرض السعر لطلب التعاقد الخاص بكم. يرجى المراجعة والرد.',
+                        'body_en' => 'A price offer has been sent for your contract request. Please review and respond.',
+                        'data' => ['contract_id' => $contract->id]
+                    ], true);
+                } elseif ($newStatus === 'awaiting_signed_contract') {
+                    $contract->user->sendFcmNotification([
+                        'type' => 'contract_ready_for_signature',
+                        'title_ar' => 'عقد جاهز للتوقيع',
+                        'title_en' => 'Contract Ready for Signature',
+                        'body_ar' => 'عقدكم جاهز للتوقيع. يرجى تحميله والتوقيع عليه وإعادة رفعه.',
+                        'body_en' => 'Your contract is ready. Please download, sign, and upload the signed copy.',
+                        'data' => ['contract_id' => $contract->id]
+                    ], true);
+                } elseif ($newStatus === 'active') {
+                    $contract->user->sendFcmNotification([
+                        'type' => 'contract_activated',
+                        'title_ar' => 'تم تفعيل التعاقد',
+                        'title_en' => 'Contract Activated',
+                        'body_ar' => 'تهانينا! تم تفعيل عقدكم بنجاح ومتابعة حالته.',
+                        'body_en' => 'Congratulations! Your contract has been successfully activated.',
+                        'data' => ['contract_id' => $contract->id]
+                    ], true);
+                }
+            } catch (\Exception $e) {
+                \Log::error('FCM Notification error in Admin ContractController: ' . $e->getMessage());
+            }
+        }
+
         return redirect()->route('admin.contracts.index')->with('success', __('Contract updated successfully.'));
     }
 
@@ -234,10 +370,21 @@ class ContractController extends Controller
     {
         $contract = Contract::findOrFail($id);
 
-        if ($contract->contract_file) {
-            $oldPath = public_path($contract->contract_file);
-            if (file_exists($oldPath)) {
-                unlink($oldPath);
+        $files = [
+            $contract->contract_file,
+            $contract->price_offer_file,
+            $contract->boq_file,
+            $contract->drawings_file,
+            $contract->other_docs_file,
+            $contract->signed_contract_file
+        ];
+
+        foreach ($files as $file) {
+            if ($file) {
+                $oldPath = public_path($file);
+                if (file_exists($oldPath)) {
+                    unlink($oldPath);
+                }
             }
         }
 

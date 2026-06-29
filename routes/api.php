@@ -110,12 +110,13 @@ Route::post('/technician-requests', [TechnicianRequestController::class, 'store'
 // Payment Webhooks / Callbacks (Must be public)
 Route::any('payment/myfatoorah/callback', [\App\Http\Controllers\Api\MyFatoorahCallbackController::class, 'success']);
 Route::any('payment/myfatoorah/error', [\App\Http\Controllers\Api\MyFatoorahCallbackController::class, 'error']);
+Route::get('/home', [\App\Http\Controllers\Api\HomeController::class, 'index']);
+
 // --- Protected Routes (User Scope) ---
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::delete('/account', [AuthController::class, 'deleteAccount']);
     Route::get('/profile', [AuthController::class, 'profile']); // Generic profile info
-    Route::get('/home', [\App\Http\Controllers\Api\HomeController::class, 'index']);
     
     Route::apiResource('reviews', ReviewController::class)->only(['index', 'show']); // Often public
 
@@ -213,11 +214,14 @@ Route::middleware('auth:sanctum')->group(function () {
     // Support & Complaints
     Route::apiResource('support/tickets', ComplaintController::class)->only(['index', 'store', 'show']);
 
-    Route::apiResource('contracts', ContractController::class)->only(['index', 'show', 'update']);
+    Route::apiResource('contracts', ContractController::class)->only(['index', 'show', 'store', 'update']);
     Route::get('my-contract', [ContractController::class, 'myContract']);
     Route::post('my-contract', [ContractController::class, 'updateMyContract']);
     Route::post('contracts/{id}/upload-receipt', [ContractController::class, 'uploadReceipt']);
     Route::post('contracts/{id}/upload-file', [ContractController::class, 'uploadContractFile']);
+    Route::post('contracts/{id}/accept-offer', [ContractController::class, 'acceptOffer']);
+    Route::post('contracts/{id}/reject-offer', [ContractController::class, 'rejectOffer']);
+    Route::post('contracts/{id}/upload-signed', [ContractController::class, 'uploadSignedContract']);
 
     Route::apiResource('settlements', FinancialSettlementController::class)->only(['index', 'store', 'show']);
     Route::apiResource('technician-requests', TechnicianRequestController::class)->only(['index', 'show']); // View own requests

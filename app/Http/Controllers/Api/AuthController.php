@@ -391,32 +391,35 @@ class AuthController extends Controller
     {
         $taqnyat = new TaqnyatOTP();
 
-        // --- التعديل المؤقت للتيست: جعل الكود 0000 للكل ---
-        $otp = '0000';
-        Log::info("[TestOTP] OTP set to 0000 for user: {$user->phone} (Global Test Mode)");
+        // Get test numbers from configuration (defined in config/services.php)
+        $testNumbersStr = config('services.taqnyat.test_numbers', '555555555,0555555555,966555555555');
+        $testNumbers = array_map('trim', explode(',', $testNumbersStr));
 
-        /* الكود الأصلي (تم تهميشه مؤقتاً)
-        $testNumbers = [
-            '555555555', // Admin
-        ];
+        // Clean phone number for test numbers check
+        $cleanPhone = ltrim(trim($user->phone), '+');
 
-        if (in_array($user->phone, $testNumbers)) {
+        $isTestNumber = false;
+        foreach ($testNumbers as $testNum) {
+            if ($testNum !== '' && str_ends_with($cleanPhone, $testNum)) {
+                $isTestNumber = true;
+                break;
+            }
+        }
+
+        if ($isTestNumber) {
             $otp = '0000';
             Log::info("[TestOTP] Static OTP 0000 set for test number: {$user->phone}");
         } else {
             $otp = $taqnyat->generateOtp();
         }
-        */
 
         $user->otp            = $otp;
         $user->otp_expires_at = Carbon::now()->addHours(24);
         $user->save();
 
-        /* إرسال SMS (تم تهميشه عشان ميرسلش رسايل حقيقية أثناء التيست للكل)
-        if (!in_array($user->phone, $testNumbers)) {
+        if (!$isTestNumber) {
             $taqnyat->sendOTP($user->phone, $otp);
         }
-        */
     }
 
     public function deleteAccount(Request $request)

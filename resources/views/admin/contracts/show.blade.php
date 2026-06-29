@@ -4,7 +4,7 @@
 @section('page_title', __('Contract Details'))
 
 @section('content')
-<div class="max-w-4xl mx-auto pb-20" dir="rtl">
+<div class="max-w-4xl mx-auto pb-20" dir="rtl" x-data="{ openOfferModal: false, openRejectModal: false }">
 
     {{-- Header --}}
     <div class="flex items-center justify-between mb-8">
@@ -18,10 +18,28 @@
                 </div>
             </a>
             <div>
-                <h1 class="text-2xl font-black text-[#1A1A31] dark:text-white">{{ __('Contract Details') }} <span class="text-slate-300 dark:text-slate-600">←</span></h1>
+                <h1 class="text-2xl font-black text-[#1A1A31] dark:text-white">{{ __('Contract Details') }} </h1>
             </div>
         </div>
         <div class="flex items-center gap-3">
+            @if(in_array($item->status, ['pending', 'under_review']))
+            <button @click="openOfferModal = true"
+                    class="px-6 py-3 bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] rounded-xl font-black text-xs shadow-lg shadow-[#1A1A31]/20 dark:shadow-white/5 hover:scale-[1.02] transition-all flex items-center gap-2 uppercase tracking-widest">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                {{ __('Send Price Offer') }}
+            </button>
+            <button @click="openRejectModal = true"
+                    class="px-6 py-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-500/20 rounded-xl font-black text-xs hover:bg-red-100 dark:hover:bg-red-500/20 transition-all flex items-center gap-2 uppercase tracking-widest">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                {{ __('Reject Request') }}
+            </button>
+            @endif
+
+            @if(!in_array($item->status, ['pending', 'under_review']))
              <a href="{{ route('admin.contracts.edit', $item->id) }}"
                class="px-6 py-3 bg-white dark:bg-white/5 text-[#1A1A31] dark:text-white rounded-xl font-black text-xs border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 transition-all uppercase tracking-widest flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -30,6 +48,7 @@
                 </svg>
                 {{ __('Edit') }}
             </a>
+            @endif
             @if($item->contract_file)
             <a href="{{ $item->contract_file_url }}" target="_blank"
                class="px-6 py-3 bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] rounded-xl font-black text-xs shadow-lg shadow-[#1A1A31]/20 dark:shadow-white/5 hover:scale-[1.02] transition-all uppercase tracking-widest flex items-center gap-2">
@@ -68,15 +87,25 @@
                     <div class="space-y-1">
                         <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{{ __('Status') }}</label>
                         <div class="pt-1">
-                            <span class="px-3 py-1 rounded-lg text-xs font-black uppercase
-                                {{ $item->status == 'active' ? 'bg-green-50 text-green-600 dark:bg-green-500/10' : ($item->status == 'expired' ? 'bg-red-50 text-red-600 dark:bg-red-500/10' : 'bg-blue-50 text-blue-600 dark:bg-blue-500/10') }}">
+                            @php
+                                $statusColors = [
+                                    'pending' => 'bg-amber-50 text-amber-600 dark:bg-amber-500/10',
+                                    'under_review' => 'bg-amber-50 text-amber-600 dark:bg-amber-500/10',
+                                    'offer_sent' => 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10',
+                                    'offer_accepted' => 'bg-blue-50 text-blue-600 dark:bg-blue-500/10',
+                                    'offer_rejected' => 'bg-red-50 text-red-600 dark:bg-red-500/10',
+                                    'awaiting_signed_contract' => 'bg-purple-50 text-purple-600 dark:bg-purple-500/10',
+                                    'awaiting_payment_proof' => 'bg-orange-50 text-orange-600 dark:bg-orange-500/10',
+                                    'active' => 'bg-green-50 text-green-600 dark:bg-green-500/10',
+                                    'completed' => 'bg-teal-50 text-teal-600 dark:bg-teal-500/10',
+                                    'expired' => 'bg-red-50 text-red-600 dark:bg-red-500/10',
+                                ];
+                                $colorClass = $statusColors[$item->status] ?? 'bg-slate-50 text-slate-600 dark:bg-white/5';
+                            @endphp
+                            <span class="px-3 py-1 rounded-lg text-xs font-black uppercase {{ $colorClass }}">
                                 {{ __($item->status) }}
                             </span>
                         </div>
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{{ __('Maintenance Company') }}</label>
-                        <p class="text-md font-bold text-[#1A1A31] dark:text-white">{{ $item->maintenanceCompany->company_name_ar ?? $item->maintenanceCompany->name ?? '-' }}</p>
                     </div>
                     <div class="space-y-1">
                         <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{{ __('Corporate Customer') }}</label>
@@ -89,7 +118,104 @@
                 </div>
             </div>
 
+            @if($item->company_name)
+            <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 shadow-sm border border-slate-50 dark:border-white/5">
+                <div class="flex items-center gap-4 mb-8 pb-6 border-b border-slate-50 dark:border-white/5">
+                    <div class="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-black text-[#1A1A31] dark:text-white">{{ __('Corporate Tendering Request Details') }}</h3>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 font-bold mt-0.5">{{ __('Company information and request details') }}</p>
+                    </div>
+                </div>
+
+                @if($item->status === 'offer_rejected')
+                <div class="mb-6 p-4 bg-red-50 dark:bg-red-500/10 border-r-4 border-red-500 rounded-xl text-red-700 dark:text-red-400">
+                    <p class="text-sm font-black">{{ __('Rejection Reason') }}:</p>
+                    <p class="text-xs mt-1 font-bold">{{ $item->rejection_reason ?? __('No reason provided') }}</p>
+                </div>
+                @endif
+
+                <div class="grid grid-cols-2 gap-8 mb-8">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{{ __('Company Name') }}</label>
+                        <p class="text-md font-bold text-[#1A1A31] dark:text-white">{{ $item->company_name }}</p>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{{ __('Commercial Record Number') }}</label>
+                        <p class="text-md font-bold text-[#1A1A31] dark:text-white">{{ $item->commercial_record_number }}</p>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{{ __('Head Office') }}</label>
+                        <p class="text-md font-bold text-[#1A1A31] dark:text-white">{{ $item->head_office }}</p>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{{ __('Contact Number') }}</label>
+                        <p class="text-md font-bold text-[#1A1A31] dark:text-white" dir="ltr">{{ $item->contact_number }}</p>
+                    </div>
+                </div>
+
+                <div class="space-y-2 mb-8">
+                    <label class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{{ __('Service Description') }}</label>
+                    <p class="text-sm text-slate-700 dark:text-slate-300 font-bold bg-slate-50 dark:bg-white/5 p-4 rounded-xl whitespace-pre-wrap leading-relaxed">{{ $item->service_description }}</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    @if($item->boq_file)
+                    <a href="{{ $item->boq_file_url }}" target="_blank" class="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-2xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all font-bold text-xs">
+                        <span class="text-[#1A1A31] dark:text-white">{{ __('BOQ File') }}</span>
+                        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                    </a>
+                    @endif
+
+                    @if($item->drawings_file)
+                    <a href="{{ $item->drawings_file_url }}" target="_blank" class="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-2xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all font-bold text-xs">
+                        <span class="text-[#1A1A31] dark:text-white">{{ __('Drawings File') }}</span>
+                        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                    </a>
+                    @endif
+
+                    @if($item->other_docs_file)
+                    <a href="{{ $item->other_docs_file_url }}" target="_blank" class="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-2xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all font-bold text-xs">
+                        <span class="text-[#1A1A31] dark:text-white">{{ __('Other Documents File') }}</span>
+                        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                    </a>
+                    @endif
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-50 dark:border-white/5">
+                    @if($item->price_offer_file)
+                    <a href="{{ $item->price_offer_file_url }}" target="_blank" class="flex items-center justify-between p-4 bg-indigo-50/50 dark:bg-indigo-500/5 border border-indigo-100/50 dark:border-indigo-500/10 rounded-2xl hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all font-bold text-xs">
+                        <span class="text-[#1A1A31] dark:text-white">{{ __('Price Offer File') }}</span>
+                        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                    </a>
+                    @endif
+
+                    @if($item->signed_contract_file)
+                    <a href="{{ $item->signed_contract_file_url }}" target="_blank" class="flex items-center justify-between p-4 bg-teal-50/50 dark:bg-teal-500/5 border border-teal-100/50 dark:border-teal-500/10 rounded-2xl hover:bg-teal-50 dark:hover:bg-teal-500/10 transition-all font-bold text-xs">
+                        <span class="text-[#1A1A31] dark:text-white">{{ __('Signed Contract File') }}</span>
+                        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                    </a>
+                    @endif
+                </div>
+            </div>
+            @endif
+
             {{-- Financial Overview --}}
+            @if(!in_array($item->status, ['pending', 'under_review']))
             <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 shadow-sm border border-slate-50 dark:border-white/5 overflow-hidden relative">
                 <div class="flex items-center gap-4 mb-10">
                     <div class="w-12 h-12 rounded-2xl bg-[#1A1A31]/5 dark:bg-white/5 flex items-center justify-center">
@@ -127,6 +253,7 @@
                     </div>
                 </div>
             </div>
+            @endif
         </div>
 
         {{-- Sidebar Details --}}
@@ -139,8 +266,16 @@
                     </svg>
                     {{ __('Contact Info') }}
                 </h4>
-                @if($item->contact_numbers)
-                    @foreach(explode(',', $item->contact_numbers) as $phone)
+                @php
+                    $phones = [];
+                    if ($item->contact_numbers) {
+                        $phones = array_filter(explode(',', $item->contact_numbers));
+                    } elseif ($item->contact_number) {
+                        $phones = [$item->contact_number];
+                    }
+                @endphp
+                @if(count($phones) > 0)
+                    @foreach($phones as $phone)
                     <div class="flex items-center justify-between py-3 border-b border-slate-50 dark:border-white/5 last:border-0">
                         <span class="text-sm font-bold text-slate-400">{{ __('Phone') }}</span>
                         <span class="text-sm font-black text-[#1A1A31] dark:text-white" dir="ltr">{{ $phone }}</span>
@@ -152,6 +287,7 @@
             </div>
 
             {{-- Dates Box --}}
+            @if($item->start_date || $item->end_date)
             <div class="bg-[#1A1A31] dark:bg-white/5 rounded-[2rem] p-8 shadow-lg shadow-[#1A1A31]/20 dark:shadow-none text-white">
                 <h4 class="text-sm font-black mb-6 flex items-center gap-2">
                     <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,8 +306,10 @@
                     </div>
                 </div>
             </div>
+            @endif
         </div>
 
+        @if(!in_array($item->status, ['pending', 'under_review', 'offer_sent', 'offer_rejected']))
         {{-- Payment Receipts --}}
         <div class="lg:col-span-3">
             <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 shadow-sm border border-slate-50 dark:border-white/5 mt-8">
@@ -204,21 +342,21 @@
                             @forelse($item->paymentReceipts as $receipt)
                             <tr class="group">
                                 <td class="py-4 px-4">
-                                    <span class="text-sm font-bold text-[#1A1A31] dark:text-white">{{ $receipt->payment_date->format('Y/m/d') }}</span>
+                                     <span class="text-sm font-bold text-[#1A1A31] dark:text-white">{{ $receipt->payment_date->format('Y/m/d') }}</span>
                                 </td>
                                 <td class="py-4 px-4">
-                                    <span class="text-sm font-black text-green-600 dark:text-green-400 font-mono">{{ number_format($receipt->amount) }} SAR</span>
+                                     <span class="text-sm font-black text-green-600 dark:text-green-400 font-mono">{{ number_format($receipt->amount) }} SAR</span>
                                 </td>
                                 <td class="py-4 px-4">
-                                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ __($receipt->payment_method) }}</span>
+                                     <span class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ __($receipt->payment_method) }}</span>
                                 </td>
                                 <td class="py-4 px-4 text-center">
-                                    <a href="{{ $receipt->receipt_url }}" target="_blank" class="text-primary dark:text-white font-black text-xs hover:underline uppercase tracking-widest">
-                                        {{ __('View Receipt') }}
-                                    </a>
+                                     <a href="{{ $receipt->receipt_url }}" target="_blank" class="text-primary dark:text-white font-black text-xs hover:underline uppercase tracking-widest">
+                                         {{ __('View Receipt') }}
+                                     </a>
                                 </td>
                                 <td class="py-4 px-4">
-                                    <p class="text-xs text-slate-400 font-bold max-w-xs truncate">{{ $receipt->notes ?? '-' }}</p>
+                                     <p class="text-xs text-slate-400 font-bold max-w-xs truncate">{{ $receipt->notes ?? '-' }}</p>
                                 </td>
                             </tr>
                             @empty
@@ -230,6 +368,69 @@
                     </table>
                 </div>
             </div>
+        </div>
+        @endif
+    </div>
+
+    {{-- Send Price Offer Modal --}}
+    <div x-show="openOfferModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" x-cloak>
+        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] max-w-lg w-full p-8 border border-slate-100 dark:border-white/10 shadow-2xl relative" @click.away="openOfferModal = false">
+            <h3 class="text-lg font-black text-[#1A1A31] dark:text-white mb-6 text-right">{{ __('Send Price Offer') }}</h3>
+            
+            <form action="{{ route('admin.contracts.update', $item->id) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="status" value="offer_sent">
+
+                <div class="space-y-2">
+                    <label class="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-right">{{ __('Project Value') }} (SAR)</label>
+                    <input type="number" name="project_value" required min="0" placeholder="0"
+                           class="w-full px-5 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary dark:focus:border-white/20 focus:bg-white dark:focus:bg-white/10 rounded-2xl text-sm font-bold transition-all outline-none text-right dark:text-white">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-right">{{ __('Price Offer File') }} (PDF)</label>
+                    <input type="file" name="price_offer_file" required accept=".pdf"
+                           class="w-full px-5 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary dark:focus:border-white/20 focus:bg-white dark:focus:bg-white/10 rounded-2xl text-sm font-bold transition-all outline-none dark:text-white">
+                </div>
+
+                <div class="flex items-center gap-3 pt-4">
+                    <button type="submit" class="flex-1 py-4 bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] rounded-2xl font-black text-xs shadow-lg hover:scale-[1.01] hover:brightness-110 transition-all">
+                        {{ __('Send') }}
+                    </button>
+                    <button type="button" @click="openOfferModal = false" class="px-6 py-4 bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-2xl font-black text-xs border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 transition-all">
+                        {{ __('Cancel') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- Reject Request Modal --}}
+    <div x-show="openRejectModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" x-cloak>
+        <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] max-w-lg w-full p-8 border border-slate-100 dark:border-white/10 shadow-2xl relative" @click.away="openRejectModal = false">
+            <h3 class="text-lg font-black text-[#1A1A31] dark:text-white mb-6 text-right">{{ __('Reject Request') }}</h3>
+            
+            <form action="{{ route('admin.contracts.update', $item->id) }}" method="POST" class="space-y-6">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="status" value="offer_rejected">
+
+                <div class="space-y-2">
+                    <label class="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-right">{{ __('Rejection Reason') }}</label>
+                    <textarea name="rejection_reason" required rows="4" placeholder="{{ __('Enter rejection reason') }}"
+                              class="w-full px-5 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary dark:focus:border-white/20 focus:bg-white dark:focus:bg-white/10 rounded-2xl text-sm font-bold transition-all outline-none text-right dark:text-white"></textarea>
+                </div>
+
+                <div class="flex items-center gap-3 pt-4">
+                    <button type="submit" class="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black text-xs shadow-lg hover:scale-[1.01] transition-all">
+                        {{ __('Reject') }}
+                    </button>
+                    <button type="button" @click="openRejectModal = false" class="px-6 py-4 bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-2xl font-black text-xs border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 transition-all">
+                        {{ __('Cancel') }}
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

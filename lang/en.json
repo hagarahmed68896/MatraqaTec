@@ -722,5 +722,18 @@
     "نشط": "Active",
     "The new password must be different from the old password.": "The new password must be different from the old password.",
     "The password is too short. It must be at least 8 characters.": "The password is too short. It must be at least 8 characters.",
-    "The IBAN must start with SA and be exactly 24 characters long (e.g., SAXXXXXXXXXXXXXXXXXXXXXX).": "The IBAN must start with SA and be exactly 24 characters long (e.g., SAXXXXXXXXXXXXXXXXXXXXXX)."
+    "The IBAN must start with SA and be exactly 24 characters long (e.g., SAXXXXXXXXXXXXXXXXXXXXXX).": "The IBAN must start with SA and be exactly 24 characters long (e.g., SAXXXXXXXXXXXXXXXXXXXXXX).",
+    "Download Our Apps": "Download Our Apps",
+    "Select the app that fits your needs": "Select the app that fits your needs",
+    "We provide specialized applications for customers, maintenance companies, and professional technicians.": "We provide specialized applications for customers, maintenance companies, and professional technicians.",
+    "Matraqa Tech": "Matraqa Tech",
+    "For Customers": "For Customers",
+    "Book home maintenance services easily, choose from trusted professionals, and track your requests.": "Book home maintenance services easily, choose from trusted professionals, and track your requests.",
+    "Google Play (Soon)": "Google Play (Soon)",
+    "Matraqa Company": "Matraqa Company",
+    "For Companies": "For Companies",
+    "For maintenance companies to manage orders, contracts, technicians, and platform operations efficiently.": "For maintenance companies to manage orders, contracts, technicians, and platform operations efficiently.",
+    "Matraqa Technician": "Matraqa Technician",
+    "For Technicians": "For Technicians",
+    "For professional technicians to receive tasks, navigate to locations, and manage maintenance work.": "For professional technicians to receive tasks, navigate to locations, and manage maintenance work."
 }

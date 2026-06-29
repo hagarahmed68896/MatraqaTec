@@ -30,7 +30,7 @@
                     <div class="absolute {{ app()->getLocale() == 'ar' ? 'left-0' : 'right-0' }} inset-y-0 w-16 flex items-center justify-center bg-slate-50 dark:bg-white/5 border-{{ app()->getLocale() == 'ar' ? 'l' : 'r' }} border-slate-100 dark:border-white/10 rounded-2xl">
                         <span class="text-lg font-black text-primary">%</span>
                     </div>
-                    <input type="number" step="0.01" name="commission_rate" value="{{ old('commission_rate', $stats['commission_rate']) }}" 
+                    <input type="number" step="0.01" name="commission_rate" value="{{ old('commission_rate', $stats['commission_rate'] ?? $fees ?? 15) }}" 
                            placeholder="{{ __('Enter commission percentage') }}" 
                            class="w-full px-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl {{ app()->getLocale() == 'ar' ? 'pr-8' : 'pl-8' }} py-6 text-base font-black text-slate-700 dark:text-white focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
                 </div>
@@ -45,7 +45,7 @@
                     <div class="absolute {{ app()->getLocale() == 'en' ? 'right-0' : 'left-0' }} inset-y-0 w-16 flex items-center justify-center bg-slate-100 dark:bg-white/10 border-{{ app()->getLocale() == 'en' ? 'l' : 'r' }} border-slate-100 dark:border-white/10 rounded-2xl">
                         <span class="text-xs font-black text-slate-400">SAR</span>
                     </div>
-                    <input type="text" readonly value="{{ number_format($stats['total_profit'], 2) }}" 
+                    <input type="text" readonly value="{{ number_format($stats['total_profit'] ?? $profit ?? 0, 2) }}" 
                            class="w-full px-4 bg-slate-100 dark:bg-white/10 border border-transparent rounded-2xl {{ app()->getLocale() == 'ar' ? 'pr-8' : 'pl-8 pr-8' }} py-6 text-base font-black text-slate-400 dark:text-slate-500 cursor-not-allowed text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
                 </div>
                 <p class="text-[10px] font-bold text-slate-400 px-2">

@@ -213,6 +213,15 @@ class TechnicianRequestController extends Controller
                 // Ignore email errors
             }
 
+            // 7. Send SMS credentials
+            try {
+                $taqnyat = new \App\Services\TaqnyatOTP();
+                $message = "مرحباً {$user->name}، تم قبول طلب انضمامك كفني في تطبيق مطرقة بنجاح.\nبيانات الدخول:\nرقم الجوال: {$user->phone}\nكلمة المرور: {$request->password}";
+                $taqnyat->sendSMS($user->phone, $message);
+            } catch (\Exception $e) {
+                \Log::error('[TechnicianRequestController] Failed to send SMS: ' . $e->getMessage());
+            }
+
             return redirect()->route('admin.technician-requests.index')->with([
                 'success' => __('Request accepted successfully.'),
                 'success_onboarding' => true

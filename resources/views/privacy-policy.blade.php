@@ -11,16 +11,10 @@
     <link href="https://fonts.cdnfonts.com/css/dubai-font" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
-        body { font-family: 'Dubai', 'Tajawal', sans-serif; overflow-x: hidden; }
-        .bg-gradient-premium {
-            background: linear-gradient(135deg, rgba(26, 26, 49, 0.02) 0%, rgba(74, 74, 92, 0.05) 100%);
-        }
-        .dark .bg-gradient-premium {
-            background: linear-gradient(135deg, rgba(26, 26, 49, 0.5) 0%, rgba(17, 17, 34, 0.8) 100%);
-        }
+        body { font-family: 'Dubai', 'Tajawal', sans-serif; overflow-x: hidden; scroll-behavior: smooth; }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-[#111122] text-[#1A1A31] dark:text-white antialiased transition-colors duration-300 min-h-screen flex flex-col">
+<body class="bg-[#F8F9FC] dark:bg-[#111122] text-[#1A1A31] dark:text-white antialiased transition-colors duration-300 min-h-screen flex flex-col">
 
     <!-- Navbar -->
     <nav class="w-full z-50 bg-white dark:bg-[#1A1A31] border-b border-slate-100 dark:border-slate-800 shadow-sm transition-all duration-300">
@@ -72,36 +66,70 @@
         </div>
     </nav>
 
+    <!-- Breadcrumb Section -->
+    <div class="w-full max-w-7xl mx-auto px-6 pt-10">
+        <div class="flex items-center gap-2 text-xs font-bold bg-[#E8EBF5] dark:bg-[#1A1A31] text-[#1A1A31] dark:text-slate-300 px-4 py-2.5 rounded-full w-max">
+            <a href="/" class="hover:text-green-500 transition-colors">{{ __('Home') }}</a>
+            <span class="text-slate-400 dark:text-slate-600">/</span>
+            <span class="text-green-600 dark:text-green-400">{{ __('Privacy Policy') }}</span>
+        </div>
+    </div>
+
     <!-- Content Header Section -->
-    <header class="py-12 bg-white dark:bg-[#1A1A31] border-b border-slate-100 dark:border-slate-800 transition-colors duration-300">
+    <header class="py-12 bg-transparent transition-colors duration-300">
         <div class="max-w-4xl mx-auto px-6 text-center">
-            <h1 class="text-3xl md:text-5xl font-black text-[#1A1A31] dark:text-white leading-tight mb-4">
+            <h1 class="text-4xl md:text-5xl font-black text-[#1A1A31] dark:text-white leading-tight mb-4">
                 {{ __('Privacy Policy') }}
             </h1>
-            <p class="text-lg text-slate-500 dark:text-slate-400 font-medium max-w-2xl mx-auto">
+            <p class="text-base md:text-lg text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-3xl mx-auto">
                 {{ __('We care about your privacy. Read our policy details to understand how we protect and handle your personal data.') }}
             </p>
         </div>
     </header>
 
     <!-- Main Content Area -->
-    <main class="flex-1 max-w-4xl w-full mx-auto px-6 py-12">
-        <!-- Main Content container -->
-        <div class="bg-white dark:bg-[#1A1A31] rounded-3xl border border-slate-100 dark:border-slate-800/80 shadow-xl p-8 md:p-12 transition-colors duration-300">
-            @if($policies->count() > 0)
-                <div class="space-y-10">
-                    @foreach($policies as $policy)
-                        <div class="border-b last:border-0 border-slate-100 dark:border-slate-800/50 pb-8 last:pb-0">
-                            <h2 class="text-2xl font-black mb-4 text-[#1A1A31] dark:text-white">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-6 pb-20">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            
+            <!-- Side Panel (Table of Contents / Index) -->
+            <div class="lg:col-span-1 bg-white dark:bg-[#1A1A31] border border-slate-100 dark:border-slate-800/80 shadow-lg rounded-3xl p-8 lg:sticky lg:top-6 transition-all duration-300">
+                <h3 class="text-lg font-black text-slate-800 dark:text-white mb-6 border-b border-slate-100 dark:border-slate-800 pb-4 flex items-center gap-2">
+                    <span>📋</span>
+                    {{ app()->getLocale() == 'ar' ? 'فهرس السياسة' : 'Policy Index' }}
+                </h3>
+                <ul class="space-y-4">
+                    @foreach($policies as $index => $policy)
+                        <li>
+                            <a href="#section-{{ $index }}" class="block text-sm font-bold text-slate-600 dark:text-slate-400 hover:text-green-500 dark:hover:text-green-400 transition-colors py-1">
                                 {{ app()->getLocale() == 'ar' ? ($policy->title_ar ?? $policy->title_en) : ($policy->title_en ?? $policy->title_ar) }}
-                            </h2>
-                            <div class="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 leading-relaxed space-y-4 text-base md:text-lg">
-                                {!! nl2br(e(app()->getLocale() == 'ar' ? ($policy->content_ar ?? $policy->content_en) : ($policy->content_en ?? $policy->content_ar))) !!}
-                            </div>
-                        </div>
+                            </a>
+                        </li>
                     @endforeach
-                </div>
-            @endif
+                </ul>
+            </div>
+
+            <!-- Content Panel (Detailed Sections) -->
+            <div class="lg:col-span-2 bg-white dark:bg-[#1A1A31] border border-slate-100 dark:border-slate-800/80 shadow-lg rounded-3xl p-8 md:p-12 transition-all duration-300">
+                @if($policies->count() > 0)
+                    <div class="space-y-12">
+                        @foreach($policies as $index => $policy)
+                            <div id="section-{{ $index }}" class="scroll-mt-10 border-b last:border-0 border-slate-100 dark:border-slate-800/50 pb-8 last:pb-0">
+                                <h2 class="text-xl md:text-2xl font-black mb-4 text-[#1A1A31] dark:text-white leading-tight">
+                                    {{ app()->getLocale() == 'ar' ? ($policy->title_ar ?? $policy->title_en) : ($policy->title_en ?? $policy->title_ar) }}
+                                </h2>
+                                <div class="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 leading-relaxed text-sm md:text-base whitespace-pre-line">
+                                    {!! nl2br(e(app()->getLocale() == 'ar' ? ($policy->content_ar ?? $policy->content_en) : ($policy->content_en ?? $policy->content_ar))) !!}
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-center py-12 text-slate-400 dark:text-slate-500">
+                        📄 {{ __('No privacy policies added yet.') }}
+                    </div>
+                @endif
+            </div>
+
         </div>
     </main>
 
@@ -117,10 +145,10 @@
 
                 <!-- Quick App Downloads -->
                 <div class="flex gap-4">
-                    <a href="#" class="h-9 opacity-80 hover:opacity-100 transition-opacity">
+                    <a href="/#download-section" class="h-9 opacity-80 hover:opacity-100 transition-opacity">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store" class="h-9">
                     </a>
-                    <a href="#" class="h-9 opacity-80 hover:opacity-100 transition-opacity">
+                    <a href="/#download-section" class="h-9 opacity-80 hover:opacity-100 transition-opacity">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play" class="h-9">
                     </a>
                 </div>
