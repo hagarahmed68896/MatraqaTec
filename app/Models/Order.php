@@ -42,7 +42,7 @@ class Order extends Model
         'spare_parts_metadata' => 'array',
     ];
 
-    protected $appends = ['status_label', 'status_color', 'formatted_scheduled_date', 'formatted_scheduled_time', 'formatted_proposed_scheduled_date', 'formatted_proposed_scheduled_time', 'client_name', 'client_phone', 'technician_name', 'technician_phone', 'technician_avatar', 'acceptance_duration_minutes', 'acceptance_expiry_time', 'remaining_acceptance_seconds', 'client_signature_url', 'attachment_urls', 'image', 'can_reschedule', 'is_paid'];
+    protected $appends = ['status_label', 'status_color', 'formatted_scheduled_date', 'formatted_scheduled_time', 'formatted_proposed_scheduled_date', 'formatted_proposed_scheduled_time', 'client_name', 'client_phone', 'technician_name', 'technician_phone', 'technician_avatar', 'acceptance_duration_minutes', 'acceptance_expiry_time', 'remaining_acceptance_seconds', 'client_signature_url', 'attachment_urls', 'image', 'can_reschedule', 'is_paid', 'required_photos_before_count', 'required_photos_after_count'];
 
     protected static function booted()
     {
@@ -134,6 +134,16 @@ class Order extends Model
     public function getImageAttribute()
     {
         return $this->attachment_urls[0] ?? null;
+    }
+
+    public function getRequiredPhotosBeforeCountAttribute()
+    {
+        return (int) \App\Models\Setting::getByKey('required_photos_before_count', 1);
+    }
+
+    public function getRequiredPhotosAfterCountAttribute()
+    {
+        return (int) \App\Models\Setting::getByKey('required_photos_after_count', 1);
     }
 
     public function getAcceptanceDurationMinutesAttribute()

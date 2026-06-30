@@ -14,4 +14,9 @@ class PlatformProfit extends Model
         'fees',
         'amount',
     ];
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
 }

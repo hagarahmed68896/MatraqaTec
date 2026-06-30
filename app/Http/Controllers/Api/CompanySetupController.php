@@ -18,7 +18,7 @@ class CompanySetupController extends Controller
         $user = auth()->user();
         $company = $user->maintenanceCompany;
         if (!$company) {
-            return response()->json(['status' => false, 'message' => 'User is not a company'], 403);
+            return response()->json(['status' => false, 'message' => __('User is not a company')], 403);
         }
 
         $services = $company->services()
@@ -47,7 +47,7 @@ class CompanySetupController extends Controller
                 return $service;
             });
 
-        return response()->json(['status' => true, 'message' => 'Your services retrieved', 'data' => $services]);
+        return response()->json(['status' => true, 'message' => __('Your services retrieved'), 'data' => $services]);
     }
 
     /**
@@ -58,7 +58,7 @@ class CompanySetupController extends Controller
         $user = auth()->user();
         $company = $user->maintenanceCompany;
         if (!$company) {
-            return response()->json(['status' => false, 'message' => 'User is not a company'], 403);
+            return response()->json(['status' => false, 'message' => __('User is not a company')], 403);
         }
 
         $selectedServiceIds = $company->services()->pluck('services.id')->toArray();
@@ -72,7 +72,7 @@ class CompanySetupController extends Controller
                 return $service;
             });
 
-        return response()->json(['status' => true, 'message' => 'All services retrieved', 'data' => $services]);
+        return response()->json(['status' => true, 'message' => __('All services retrieved'), 'data' => $services]);
     }
 
     /**
@@ -90,7 +90,7 @@ class CompanySetupController extends Controller
         $user = auth()->user();
         $company = $user->maintenanceCompany;
         if (!$company) {
-            return response()->json(['status' => false, 'message' => 'User is not a company'], 403);
+            return response()->json(['status' => false, 'message' => __('User is not a company')], 403);
         }
 
         $syncData = [];
@@ -102,7 +102,7 @@ class CompanySetupController extends Controller
 
         $company->services()->syncWithoutDetaching($syncData);
 
-        return response()->json(['status' => true, 'message' => 'Services updated successfully']);
+        return response()->json(['status' => true, 'message' => __('Services updated successfully')]);
     }
 
     /**
@@ -113,12 +113,12 @@ class CompanySetupController extends Controller
         $user = auth()->user();
         $company = $user->maintenanceCompany;
         if (!$company) {
-            return response()->json(['status' => false, 'message' => 'User is not a company'], 403);
+            return response()->json(['status' => false, 'message' => __('User is not a company')], 403);
         }
 
         $company->services()->detach($id);
 
-        return response()->json(['status' => true, 'message' => 'Service removed successfully']);
+        return response()->json(['status' => true, 'message' => __('Service removed successfully')]);
     }
 
     /**
@@ -129,7 +129,7 @@ class CompanySetupController extends Controller
         $user = auth()->user();
         $company = $user->maintenanceCompany;
         if (!$company) {
-            return response()->json(['status' => false, 'message' => 'User is not a company'], 403);
+            return response()->json(['status' => false, 'message' => __('User is not a company')], 403);
         }
 
         $selectedDistrictIds = $company->districts()->pluck('districts.id')->toArray();
@@ -150,7 +150,7 @@ class CompanySetupController extends Controller
                 return $district;
             });
 
-        return response()->json(['status' => true, 'message' => 'Coverage areas retrieved', 'data' => $districts]);
+        return response()->json(['status' => true, 'message' => __('Coverage areas retrieved'), 'data' => $districts]);
     }
 
     /**
@@ -166,11 +166,11 @@ class CompanySetupController extends Controller
         $user = auth()->user();
         $company = $user->maintenanceCompany;
         if (!$company) {
-            return response()->json(['status' => false, 'message' => 'User is not a company'], 403);
+            return response()->json(['status' => false, 'message' => __('User is not a company')], 403);
         }
 
         $company->districts()->syncWithoutDetaching($request->district_ids);
 
-        return response()->json(['status' => true, 'message' => 'Coverage areas updated successfully']);
+        return response()->json(['status' => true, 'message' => __('Coverage areas updated successfully')]);
     }
 }

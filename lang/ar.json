@@ -1308,5 +1308,20 @@
     "Awaiting Payment Proof": "بانتظار رفع إثبات السداد",
     "Active": "نشط",
     "Completed": "مكتمل",
-    "Expired": "منتهي"
+    "Expired": "منتهي",
+    "Manage VAT and platform commission rates for services and spare parts": "إدارة نسب الضريبة وعمولة المنصة للخدمات وقطع الغيار",
+    "Maintenance Services Settings": "إعدادات خدمات الصيانة",
+    "Services VAT Rate (%)": "نسبة ضريبة الخدمات (%)",
+    "Services Platform Commission (%)": "نسبة عمولة المنصة للخدمات (%)",
+    "Spare Parts Settings": "إعدادات قطع الغيار",
+    "Spare Parts VAT Rate (%)": "نسبة ضريبة قطع الغيار (%)",
+    "Spare Parts Platform Commission (%)": "نسبة عمولة المنصة لقطع الغيار (%)",
+    "Commission and VAT settings updated successfully.": "تم تحديث إعدادات العمولات والضرائب بنجاح.",
+    "Service removed successfully": "تم حذف الخدمة بنجاح",
+    "Services updated successfully": "تم تحديث الخدمات بنجاح",
+    "Your services retrieved": "تم استرجاع خدماتك بنجاح",
+    "All services retrieved": "تم استرجاع جميع الخدمات بنجاح",
+    "User is not a company": "المستخدم ليس شركة صيانة",
+    "Coverage areas retrieved": "تم استرجاع مناطق التغطية بنجاح",
+    "Coverage areas updated successfully": "تم تحديث مناطق التغطية بنجاح"
 }

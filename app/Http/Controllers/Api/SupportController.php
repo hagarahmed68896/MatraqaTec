@@ -25,12 +25,30 @@ class SupportController extends Controller
             'email' => Setting::getByKey('contact_email', $socialLinks->first()->email ?? 'support@matraqa.sa'),
         ];
 
+        // Global VAT and Commission configurations
+        $settings = [
+            'vat_rate_services' => (float) Setting::getByKey('vat_rate_services', 15),
+            'platform_commission_services' => (float) Setting::getByKey('platform_commission_services', 15),
+            'vat_rate_parts' => (float) Setting::getByKey('vat_rate_parts', 15),
+            'platform_commission_parts' => (float) Setting::getByKey('platform_commission_parts', 15),
+            // Backwards compatibility fallbacks
+            'vat_rate' => (float) Setting::getByKey('vat_rate', 15),
+            'platform_commission' => (float) Setting::getByKey('platform_commission', 15),
+            // General settings
+            'order_acceptance_duration' => (int) Setting::getByKey('order_acceptance_duration', 30),
+            'required_photos_before_count' => (int) Setting::getByKey('required_photos_before_count', 1),
+            'required_photos_after_count' => (int) Setting::getByKey('required_photos_after_count', 1),
+            'reminder_type' => Setting::getByKey('reminder_type', 'day'),
+            'reminder_custom_value' => Setting::getByKey('reminder_custom_value', null),
+        ];
+
         return response()->json([
             'status' => true,
             'message' => 'Support information retrieved',
             'data' => [
                 'contact' => $contact,
-                'social_links' => $socialLinks
+                'social_links' => $socialLinks,
+                'settings' => $settings
             ]
         ]);
     }

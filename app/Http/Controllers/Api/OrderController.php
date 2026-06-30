@@ -776,11 +776,16 @@ class OrderController extends Controller
             }
         }
 
-        // Calculate Grand Total (Service + Parts + Tax)
+        // Calculate Grand Total (Service + Parts + Tax) using separate rates
         $basePrice = $order->service->price ?? 50;
-        $taxRate = (float) \App\Models\Setting::getByKey('vat_rate', 15) / 100;
+        $serviceTaxRate = (float) \App\Models\Setting::getByKey('vat_rate_services', 15) / 100;
+        $partsTaxRate = (float) \App\Models\Setting::getByKey('vat_rate_parts', 15) / 100;
+
+        $serviceTax = $basePrice * $serviceTaxRate;
+        $partsTax = $sparePartsTotal * $partsTaxRate;
+
         $subTotal = $basePrice + $sparePartsTotal;
-        $tax = $subTotal * $taxRate;
+        $tax = $serviceTax + $partsTax;
         $grandTotal = $subTotal + $tax;
 
         $order->update([
@@ -1009,9 +1014,10 @@ class OrderController extends Controller
             }
         }
 
-        // Calculate Final Grand Total
+        // Calculate Final Grand Total using separate rates
         $basePrice = $order->service->price ?? 50;
-        $taxRate = (float) \App\Models\Setting::getByKey('vat_rate', 15) / 100;
+        $serviceTaxRate = (float) \App\Models\Setting::getByKey('vat_rate_services', 15) / 100;
+        $partsTaxRate = (float) \App\Models\Setting::getByKey('vat_rate_parts', 15) / 100;
         
         // Sum up existing parts if not provided in request (or overwrite with new ones)
         if (empty($sparePartsMetadata) && $order->spare_parts_metadata) {
@@ -1021,8 +1027,11 @@ class OrderController extends Controller
             }
         }
 
+        $serviceTax = $basePrice * $serviceTaxRate;
+        $partsTax = $sparePartsTotal * $partsTaxRate;
+
         $subTotal = $basePrice + $sparePartsTotal;
-        $tax = $subTotal * $taxRate;
+        $tax = $serviceTax + $partsTax;
         $finalGrandTotal = $subTotal + $tax;
 
         // Re-verify payment against the final calculated total
@@ -1066,14 +1075,18 @@ class OrderController extends Controller
             $order->technician->update(['availability_status' => 'available']);
         }
 
-        // --- Calculate and Record Platform Profit ---
-        $commissionRate = (float) \App\Models\Setting::getByKey('platform_commission', 15);
-        $profitAmount = $order->total_price * ($commissionRate / 100);
+        // --- Calculate and Record Platform Profit using separate rates ---
+        $serviceCommissionRate = (float) \App\Models\Setting::getByKey('platform_commission_services', 15);
+        $partsCommissionRate = (float) \App\Models\Setting::getByKey('platform_commission_parts', 15);
+
+        $serviceProfit = $basePrice * ($serviceCommissionRate / 100);
+        $partsProfit = $sparePartsTotal * ($partsCommissionRate / 100);
+        $profitAmount = $serviceProfit + $partsProfit;
 
         if ($profitAmount > 0) {
             \App\Models\PlatformProfit::create([
                 'order_id' => $order->id,
-                'fees'     => $commissionRate, // Percentage
+                'fees'     => $serviceCommissionRate, // Primary rate
                 'amount'   => round($profitAmount, 2),
             ]);
         }
@@ -1442,21 +1455,31 @@ class OrderController extends Controller
         $order = Order::with(['service', 'user'])->find($id);
         if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
 
-        $sparePartsTotal = 0;
+        $serviceTaxRate = (float) \App\Models\Setting::getByKey('vat_rate_services', 15) / 100;
+        $partsTaxRate = (float) \App\Models\Setting::getByKey('vat_rate_parts', 15) / 100;
+        $serviceCommissionRate = (float) \App\Models\Setting::getByKey('platform_commission_services', 15);
+        $partsCommissionRate = (float) \App\Models\Setting::getByKey('platform_commission_parts', 15);
+
+        $serviceBase = $order->service->price ?? 50;
+        $serviceTax = $serviceBase * $serviceTaxRate;
+        $serviceCommission = $serviceBase * ($serviceCommissionRate / 100);
+        $serviceCompanyShare = $serviceBase - $serviceCommission;
+
+        $sparePartsBase = 0;
         if (is_array($order->spare_parts_metadata)) {
             foreach ($order->spare_parts_metadata as $part) {
-                $sparePartsTotal += isset($part['total']) ? $part['total'] : ($part['qty'] * $part['price']);
+                $sparePartsBase += isset($part['total']) ? $part['total'] : ($part['qty'] * $part['price']);
             }
         }
+        $sparePartsTax = $sparePartsBase * $partsTaxRate;
+        $sparePartsCommission = $sparePartsBase * ($partsCommissionRate / 100);
+        $sparePartsCompanyShare = $sparePartsBase - $sparePartsCommission;
 
-        $serviceBase = $order->service->price ?? ($order->total_price / 1.15); 
-        $serviceTax = $serviceBase * 0.15;
-        
-        $expectedTotal = $serviceBase + $serviceTax + $sparePartsTotal;
-        $grandTotal = max($order->total_price, $expectedTotal);
-
-        $base = $grandTotal / 1.15;
-        $tax = $grandTotal - $base;
+        $totalBase = $serviceBase + $sparePartsBase;
+        $totalTax = $serviceTax + $sparePartsTax;
+        $totalCommission = $serviceCommission + $sparePartsCommission;
+        $totalCompanyShare = $serviceCompanyShare + $sparePartsCompanyShare;
+        $grandTotal = $totalBase + $totalTax;
 
         $isPaid = $order->payments()->where('status', 'completed')->exists();
 
@@ -1469,9 +1492,17 @@ class OrderController extends Controller
                 'is_paid' => $isPaid,
                 'service' => $order->service->name_ar ?? 'خدمة',
                 'service_amount' => number_format($serviceBase, 2),
-                'spare_parts_amount' => number_format($sparePartsTotal, 2),
-                'base_amount' => number_format($base, 2),
-                'tax' => number_format($tax, 2),
+                'service_tax' => number_format($serviceTax, 2),
+                'service_commission' => number_format($serviceCommission, 2),
+                'service_company_share' => number_format($serviceCompanyShare, 2),
+                'spare_parts_amount' => number_format($sparePartsBase, 2),
+                'spare_parts_tax' => number_format($sparePartsTax, 2),
+                'spare_parts_commission' => number_format($sparePartsCommission, 2),
+                'spare_parts_company_share' => number_format($sparePartsCompanyShare, 2),
+                'base_amount' => number_format($totalBase, 2),
+                'tax' => number_format($totalTax, 2),
+                'total_commission' => number_format($totalCommission, 2),
+                'total_company_share' => number_format($totalCompanyShare, 2),
                 'total' => number_format($grandTotal, 2),
                 'spare_parts' => $order->spare_parts_metadata ?? [],
             ]
