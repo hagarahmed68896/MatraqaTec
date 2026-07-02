@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class ContractController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
         if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
@@ -20,14 +20,39 @@ class ContractController extends Controller
             $query->where('maintenance_company_id', $company->id ?? 0);
         } elseif ($user->type === 'corporate_customer') {
             $corporate = $user->corporateCustomer;
-            $query->where('corporate_customer_id', $corporate->id ?? 0)
+            $query->where(function($q) use ($corporate, $user) {
+                $q->where('corporate_customer_id', $corporate->id ?? 0)
                   ->orWhere('user_id', $user->id);
+            });
         } elseif ($user->type === 'technician') {
             $technician = $user->technician;
             $query->where('maintenance_company_id', $technician->maintenance_company_id ?? 0);
         } else {
             // General users or individuals might not have contracts
             $query->where('user_id', $user->id);
+        }
+
+        // Filter by status (single status)
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by tab
+        if ($request->filled('tab')) {
+            switch ($request->tab) {
+                case 'requests':
+                    $query->whereIn('status', ['pending', 'offer_sent', 'offer_rejected']);
+                    break;
+                case 'awaiting':
+                    $query->whereIn('status', ['offer_accepted', 'awaiting_signed_contract', 'awaiting_payment_proof']);
+                    break;
+                case 'active':
+                    $query->where('status', 'active');
+                    break;
+                case 'archived':
+                    $query->whereIn('status', ['completed', 'expired']);
+                    break;
+            }
         }
 
         $contracts = $query->latest()->get();
@@ -85,7 +110,7 @@ class ContractController extends Controller
 
         // Check if the corporate customer already has a pending or under review request
         $hasPending = Contract::where('corporate_customer_id', $user->corporateCustomer?->id)
-            ->whereIn('status', ['pending', 'under_review'])
+            ->where('status', 'pending')
             ->exists();
 
         if ($hasPending) {

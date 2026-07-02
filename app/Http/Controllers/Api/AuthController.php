@@ -501,4 +501,23 @@ class AuthController extends Controller
 
         return $data;
     }
+
+    /**
+     * Update FCM Token for authenticated user
+     */
+    public function updateFcmToken(Request $request)
+    {
+        $request->validate([
+            'fcm_token' => 'required|string',
+        ]);
+
+        auth()->user()->update([
+            'fcm_token' => $request->fcm_token
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => __('FCM token updated successfully')
+        ]);
+    }
 }

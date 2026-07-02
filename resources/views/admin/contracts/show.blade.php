@@ -22,7 +22,7 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
-            @if(in_array($item->status, ['pending', 'under_review']))
+            @if($item->status === 'pending')
             <button @click="openOfferModal = true"
                     class="px-6 py-3 bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] rounded-xl font-black text-xs shadow-lg shadow-[#1A1A31]/20 dark:shadow-white/5 hover:scale-[1.02] transition-all flex items-center gap-2 uppercase tracking-widest">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,7 +39,7 @@
             </button>
             @endif
 
-            @if(!in_array($item->status, ['pending', 'under_review']))
+            @if($item->status !== 'pending')
              <a href="{{ route('admin.contracts.edit', $item->id) }}"
                class="px-6 py-3 bg-white dark:bg-white/5 text-[#1A1A31] dark:text-white rounded-xl font-black text-xs border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 transition-all uppercase tracking-widest flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,7 +90,6 @@
                             @php
                                 $statusColors = [
                                     'pending' => 'bg-amber-50 text-amber-600 dark:bg-amber-500/10',
-                                    'under_review' => 'bg-amber-50 text-amber-600 dark:bg-amber-500/10',
                                     'offer_sent' => 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10',
                                     'offer_accepted' => 'bg-blue-50 text-blue-600 dark:bg-blue-500/10',
                                     'offer_rejected' => 'bg-red-50 text-red-600 dark:bg-red-500/10',
@@ -215,7 +214,7 @@
             @endif
 
             {{-- Financial Overview --}}
-            @if(!in_array($item->status, ['pending', 'under_review']))
+            @if($item->status !== 'pending')
             <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 shadow-sm border border-slate-50 dark:border-white/5 overflow-hidden relative">
                 <div class="flex items-center gap-4 mb-10">
                     <div class="w-12 h-12 rounded-2xl bg-[#1A1A31]/5 dark:bg-white/5 flex items-center justify-center">
@@ -309,7 +308,7 @@
             @endif
         </div>
 
-        @if(!in_array($item->status, ['pending', 'under_review', 'offer_sent', 'offer_rejected']))
+        @if(!in_array($item->status, ['pending', 'offer_sent', 'offer_rejected']))
         {{-- Payment Receipts --}}
         <div class="lg:col-span-3">
             <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] p-8 shadow-sm border border-slate-50 dark:border-white/5 mt-8">

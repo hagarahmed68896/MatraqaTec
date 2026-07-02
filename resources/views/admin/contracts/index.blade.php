@@ -125,7 +125,6 @@
                                     $statuses = [
                                         '' => __('All'),
                                         'pending' => __('Pending'),
-                                        'under_review' => __('Under Review'),
                                         'offer_sent' => __('Offer Sent'),
                                         'offer_accepted' => __('Offer Accepted'),
                                         'offer_rejected' => __('Offer Rejected'),
@@ -291,7 +290,6 @@
                             @php
                                 $statusColors = [
                                     'pending' => 'bg-amber-50 text-amber-600 dark:bg-amber-500/10',
-                                    'under_review' => 'bg-amber-50 text-amber-600 dark:bg-amber-500/10',
                                     'offer_sent' => 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10',
                                     'offer_accepted' => 'bg-blue-50 text-blue-600 dark:bg-blue-500/10',
                                     'offer_rejected' => 'bg-red-50 text-red-600 dark:bg-red-500/10',
@@ -311,7 +309,7 @@
                             <span class="text-[11px] font-bold text-slate-400 dark:text-slate-500">{{ $item->created_at->format('Y/m/d') }}</span>
                         </td>
                         <td class="py-6 px-8 text-center" onclick="event.stopPropagation()">
-                            @if(!in_array($item->status, ['pending', 'under_review']))
+                            @if($item->status !== 'pending')
                             <a href="{{ route('admin.contracts.edit', $item->id) }}" class="w-8 h-8 inline-flex items-center justify-center rounded-lg bg-slate-50 dark:bg-white/5 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-white/20 hover:text-[#1A1A31] dark:hover:text-white transition-all">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </a>

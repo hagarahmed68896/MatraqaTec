@@ -84,6 +84,7 @@ use App\Http\Controllers\Api\SupportController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
+Route::post('/send-otp', [AuthController::class, 'resendOtp']);
 Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
@@ -115,6 +116,7 @@ Route::get('/home', [\App\Http\Controllers\Api\HomeController::class, 'index']);
 // --- Protected Routes (User Scope) ---
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('update-fcm-token', [AuthController::class, 'updateFcmToken']);
     Route::delete('/account', [AuthController::class, 'deleteAccount']);
     Route::get('/profile', [AuthController::class, 'profile']); // Generic profile info
     

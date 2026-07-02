@@ -42,7 +42,7 @@ class ContractController extends Controller
         if ($request->filled('tab')) {
             switch ($request->tab) {
                 case 'requests':
-                    $query->whereIn('status', ['pending', 'under_review', 'offer_sent', 'offer_rejected']);
+                    $query->whereIn('status', ['pending', 'offer_sent', 'offer_rejected']);
                     break;
                 case 'awaiting':
                     $query->whereIn('status', ['offer_accepted', 'awaiting_signed_contract', 'awaiting_payment_proof']);
@@ -132,7 +132,7 @@ class ContractController extends Controller
             'project_value'            => 'nullable|numeric|min:0',
             'start_date'               => 'nullable|date',
             'end_date'                 => 'nullable|date|after:start_date',
-            'status'                   => 'required|in:pending,under_review,offer_sent,offer_accepted,offer_rejected,awaiting_signed_contract,awaiting_payment_proof,active,completed,expired',
+            'status'                   => 'required|in:pending,offer_sent,offer_accepted,offer_rejected,awaiting_signed_contract,awaiting_payment_proof,active,completed,expired',
             'contract_file'            => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
             'price_offer_file'         => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
             'contact_numbers'          => 'nullable|array',
@@ -205,7 +205,21 @@ class ContractController extends Controller
         }
 
         $contract = null;
-        DB::transaction(function () use ($data, &$contract) {
+        DB::transaction(function () use (&$data, &$contract) {
+            // Automatically resolve user_id based on company/customer relation
+            if (empty($data['user_id'])) {
+                if (!empty($data['corporate_customer_id'])) {
+                    $corp = CorporateCustomer::find($data['corporate_customer_id']);
+                    if ($corp) {
+                        $data['user_id'] = $corp->user_id;
+                    }
+                } elseif (!empty($data['maintenance_company_id'])) {
+                    $comp = MaintenanceCompany::find($data['maintenance_company_id']);
+                    if ($comp) {
+                        $data['user_id'] = $comp->user_id;
+                    }
+                }
+            }
             $contract = Contract::create($data);
         });
 
@@ -237,7 +251,7 @@ class ContractController extends Controller
             'project_value'            => 'nullable|numeric|min:0',
             'start_date'               => 'nullable|date',
             'end_date'                 => 'nullable|date|after:start_date',
-            'status'                   => 'required|in:pending,under_review,offer_sent,offer_accepted,offer_rejected,awaiting_signed_contract,awaiting_payment_proof,active,completed,expired',
+            'status'                   => 'required|in:pending,offer_sent,offer_accepted,offer_rejected,awaiting_signed_contract,awaiting_payment_proof,active,completed,expired',
             'contract_file'            => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
             'price_offer_file'         => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
             'contact_numbers'          => 'nullable|array',
@@ -322,16 +336,38 @@ class ContractController extends Controller
             $data['contact_numbers'] = $phones ? implode(',', $phones) : null;
         }
 
-        DB::transaction(function () use ($data, $contract) {
+        DB::transaction(function () use (&$data, $contract) {
+            // Update user_id based on selected customer or company
+            if (!empty($data['corporate_customer_id'])) {
+                $corp = CorporateCustomer::find($data['corporate_customer_id']);
+                if ($corp) {
+                    $data['user_id'] = $corp->user_id;
+                }
+            } elseif (!empty($data['maintenance_company_id'])) {
+                $comp = MaintenanceCompany::find($data['maintenance_company_id']);
+                if ($comp) {
+                    $data['user_id'] = $comp->user_id;
+                }
+            }
             $contract->update($data);
         });
 
         // Trigger Notifications on Status Changes
         $newStatus = $contract->status;
-        if ($oldStatus !== $newStatus && $contract->user) {
+        $targetUser = $contract->user ?? ($contract->user_id ? \App\Models\User::find($contract->user_id) : null);
+        
+        if (!$targetUser) {
+            if ($contract->corporateCustomer && $contract->corporateCustomer->user) {
+                $targetUser = $contract->corporateCustomer->user;
+            } elseif ($contract->maintenanceCompany && $contract->maintenanceCompany->user) {
+                $targetUser = $contract->maintenanceCompany->user;
+            }
+        }
+
+        if ($oldStatus !== $newStatus && $targetUser) {
             try {
                 if ($newStatus === 'offer_sent') {
-                    $contract->user->sendFcmNotification([
+                    $targetUser->sendFcmNotification([
                         'type' => 'contract_offer_sent',
                         'title_ar' => 'عرض سعر جديد',
                         'title_en' => 'New Price Offer',
@@ -340,7 +376,7 @@ class ContractController extends Controller
                         'data' => ['contract_id' => $contract->id]
                     ], true);
                 } elseif ($newStatus === 'awaiting_signed_contract') {
-                    $contract->user->sendFcmNotification([
+                    $targetUser->sendFcmNotification([
                         'type' => 'contract_ready_for_signature',
                         'title_ar' => 'عقد جاهز للتوقيع',
                         'title_en' => 'Contract Ready for Signature',
@@ -349,7 +385,7 @@ class ContractController extends Controller
                         'data' => ['contract_id' => $contract->id]
                     ], true);
                 } elseif ($newStatus === 'active') {
-                    $contract->user->sendFcmNotification([
+                    $targetUser->sendFcmNotification([
                         'type' => 'contract_activated',
                         'title_ar' => 'تم تفعيل التعاقد',
                         'title_en' => 'Contract Activated',

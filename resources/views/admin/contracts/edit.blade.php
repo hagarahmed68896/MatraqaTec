@@ -366,7 +366,6 @@
                             class="w-full px-5 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary dark:focus:border-white/20 focus:bg-white dark:focus:bg-white/10 rounded-2xl text-sm font-bold transition-all outline-none appearance-none text-right @error('status') border-red-400 @enderror dark:text-white">
                         <option value="">{{ __('Select Status') }}</option>
                         <option value="pending" class="dark:bg-[#1A1A31]">{{ __('Pending') }}</option>
-                        <option value="under_review" class="dark:bg-[#1A1A31]">{{ __('Under Review') }}</option>
                         <option value="offer_sent" class="dark:bg-[#1A1A31]">{{ __('Offer Sent') }}</option>
                         <option value="offer_accepted" class="dark:bg-[#1A1A31]">{{ __('Offer Accepted') }}</option>
                         <option value="offer_rejected" class="dark:bg-[#1A1A31]">{{ __('Offer Rejected') }}</option>
