@@ -223,6 +223,10 @@ class ContractController extends Controller
             $contract = Contract::create($data);
         });
 
+        if ($contract && !empty($contract->status)) {
+            $this->sendContractStatusNotification($contract, $contract->status);
+        }
+
         return redirect()->route('admin.contracts.index')->with('success', __('Contract created successfully.'));
     }
 
@@ -354,49 +358,8 @@ class ContractController extends Controller
 
         // Trigger Notifications on Status Changes
         $newStatus = $contract->status;
-        $targetUser = $contract->user ?? ($contract->user_id ? \App\Models\User::find($contract->user_id) : null);
-        
-        if (!$targetUser) {
-            if ($contract->corporateCustomer && $contract->corporateCustomer->user) {
-                $targetUser = $contract->corporateCustomer->user;
-            } elseif ($contract->maintenanceCompany && $contract->maintenanceCompany->user) {
-                $targetUser = $contract->maintenanceCompany->user;
-            }
-        }
-
-        if ($oldStatus !== $newStatus && $targetUser) {
-            try {
-                if ($newStatus === 'offer_sent') {
-                    $targetUser->sendFcmNotification([
-                        'type' => 'contract_offer_sent',
-                        'title_ar' => 'عرض سعر جديد',
-                        'title_en' => 'New Price Offer',
-                        'body_ar' => 'تم إرسال عرض السعر لطلب التعاقد الخاص بكم. يرجى المراجعة والرد.',
-                        'body_en' => 'A price offer has been sent for your contract request. Please review and respond.',
-                        'data' => ['contract_id' => $contract->id]
-                    ], true);
-                } elseif ($newStatus === 'awaiting_signed_contract') {
-                    $targetUser->sendFcmNotification([
-                        'type' => 'contract_ready_for_signature',
-                        'title_ar' => 'عقد جاهز للتوقيع',
-                        'title_en' => 'Contract Ready for Signature',
-                        'body_ar' => 'عقدكم جاهز للتوقيع. يرجى تحميله والتوقيع عليه وإعادة رفعه.',
-                        'body_en' => 'Your contract is ready. Please download, sign, and upload the signed copy.',
-                        'data' => ['contract_id' => $contract->id]
-                    ], true);
-                } elseif ($newStatus === 'active') {
-                    $targetUser->sendFcmNotification([
-                        'type' => 'contract_activated',
-                        'title_ar' => 'تم تفعيل التعاقد',
-                        'title_en' => 'Contract Activated',
-                        'body_ar' => 'تهانينا! تم تفعيل عقدكم بنجاح ومتابعة حالته.',
-                        'body_en' => 'Congratulations! Your contract has been successfully activated.',
-                        'data' => ['contract_id' => $contract->id]
-                    ], true);
-                }
-            } catch (\Exception $e) {
-                \Log::error('FCM Notification error in Admin ContractController: ' . $e->getMessage());
-            }
+        if ($oldStatus !== $newStatus) {
+            $this->sendContractStatusNotification($contract, $newStatus);
         }
 
         return redirect()->route('admin.contracts.index')->with('success', __('Contract updated successfully.'));
@@ -465,5 +428,103 @@ class ContractController extends Controller
                 'Content-Disposition' => 'attachment; filename="' . $filename . '"',
             ]
         );
+    }
+
+    private function sendContractStatusNotification(Contract $contract, string $status)
+    {
+        $targetUser = $contract->user ?? ($contract->user_id ? \App\Models\User::find($contract->user_id) : null);
+        
+        if (!$targetUser) {
+            if ($contract->corporateCustomer && $contract->corporateCustomer->user) {
+                $targetUser = $contract->corporateCustomer->user;
+            } elseif ($contract->maintenanceCompany && $contract->maintenanceCompany->user) {
+                $targetUser = $contract->maintenanceCompany->user;
+            }
+        }
+
+        if (!$targetUser) {
+            \Log::warning("FCM: No target user found to send notification for contract ID: {$contract->id}");
+            return;
+        }
+
+        $notificationData = [
+            'type' => 'contract_status_updated',
+            'data' => ['contract_id' => $contract->id]
+        ];
+
+        switch ($status) {
+            case 'pending':
+                $notificationData['type'] = 'contract_under_review';
+                $notificationData['title_ar'] = 'طلب التعاقد قيد الدراسة';
+                $notificationData['title_en'] = 'Contract Request Under Review';
+                $notificationData['body_ar'] = 'طلب التعاقد الخاص بكم قيد الدراسة والمراجعة حالياً.';
+                $notificationData['body_en'] = 'Your contract request is currently under review.';
+                break;
+            case 'offer_sent':
+                $notificationData['type'] = 'contract_offer_sent';
+                $notificationData['title_ar'] = 'عرض سعر جديد';
+                $notificationData['title_en'] = 'New Price Offer';
+                $notificationData['body_ar'] = 'تم إرسال عرض السعر لطلب التعاقد الخاص بكم. يرجى المراجعة والرد.';
+                $notificationData['body_en'] = 'A price offer has been sent for your contract request. Please review and respond.';
+                break;
+            case 'offer_accepted':
+                $notificationData['type'] = 'contract_offer_accepted';
+                $notificationData['title_ar'] = 'تم قبول عرض السعر';
+                $notificationData['title_en'] = 'Price Offer Accepted';
+                $notificationData['body_ar'] = 'تم قبول عرض السعر الخاص بعقدكم وجاري تجهيز العقد للتوقيع.';
+                $notificationData['body_en'] = 'The price offer for your contract has been accepted. Preparing the contract for signature.';
+                break;
+            case 'offer_rejected':
+                $notificationData['type'] = 'contract_offer_rejected';
+                $notificationData['title_ar'] = 'تم رفض عرض السعر';
+                $notificationData['title_en'] = 'Price Offer Rejected';
+                $reason = $contract->rejection_reason ? " السبب: " . $contract->rejection_reason : "";
+                $notificationData['body_ar'] = 'تم رفض عرض السعر الخاص بعقدكم.' . $reason;
+                $notificationData['body_en'] = 'The price offer for your contract has been rejected.';
+                break;
+            case 'awaiting_signed_contract':
+                $notificationData['type'] = 'contract_ready_for_signature';
+                $notificationData['title_ar'] = 'عقد جاهز للتوقيع';
+                $notificationData['title_en'] = 'Contract Ready for Signature';
+                $notificationData['body_ar'] = 'عقدكم جاهز للتوقيع. يرجى تحميله والتوقيع عليه وإعادة رفعه.';
+                $notificationData['body_en'] = 'Your contract is ready. Please download, sign, and upload the signed copy.';
+                break;
+            case 'awaiting_payment_proof':
+                $notificationData['type'] = 'contract_awaiting_payment';
+                $notificationData['title_ar'] = 'بانتظار إثبات الدفع';
+                $notificationData['title_en'] = 'Awaiting Payment Proof';
+                $notificationData['body_ar'] = 'تم استلام العقد الموقع وبانتظار رفع إثبات الدفع لتفعيل العقد.';
+                $notificationData['body_en'] = 'Signed contract received. Please upload payment proof to activate the contract.';
+                break;
+            case 'active':
+                $notificationData['type'] = 'contract_activated';
+                $notificationData['title_ar'] = 'تم تفعيل التعاقد';
+                $notificationData['title_en'] = 'Contract Activated';
+                $notificationData['body_ar'] = 'تهانينا! تم تفعيل عقدكم بنجاح ومتابعة حالته.';
+                $notificationData['body_en'] = 'Congratulations! Your contract has been successfully activated.';
+                break;
+            case 'completed':
+                $notificationData['type'] = 'contract_completed';
+                $notificationData['title_ar'] = 'اكتمل التعاقد';
+                $notificationData['title_en'] = 'Contract Completed';
+                $notificationData['body_ar'] = 'تم إكمال فترة التعاقد بنجاح. شكراً لتعاملكم معنا.';
+                $notificationData['body_en'] = 'Your contract period has been completed successfully. Thank you for your business.';
+                break;
+            case 'expired':
+                $notificationData['type'] = 'contract_expired';
+                $notificationData['title_ar'] = 'انتهت صلاحية العقد';
+                $notificationData['title_en'] = 'Contract Expired';
+                $notificationData['body_ar'] = 'لقد انتهت صلاحية عقدكم. يرجى التواصل معنا للتجديد.';
+                $notificationData['body_en'] = 'Your contract has expired. Please contact us for renewal.';
+                break;
+            default:
+                return;
+        }
+
+        try {
+            $targetUser->sendFcmNotification($notificationData, true);
+        } catch (\Exception $e) {
+            \Log::error("FCM Notification error for status '{$status}' in Admin ContractController: " . $e->getMessage());
+        }
     }
 }

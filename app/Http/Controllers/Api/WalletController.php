@@ -89,8 +89,8 @@ class WalletController extends Controller
             // If transaction is related to an order
             if ($transaction->reference_type === 'App\Models\Order' && $transaction->order) {
                 $order = $transaction->order;
-                $serviceName = $order->service->name_ar ?? 'خدمة';
-                $categoryName = $order->service->parent->name_ar ?? '';
+                $serviceName = $order->service?->name_ar ?? 'خدمة';
+                $categoryName = $order->service?->parent?->name_ar ?? '';
                 
                 $transaction->display_title = $serviceName . ($categoryName ? " ({$categoryName})" : '');
                 

@@ -1,5 +1,10 @@
 {
     "all": "All",
+    "Service Areas": "Service Areas",
+    "Select Cities": "Select Cities",
+    "Select Districts": "Select Districts",
+    "Technician Data": "Technician Data",
+    "Specialty": "Specialty",
     "clients": "Clients",
     "companies": "Companies",
     "technicians": "Technicians",
@@ -269,6 +274,7 @@
     "Enter full address details": "Enter full address details",
     "Enter full name": "Enter full name",
     "Enter item name": "Enter item name",
+    "Enter quantity": "Enter quantity",
     "Enter last name in Arabic": "Enter last name in Arabic",
     "Enter last name in English": "Enter last name in English",
     "Enter main service name": "Enter main service name",
@@ -735,5 +741,8 @@
     "For maintenance companies to manage orders, contracts, technicians, and platform operations efficiently.": "For maintenance companies to manage orders, contracts, technicians, and platform operations efficiently.",
     "Matraqa Technician": "Matraqa Technician",
     "For Technicians": "For Technicians",
-    "For professional technicians to receive tasks, navigate to locations, and manage maintenance work.": "For professional technicians to receive tasks, navigate to locations, and manage maintenance work."
+    "For professional technicians to receive tasks, navigate to locations, and manage maintenance work.": "For professional technicians to receive tasks, navigate to locations, and manage maintenance work.",
+    "Please login to access the dashboard.": "Please login to access the dashboard.",
+    "Invalid credentials": "Invalid credentials",
+    "Phone number must contain only numbers.": "Phone number must contain only numbers."
 }

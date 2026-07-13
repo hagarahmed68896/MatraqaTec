@@ -507,7 +507,7 @@ class OrderController extends Controller
         $order = Order::findOrFail($id);
         
         $service = $order->service;
-        $categoryId = $service->parent_id ?? $service->id;
+        $categoryId = $service?->parent_id ?? $service?->id;
         $cityId = $order->city_id ?? ($order->user->city_id ?? null);
 
         $query = Technician::with(['user', 'service'])
@@ -586,7 +586,7 @@ class OrderController extends Controller
     {
         $order = Order::findOrFail($id);
         
-        $categoryId = $order->service->parent_id ?? $order->service_id;
+        $categoryId = $order->service?->parent_id ?? $order->service_id;
 
         $cityId = $order->city_id ?? ($order->user->city_id ?? null);
         \Log::info("OrderAssignment - Companies - Order: {$id}, CityId: " . ($cityId ?? 'null') . ", Category: {$categoryId}");

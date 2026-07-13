@@ -16,8 +16,8 @@
                 <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
                 </div>
             </div>
-            <button type="submit" class="px-5 py-2.5 bg-slate-900
-             dark:bg-primary text-gray rounded-xl font-bold 
+            <button type="submit" class="px-5 py-2.5 bg-[#1A1A31]
+             dark:bg-primary text-white rounded-xl font-bold 
              border border-slate-100 dark:border-white/10
              hover:opacity-90 transition-all shadow-sm text-sm 
              whitespace-nowrap">

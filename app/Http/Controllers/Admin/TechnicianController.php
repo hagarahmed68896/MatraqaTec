@@ -191,7 +191,7 @@ class TechnicianController extends Controller
             'name_en' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'nullable|string|min:8',
-            'phone' => 'required|string|unique:users',
+            'phone' => 'required|string|regex:/^\+?[0-9\s\-]+$/|unique:users',
             'category_id' => 'required|exists:services,id',
             'service_id' => 'nullable|exists:services,id',
             'years_experience' => 'nullable|integer',
@@ -207,6 +207,7 @@ class TechnicianController extends Controller
         ];
 
         $request->validate($rules, [
+            'phone.regex' => __('Phone number must contain only numbers.'),
             'password.min' => __('The password is too short. It must be at least 8 characters.'),
         ]);
 
@@ -358,7 +359,7 @@ class TechnicianController extends Controller
             'name_en' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.$technician->user_id,
             'password' => 'nullable|string|min:8',
-            'phone' => 'nullable|string|unique:users,phone,'.$technician->user_id,
+            'phone' => 'nullable|string|regex:/^\+?[0-9\s\-]+$/|unique:users,phone,'.$technician->user_id,
             'image' => 'nullable|image|max:2048',
             'national_id_image' => 'nullable|image|max:2048',
             'category_id' => 'required|exists:services,id',
@@ -373,6 +374,7 @@ class TechnicianController extends Controller
         ];
 
         $request->validate($rules, [
+            'phone.regex' => __('Phone number must contain only numbers.'),
             'password.min' => __('The password is too short. It must be at least 8 characters.'),
         ]);
         

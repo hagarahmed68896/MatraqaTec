@@ -76,11 +76,12 @@ class SupervisorController extends Controller
             'last_name' => 'required|string|max:100',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'phone' => 'required|string|unique:users',
+            'phone' => 'required|string|regex:/^\+?[0-9\s\-]+$/|unique:users',
             'roles' => 'required|array',
             'roles.*' => 'exists:roles,id',
             'status' => 'required|in:active,blocked',
         ], [
+            'phone.regex' => __('Phone number must contain only numbers.'),
             'password.min' => __('The password is too short. It must be at least 8 characters.'),
         ]);
 
@@ -127,11 +128,12 @@ class SupervisorController extends Controller
             'last_name' => 'required|string|max:100',
             'email' => 'required|string|email|max:255|unique:users,email,' . $id,
             'password' => 'nullable|string|min:8|confirmed',
-            'phone' => 'required|string|unique:users,phone,' . $id,
+            'phone' => 'required|string|regex:/^\+?[0-9\s\-]+$/|unique:users,phone,' . $id,
             'roles' => 'required|array',
             'roles.*' => 'exists:roles,id',
             'status' => 'required|in:active,blocked',
         ], [
+            'phone.regex' => __('Phone number must contain only numbers.'),
             'password.min' => __('The password is too short. It must be at least 8 characters.'),
         ]);
 

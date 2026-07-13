@@ -38,8 +38,9 @@ class ServiceController extends Controller
 
     public function create()
     {
+        $cities = \App\Models\City::with('districts')->get();
         $districts = \App\Models\District::all();
-        return view('admin.services.create', compact('districts'));
+        return view('admin.services.create', compact('cities', 'districts'));
     }
 
     public function store(Request $request)
@@ -151,8 +152,9 @@ class ServiceController extends Controller
     public function edit($id)
     {
         $item = Service::with('children')->findOrFail($id);
+        $cities = \App\Models\City::with('districts')->get();
         $districts = \App\Models\District::all();
-        return view('admin.services.edit', compact('item', 'districts'));
+        return view('admin.services.edit', compact('item', 'cities', 'districts'));
     }
 
     public function update(Request $request, $id)

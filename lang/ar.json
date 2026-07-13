@@ -1,5 +1,12 @@
 {
+    "No services found": "لا توجد خدمات حالياً",
+    "Try adjusting your search or add a new service": "جرّب تعديل خيارات البحث أو أضف خدمة جديدة",
     "Invoices Management": "إدارة الفواتير",
+    "Service Areas": "مناطق الخدمة",
+    "Select Cities": "اختر المدن",
+    "Select Districts": "اختر الأحياء",
+    "Technician Data": "بيانات الفني",
+    "Specialty": "التخصص",
     "Invoice Details": "تفاصيل الفاتورة",
     "Invoices": "الفواتير",
     "Download as PDF": "تحميل كـ PDF",
@@ -52,6 +59,7 @@
     "Invoice Date:": "تاريخ الفاتورة:",
     "Description": "الوصف",
     "Quantity": "الكمية",
+    "Enter quantity": "أدخل الكمية",
     "Unit Price": "سعر الوحدة",
     "Subtotal": "المجموع (غير شامل الضريبة)",
     "VAT (15%)": "ضريبة القيمة المضافة (15%)",
@@ -1324,5 +1332,8 @@
     "All services retrieved": "تم استرجاع جميع الخدمات بنجاح",
     "User is not a company": "المستخدم ليس شركة صيانة",
     "Coverage areas retrieved": "تم استرجاع مناطق التغطية بنجاح",
-    "Coverage areas updated successfully": "تم تحديث مناطق التغطية بنجاح"
+    "Coverage areas updated successfully": "تم تحديث مناطق التغطية بنجاح",
+    "Please login to access the dashboard.": "يرجى تسجيل الدخول للوصول إلى لوحة التحكم.",
+    "Invalid credentials": "بيانات الدخول غير صحيحة",
+    "Phone number must contain only numbers.": "يجب أن يحتوي رقم الهاتف على أرقام فقط."
 }

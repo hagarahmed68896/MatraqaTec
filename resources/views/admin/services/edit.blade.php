@@ -59,9 +59,19 @@
                 if (file) {
                     this.newSubService.image = file;
                     const reader = new FileReader();
-                    reader.onload = (e) => { this.newSubService.preview = e.target.result; };
+                    reader.onload = function(e) { 
+                        this.newSubService.preview = e.target.result; 
+                    }.bind(this);
                     reader.readAsDataURL(file);
                 }
+            },
+            selectedCities: @js(array_values(array_map('strval', \App\Models\District::whereIn('id', (array)old('districts', $item->districts ?? []))->pluck('city_id')->unique()->toArray()))),
+            selectedDistricts: @js(array_values(array_map('strval', (array)old('districts', $item->districts ?? [])))),
+            districtCityMap: @js(\App\Models\District::pluck('city_id', 'id')->toArray()),
+            filterDistricts() {
+                this.selectedDistricts = this.selectedDistricts.filter(function(id) {
+                    return this.selectedCities.includes(String(this.districtCityMap[id]));
+                }.bind(this));
             }
         }">
         @csrf
@@ -123,17 +133,59 @@
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="space-y-4">
-                    <label class="block text-sm font-black text-[#1A1A31] dark:text-slate-300">{{ __('Service Districts') }}</label>
-                    <select name="districts[]" multiple class="w-full px-6 py-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-sm font-bold text-[#1A1A31] dark:text-white focus:ring-4 focus:ring-[#1A1A31]/5 transition-all outline-none">
-                        @foreach($districts as $district)
-                            <option value="{{ $district->id }}" {{ in_array($district->id, (array) old('districts', $item->districts ?? [])) ? 'selected' : '' }}>
-                                {{ app()->getLocale() == 'ar' ? $district->name_ar : $district->name_en }} - {{ $district->city->name_ar ?? '' }}
-                            </option>
+            {{-- Cities and Districts Selector --}}
+            <div class="space-y-6 pt-6 border-t border-slate-50 dark:border-white/5">
+                <h4 class="text-lg font-black text-[#1A1A31] dark:text-white">{{ __('Service Areas') }}</h4>
+                
+                {{-- City Selection --}}
+                <div class="space-y-3">
+                    <label class="block text-sm font-black text-slate-400 dark:text-slate-400">{{ __('Select Cities') }}</label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        @foreach($cities as $city)
+                            <label class="flex items-center gap-3 p-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl cursor-pointer hover:border-slate-200 dark:hover:border-white/20 transition-all">
+                                <input type="checkbox" 
+                                       value="{{ $city->id }}" 
+                                       class="rounded text-primary border-slate-200 dark:border-white/10 focus:ring-primary focus:ring-offset-0"
+                                       x-model="selectedCities"
+                                       @change="filterDistricts()">
+                                <span class="text-sm font-bold text-[#1A1A31] dark:text-white">
+                                    {{ app()->getLocale() == 'ar' ? $city->name_ar : $city->name_en }}
+                                </span>
+                            </label>
                         @endforeach
-                    </select>
-                    <p class="text-xs text-slate-400 mt-1">{{ __('Hold Ctrl/Cmd to select multiple districts') }}</p>
+                    </div>
+                </div>
+
+                {{-- Districts Selection by City --}}
+                <div x-show="selectedCities.length > 0" class="space-y-6 mt-6" x-transition>
+                    <label class="block text-sm font-black text-slate-400 dark:text-slate-400">{{ __('Select Districts') }}</label>
+                    <div class="space-y-6">
+                        @foreach($cities as $city)
+                            <div x-show="selectedCities.includes('{{ $city->id }}')" 
+                                 class="p-6 rounded-[2rem] bg-slate-50/50 dark:bg-white/5 border border-slate-100 dark:border-white/10 space-y-4"
+                                 x-transition>
+                                <h5 class="text-sm font-black text-[#1A1A31] dark:text-white border-b border-slate-100 dark:border-white/5 pb-2">
+                                    {{ app()->getLocale() == 'ar' ? $city->name_ar : $city->name_en }}
+                                </h5>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    @foreach($city->districts as $district)
+                                        <label class="flex items-center gap-3 p-3 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl cursor-pointer hover:border-slate-200 dark:hover:border-white/20 transition-all">
+                                            <input type="checkbox" 
+                                                   name="districts[]"
+                                                   value="{{ $district->id }}" 
+                                                   class="rounded text-primary border-slate-200 dark:border-white/10 focus:ring-primary focus:ring-offset-0"
+                                                   x-model="selectedDistricts">
+                                            <span class="text-xs font-bold text-[#1A1A31] dark:text-white">
+                                                {{ app()->getLocale() == 'ar' ? $district->name_ar : $district->name_en }}
+                                            </span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
             </div>
 

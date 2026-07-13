@@ -323,10 +323,10 @@
                             <span class="px-4 py-1.5 rounded-xl bg-slate-50 dark:bg-white/5 text-[10px] font-bold text-slate-600 dark:text-white">{{ $item->user->type == 'client' ? __('Individual') : __('Corporate') }}</span>
                         </td>
                         <td class="py-6 px-4">
-                            <span class="text-md font-bold text-slate-500 dark:text-white">{{ $item->service->name_ar }}</span>
+                            <span class="text-md font-bold text-slate-500 dark:text-white">{{ $item->service?->name_ar ?? '-' }}</span>
                         </td>
                         <td class="py-6 px-4">
-                            <span class="text-md font-bold text-slate-500 dark:text-white">{{ $item->service->parent->name_ar ?? '-' }}</span>
+                            <span class="text-md font-bold text-slate-500 dark:text-white">{{ $item->service?->parent?->name_ar ?? '-' }}</span>
                         </td>
                         @if($currentTab == 'scheduled')
                         <td class="py-6 px-4">

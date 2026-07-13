@@ -47,8 +47,8 @@
                     <div class="space-y-1">
                         <p class="text-xs font-bold text-slate-400">{{ __('Service:') }}</p>
                         <p class="text-sm font-black text-[#1A1A31]">
-                            {{ app()->getLocale() == 'ar' ? $item->service->parent->name_ar ?? '' : $item->service->parent->name_en ?? '' }} 
-                            ({{ app()->getLocale() == 'ar' ? $item->service->name_ar : $item->service->name_en }})
+                            {{ app()->getLocale() == 'ar' ? ($item->service?->parent?->name_ar ?? '') : ($item->service?->parent?->name_en ?? '') }} 
+                            ({{ app()->getLocale() == 'ar' ? ($item->service?->name_ar ?? '') : ($item->service?->name_en ?? '') }})
                         </p>
                     </div>
                 </div>

@@ -138,6 +138,17 @@
         }
 
         updateTheme();
+
+        // Force phone inputs to only accept numbers
+        document.addEventListener('input', function (e) {
+            if (e.target && (
+                e.target.name === 'phone' || 
+                e.target.id === 'phone' || 
+                e.target.type === 'tel'
+            )) {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            }
+        });
     </script>
 </body>
 </html>

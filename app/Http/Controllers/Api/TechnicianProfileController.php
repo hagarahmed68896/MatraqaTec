@@ -50,7 +50,7 @@ class TechnicianProfileController extends Controller
 
         $request->validate([
             'name' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|unique:users,phone,' . $user->id,
+            'phone' => 'nullable|string|regex:/^\+?[0-9\s\-]+$/|unique:users,phone,' . $user->id,
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'bio_ar' => 'nullable|string',
             'bio_en' => 'nullable|string',
@@ -66,6 +66,7 @@ class TechnicianProfileController extends Controller
             'lat' => 'nullable|numeric|between:-90,90',
             'lng' => 'nullable|numeric|between:-180,180',
         ], [
+            'phone.regex' => __('Phone number must contain only numbers.'),
             'iban.regex' => __('The IBAN must start with SA and be exactly 24 characters long (e.g., SAXXXXXXXXXXXXXXXXXXXXXX).'),
         ]);
 

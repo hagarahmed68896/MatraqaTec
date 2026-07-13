@@ -23,6 +23,9 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         if ($request->has('phone')) {
+            if ($request->filled('phone') && !preg_match('/^\+?[0-9\s\-]+$/', $request->phone)) {
+                return response()->json(['status' => false, 'message' => __('Phone number must contain only numbers.'), 'errors' => ['phone' => [__('Phone number must contain only numbers.')]]], 422);
+            }
             $phone = $request->phone;
             $phone = preg_replace('/[^0-9]/', '', $phone);
             if (str_starts_with($phone, '966')) $phone = substr($phone, 3);
@@ -147,6 +150,9 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         if ($request->filled('phone')) {
+            if (!preg_match('/^\+?[0-9\s\-]+$/', $request->phone)) {
+                return response()->json(['status' => false, 'message' => __('Phone number must contain only numbers.'), 'errors' => ['phone' => [__('Phone number must contain only numbers.')]]], 422);
+            }
             $phone = $request->phone;
             $phone = preg_replace('/[^0-9]/', '', $phone);
             if (str_starts_with($phone, '966')) $phone = substr($phone, 3);
@@ -241,6 +247,9 @@ class AuthController extends Controller
     public function verifyOtp(Request $request)
     {
         if ($request->has('phone')) {
+            if ($request->filled('phone') && !preg_match('/^\+?[0-9\s\-]+$/', $request->phone)) {
+                return response()->json(['status' => false, 'message' => __('Phone number must contain only numbers.'), 'errors' => ['phone' => [__('Phone number must contain only numbers.')]]], 422);
+            }
             $phone = $request->phone;
             $phone = preg_replace('/[^0-9]/', '', $phone);
             if (str_starts_with($phone, '966')) $phone = substr($phone, 3);
@@ -291,6 +300,9 @@ class AuthController extends Controller
     public function resendOtp(Request $request)
     {
         if ($request->has('phone')) {
+            if ($request->filled('phone') && !preg_match('/^\+?[0-9\s\-]+$/', $request->phone)) {
+                return response()->json(['status' => false, 'message' => __('Phone number must contain only numbers.'), 'errors' => ['phone' => [__('Phone number must contain only numbers.')]]], 422);
+            }
             $phone = $request->phone;
             $phone = preg_replace('/[^0-9]/', '', $phone);
             if (str_starts_with($phone, '966')) $phone = substr($phone, 3);
@@ -323,6 +335,9 @@ class AuthController extends Controller
     public function forgotPassword(Request $request)
     {
         if ($request->has('phone')) {
+            if ($request->filled('phone') && !preg_match('/^\+?[0-9\s\-]+$/', $request->phone)) {
+                return response()->json(['status' => false, 'message' => __('Phone number must contain only numbers.'), 'errors' => ['phone' => [__('Phone number must contain only numbers.')]]], 422);
+            }
             $phone = $request->phone;
             $phone = preg_replace('/[^0-9]/', '', $phone);
             if (str_starts_with($phone, '966')) $phone = substr($phone, 3);
@@ -350,6 +365,9 @@ class AuthController extends Controller
     public function resetPassword(Request $request)
     {
         if ($request->has('phone')) {
+            if ($request->filled('phone') && !preg_match('/^\+?[0-9\s\-]+$/', $request->phone)) {
+                return response()->json(['status' => false, 'message' => __('Phone number must contain only numbers.'), 'errors' => ['phone' => [__('Phone number must contain only numbers.')]]], 422);
+            }
             $phone = $request->phone;
             $phone = preg_replace('/[^0-9]/', '', $phone);
             if (str_starts_with($phone, '966')) $phone = substr($phone, 3);

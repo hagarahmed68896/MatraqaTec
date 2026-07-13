@@ -70,7 +70,7 @@
                 </div>
             </div>
 
-            {{-- Price & Status Row --}}
+            {{-- Price & Quantity Row --}}
             <div class="grid mb-4 grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="space-y-4">
                     <label class="block text-sm font-black text-[#1A1A31] dark:text-slate-300">{{ __('Price') }}</label>
@@ -81,40 +81,47 @@
                         </div>
                     </div>
                 </div>
-               <div class="space-y-4" x-data="{ status: 'available' }">
-    <div class="flex items-center justify-between">
-        <label class="block text-sm font-black text-[#1A1A31] dark:text-slate-300">
-            {{ __('Status') }}
-        </label>
-        <span :class="status === 'available' ? 'bg-green-500' : 'bg-red-500'" 
-              class="w-2 h-2 rounded-full animate-pulse transition-colors duration-500"></span>
-    </div>
+                <div class="space-y-4">
+                    <label class="block text-sm font-black text-[#1A1A31] dark:text-slate-300">{{ __('Quantity') }}</label>
+                    <input type="number" name="quantity" value="{{ old('quantity', 0) }}" min="0" placeholder="{{ __('Enter quantity') }}" required class="w-full px-6 py-4 rounded-2xl bg-[#F8F9FE] dark:bg-white/5 border border-slate-100 dark:border-white/10 text-sm font-bold text-[#1A1A31] dark:text-white focus:ring-4 focus:ring-[#1A1A31]/5 transition-all outline-none">
+                </div>
+            </div>
 
-    <div class="grid grid-cols-2 gap-3 p-1.5 bg-[#F8F9FE] dark:bg-white/5 rounded-[2rem] border border-slate-100 dark:border-white/10 relative">
-        
-        <input type="hidden" name="status" :value="status">
+            {{-- Status Row --}}
+            <div class="grid mb-4 grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-4" x-data="{ status: 'available' }">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-sm font-black text-[#1A1A31] dark:text-slate-300">
+                            {{ __('Status') }}
+                        </label>
+                        <span :class="status === 'available' ? 'bg-green-500' : 'bg-red-500'" 
+                              class="w-2 h-2 rounded-full animate-pulse transition-colors duration-500"></span>
+                    </div>
 
-        <button type="button" 
-                @click="status = 'available'"
-                :class="status === 'available' ? 'bg-white dark:bg-[#1A1A31] shadow-md text-[#1A1A31] dark:text-white' : 'text-slate-400 hover:text-slate-600'"
-                class="flex items-center justify-center gap-2 py-3 px-4 rounded-[1.5rem] text-sm font-bold transition-all duration-300 z-10">
-            <svg class="w-4 h-4" :class="status === 'available' ? 'text-green-500' : 'text-slate-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            {{ __('Available') }}
-        </button>
+                    <div class="grid grid-cols-2 gap-3 p-1.5 bg-[#F8F9FE] dark:bg-white/5 rounded-[2rem] border border-slate-100 dark:border-white/10 relative">
+                        <input type="hidden" name="status" :value="status">
 
-        <button type="button" 
-                @click="status = 'not_available'"
-                :class="status === 'not_available' ? 'bg-white dark:bg-[#1A1A31] shadow-md text-[#1A1A31] dark:text-white' : 'text-slate-400 hover:text-slate-600'"
-                class="flex items-center justify-center gap-2 py-3 px-4 rounded-[1.5rem] text-sm font-bold transition-all duration-300 z-10">
-            <svg class="w-4 h-4" :class="status === 'not_available' ? 'text-red-500' : 'text-slate-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            {{ __('Out of Stock') }}
-        </button>
-    </div>
-</div>
+                        <button type="button" 
+                                @click="status = 'available'"
+                                :class="status === 'available' ? 'bg-white dark:bg-[#1A1A31] shadow-md text-[#1A1A31] dark:text-white' : 'text-slate-400 hover:text-slate-600'"
+                                class="flex items-center justify-center gap-2 py-3 px-4 rounded-[1.5rem] text-sm font-bold transition-all duration-300 z-10">
+                            <svg class="w-4 h-4" :class="status === 'available' ? 'text-green-500' : 'text-slate-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            {{ __('Available') }}
+                        </button>
+
+                        <button type="button" 
+                                @click="status = 'unavailable'"
+                                :class="status === 'unavailable' ? 'bg-white dark:bg-[#1A1A31] shadow-md text-[#1A1A31] dark:text-white' : 'text-slate-400 hover:text-slate-600'"
+                                class="flex items-center justify-center gap-2 py-3 px-4 rounded-[1.5rem] text-sm font-bold transition-all duration-300 z-10">
+                            <svg class="w-4 h-4" :class="status === 'unavailable' ? 'text-red-500' : 'text-slate-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            {{ __('Out of Stock') }}
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {{-- Actions --}}

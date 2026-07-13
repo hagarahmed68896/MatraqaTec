@@ -53,13 +53,15 @@ class ComplaintController extends Controller
         $validator = Validator::make($request->all(), [
             'type' => 'required|in:general_inquiry,complaint_technician,complaint_customer,payment_issue,suggestion_note',
             'description' => 'required|string',
-            'phone' => 'required|string',
+            'phone' => 'required|string|regex:/^\+?[0-9\s\-]+$/',
             'order_id' => [
                 'nullable',
                 'exists:orders,id',
                 Rule::requiredIf(fn() => in_array($request->type, ['complaint_technician', 'complaint_customer', 'payment_issue'])),
             ],
             'attachment' => 'nullable|file|mimes:jpeg,png,jpg,pdf,doc,docx|max:10240',
+        ], [
+            'phone.regex' => __('Phone number must contain only numbers.'),
         ]);
 
         if ($validator->fails()) {

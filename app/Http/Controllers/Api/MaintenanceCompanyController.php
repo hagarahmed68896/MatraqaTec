@@ -68,7 +68,7 @@ class MaintenanceCompanyController extends Controller
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|email|unique:users,email,' . $user->id,
             'password' => 'sometimes|min:8|confirmed',
-            'phone' => 'sometimes|string|max:20',
+            'phone' => 'sometimes|string|max:20|regex:/^\+?[0-9\s\-]+$/',
             'bank_name' => 'sometimes|string|max:255',
             'account_name' => 'sometimes|string|max:255',
             'account_number' => 'sometimes|string|max:255',
@@ -83,6 +83,7 @@ class MaintenanceCompanyController extends Controller
             'lng' => 'sometimes|numeric',
             'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:5120',
         ], [
+            'phone.regex' => __('Phone number must contain only numbers.'),
             'iban.regex' => __('The IBAN must start with SA and be exactly 24 characters long (e.g., SAXXXXXXXXXXXXXXXXXXXXXX).'),
         ]);
 
@@ -303,7 +304,7 @@ class MaintenanceCompanyController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
+            'phone' => 'required|string|max:20|regex:/^\+?[0-9\s\-]+$/',
             'email' => 'required|email|max:255',
             'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'iqama_photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -316,6 +317,8 @@ class MaintenanceCompanyController extends Controller
             'years_experience' => 'required|integer|min:0',
             'bio_ar' => 'required|string',
             'bio_en' => 'required|string',
+        ], [
+            'phone.regex' => __('Phone number must contain only numbers.'),
         ]);
 
         if ($validator->fails()) {
@@ -574,11 +577,13 @@ class MaintenanceCompanyController extends Controller
 
         $request->validate([
             'name' => 'sometimes|string|max:255',
-            'phone' => 'sometimes|string|max:20',
+            'phone' => 'sometimes|string|max:20|regex:/^\+?[0-9\s\-]+$/',
             'category_id' => 'sometimes|exists:services,id',
             'service_id' => 'sometimes|exists:services,id',
             'districts' => 'sometimes|array',
             'availability_status' => 'sometimes|in:available,unavailable,busy',
+        ], [
+            'phone.regex' => __('Phone number must contain only numbers.'),
         ]);
 
         if ($request->has('name')) {

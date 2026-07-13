@@ -49,11 +49,12 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'phone' => 'required|string|unique:users,phone',
+            'phone' => 'required|string|regex:/^\+?[0-9\s\-]+$/|unique:users,phone',
             'password' => 'required|string|min:8',
             'type' => 'required|in:customer,technician,maintenance_company',
             'status' => 'required|in:active,blocked,pending,inactive',
         ], [
+            'phone.regex' => __('Phone number must contain only numbers.'),
             'password.min' => __('The password is too short. It must be at least 8 characters.'),
         ]);
 
@@ -83,9 +84,11 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
-            'phone' => 'required|string|unique:users,phone,' . $user->id,
+            'phone' => 'required|string|regex:/^\+?[0-9\s\-]+$/|unique:users,phone,' . $user->id,
             'type' => 'required|in:customer,technician,maintenance_company',
             'status' => 'required|in:active,blocked,pending,inactive',
+        ], [
+            'phone.regex' => __('Phone number must contain only numbers.'),
         ]);
 
         if ($request->filled('password')) {

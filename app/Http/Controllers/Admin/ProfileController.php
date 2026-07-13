@@ -30,10 +30,12 @@ class ProfileController extends Controller
         $user = $request->user();
 
         $request->validate([
-            'phone' => 'nullable|string',
+            'phone' => 'nullable|string|regex:/^\+?[0-9\s\-]+$/',
             'first_name' => 'nullable|string',
             'last_name' => 'nullable|string',
             'avatar' => 'nullable|image|max:2048', // 2MB max
+        ], [
+            'phone.regex' => __('Phone number must contain only numbers.'),
         ]);
 
         // Update User fields

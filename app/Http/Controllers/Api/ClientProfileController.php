@@ -74,6 +74,9 @@ class ClientProfileController extends Controller
 
         // Sanitize phone if present
         if ($request->has('phone')) {
+             if ($request->filled('phone') && !preg_match('/^\+?[0-9\s\-]+$/', $request->phone)) {
+                 return response()->json(['status' => false, 'message' => __('Phone number must contain only numbers.'), 'errors' => ['phone' => [__('Phone number must contain only numbers.')]]], 422);
+             }
              $phone = $request->phone;
              $phone = preg_replace('/[^0-9]/', '', $phone);
              if (str_starts_with($phone, '966')) $phone = substr($phone, 3);

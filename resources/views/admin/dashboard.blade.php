@@ -134,7 +134,7 @@
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-{{ $stats['revenue_change'] >= 0 ? 'green' : 'red' }}-500/10 text-{{ $stats['revenue_change'] >= 0 ? 'green' : 'red' }}-500 font-bold border border-{{ $stats['revenue_change'] >= 0 ? 'green' : 'red' }}-500/20">{{ $stats['revenue_change'] }}%+</span>
                     </div>
                 </div>
-                <select x-model="period" @change="updatePeriod($event.target.value)" class="bg-slate-100 dark:bg-indigo-600 border border-slate-200 dark:border-indigo-500 rounded-lg text-xs font-bold px-3 py-1.5 focus:ring-0 text-slate-700 dark:text-gray transition-all hover:bg-slate-200 dark:hover:bg-indigo-500 cursor-pointer shadow-sm">
+                <select x-model="period" @change="updatePeriod($event.target.value)" class="bg-slate-100 dark:bg-indigo-600 border border-slate-200 dark:border-indigo-500 rounded-lg text-xs font-bold px-3 py-1.5 focus:ring-0 text-slate-700 dark:text-white transition-all hover:bg-slate-200 dark:hover:bg-indigo-500 cursor-pointer shadow-sm">
                     <option value="weekly">{{ __('Weekly') }}</option>
                     <option value="monthly">{{ __('Monthly') }}</option>
                     <option value="yearly">{{ __('Yearly') }}</option>
@@ -199,7 +199,7 @@
                             <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">{{ __('Technicians') }}</span>
                         </div>
                     </div>
-                    <select x-model="period" @change="updatePeriod($event.target.value)" class="bg-slate-100 dark:bg-indigo-600 border border-slate-200 dark:border-indigo-500 rounded-lg text-xs font-bold px-3 py-1.5 focus:ring-0 text-slate-700 dark:text-gray transition-all hover:bg-slate-200 dark:hover:bg-indigo-500 cursor-pointer shadow-sm">
+                    <select x-model="period" @change="updatePeriod($event.target.value)" class="bg-slate-100 dark:bg-indigo-600 border border-slate-200 dark:border-indigo-500 rounded-lg text-xs font-bold px-3 py-1.5 focus:ring-0 text-slate-700 dark:text-white transition-all hover:bg-slate-200 dark:hover:bg-indigo-500 cursor-pointer shadow-sm">
                         <option value="weekly">{{ __('Weekly') }}</option>
                         <option value="monthly">{{ __('Monthly') }}</option>
                         <option value="yearly">{{ __('Yearly') }}</option>
@@ -306,6 +306,24 @@
                             chart.data.labels = data.labels;
                             chart.data.datasets[0].data = data.data;
                             chart.update("active");
+                        } else {
+                            new Chart(document.getElementById("categoryChart"), {
+                                type: "doughnut",
+                                data: {
+                                    labels: data.labels,
+                                    datasets: [{ 
+                                        data: data.data, 
+                                        backgroundColor: ["#1e1b4b", "#4F46E5", "#818CF8", "#C7D2FE", "#E0E7FF"],
+                                        borderWidth: 0
+                                    }]
+                                },
+                                options: { 
+                                    cutout: "75%", 
+                                    plugins: { legend: { display: false } },
+                                    responsive: true,
+                                    maintainAspectRatio: false
+                                }
+                            });
                         }
                         this.loading = false;
                     })
@@ -323,7 +341,7 @@
                 <h3 class="text-lg font-black text-slate-800 dark:text-white">{{ __('Service Categories') }}</h3>
                 
                 <div class="relative">
-                    <button @click="open = !open" class="flex items-center gap-3 px-4 py-2 bg-slate-100 dark:bg-indigo-900 border border-slate-200 dark:border-indigo-500 rounded-xl text-xs font-bold text-slate-700 dark:text-gray shadow-sm hover:border-primary/50 dark:hover:bg-indigo-500 transition-all min-w-[140px] justify-between">
+                    <button @click="open = !open" class="flex items-center gap-3 px-4 py-2 bg-slate-100 dark:bg-indigo-900 border border-slate-200 dark:border-indigo-500 rounded-xl text-xs font-bold text-slate-700 dark:text-white shadow-sm hover:border-primary/50 dark:hover:bg-indigo-500 transition-all min-w-[140px] justify-between">
                         <span x-text="categoryType === 'individual' ? '{{ __('Individuals') }}' : (categoryType === 'corporate_customer' ? '{{ __('Corporate') }}' : '{{ __('All Categories') }}')"></span>
                         <svg class="w-3 h-3 transition-transform text-slate-400" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
                     </button>

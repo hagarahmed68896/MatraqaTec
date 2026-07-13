@@ -382,8 +382,8 @@
                                     </div>
                                 </td>
                                 <td class="py-6 px-8 text-sm font-black text-slate-500 dark:text-white uppercase">{{ __($order->user->type ?? 'Individual') }}</td>
-                                <td class="py-6 px-8 text-sm font-bold text-slate-700 dark:text-slate-300">{{ $order->service->{'name_'.app()->getLocale()} ?? '-' }}</td>
-                                <td class="py-6 px-8 text-sm font-bold text-slate-500 dark:text-white italic">{{ $order->service->parent->{'name_'.app()->getLocale()} ?? '-' }}</td>
+                                <td class="py-6 px-8 text-sm font-bold text-slate-700 dark:text-slate-300">{{ $order->service?->{'name_'.app()->getLocale()} ?? '-' }}</td>
+                                <td class="py-6 px-8 text-sm font-bold text-slate-500 dark:text-white italic">{{ $order->service?->parent?->{'name_'.app()->getLocale()} ?? '-' }}</td>
                                 <td class="py-6 px-8 text-sm font-bold text-slate-500 dark:text-white max-w-[150px] truncate">{{ $order->address ?? '-' }}</td>
                                 <td class="py-6 px-8 text-sm font-black text-slate-500 dark:text-white">
                                     {{ $order->technician->maintenanceCompany ? __('Corporate') : __('Independent') }}

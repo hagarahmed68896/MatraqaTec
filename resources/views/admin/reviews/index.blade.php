@@ -351,23 +351,23 @@
                             </span>
                         </td>
                         <td class="py-6 px-4">
-                          <div class="space-y-0.5">
-    <span class="block text-[11px] font-black text-[#1A1A31]">
-        {{ app()->getLocale() == 'ar' 
-            ? ($item->service->parent->name_ar ?? '-') 
-            : ($item->service->parent->name_en ?? '-') 
-        }}
-    </span>
+                           <div class="space-y-0.5">
+                                <span class="block text-[11px] font-black text-[#1A1A31]">
+                                    {{ app()->getLocale() == 'ar' 
+                                        ? ($item->service?->parent?->name_ar ?? '-') 
+                                        : ($item->service?->parent?->name_en ?? '-') 
+                                    }}
+                                </span>
 
-    <span class="block text-[9px] font-bold text-slate-400 ">
-        (
-        {{ app()->getLocale() == 'ar' 
-            ? ($item->service->name_ar ?? '-') 
-            : ($item->service->name_en ?? '-') 
-        }}
-        )
-    </span>
-</div>
+                                <span class="block text-[9px] font-bold text-slate-400 ">
+                                    (
+                                    {{ app()->getLocale() == 'ar' 
+                                        ? ($item->service?->name_ar ?? '-') 
+                                        : ($item->service?->name_en ?? '-') 
+                                    }}
+                                    )
+                                </span>
+                            </div>
                         </td>
                         <td class="py-6 px-4">
                             <p class="text-[11px] font-bold text-slate-400 max-w-[150px] truncate" title="{{ $item->comment }}">{{ $item->comment ?: __('No remarks') }}</p>

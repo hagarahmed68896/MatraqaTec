@@ -507,9 +507,13 @@
                     <!-- User Circle Dropdown -->
                     <div x-data="{ open: false, logoutModal: false }" class="relative">
                         <button @click="open = !open; if(open) logoutModal = false" class="flex items-center gap-3 p-1 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200">
-                            <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center font-black">
-                                {{ mb_substr(Auth::user()->name ?? 'A', 0, 1) }}
-                            </div>
+                            @if(Auth::user()->avatar && Auth::user()->avatar_url)
+                                <img src="{{ Auth::user()->avatar_url }}" class="w-8 h-8 rounded-lg object-cover shadow-sm">
+                            @else
+                                <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center font-black">
+                                    {{ mb_substr(Auth::user()->name ?? 'A', 0, 1) }}
+                                </div>
+                            @endif
                             <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
 
@@ -649,6 +653,21 @@
         </div>
         @endif
     </div>
+
+    <script>
+        // Force phone inputs to only accept numbers
+        document.addEventListener('input', function (e) {
+            if (e.target && (
+                e.target.name === 'phone' || 
+                e.target.id === 'phone' || 
+                e.target.type === 'tel' || 
+                (e.target.name && e.target.name.startsWith('contact_numbers')) ||
+                (e.target.placeholder && e.target.placeholder.includes('5XXXX'))
+            )) {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            }
+        });
+    </script>
 
     @yield('scripts')
 </body>

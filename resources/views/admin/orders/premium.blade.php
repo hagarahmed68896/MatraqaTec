@@ -337,10 +337,10 @@
                             <span class="px-3 py-1 rounded-lg bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-white text-[10px] font-bold">{{ $item->user->type == 'client' ? __('Individual') : __('Corporate') }}</span>
                         </td>
                         <td class="py-6 px-4">
-                            <span class="text-[11px] font-bold text-slate-400 dark:text-white/80">{{ $item->service->name_ar }}</span>
+                            <span class="text-[11px] font-bold text-slate-400 dark:text-white/80">{{ $item->service?->name_ar ?? '-' }}</span>
                         </td>
                         <td class="py-6 px-4">
-                            <span class="text-[11px] font-bold text-slate-400 dark:text-white/80">{{ $item->service->parent->name_ar ?? '-' }}</span>
+                            <span class="text-[11px] font-bold text-slate-400 dark:text-white/80">{{ $item->service?->parent?->name_ar ?? '-' }}</span>
                         </td>
                         <td class="py-6 px-4">
                             <span class="text-[11px] font-bold text-slate-400 dark:text-white/80">{{ __('Address') }}</span>

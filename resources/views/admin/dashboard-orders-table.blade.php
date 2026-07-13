@@ -10,11 +10,11 @@
         </span>
     </td>
     <td class="py-5 px-2 font-black text-slate-800 dark:text-white">
-        {{ $order->service->parent->{'name_'.app()->getLocale()} ?? $order->service->{'name_'.app()->getLocale()} }}
+        {{ $order->service?->parent?->{'name_'.app()->getLocale()} ?? $order->service?->{'name_'.app()->getLocale()} ?? '-' }}
     </td>
     <td class="py-5 px-2 opacity-70">
-        @if($order->service->parent_id)
-            {{ $order->service->{'name_'.app()->getLocale()} }}
+        @if($order->service?->parent_id)
+            {{ $order->service?->{'name_'.app()->getLocale()} }}
         @else
             {{ __('General Service') }}
         @endif

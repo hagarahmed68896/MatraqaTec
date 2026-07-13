@@ -62,31 +62,8 @@ class AdminController extends Controller
             return redirect()->back()->with('error', __('Unauthorized access. Admin only.'))->withInput();
         }
 
-        $taqnyat = new TaqnyatOTP();
-
-        // Get test numbers from configuration
-        $testNumbersStr = config('services.taqnyat.test_numbers', '555555555,0555555555,966555555555');
-        $testNumbers = array_map('trim', explode(',', $testNumbersStr));
-
-        // Clean phone number for test numbers check
-        $cleanPhone = ltrim(trim($phone), '+');
-
-        $isTestNumber = false;
-        foreach ($testNumbers as $testNum) {
-            if ($testNum !== '' && str_ends_with($cleanPhone, $testNum)) {
-                $isTestNumber = true;
-                break;
-            }
-        }
-
-        if ($isTestNumber) {
-            $otp = '0000';
-            \Log::info("Admin OTP for {$phone}: {$otp} (Static Test Mode)");
-        } else {
-            $otp = $taqnyat->generateOtp();
-            $taqnyat->sendOTP($phone, $otp);
-            \Log::info("Admin OTP for {$phone}: {$otp} (Real SMS Sent)");
-        }
+        $otp = '0000';
+        \Log::info("Admin OTP for {$phone}: {$otp} (Fixed Dashboard Mode)");
 
         $user->otp = $otp;
         $user->otp_expires_at = Carbon::now()->addMinutes(10);
@@ -124,31 +101,8 @@ class AdminController extends Controller
             return redirect()->back()->with('error', __('Admin phone not found.'))->withInput();
         }
 
-        $taqnyat = new TaqnyatOTP();
-
-        // Get test numbers from configuration
-        $testNumbersStr = config('services.taqnyat.test_numbers', '555555555,0555555555,966555555555');
-        $testNumbers = array_map('trim', explode(',', $testNumbersStr));
-
-        // Clean phone number for test numbers check
-        $cleanPhone = ltrim(trim($phone), '+');
-
-        $isTestNumber = false;
-        foreach ($testNumbers as $testNum) {
-            if ($testNum !== '' && str_ends_with($cleanPhone, $testNum)) {
-                $isTestNumber = true;
-                break;
-            }
-        }
-
-        if ($isTestNumber) {
-            $otp = '0000';
-            \Log::info("Admin Reset OTP for {$phone}: {$otp} (Static Test Mode)");
-        } else {
-            $otp = $taqnyat->generateOtp();
-            $taqnyat->sendOTP($phone, $otp);
-            \Log::info("Admin Reset OTP for {$phone}: {$otp} (Real SMS Sent)");
-        }
+        $otp = '0000';
+        \Log::info("Admin Reset OTP for {$phone}: {$otp} (Fixed Dashboard Mode)");
 
         $user->otp = $otp;
         $user->otp_expires_at = Carbon::now()->addMinutes(10);
@@ -376,12 +330,14 @@ class AdminController extends Controller
         }
 
         // Top Services aggregation at parent level
-        $topServicesQuery = Order::join('services', 'orders.service_id', '=', 'services.id')
+        $topServicesQuery = DB::table('order_services')
+            ->join('services', 'order_services.service_id', '=', 'services.id')
+            ->join('orders', 'order_services.order_id', '=', 'orders.id')
             ->select(
                 DB::raw('COALESCE(services.parent_id, services.id) as parent_service_id'),
                 DB::raw('count(DISTINCT orders.user_id) as count')
             )
-            ->groupBy('parent_service_id')
+            ->groupBy(DB::raw('COALESCE(services.parent_id, services.id)'))
             ->orderByDesc('count')
             ->take(5)
             ->get();
@@ -452,20 +408,20 @@ class AdminController extends Controller
     {
         $type = $request->get('type', 'all'); // 'all', 'individual', 'corporate_customer'
         
-        $query = Order::query()
-            ->join('services', 'orders.service_id', '=', 'services.id')
+        $query = DB::table('order_services')
+            ->join('services', 'order_services.service_id', '=', 'services.id')
+            ->join('orders', 'order_services.order_id', '=', 'orders.id')
             ->select(
                 DB::raw('COALESCE(services.parent_id, services.id) as parent_service_id'),
                 DB::raw('count(DISTINCT orders.user_id) as count')
             );
         
         if ($type !== 'all') {
-            $query->whereHas('user', function($q) use ($type) {
-                $q->where('type', $type);
-            });
+            $query->join('users', 'orders.user_id', '=', 'users.id')
+                ->where('users.type', $type);
         }
         
-        $topServices = $query->groupBy('parent_service_id')
+        $topServices = $query->groupBy(DB::raw('COALESCE(services.parent_id, services.id)'))
             ->orderByDesc('count')
             ->take(5)
             ->get();
