@@ -8,7 +8,11 @@
  * IMPORTANT: Delete this file from your server after running it for security.
  */
 
-define('TARGET_FILE', __DIR__ . '/app/Http/Controllers/Api/AppointmentController.php');
+$targetFile = __DIR__ . '/app/Http/Controllers/Api/AppointmentController.php';
+if (!file_exists($targetFile)) {
+    $targetFile = __DIR__ . '/../app/Http/Controllers/Api/AppointmentController.php';
+}
+define('TARGET_FILE', $targetFile);
 
 header('Content-Type: text/plain; charset=utf-8');
 
@@ -17,7 +21,7 @@ echo "======================\n\n";
 
 if (!file_exists(TARGET_FILE)) {
     echo "[ERROR] File not found at: " . TARGET_FILE . "\n";
-    echo "Please ensure this script is uploaded to the root of your Laravel project (same folder as composer.json and the 'app' directory).\n";
+    echo "Please ensure this script is uploaded to either the root of your project or the 'public' folder.\n";
     exit;
 }
 
