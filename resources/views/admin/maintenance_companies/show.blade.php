@@ -329,7 +329,7 @@
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                         {{ __('File uploaded') }}
                                     </span>
-                                    <a href="{{ $company->commercial_record_url }}"
+                                    <a href="{{ route('admin.maintenance-companies.view-cr', $company->id) }}"
                                        target="_blank"
                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-indigo-700 dark:text-white rounded-xl text-[10px] font-black transition-all hover:scale-[1.03]">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>

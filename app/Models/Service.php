@@ -94,11 +94,7 @@ class Service extends Model
 
     public function city()
     {
-        return $this->belongsTo(City::class)->withDefault([
-            'id' => 1,
-            'name_ar' => 'الدمام',
-            'name_en' => 'Dammam',
-        ]);
+        return $this->belongsTo(City::class);
     }
 
     public function maintenanceCompanies()

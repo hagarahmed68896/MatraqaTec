@@ -132,7 +132,22 @@
                         </div>
                     </div>
                     <input type="hidden" name="reminder_type" :value="reminder">
+            </div>
+
+            <!-- Hourly Booking Capacity -->
+            <div class="space-y-4 mt-6">
+                <label class="block text-sm font-black text-slate-800 dark:text-white text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
+                    {{ __('Hourly Booking Capacity') }}
+                </label>
+                <div class="relative group">
+                    <input type="number" name="hourly_booking_capacity" value="{{ old('hourly_booking_capacity', $items['hourly_booking_capacity'] ?? '5') }}" placeholder="{{ __('Hourly Booking Capacity') }}" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl px-6 py-4 text-sm font-bold text-slate-700 dark:text-white placeholder-slate-300 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
+                    <div class="absolute {{ app()->getLocale() == 'ar' ? 'left-6 border-r pr-6' : 'right-6 border-l pl-6' }} top-1/2 -translate-y-1/2 border-slate-200 dark:border-white/10 text-slate-400 font-bold text-sm">
+                        {{ __('Orders/Hour') }}
+                    </div>
                 </div>
+                <p class="text-xs text-slate-400 font-bold text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
+                    {{ __('Determine the maximum number of bookings/orders allowed per hour for each technician.') }}
+                </p>
             </div>
 
             <!-- Form Actions -->

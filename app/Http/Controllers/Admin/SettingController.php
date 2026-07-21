@@ -24,6 +24,7 @@ class SettingController extends Controller
             'required_photos_after_count' => 1,
             'reminder_type' => 'day',
             'reminder_custom_value' => null,
+            'hourly_booking_capacity' => 5,
         ];
 
         $items = array_merge($defaults, $settings->toArray());
@@ -44,6 +45,7 @@ class SettingController extends Controller
             'required_photos_after_count' => 'nullable|integer|min:0',
             'reminder_type' => 'nullable|in:day,hour,custom',
             'reminder_custom_value' => 'nullable|integer|min:1',
+            'hourly_booking_capacity' => 'nullable|integer|min:1',
         ]);
 
         $settings = $request->only([
@@ -54,6 +56,7 @@ class SettingController extends Controller
             'required_photos_after_count',
             'reminder_type',
             'reminder_custom_value',
+            'hourly_booking_capacity',
         ]);
 
         foreach ($settings as $key => $value) {

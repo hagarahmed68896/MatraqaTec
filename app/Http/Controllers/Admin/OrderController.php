@@ -33,6 +33,15 @@ class OrderController extends Controller
             $query->where('sub_status', $request->sub_status);
         }
 
+        // Day Filter (Today vs Future Reservations)
+        if ($request->filled('day_filter')) {
+            if ($request->day_filter === 'today') {
+                $query->whereDate('scheduled_at', \Carbon\Carbon::today());
+            } elseif ($request->day_filter === 'future') {
+                $query->whereDate('scheduled_at', '>', \Carbon\Carbon::today());
+            }
+        }
+
         // 2. Search Logic
         if ($request->filled('search')) {
             $search = $request->search;
@@ -164,13 +173,37 @@ class OrderController extends Controller
 
         // 1. Filter by tab/status
         $currentTab = $request->get('tab', 'new');
-        if (in_array($currentTab, ['new', 'scheduled', 'in_progress', 'completed', 'rejected'])) {
+        if ($currentTab === 'new') {
+            $query->where('status', 'new')
+                  ->whereNull('technician_id')
+                  ->whereNull('maintenance_company_id');
+        } elseif ($currentTab === 'scheduled') {
+            $query->where(function($q) {
+                $q->where('status', 'scheduled')
+                  ->orWhere(function($sub) {
+                      $sub->where('status', 'new')
+                          ->where(function($sub2) {
+                              $sub2->whereNotNull('technician_id')
+                                   ->orWhereNotNull('maintenance_company_id');
+                          });
+                  });
+            });
+        } elseif (in_array($currentTab, ['in_progress', 'completed', 'rejected'])) {
             $query->where('status', $currentTab);
         }
 
         // 1b. Filter by specific sub_status
         if ($request->filled('sub_status')) {
             $query->where('sub_status', $request->sub_status);
+        }
+
+        // Day Filter (Today vs Future Reservations)
+        if ($request->filled('day_filter')) {
+            if ($request->day_filter === 'today') {
+                $query->whereDate('scheduled_at', \Carbon\Carbon::today());
+            } elseif ($request->day_filter === 'future') {
+                $query->whereDate('scheduled_at', '>', \Carbon\Carbon::today());
+            }
         }
 
         // 2. Search Logic
@@ -261,8 +294,26 @@ class OrderController extends Controller
         $totalOrdersLastWeek = Order::where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
         $totalOrdersGrowth = $totalOrdersLastWeek > 0 ? (($totalOrders - $totalOrdersLastWeek) / $totalOrdersLastWeek) * 100 : ($totalOrders > 0 ? 100 : 0);
 
-        $scheduledOrders = Order::where('status', 'scheduled')->count();
-        $scheduledOrdersLastWeek = Order::where('status', 'scheduled')->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
+        $scheduledOrders = Order::where(function($q) {
+            $q->where('status', 'scheduled')
+              ->orWhere(function($sub) {
+                  $sub->where('status', 'new')
+                      ->where(function($sub2) {
+                          $sub2->whereNotNull('technician_id')
+                               ->orWhereNotNull('maintenance_company_id');
+                      });
+              });
+        })->count();
+        $scheduledOrdersLastWeek = Order::where(function($q) {
+            $q->where('status', 'scheduled')
+              ->orWhere(function($sub) {
+                  $sub->where('status', 'new')
+                      ->where(function($sub2) {
+                          $sub2->whereNotNull('technician_id')
+                               ->orWhereNotNull('maintenance_company_id');
+                      });
+              });
+        })->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
         $scheduledOrdersGrowth = $scheduledOrdersLastWeek > 0 ? (($scheduledOrders - $scheduledOrdersLastWeek) / $scheduledOrdersLastWeek) * 100 : ($scheduledOrders > 0 ? 100 : 0);
 
         $inProgressOrders = Order::where('status', 'in_progress')->count();
@@ -277,8 +328,14 @@ class OrderController extends Controller
         $rejectedOrdersLastWeek = Order::where('status', 'rejected')->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
         $rejectedOrdersGrowth = $rejectedOrdersLastWeek > 0 ? (($rejectedOrders - $rejectedOrdersLastWeek) / $rejectedOrdersLastWeek) * 100 : ($rejectedOrders > 0 ? 100 : 0);
 
-        $newOrders = Order::where('status', 'new')->count();
-        $newOrdersLastWeek = Order::where('status', 'new')->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
+        $newOrders = Order::where('status', 'new')
+            ->whereNull('technician_id')
+            ->whereNull('maintenance_company_id')
+            ->count();
+        $newOrdersLastWeek = Order::where('status', 'new')
+            ->whereNull('technician_id')
+            ->whereNull('maintenance_company_id')
+            ->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
         $newOrdersGrowth = $newOrdersLastWeek > 0 ? (($newOrders - $newOrdersLastWeek) / $newOrdersLastWeek) * 100 : ($newOrders > 0 ? 100 : 0);
 
         $stats = [

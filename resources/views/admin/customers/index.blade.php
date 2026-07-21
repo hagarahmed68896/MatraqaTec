@@ -219,7 +219,13 @@
                 <!-- Search -->
                 <form action="{{ url()->current() }}" method="GET" class="relative w-full max-w-[18rem] flex-1">
                     @foreach(request()->except('search','page') as $key => $value)
-                        <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                        @if(is_array($value))
+                            @foreach($value as $val)
+                                <input type="hidden" name="{{ $key }}[]" value="{{ $val }}">
+                            @endforeach
+                        @else
+                            <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                        @endif
                     @endforeach
 
                     <input type="text"

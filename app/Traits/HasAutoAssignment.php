@@ -70,6 +70,8 @@ trait HasAutoAssignment
         $start = (clone $time)->subHours(1)->addMinute();
         $end = (clone $time)->addHours(1)->subMinute();
 
+        $capacity = (int) \App\Models\Setting::getByKey('hourly_booking_capacity', 5);
+
         $query = Technician::query()
             ->join('users', 'technicians.user_id', '=', 'users.id')
             ->where('technicians.availability_status', 'available')
@@ -80,13 +82,12 @@ trait HasAutoAssignment
                   ->orWhereJsonContains('technicians.service_ids', (int)$serviceId)
                   ->orWhereJsonContains('technicians.service_ids', (string)$serviceId);
             })
-            ->whereDoesntHave('orders', function($q) use ($start, $end) {
-                $q->whereIn('status', ['new', 'accepted', 'scheduled', 'in_progress'])
-                  ->whereBetween('scheduled_at', [$start, $end]);
-            })
-            ->whereDoesntHave('appointments', function($q) use ($start, $end) {
-                $q->whereIn('status', ['scheduled', 'in_progress'])
-                  ->whereBetween('appointment_date', [$start, $end]);
+            ->where(function($q) use ($start, $end, $capacity) {
+                $q->whereRaw("(
+                    (SELECT COUNT(*) FROM orders WHERE orders.technician_id = technicians.id AND orders.status IN ('new', 'accepted', 'scheduled', 'in_progress') AND orders.scheduled_at BETWEEN ? AND ?)
+                    +
+                    (SELECT COUNT(*) FROM appointments WHERE appointments.technician_id = technicians.id AND appointments.status IN ('scheduled', 'in_progress') AND appointments.appointment_date BETWEEN ? AND ?)
+                ) < ?", [$start, $end, $start, $end, $capacity]);
             });
 
         // Location filtering: Use distance if coords provided, else city
@@ -238,20 +239,20 @@ trait HasAutoAssignment
                 $rejectionReasons[] = "Location mismatch: " . $locReason;
             }
 
-            $hasOrderConflict = Order::where('technician_id', $tech->id)
+            $capacity = (int) \App\Models\Setting::getByKey('hourly_booking_capacity', 5);
+
+            $orderCount = Order::where('technician_id', $tech->id)
                 ->whereIn('status', ['new', 'accepted', 'scheduled', 'in_progress'])
                 ->whereBetween('scheduled_at', [$start, $end])
-                ->exists();
-            if ($hasOrderConflict) {
-                $rejectionReasons[] = "Has conflicting order between {$start->toDateTimeString()} and {$end->toDateTimeString()}";
-            }
+                ->count();
 
-            $hasAppointmentConflict = \App\Models\Appointment::where('technician_id', $tech->id)
+            $appointmentCount = \App\Models\Appointment::where('technician_id', $tech->id)
                 ->whereIn('status', ['scheduled', 'in_progress'])
                 ->whereBetween('appointment_date', [$start, $end])
-                ->exists();
-            if ($hasAppointmentConflict) {
-                $rejectionReasons[] = "Has conflicting appointment between {$start->toDateTimeString()} and {$end->toDateTimeString()}";
+                ->count();
+
+            if (($orderCount + $appointmentCount) >= $capacity) {
+                $rejectionReasons[] = "Hourly booking capacity reached ({$orderCount} orders, {$appointmentCount} appointments, capacity: {$capacity})";
             }
 
             if (empty($rejectionReasons)) {

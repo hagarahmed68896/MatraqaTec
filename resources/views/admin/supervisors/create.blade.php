@@ -83,7 +83,7 @@
                     <!-- Password Confirmation (Optional but good practice) -->
                     <div class="space-y-3">
                         <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">{{ __('Confirm Password') }}</label>
-                        <input type="password" name="password_confirmation" required placeholder="{{ __('Confirm password') }}"
+                        <input type="password" name="password_confirmation" required placeholder="{{ __('Confirm Password') }}"
                                class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none">
                     </div>
                 </div>

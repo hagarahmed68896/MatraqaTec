@@ -129,7 +129,7 @@
                         </div>
                         @if($item->commercial_record_file)
                             <p class="text-xs text-primary font-bold mt-1">
-                                <a href="{{ $item->commercial_record_url }}" target="_blank" class="hover:underline">{{ __('View Current File') }}</a>
+                                <a href="{{ route('admin.corporate-customers.view-cr', $item->id) }}" target="_blank" class="hover:underline">{{ __('View Current File') }}</a>
                             </p>
                         @endif
                         @error('commercial_record_file') <p class="text-red-500 text-xs mt-1 font-bold">⚠ {{ $message }}</p> @enderror

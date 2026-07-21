@@ -723,7 +723,7 @@
     "please_specify_rejection_reason_hint": "Please specify the reason for rejection to be sent to the company",
     "please_specify_rejection_reason_placeholder": "Please specify the reason for rejection...",
     "selected": "selected",
-    "will_create_account_email_hint": "An account will be created for the technician and login credentials will be sent via email",
+    "will_create_account_email_hint": "An account will be created for the technician and login credentials will be sent via SMS",
     "غير نشط": "Inactive",
     "نشط": "Active",
     "The new password must be different from the old password.": "The new password must be different from the old password.",

@@ -602,5 +602,33 @@ class MaintenanceCompanyController extends Controller
 
             fclose($handle);
         }, 200, $headers);
+     }
+
+    public function viewCR($id)
+    {
+        $company = MaintenanceCompany::where('user_id', $id)->orWhere('id', $id)->firstOrFail();
+        
+        $filePath = public_path($company->commercial_record_file);
+        
+        if (!$company->commercial_record_file || !file_exists($filePath)) {
+            $pathsToTry = [
+                public_path('uploads/maintenance/cr/' . basename($company->commercial_record_file)),
+                public_path('uploads/commercial_records/' . basename($company->commercial_record_file)),
+                public_path(basename($company->commercial_record_file)),
+            ];
+            
+            foreach ($pathsToTry as $path) {
+                if (file_exists($path)) {
+                    $filePath = $path;
+                    break;
+                }
+            }
+        }
+        
+        if (!file_exists($filePath)) {
+            abort(404, __('Commercial record file not found.'));
+        }
+        
+        return response()->file($filePath);
     }
 }

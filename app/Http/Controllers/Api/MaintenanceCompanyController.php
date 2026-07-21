@@ -333,10 +333,11 @@ class MaintenanceCompanyController extends Controller
         // 1. Check existing users (Technicians/Customers/etc)
         $existingUser = \App\Models\User::where('email', $request->email)
             ->orWhere('phone', $phone)
+            ->orWhere('phone', '0' . $phone)
             ->first();
 
         if ($existingUser) {
-            $msg = $existingUser->phone == $phone 
+            $msg = ($existingUser->phone == $phone || $existingUser->phone == '0' . $phone) 
                 ? __('This phone number is already registered in the system.') 
                 : __('This email is already registered in the system.');
             return response()->json(['status' => false, 'message' => $msg], 422);
@@ -346,7 +347,9 @@ class MaintenanceCompanyController extends Controller
         $existingRequest = \App\Models\TechnicianRequest::where('status', 'pending')
             ->where(function($q) use ($request, $phone) {
                 $q->where('email', $request->email)
-                  ->orWhere('phone', $phone);
+                  ->orWhere('phone', $request->phone)
+                  ->orWhere('phone', $phone)
+                  ->orWhere('phone', '0' . $phone);
             })
             ->first();
 

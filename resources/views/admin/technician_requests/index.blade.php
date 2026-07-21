@@ -178,14 +178,14 @@
 
 
     <!-- Main Container with Filters & Actions -->
-    <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-sm overflow-visible">
+    <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-sm overflow-visible text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
         <div class="p-6 flex flex-col md:flex-row items-center justify-between gap-6">
             <!-- Filter & Search (Refined) -->
              <div class="flex items-center gap-3 w-full md:w-auto">
                 <!-- Filter Button -->
                 <div class="relative">
                     <button @click="showFilters = !showFilters"
-                        class="px-4 py-3 flex items-center gap-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-slate-500 dark:text-slate-300 font-bold transition shadow-sm">
+                        class="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-slate-400 hover:text-primary dark:hover:text-white transition shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-sliders" viewBox="0 0 16 16">
                             <path fill-rule="evenodd" d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z"/>
                         </svg>

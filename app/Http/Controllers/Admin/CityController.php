@@ -42,8 +42,8 @@ class CityController extends Controller
             'name_ar' => 'required|string',
             'name_en' => 'required|string',
             'districts' => 'nullable|array',
-            'districts.*.name_ar' => 'required_with:districts|string',
-            'districts.*.name_en' => 'required_with:districts|string',
+            'districts.*.name_ar' => 'nullable|string',
+            'districts.*.name_en' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -54,7 +54,18 @@ class CityController extends Controller
             $city = City::create($request->only(['name_ar', 'name_en']));
 
             if ($request->has('districts') && is_array($request->districts)) {
-                $city->districts()->createMany($request->districts);
+                // Filter out entries with empty names
+                $districts = array_filter($request->districts, function ($d) {
+                    return !empty($d['name_ar']) && !empty($d['name_en']);
+                });
+
+                if (!empty($districts)) {
+                    $city->districts()->createMany(array_values($districts));
+                } else {
+                    $this->createDefaultDistricts($city);
+                }
+            } else {
+                $this->createDefaultDistricts($city);
             }
         });
 
@@ -82,8 +93,8 @@ class CityController extends Controller
             'name_en' => 'required|string',
             'districts' => 'nullable|array',
             'districts.*.id' => 'nullable|exists:districts,id',
-            'districts.*.name_ar' => 'required_with:districts|string',
-            'districts.*.name_en' => 'required_with:districts|string',
+            'districts.*.name_ar' => 'nullable|string',
+            'districts.*.name_en' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -94,13 +105,18 @@ class CityController extends Controller
             $city->update($request->only(['name_ar', 'name_en']));
 
             if ($request->has('districts')) {
+                // Filter out entries with empty names
+                $districts = array_filter($request->districts, function ($d) {
+                    return !empty($d['name_ar']) && !empty($d['name_en']);
+                });
+
                 // Get IDs from request to identify which to keep
-                $requestedIds = collect($request->districts)->pluck('id')->filter()->toArray();
+                $requestedIds = collect($districts)->pluck('id')->filter()->toArray();
                 
                 // Delete districts not in the request
                 $city->districts()->whereNotIn('id', $requestedIds)->delete();
 
-                foreach ($request->districts as $districtData) {
+                foreach ($districts as $districtData) {
                     if (isset($districtData['id'])) {
                         // Update existing
                         $city->districts()->where('id', $districtData['id'])->update([
@@ -115,11 +131,6 @@ class CityController extends Controller
                         ]);
                     }
                 }
-            } else {
-                 // If no districts sent, maybe delete all? checking context usually 'districts' array sent empty if clearing
-                 // BUT if key missing, might be partial update. Assuming complete form submission here.
-                 // Safety: only delete if 'districts' key exists but is empty? 
-                 // The validator allows nullable, so if request has 'districts' key it runs logic.
             }
         });
 
@@ -131,5 +142,17 @@ class CityController extends Controller
         $city = City::findOrFail($id);
         $city->delete();
         return redirect()->route('admin.cities.index')->with('success', __('City deleted successfully.'));
+    }
+
+    private function createDefaultDistricts(City $city)
+    {
+        $defaultDistricts = [
+            ['name_ar' => 'شمال ' . $city->name_ar, 'name_en' => 'North of ' . $city->name_en],
+            ['name_ar' => 'جنوب ' . $city->name_ar, 'name_en' => 'South of ' . $city->name_en],
+            ['name_ar' => 'شرق ' . $city->name_ar, 'name_en' => 'East of ' . $city->name_en],
+            ['name_ar' => 'غرب ' . $city->name_ar, 'name_en' => 'West of ' . $city->name_en],
+            ['name_ar' => 'وسط ' . $city->name_ar, 'name_en' => 'Center of ' . $city->name_en],
+        ];
+        $city->districts()->createMany($defaultDistricts);
     }
 }

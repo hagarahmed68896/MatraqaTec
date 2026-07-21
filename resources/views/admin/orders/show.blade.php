@@ -89,13 +89,35 @@
                                 iconAnchor: [20, 40]
                             });
 
-                            const m = L.marker([item.lat, item.lng], { icon: marker })
-                                .addTo(this.map)
-                                .on('click', () => {
-                                    this.selectedMapTech = item;
-                                    this.selectedMapTech.type = this.modalTab === 'platform' ? 'technician' : 'company';
-                                    this.map.panTo([item.lat, item.lng]);
-                                });
+                            const m = L.marker([item.lat, item.lng], { icon: marker }).addTo(this.map);
+                            
+                            const nameLabel = item.name || '';
+                            const specialtyLabel = this.modalTab === 'platform' ? (item.service_name || '') : '';
+                            const ratingVal = item.rating || '0';
+                            
+                            m.bindPopup(`
+                                <div style="font-family: inherit; font-size: 13px; text-align: right; direction: rtl; padding: 4px;">
+                                    <h4 style="margin: 0 0 5px 0; font-weight: bold; font-size: 14px; color: #1a1a31;">${nameLabel}</h4>
+                                    ${specialtyLabel ? `<p style="margin: 0 0 5px 0; color: #64748b;">${specialtyLabel}</p>` : ''}
+                                    <div style="display: flex; align-items: center; gap: 4px; color: #eab308; font-weight: bold; font-size: 11px;">
+                                        <svg style="width: 12px; height: 12px; fill: currentColor;" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                        <span>${ratingVal}</span>
+                                    </div>
+                                </div>
+                            `);
+                            
+                            m.on('click', () => {
+                                this.selectedMapTech = item;
+                                this.selectedMapTech.type = this.modalTab === 'platform' ? 'technician' : 'company';
+                                this.map.panTo([item.lat, item.lng]);
+                                if (this.modalTab === 'platform') {
+                                    this.selectedTechId = item.id;
+                                    this.selectedCompanyId = null;
+                                } else {
+                                    this.selectedCompanyId = item.id;
+                                    this.selectedTechId = null;
+                                }
+                            });
                             this.markers.push(m);
                         }
                     });
@@ -527,7 +549,7 @@
                                     ? 'admin.individual-customers.show' 
                                     : 'admin.corporate-customers.show';
                             @endphp
-                            <a href="{{ route($route, $item->user_id) }}" class="px-8 py-3 rounded-2xl bg-white/10 text-black dark:text-white text-xs font-black shadow-xl shadow-white/5 hover:scale-105 transition-all uppercase tracking-widest">
+                            <a href="{{ route($route, $item->user_id) }}" class="px-8 py-3 rounded-2xl bg-white/20 hover:bg-white/30 text-white text-xs font-black shadow-xl shadow-white/5 hover:scale-105 transition-all uppercase tracking-widest border border-white/35">
                                 {{ __('View Customer Profile') }}
                             </a>
                         </div>

@@ -165,6 +165,10 @@ Route::prefix('admin')->group(function () {
                     Route::get('/premium', [$controller, 'premium'])->name('premium');
                 }
 
+                if (in_array($prefix, ['corporate-customers', 'maintenance-companies'])) {
+                    Route::get('/{id}/view-cr', [$controller, 'viewCR'])->name('view-cr');
+                }
+
                 Route::get('/', [$controller, 'index'])->name('index');
                 Route::get('/create', [$controller, 'create'])->name('create');
                 Route::post('/', [$controller, 'store'])->name('store');

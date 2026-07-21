@@ -193,7 +193,13 @@
                 <div class="flex-1 relative group">
                     <form action="{{ route('admin.financial-settlements.index') }}" method="GET" id="searchForm">
                         @foreach(request()->except('search', '_token', 'page') as $key => $val)
-                            <input type="hidden" name="{{ $key }}" value="{{ $val }}">
+                            @if(is_array($val))
+                                @foreach($val as $v)
+                                    <input type="hidden" name="{{ $key }}[]" value="{{ $v }}">
+                                @endforeach
+                            @else
+                                <input type="hidden" name="{{ $key }}" value="{{ $val }}">
+                            @endif
                         @endforeach
                         <input type="text" name="search" value="{{ request('search') }}"
                                class="w-full h-11 {{ app()->getLocale() == 'ar' ? 'pr-12 pl-6' : 'pl-12 pr-6' }} bg-slate-50 dark:bg-white/5 border border-transparent focus:border-slate-100 dark:focus:border-white/10 rounded-xl transition-all font-bold text-xs text-[#1A1A31] dark:text-white placeholder:text-slate-300"

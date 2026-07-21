@@ -219,6 +219,15 @@ class OrderController extends Controller
 
         // 4. Advanced Filtering (Matching the Mobile UI Filter)
         
+        // Day Filter (Today vs Future Reservations)
+        if ($request->filled('day_filter')) {
+            if ($request->day_filter === 'today') {
+                $query->whereDate('scheduled_at', \Carbon\Carbon::today());
+            } elseif ($request->day_filter === 'future') {
+                $query->whereDate('scheduled_at', '>', \Carbon\Carbon::today());
+            }
+        }
+
         // A. Date Filter (Calendar)
         if ($request->filled('date')) {
             $date = $request->date;
@@ -341,6 +350,14 @@ class OrderController extends Controller
             ], 422);
         }
 
+        $scheduledAt = \Carbon\Carbon::parse($request->scheduled_at);
+        if ($scheduledAt->isToday() && $scheduledAt->lt(now()->addHour())) {
+            return response()->json([
+                'status' => false,
+                'message' => __('Appointments must start from the first hour after the current time (at least 1 hour from now).')
+            ], 422);
+        }
+
         // Detect City from Logic if not provided
         $cityId = $request->city_id ?? $this->detectCityFromCoords($request->latitude, $request->longitude);
         
@@ -350,7 +367,6 @@ class OrderController extends Controller
         }
 
         // 1. Availability Check Logic
-        $scheduledAt = \Carbon\Carbon::parse($request->scheduled_at);
         
         // Priority to sub_service_id if provided
         $targetServiceId = $request->sub_service_id ?? $request->service_id;

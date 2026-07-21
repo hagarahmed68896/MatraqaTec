@@ -94,6 +94,50 @@ class TechnicianRequestController extends Controller
 
     public function store(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+            'email' => 'required|email|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $phone = preg_replace('/[^0-9]/', '', $request->phone);
+        if (str_starts_with($phone, '966')) $phone = substr($phone, 3);
+        if (str_starts_with($phone, '0')) $phone = substr($phone, 1);
+
+        // 1. Check existing users
+        $existingUser = \App\Models\User::where('email', $request->email)
+            ->orWhere('phone', $phone)
+            ->orWhere('phone', '0' . $phone)
+            ->first();
+
+        if ($existingUser) {
+            $msg = ($existingUser->phone == $phone || $existingUser->phone == '0' . $phone)
+                ? __('This phone number is already registered in the system.') 
+                : __('This email is already registered in the system.');
+            return response()->json(['status' => false, 'message' => $msg], 422);
+        }
+
+        // 2. Check existing pending technician requests
+        $existingRequest = \App\Models\TechnicianRequest::where('status', 'pending')
+            ->where(function($q) use ($request, $phone) {
+                $q->where('email', $request->email)
+                  ->orWhere('phone', $request->phone)
+                  ->orWhere('phone', $phone)
+                  ->orWhere('phone', '0' . $phone);
+            })
+            ->first();
+
+        if ($existingRequest) {
+            return response()->json([
+                'status' => false, 
+                'message' => __('هناك طلب قيد الانتظار لهذا الفني بالفعل.')
+            ], 422);
+        }
+
         // Public or User. If User logged in, force ID.
         if (auth()->check()) {
             $request->merge(['user_id' => auth()->id()]);

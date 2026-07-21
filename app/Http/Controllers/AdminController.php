@@ -239,9 +239,17 @@ class AdminController extends Controller
         $revenueChange = $getChange($revenueThisPeriod, $revenueLastPeriod);
 
         // New Orders
-        $newOrdersCount = Order::where('status', 'new')->count();
-        $newOrdersThisPeriod = Order::where('status', 'new')->where('created_at', '>=', $compareDate)->count();
+        $newOrdersCount = Order::where('status', 'new')
+            ->whereNull('technician_id')
+            ->whereNull('maintenance_company_id')
+            ->count();
+        $newOrdersThisPeriod = Order::where('status', 'new')
+            ->whereNull('technician_id')
+            ->whereNull('maintenance_company_id')
+            ->where('created_at', '>=', $compareDate)->count();
         $newOrdersLastPeriod = Order::where('status', 'new')
+            ->whereNull('technician_id')
+            ->whereNull('maintenance_company_id')
             ->whereBetween('created_at', [$prevCompareDate, $compareDate])->count();
         $newOrdersChange = $getChange($newOrdersThisPeriod, $newOrdersLastPeriod);
 
@@ -365,6 +373,8 @@ class AdminController extends Controller
         // 4. Recent Orders (Initial load)
         $recent_orders = Order::with(['user', 'service', 'technician'])
             ->where('status', 'new')
+            ->whereNull('technician_id')
+            ->whereNull('maintenance_company_id')
             ->latest()
             ->take(10)
             ->get();
@@ -395,7 +405,22 @@ class AdminController extends Controller
         $status = $request->get('status', 'all');
         $query = Order::with(['user', 'service', 'technician']);
         
-        if ($status !== 'all') {
+        if ($status === 'new') {
+            $query->where('status', 'new')
+                  ->whereNull('technician_id')
+                  ->whereNull('maintenance_company_id');
+        } elseif ($status === 'scheduled') {
+            $query->where(function($q) {
+                $q->where('status', 'scheduled')
+                  ->orWhere(function($sub) {
+                      $sub->where('status', 'new')
+                          ->where(function($sub2) {
+                              $sub2->whereNotNull('technician_id')
+                                   ->orWhereNotNull('maintenance_company_id');
+                          });
+                  });
+            });
+        } elseif ($status !== 'all') {
             $query->where('status', $status);
         }
         

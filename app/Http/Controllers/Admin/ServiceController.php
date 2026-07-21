@@ -56,16 +56,34 @@ class ServiceController extends Controller
             'children' => 'nullable|array',
             'children.*.name_ar' => 'required_with:children|string',
             'children.*.name_en' => 'required_with:children|string',
+            'children.*.price' => 'nullable|numeric',
+            'children.*.description_ar' => 'nullable|string',
+            'children.*.description_en' => 'nullable|string',
             'children.*.image' => 'nullable|image',
             'districts' => 'nullable|array',
             'districts.*' => 'exists:districts,id',
+            'cities' => 'nullable|array',
+            'cities.*' => 'exists:cities,id',
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
 
-        $data = $request->except(['image', 'icon', 'children']);
+        $data = $request->except(['image', 'icon', 'children', 'cities']);
+
+        // Resolve city_id
+        $cityId = null;
+        if ($request->has('cities') && is_array($request->cities) && count($request->cities) > 0) {
+            $cityId = $request->cities[0];
+        } elseif ($request->has('districts') && is_array($request->districts) && count($request->districts) > 0) {
+            $firstDistrictId = $request->districts[0];
+            $district = \App\Models\District::find($firstDistrictId);
+            if ($district) {
+                $cityId = $district->city_id;
+            }
+        }
+        $data['city_id'] = $cityId;
 
         // Ensure directories exist
         if (!file_exists(public_path('uploads/services/icons'))) {
@@ -113,6 +131,11 @@ class ServiceController extends Controller
                     'name_en' => $childData['name_en'],
                     'parent_id' => $service->id,
                     'image' => $childImagePath,
+                    'city_id' => $service->city_id,
+                    'districts' => $service->districts,
+                    'price' => $childData['price'] ?? null,
+                    'description_ar' => $childData['description_ar'] ?? null,
+                    'description_en' => $childData['description_en'] ?? null,
                 ]);
             }
         }
@@ -173,16 +196,34 @@ class ServiceController extends Controller
             'children.*.id' => 'nullable|exists:services,id',
             'children.*.name_ar' => 'required_with:children|string',
             'children.*.name_en' => 'required_with:children|string',
+            'children.*.price' => 'nullable|numeric',
+            'children.*.description_ar' => 'nullable|string',
+            'children.*.description_en' => 'nullable|string',
             'children.*.image' => 'nullable|image',
             'districts' => 'nullable|array',
             'districts.*' => 'exists:districts,id',
+            'cities' => 'nullable|array',
+            'cities.*' => 'exists:cities,id',
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
 
-        $data = $request->except(['image', 'icon', 'children']);
+        $data = $request->except(['image', 'icon', 'children', 'cities']);
+
+        // Resolve city_id
+        $cityId = null;
+        if ($request->has('cities') && is_array($request->cities) && count($request->cities) > 0) {
+            $cityId = $request->cities[0];
+        } elseif ($request->has('districts') && is_array($request->districts) && count($request->districts) > 0) {
+            $firstDistrictId = $request->districts[0];
+            $district = \App\Models\District::find($firstDistrictId);
+            if ($district) {
+                $cityId = $district->city_id;
+            }
+        }
+        $data['city_id'] = $cityId;
 
         // Ensure directories exist
         if (!file_exists(public_path('uploads/services/icons'))) {
@@ -211,7 +252,11 @@ class ServiceController extends Controller
 
         // Handle Sub-services Sync
         if ($request->has('children')) {
-            $submittedIds = collect($request->children)->pluck('id')->filter()->toArray();
+            $submittedIds = collect($request->children)
+                ->filter(fn($child) => !isset($child['is_deleted']) || !$child['is_deleted'] || $child['is_deleted'] === 'false' || $child['is_deleted'] === 0 || $child['is_deleted'] === '0')
+                ->pluck('id')
+                ->filter()
+                ->toArray();
             
             // Delete sub-services that are no longer in the list
             $service->children()->whereNotIn('id', $submittedIds)->each(function($child) {
@@ -222,6 +267,10 @@ class ServiceController extends Controller
             });
 
             foreach ($request->children as $index => $childData) {
+                if (isset($childData['is_deleted']) && ($childData['is_deleted'] === 'true' || $childData['is_deleted'] === '1' || $childData['is_deleted'] === true || $childData['is_deleted'] === 1)) {
+                    continue;
+                }
+
                 $childImagePath = null;
                 if (!empty($childData['image_base64']) && str_starts_with($childData['image_base64'], 'data:image')) {
                     $imageData = $childData['image_base64'];
@@ -246,6 +295,11 @@ class ServiceController extends Controller
                     $childUpdateData = [
                         'name_ar' => $childData['name_ar'],
                         'name_en' => $childData['name_en'],
+                        'city_id' => $service->city_id,
+                        'districts' => $service->districts,
+                        'price' => $childData['price'] ?? null,
+                        'description_ar' => $childData['description_ar'] ?? null,
+                        'description_en' => $childData['description_en'] ?? null,
                     ];
                     if ($childImagePath) {
                         if ($child->image && file_exists(public_path($child->image))) {
@@ -261,9 +315,22 @@ class ServiceController extends Controller
                         'name_en' => $childData['name_en'],
                         'parent_id' => $service->id,
                         'image' => $childImagePath,
+                        'city_id' => $service->city_id,
+                        'districts' => $service->districts,
+                        'price' => $childData['price'] ?? null,
+                        'description_ar' => $childData['description_ar'] ?? null,
+                        'description_en' => $childData['description_en'] ?? null,
                     ]);
                 }
             }
+        }
+
+        // Always sync city_id and districts to all children of this service
+        foreach ($service->children()->get() as $child) {
+            $child->update([
+                'city_id' => $service->city_id,
+                'districts' => $service->districts,
+            ]);
         }
 
         return redirect()->route('admin.services.index')->with('success', __('Service updated successfully.'));

@@ -513,4 +513,32 @@ class CorporateCustomerController extends Controller
         
         return back()->with('success', __('Customers unblocked successfully.'));
     }
+
+    public function viewCR($id)
+    {
+        $item = CorporateCustomer::where('user_id', $id)->orWhere('id', $id)->firstOrFail();
+        
+        $filePath = public_path($item->commercial_record_file);
+        
+        if (!$item->commercial_record_file || !file_exists($filePath)) {
+            $pathsToTry = [
+                public_path('uploads/corporate/cr/' . basename($item->commercial_record_file)),
+                public_path('uploads/commercial_records/' . basename($item->commercial_record_file)),
+                public_path(basename($item->commercial_record_file)),
+            ];
+            
+            foreach ($pathsToTry as $path) {
+                if (file_exists($path)) {
+                    $filePath = $path;
+                    break;
+                }
+            }
+        }
+        
+        if (!file_exists($filePath)) {
+            abort(404, __('Commercial record file not found.'));
+        }
+        
+        return response()->file($filePath);
+    }
 }

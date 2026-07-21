@@ -151,6 +151,14 @@ class AppointmentController extends Controller
             ], 422);
         }
 
+        $appointmentDate = \Carbon\Carbon::parse($request->appointment_date);
+        if ($appointmentDate->isToday() && $appointmentDate->lt(now()->addHour())) {
+            return response()->json([
+                'status' => false,
+                'message' => __('Appointments must start from the first hour after the current time (at least 1 hour from now).')
+            ], 422);
+        }
+
         $order = \App\Models\Order::find($request->order_id);
         
         // Ensure user owns the order
@@ -158,7 +166,6 @@ class AppointmentController extends Controller
             return response()->json(['status' => false, 'message' => __('Unauthorized')], 403);
         }
 
-        $appointmentDate = \Carbon\Carbon::parse($request->appointment_date);
         $technicianId = $request->technician_id;
 
         // Auto-assign if no technician provided

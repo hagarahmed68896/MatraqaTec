@@ -281,7 +281,7 @@
                                 </div>
                                 <span class="text-xs font-black text-slate-700 dark:text-white/80">{{ __('Commercial Record') }}</span>
                             </div>
-                            <a href="{{ $item->commercial_record_url }}" target="_blank" class="text-[10px] font-black text-indigo-600 hover:underline">{{ __('View') }}</a>
+                            <a href="{{ route('admin.corporate-customers.view-cr', $item->id) }}" target="_blank" class="text-[10px] font-black text-indigo-600 hover:underline">{{ __('View') }}</a>
                         </div>
                         @endif
                     </div>

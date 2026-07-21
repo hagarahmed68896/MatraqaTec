@@ -7,9 +7,36 @@
 <div class="space-y-8" dir="rtl" x-data="{ 
     addModal: false, 
     editModal: false,
-    addDistricts: [{ name_ar: '', name_en: '' }],
+    cityNameAr: '',
+    cityNameEn: '',
+    addDistricts: [],
     editData: { id: '', name_ar: '', name_en: '', districts: [] },
     
+    init() {
+        this.resetAddForm();
+    },
+    resetAddForm() {
+        this.cityNameAr = '';
+        this.cityNameEn = '';
+        this.addDistricts = [
+            { name_ar: 'شمال المدينة', name_en: 'North of City' },
+            { name_ar: 'جنوب المدينة', name_en: 'South of City' },
+            { name_ar: 'شرق المدينة', name_en: 'East of City' },
+            { name_ar: 'غرب المدينة', name_en: 'West of City' },
+            { name_ar: 'وسط المدينة', name_en: 'City Center' }
+        ];
+    },
+    updateDistrictNames() {
+        const arSuffix = this.cityNameAr ? ' ' + this.cityNameAr : ' المدينة';
+        const enSuffix = this.cityNameEn ? ' ' + this.cityNameEn : ' City';
+        this.addDistricts = [
+            { name_ar: 'شمال' + arSuffix, name_en: 'North of' + enSuffix },
+            { name_ar: 'جنوب' + arSuffix, name_en: 'South of' + enSuffix },
+            { name_ar: 'شرق' + arSuffix, name_en: 'East of' + enSuffix },
+            { name_ar: 'غرب' + arSuffix, name_en: 'West of' + enSuffix },
+            { name_ar: 'وسط' + arSuffix, name_en: 'Center of' + enSuffix }
+        ];
+    },
     addDistrictRow() {
         this.addDistricts.push({ name_ar: '', name_en: '' });
     },
@@ -44,7 +71,7 @@
                 </div>
             </form>
 
-            <button @click="addModal = true" class="px-8 py-4 bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] rounded-2xl font-black text-sm shadow-xl shadow-[#1A1A31]/10 dark:shadow-white/5 hover:scale-[1.02] transition-all flex items-center gap-2">
+            <button @click="resetAddForm(); addModal = true" class="px-8 py-4 bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] rounded-2xl font-black text-sm shadow-xl shadow-[#1A1A31]/10 dark:shadow-white/5 hover:scale-[1.02] transition-all flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 {{ __('Add City') }}
             </button>
@@ -157,11 +184,11 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-3">
                             <label class="block text-sm font-black text-[#1A1A31] dark:text-slate-300">{{ __('City Name (Arabic)') }}</label>
-                            <input type="text" name="name_ar" required placeholder="{{ __('Enter city name in Arabic') }}" class="w-full px-6 py-4 rounded-2xl bg-[#F8F9FE] dark:bg-white/5 border border-slate-100 dark:border-white/10 text-sm font-bold text-[#1A1A31] dark:text-white outline-none focus:ring-4 focus:ring-[#1A1A31]/5 transition-all text-right">
+                            <input type="text" name="name_ar" required x-model="cityNameAr" @input="updateDistrictNames()" placeholder="{{ __('Enter city name in Arabic') }}" class="w-full px-6 py-4 rounded-2xl bg-[#F8F9FE] dark:bg-white/5 border border-slate-100 dark:border-white/10 text-sm font-bold text-[#1A1A31] dark:text-white outline-none focus:ring-4 focus:ring-[#1A1A31]/5 transition-all text-right">
                         </div>
                         <div class="space-y-3">
                             <label class="block text-sm font-black text-[#1A1A31] dark:text-slate-300 text-left">{{ __('City Name (English)') }}</label>
-                            <input type="text" name="name_en" required placeholder="{{ __('Enter city name in English') }}" class="w-full px-6 py-4 rounded-2xl bg-[#F8F9FE] dark:bg-white/5 border border-slate-100 dark:border-white/10 text-sm font-bold text-[#1A1A31] dark:text-white outline-none focus:ring-4 focus:ring-[#1A1A31]/5 transition-all text-left">
+                            <input type="text" name="name_en" required x-model="cityNameEn" @input="updateDistrictNames()" placeholder="{{ __('Enter city name in English') }}" class="w-full px-6 py-4 rounded-2xl bg-[#F8F9FE] dark:bg-white/5 border border-slate-100 dark:border-white/10 text-sm font-bold text-[#1A1A31] dark:text-white outline-none focus:ring-4 focus:ring-[#1A1A31]/5 transition-all text-left">
                         </div>
                     </div>
 

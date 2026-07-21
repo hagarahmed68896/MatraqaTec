@@ -591,6 +591,44 @@
                     </div>
 
                     <div id="tech-map" class="z-[1]"></div>
+
+                    <!-- Technician Card (Floating) -->
+                    <template x-if="selectedMapTech">
+                        <div class="absolute bottom-6 right-6 z-[1000] w-[320px] bg-white dark:bg-[#1A1A31] rounded-[2rem] shadow-2xl p-6 text-right space-y-4 animate-fade-in-up border border-slate-100 dark:border-white/10 pointer-events-auto">
+                            <div class="flex items-start justify-between">
+                                <span class="px-3 py-1 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 rounded-lg text-[10px] font-black" x-text="selectedMapTech.status_label || '{{ __('Available') }}'"></span>
+                                <div class="flex items-center gap-4">
+                                    <div class="text-right">
+                                        <h4 class="font-black text-[#1A1A31] dark:text-white text-sm" x-text="selectedMapTech.name"></h4>
+                                        <p class="text-[10px] font-bold text-slate-400" x-text="selectedMapTech.service_name"></p>
+                                    </div>
+                                    <div class="w-12 h-12 rounded-2xl overflow-hidden bg-slate-100 shrink-0">
+                                        <img :src="selectedMapTech.avatar || '/assets/admin/images/avatar-placeholder.png'" class="w-full h-full object-cover">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3 pt-3 border-t border-slate-50 dark:border-white/5">
+                                <div class="flex items-center justify-between text-[11px] font-bold">
+                                    <span class="text-[#1A1A31] dark:text-white/80" x-text="selectedMapTech.service_name || '-'"></span>
+                                    <span class="text-slate-400 flex items-center gap-2">
+                                        {{ __('Service Type:') }}
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                    </span>
+                                </div>
+                                <div class="flex items-center justify-between text-[11px] font-bold">
+                                    <div class="flex items-center gap-1">
+                                        <svg class="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                        <span class="text-[#1A1A31] dark:text-white" x-text="selectedMapTech.rating"></span>
+                                    </div>
+                                    <span class="text-slate-400 flex items-center gap-2">
+                                        {{ __('Average Rating:') }}
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
                 </div>
 
                 <!-- Footer Actions -->
@@ -645,9 +683,8 @@
                     <p class="text-slate-400 font-bold text-md">{{ __('Please state the reason for rejection to clarify to the customer') }}</p>
                 </div>
 
-                <form :action="`/admin/orders/${selectedOrder}/destroy`" method="POST" class="space-y-8">
+                <form :action="`/admin/orders/${selectedOrder}/refuse`" method="POST" class="space-y-8">
                     @csrf
-                    @method('DELETE')
                     <textarea name="rejection_reason" x-model="rejectionReason" required
                               placeholder="{{ __('Write the rejection reason here...') }}"
                               class="w-full h-40 p-6 bg-slate-50 dark:bg-white/5 border-none rounded-[2rem] focus:ring-2 focus:ring-red-500/20 transition-all font-bold text-md text-[#1A1A31] dark:text-white resize-none"></textarea>
@@ -961,8 +998,31 @@ document.addEventListener('alpine:init', () => {
             }
             data.forEach(item => {
                 if (item.lat && item.lng) {
-                    const marker = L.marker([item.lat, item.lng]).addTo(this.map)
-                        .on('click', () => { this.selectedMapTech = item; });
+                    const marker = L.marker([item.lat, item.lng]).addTo(this.map);
+                    
+                    const nameLabel = item.name || '';
+                    const specialtyLabel = this.activeTab === 'platform' ? (item.service_name || '') : '';
+                    const ratingVal = item.rating || '0';
+                    
+                    marker.bindPopup(`
+                        <div style="font-family: inherit; font-size: 13px; text-align: right; direction: rtl; padding: 4px;">
+                            <h4 style="margin: 0 0 5px 0; font-weight: bold; font-size: 14px; color: #1a1a31;">${nameLabel}</h4>
+                            ${specialtyLabel ? `<p style="margin: 0 0 5px 0; color: #64748b;">${specialtyLabel}</p>` : ''}
+                            <div style="display: flex; align-items: center; gap: 4px; color: #eab308; font-weight: bold; font-size: 11px;">
+                                <svg style="width: 12px; height: 12px; fill: currentColor;" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                <span>${ratingVal}</span>
+                            </div>
+                        </div>
+                    `);
+                    
+                    marker.on('click', () => { 
+                        this.selectedMapTech = item; 
+                        if (this.activeTab === 'platform') {
+                            this.selectedTechId = item.id;
+                        } else {
+                            this.selectedCompanyId = item.id;
+                        }
+                    });
                     this.markers.push(marker);
                 }
             });

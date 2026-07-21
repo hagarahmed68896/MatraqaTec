@@ -16,38 +16,79 @@
 
     <form action="{{ route('admin.services.update', $item->id) }}" method="POST" enctype="multipart/form-data" class="space-y-8" 
         x-data="{ 
-            subServices: @js($item->children->map(fn($child) => [
+             subServices: @js($item->children->map(fn($child) => [
                 'id' => $child->id,
                 'temp_id' => $child->id,
                 'name_ar' => $child->name_ar,
                 'name_en' => $child->name_en,
+                'price' => $child->price,
+                'description_ar' => $child->description_ar,
+                'description_en' => $child->description_en,
                 'image_url' => $child->image_url,
                 'is_deleted' => false
             ])),
             newSubService: {
                 name_ar: '',
                 name_en: '',
+                price: '',
+                description_ar: '',
+                description_en: '',
                 image: null,
                 preview: null
+            },
+            editingIndex: null,
+            editSubService(index) {
+                this.editingIndex = index;
+                const sub = this.subServices[index];
+                this.newSubService = {
+                    name_ar: sub.name_ar,
+                    name_en: sub.name_en,
+                    price: sub.price,
+                    description_ar: sub.description_ar,
+                    description_en: sub.description_en,
+                    image: null,
+                    preview: sub.image_url
+                };
             },
             addSubService() {
                 if(!this.newSubService.name_ar || !this.newSubService.name_en) return;
                 
-                this.subServices.push({
-                    id: null,
-                    temp_id: Date.now(),
-                    name_ar: this.newSubService.name_ar,
-                    name_en: this.newSubService.name_en,
-                    image_url: this.newSubService.preview,
-                    file: this.newSubService.image,
-                    is_deleted: false
-                });
+                if (this.editingIndex !== null) {
+                    const sub = this.subServices[this.editingIndex];
+                    sub.name_ar = this.newSubService.name_ar;
+                    sub.name_en = this.newSubService.name_en;
+                    sub.price = this.newSubService.price;
+                    sub.description_ar = this.newSubService.description_ar;
+                    sub.description_en = this.newSubService.description_en;
+                    if (this.newSubService.preview) {
+                        sub.image_url = this.newSubService.preview;
+                    }
+                    this.editingIndex = null;
+                } else {
+                    this.subServices.push({
+                        id: null,
+                        temp_id: Date.now(),
+                        name_ar: this.newSubService.name_ar,
+                        name_en: this.newSubService.name_en,
+                        price: this.newSubService.price,
+                        description_ar: this.newSubService.description_ar,
+                        description_en: this.newSubService.description_en,
+                        image_url: this.newSubService.preview,
+                        file: this.newSubService.image,
+                        is_deleted: false
+                    });
+                }
                 
                 // Reset form
-                this.newSubService = { name_ar: '', name_en: '', image: null, preview: null };
+                this.newSubService = { name_ar: '', name_en: '', price: '', description_ar: '', description_en: '', image: null, preview: null };
                 this.$refs.subImageInput.value = '';
             },
             removeSubService(index) {
+                if (this.editingIndex === index) {
+                    this.editingIndex = null;
+                    this.newSubService = { name_ar: '', name_en: '', price: '', description_ar: '', description_en: '', image: null, preview: null };
+                    this.$refs.subImageInput.value = '';
+                }
                 if(this.subServices[index].id) {
                     this.subServices[index].is_deleted = true;
                 } else {
@@ -146,6 +187,7 @@
                         @foreach($cities as $city)
                             <label class="flex items-center gap-3 p-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl cursor-pointer hover:border-slate-200 dark:hover:border-white/20 transition-all">
                                 <input type="checkbox" 
+                                       name="cities[]"
                                        value="{{ $city->id }}" 
                                        class="rounded text-primary border-slate-200 dark:border-white/10 focus:ring-primary focus:ring-offset-0"
                                        x-model="selectedCities"
@@ -222,9 +264,27 @@
                         </div>
                     </div>
 
-                    <div class="flex justify-center">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="space-y-4">
+                            <label class="block text-sm font-black text-[#1A1A31] dark:text-slate-300">{{ __('Price') }}</label>
+                            <input type="number" step="0.01" x-model="newSubService.price" placeholder="{{ __('Enter service price') }}" class="w-full px-6 py-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-sm font-bold text-[#1A1A31] dark:text-white focus:ring-4 focus:ring-[#1A1A31]/5 transition-all outline-none">
+                        </div>
+                        <div class="space-y-4">
+                            <label class="block text-sm font-black text-[#1A1A31] dark:text-slate-300">{{ __('Description (Arabic)') }}</label>
+                            <input type="text" x-model="newSubService.description_ar" placeholder="{{ __('Enter service description in Arabic') }}" class="w-full px-6 py-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-sm font-bold text-[#1A1A31] dark:text-white focus:ring-4 focus:ring-[#1A1A31]/5 transition-all outline-none">
+                        </div>
+                        <div class="space-y-4">
+                            <label class="block text-sm font-black text-[#1A1A31] dark:text-slate-300 text-left">{{ __('Description (English)') }}</label>
+                            <input type="text" x-model="newSubService.description_en" placeholder="{{ __('Enter service description in English') }}" class="w-full px-6 py-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-sm font-bold text-[#1A1A31] dark:text-white focus:ring-4 focus:ring-[#1A1A31]/5 transition-all outline-none text-left">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center gap-4">
                         <button type="button" @click="addSubService()" class="px-8 py-4 bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] rounded-2xl font-black text-sm hover:scale-[1.02] transition-all shadow-lg">
-                            {{ __('Add Sub-service') }}
+                            <span x-text="editingIndex !== null ? '{{ __('Update Sub-service') }}' : '{{ __('Add Sub-service') }}'"></span>
+                        </button>
+                        <button type="button" x-show="editingIndex !== null" @click="editingIndex = null; newSubService = { name_ar: '', name_en: '', price: '', description_ar: '', description_en: '', image: null, preview: null }; $refs.subImageInput.value = '';" class="px-8 py-4 bg-gray-200 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-2xl font-black text-sm hover:scale-[1.02] transition-all">
+                            {{ __('Cancel') }}
                         </button>
                     </div>
                 </div>
@@ -232,14 +292,20 @@
                 {{-- Sub-services List --}}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <template x-for="(sub, index) in subServices" :key="sub.temp_id">
-                        <div x-show="!sub.is_deleted" class="p-4 rounded-3xl bg-slate-50/50 dark:bg-white/5 border border-slate-100 dark:border-white/10 flex items-center justify-between group h-24 transition-all">
+                        <div x-show="!sub.is_deleted" 
+                             :class="editingIndex === index ? 'border-primary ring-2 ring-primary/20' : 'border-slate-100 dark:border-white/10'" 
+                             class="p-4 rounded-3xl bg-slate-50/50 dark:bg-white/5 border flex items-center justify-between group h-24 transition-all">
                             <div class="flex items-center gap-4">
                                 <div class="w-16 h-16 rounded-2xl bg-white dark:bg-white/10 shadow-sm overflow-hidden flex-shrink-0">
                                     <img :src="sub.image_url" class="w-full h-full object-cover">
                                 </div>
-                                <div>
-                                    <p class="text-sm font-black text-[#1A1A31] dark:text-white" x-text="sub.name_ar"></p>
+                                <div class="flex-1 min-w-0 pr-4">
+                                    <div class="flex items-baseline gap-2">
+                                        <p class="text-sm font-black text-[#1A1A31] dark:text-white" x-text="sub.name_ar"></p>
+                                        <span class="text-[11px] font-black text-primary" x-show="sub.price" x-text="`${sub.price} ر.س`"></span>
+                                    </div>
                                     <p class="text-[10px] text-slate-400 dark:text-slate-500 font-bold" x-text="sub.name_en"></p>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-1" x-show="sub.description_ar" x-text="sub.description_ar"></p>
                                 </div>
                             </div>
                             
@@ -247,10 +313,16 @@
                             <input type="hidden" :name="`children[${index}][id]`" :value="sub.id">
                             <input type="hidden" :name="`children[${index}][name_ar]`" :value="sub.name_ar">
                             <input type="hidden" :name="`children[${index}][name_en]`" :value="sub.name_en">
+                            <input type="hidden" :name="`children[${index}][price]`" :value="sub.price">
+                            <input type="hidden" :name="`children[${index}][description_ar]`" :value="sub.description_ar">
+                            <input type="hidden" :name="`children[${index}][description_en]`" :value="sub.description_en">
                             <input type="hidden" :name="`children[${index}][is_deleted]`" :value="sub.is_deleted">
                             <input type="hidden" :name="`children[${index}][image_base64]`" :value="sub.image_url && sub.image_url.startsWith('data:') ? sub.image_url : ''">
 
                             <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button type="button" @click="editSubService(index)" class="p-2 text-slate-400 hover:text-[#1A1A31] dark:hover:text-white transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                </button>
                                 <button type="button" @click="removeSubService(index)" class="p-2 text-slate-400 hover:text-red-500 transition-colors">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.895-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>

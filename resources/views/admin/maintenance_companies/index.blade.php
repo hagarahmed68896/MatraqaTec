@@ -85,7 +85,7 @@
     </div>
 
     <!-- Main Container with Filters & Actions -->
-    <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-sm overflow-visible">
+    <div class="bg-white dark:bg-[#1A1A31] rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-sm overflow-visible text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
         <div class="p-6 flex flex-wrap flex-col md:flex-row items-center justify-between gap-6 relative min-h-[5rem]">
 
             <!-- Bulk Actions Bar (Visible when rows selected) -->
@@ -211,7 +211,13 @@
                     <!-- Search -->
                     <form action="{{ url()->current() }}" method="GET" class="relative w-full max-w-[18rem] flex-1" x-data="{ search: '{{ request('search') }}' }">
                         @foreach(request()->except('search','page') as $key => $value)
-                            <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                            @if(is_array($value))
+                                @foreach($value as $val)
+                                    <input type="hidden" name="{{ $key }}[]" value="{{ $val }}">
+                                @endforeach
+                            @else
+                                <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                            @endif
                         @endforeach
 
                         <input type="text"

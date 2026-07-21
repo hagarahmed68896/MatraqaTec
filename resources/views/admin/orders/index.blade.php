@@ -89,19 +89,21 @@
             </div>
         </div>
 
-        <!-- Filter Dropdown Trigger -->
-        <button @click="showFilters = !showFilters" 
-                class="w-16 h-16 flex items-center justify-center bg-white dark:bg-[#1A1A31] rounded-2xl shadow-sm border border-slate-50 dark:border-white/10 text-[#1A1A31] dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-all relative">
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-            <div x-show="showFilters" class="absolute top-0 right-0 w-3 h-3 bg-red-500 border-2 border-white dark:border-[#1A1A31] rounded-full"></div>
-        </button>
+        <!-- Filter Dropdown Wrapper -->
+        <div class="relative">
+            <!-- Filter Dropdown Trigger -->
+            <button @click="showFilters = !showFilters" 
+                    class="w-16 h-16 flex items-center justify-center bg-white dark:bg-[#1A1A31] rounded-2xl shadow-sm border border-slate-50 dark:border-white/10 text-[#1A1A31] dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                <div x-show="showFilters" class="absolute top-0 right-0 w-3 h-3 bg-red-500 border-2 border-white dark:border-[#1A1A31] rounded-full"></div>
+            </button>
 
-        <!-- Filter Dropdown Panel -->
-        <div x-show="showFilters" @click.away="showFilters = false" x-cloak 
-             x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0 scale-95 translate-y-2"
-             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-             class="absolute top-20 right-0 mt-4 w-80 bg-white dark:bg-[#1A1A31] rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-white/10 z-[100] p-6 space-y-6 text-right overflow-y-auto max-h-[calc(100vh-200px)] custom-scrollbar">
+            <!-- Filter Dropdown Panel -->
+            <div x-show="showFilters" @click.away="showFilters = false" x-cloak 
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                 class="absolute top-full {{ app()->getLocale() == 'ar' ? 'right-0' : 'left-0' }} mt-4 w-80 bg-white dark:bg-[#1A1A31] rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-white/10 z-[100] p-6 space-y-6 text-right overflow-y-auto max-h-[calc(100vh-200px)] custom-scrollbar">
             
             <form id="filterForm" action="{{ route('admin.orders.index') }}" method="GET" class="space-y-8">
                 <input type="hidden" name="tab" value="{{ request('tab') }}">
@@ -273,6 +275,7 @@
                     </a>
                 </div>
             </form>
+        </div>
         </div>
     </div>
 
@@ -817,12 +820,32 @@
                             iconAnchor: [20, 40]
                         });
 
-                        const m = L.marker([item.lat, item.lng], { icon: marker })
-                            .addTo(this.map)
-                            .on('click', () => {
-                                this.selectedMapTech = item;
-                                this.map.panTo([item.lat, item.lng]);
-                            });
+                        const m = L.marker([item.lat, item.lng], { icon: marker }).addTo(this.map);
+                        
+                        const nameLabel = item.name || '';
+                        const specialtyLabel = this.activeTab === 'platform' ? (item.service_name || '') : '';
+                        const ratingVal = item.rating || '0';
+                        
+                        m.bindPopup(`
+                            <div style="font-family: inherit; font-size: 13px; text-align: right; direction: rtl; padding: 4px;">
+                                <h4 style="margin: 0 0 5px 0; font-weight: bold; font-size: 14px; color: #1a1a31;">${nameLabel}</h4>
+                                ${specialtyLabel ? `<p style="margin: 0 0 5px 0; color: #64748b;">${specialtyLabel}</p>` : ''}
+                                <div style="display: flex; align-items: center; gap: 4px; color: #eab308; font-weight: bold; font-size: 11px;">
+                                    <svg style="width: 12px; height: 12px; fill: currentColor;" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                    <span>${ratingVal}</span>
+                                </div>
+                            </div>
+                        `);
+                        
+                        m.on('click', () => {
+                            this.selectedMapTech = item;
+                            this.map.panTo([item.lat, item.lng]);
+                            if (this.activeTab === 'platform') {
+                                this.selectedTechId = item.id;
+                            } else {
+                                this.selectedCompanyId = item.id;
+                            }
+                        });
                         
                         this.markers.push(m);
                     }
