@@ -11,3 +11,4 @@ use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('app:send-appointment-reminders')->hourly();
 Schedule::command('app:handle-expired-orders')->everyFifteenMinutes();
+Schedule::command('app:send-scheduled-notifications')->everyMinute();

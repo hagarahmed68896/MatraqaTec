@@ -139,7 +139,7 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                     {{ __('Edit') }}
                 </button>
-                  <form action="{{ route('admin.cities.destroy', $item->id) }}" method="POST" class="inline-block" onsubmit="return confirm('{{ __('Are you sure?') }}')">
+                  <form action="{{ route('admin.cities.destroy', $item->id) }}" method="POST" class="inline-block delete-city-form">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-[#F1F3F9] dark:bg-white/5 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all">
@@ -294,4 +294,54 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<style>
+.swal2-delete-btn {
+    background-color: #ef4444 !important;
+    color: #ffffff !important;
+}
+.swal2-delete-btn:hover {
+    background-color: #dc2626 !important;
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteForms = document.querySelectorAll('.delete-city-form');
+    deleteForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const isDark = document.documentElement.classList.contains('dark');
+            
+            Swal.fire({
+                title: "{{ __('Are you sure?') }}",
+                text: "{{ __('Are you sure you want to delete this city?') }}",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: "{{ __('Delete') }}",
+                cancelButtonText: "{{ __('Cancel') }}",
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-2xl p-8',
+                    title: 'text-xl font-black text-slate-800 dark:text-white pt-4',
+                    htmlContainer: 'text-sm font-bold text-slate-500 dark:text-slate-400 mt-2',
+                    confirmButton: 'px-8 py-3.5 swal2-delete-btn text-white rounded-2xl font-black text-sm transition-all mx-2 cursor-pointer shadow-lg shadow-red-500/20',
+                    cancelButton: 'px-8 py-3.5 bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 rounded-2xl font-black text-sm hover:bg-slate-200 dark:hover:bg-white/20 transition-all mx-2 cursor-pointer'
+                },
+                background: isDark ? '#1A1A31' : '#ffffff',
+                color: isDark ? '#ffffff' : '#1e293b',
+                iconColor: '#ef4444',
+                heightAuto: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+});
+</script>
 @endsection

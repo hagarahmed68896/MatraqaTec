@@ -259,7 +259,7 @@
                                 {{ __($item->target_audience) }}
                             </span>
                         </td>
-                        <td class="py-5 px-4">
+                        <td class="py-5 px-4 text-center">
                             @php
                                 $statusClasses = [
                                     'sent' => 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
@@ -272,31 +272,40 @@
                                     'unsent' => 'غير مرسل',
                                 ];
                             @endphp
-                            <span class="px-3 py-1 rounded-full border {{ $statusClasses[$item->status] ?? 'bg-slate-100 text-slate-500 dark:text-white' }} text-[10px] font-black">
-                                {{ $statusLabels[$item->status] ?? $item->status }}
-                            </span>
+                            <div class="flex flex-col items-center gap-1">
+                                <span class="px-3 py-1 rounded-full border {{ $statusClasses[$item->status] ?? 'bg-slate-100 text-slate-500 dark:text-white' }} text-[10px] font-black">
+                                    {{ $statusLabels[$item->status] ?? $item->status }}
+                                </span>
+                                @if($item->status == 'scheduled' && $item->scheduled_at)
+                                    <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500" dir="ltr">
+                                        {{ $item->scheduled_at->format('Y-m-d H:i') }}
+                                    </span>
+                                @endif
+                            </div>
                         </td>
                         <td class="py-5 px-4 text-right">
                             <div class="text-xs font-black text-slate-700 dark:text-white">{{ $item->created_at->format('j/m/Y') }}</div>
                             <div class="text-[10px] text-slate-400 font-bold uppercase">{{ $item->created_at->format('H:i A') }}</div>
-                        </td>
-                        <td class="py-5 px-8">
+                                       <td class="py-5 px-8">
                             <div class="flex items-center justify-center gap-1.5">
-                                <button class="w-8 h-8 text-orange-500 flex items-center justify-center   transition-all " title="{{ __('Resend') }}">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                                </button>
+                                <form action="{{ route('admin.broadcast-notifications.send', $item->id) }}" method="POST" class="inline resend-notification-form">
+                                    @csrf
+                                    <button type="submit" class="w-8 h-8 text-orange-500 flex items-center justify-center transition-all" title="{{ __('Resend') }}">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                                    </button>
+                                </form>
                                 <a href="{{ route('admin.broadcast-notifications.edit', $item->id) }}" class="w-8 h-8  flex items-center justify-center transition-all" title="{{ __('Edit') }}">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                 </a>
-                                <form action="{{ route('admin.broadcast-notifications.destroy', $item->id) }}" method="POST" onsubmit="return confirm('{{ __('Are you sure?') }}')">
+                                <form action="{{ route('admin.broadcast-notifications.destroy', $item->id) }}" method="POST" class="inline delete-notification-form">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="w-8 h-8 flex items-center justify-center transition-all" title="{{ __('Delete') }}">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.895-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                     </button>
                                 </form>
                             </div>
-                        </td>
+                        </td>           </td>
                     </tr>
                     @empty
                     <tr>
@@ -329,6 +338,23 @@
 @endsection
 
 @section('scripts')
+<style>
+.swal2-confirm-btn {
+    background-color: #f97316 !important;
+    color: #ffffff !important;
+}
+.swal2-confirm-btn:hover {
+    background-color: #ea580c !important;
+}
+.swal2-delete-btn {
+    background-color: #ef4444 !important;
+    color: #ffffff !important;
+}
+.swal2-delete-btn:hover {
+    background-color: #dc2626 !important;
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.addEventListener('alpine:init', () => {
         Alpine.data('notificationManagement', () => ({
@@ -384,6 +410,70 @@
     });
 
     document.addEventListener('DOMContentLoaded', () => {
+        // Delete notification confirmation
+        const deleteForms = document.querySelectorAll('.delete-notification-form');
+        deleteForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: "{{ __('Are you sure?') }}",
+                    text: "{{ __('Are you sure you want to delete this notification?') }}",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: "{{ __('Delete') }}",
+                    cancelButtonText: "{{ __('Cancel') }}",
+                    buttonsStyling: false,
+                    customClass: {
+                        popup: 'rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-2xl p-8',
+                        title: 'text-xl font-black text-slate-800 dark:text-white pt-4',
+                        htmlContainer: 'text-sm font-bold text-slate-500 dark:text-slate-400 mt-2',
+                        confirmButton: 'px-8 py-3.5 swal2-delete-btn text-white rounded-2xl font-black text-sm transition-all mx-2 cursor-pointer shadow-lg shadow-red-500/20',
+                        cancelButton: 'px-8 py-3.5 bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 rounded-2xl font-black text-sm hover:bg-slate-200 dark:hover:bg-white/20 transition-all mx-2 cursor-pointer'
+                    },
+                    background: document.documentElement.classList.contains('dark') ? '#1A1A31' : '#ffffff',
+                    color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#1e293b',
+                    iconColor: '#ef4444',
+                    heightAuto: false
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+
+        // Resend notification confirmation
+        const resendForms = document.querySelectorAll('.resend-notification-form');
+        resendForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: "{{ __('Are you sure?') }}",
+                    text: "{{ __('Are you sure you want to resend this notification?') }}",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: "{{ __('Send') }}",
+                    cancelButtonText: "{{ __('Cancel') }}",
+                    buttonsStyling: false,
+                    customClass: {
+                        popup: 'rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-2xl p-8',
+                        title: 'text-xl font-black text-slate-800 dark:text-white pt-4',
+                        htmlContainer: 'text-sm font-bold text-slate-500 dark:text-slate-400 mt-2',
+                        confirmButton: 'px-8 py-3.5 swal2-confirm-btn text-white rounded-2xl font-black text-sm transition-all mx-2 cursor-pointer shadow-lg shadow-orange-500/20',
+                        cancelButton: 'px-8 py-3.5 bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 rounded-2xl font-black text-sm hover:bg-slate-200 dark:hover:bg-white/20 transition-all mx-2 cursor-pointer'
+                    },
+                    background: document.documentElement.classList.contains('dark') ? '#1A1A31' : '#ffffff',
+                    color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#1e293b',
+                    iconColor: '#f97316',
+                    heightAuto: false
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+
         const commonOptions = {
             responsive: true,
             maintainAspectRatio: false,

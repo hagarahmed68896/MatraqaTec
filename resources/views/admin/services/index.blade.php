@@ -1,4 +1,4 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('title', __('Service Management'))
 @section('page_title', __('Service Management'))
@@ -132,12 +132,11 @@
                         {{ __('Edit') }}
                     </a>
                     
-                    <form action="{{ route('admin.services.destroy', $item->id) }}" method="POST" class="inline">
+                    <form action="{{ route('admin.services.destroy', $item->id) }}" method="POST" class="inline delete-service-form">
                         @csrf
                         @method('DELETE')
                         <button type="submit" 
-                                class="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-500 transition-all border border-transparent hover:border-red-100 dark:hover:border-red-500/20" 
-                                onclick="return confirm('{{ __('Are you sure?') }}')">
+                                class="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-500 transition-all border border-transparent hover:border-red-100 dark:hover:border-red-500/20">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.895-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                     </form>
@@ -162,4 +161,54 @@
     </div>
     @endif
 </div>
+@endsection
+
+@section('scripts')
+<style>
+.swal2-delete-btn {
+    background-color: #ef4444 !important;
+    color: #ffffff !important;
+}
+.swal2-delete-btn:hover {
+    background-color: #dc2626 !important;
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteForms = document.querySelectorAll('.delete-service-form');
+    deleteForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const isDark = document.documentElement.classList.contains('dark');
+            
+            Swal.fire({
+                title: "{{ __('Are you sure?') }}",
+                text: "{{ __('Are you sure you want to delete this service?') }}",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: "{{ __('Delete') }}",
+                cancelButtonText: "{{ __('Cancel') }}",
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-2xl p-8',
+                    title: 'text-xl font-black text-slate-800 dark:text-white pt-4',
+                    htmlContainer: 'text-sm font-bold text-slate-500 dark:text-slate-400 mt-2',
+                    confirmButton: 'px-8 py-3.5 swal2-delete-btn text-white rounded-2xl font-black text-sm transition-all mx-2 cursor-pointer shadow-lg shadow-red-500/20',
+                    cancelButton: 'px-8 py-3.5 bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 rounded-2xl font-black text-sm hover:bg-slate-200 dark:hover:bg-white/20 transition-all mx-2 cursor-pointer'
+                },
+                background: isDark ? '#1A1A31' : '#ffffff',
+                color: isDark ? '#ffffff' : '#1e293b',
+                iconColor: '#ef4444',
+                heightAuto: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+});
+</script>
 @endsection

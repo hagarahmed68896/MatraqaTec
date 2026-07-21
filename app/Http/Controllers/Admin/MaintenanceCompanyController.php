@@ -38,7 +38,11 @@ class MaintenanceCompanyController extends Controller
         if ($request->has('status') && $request->status) {
             $status = $request->status; 
             $query->whereHas('user', function ($q) use ($status) {
-                $q->where('status', $status);
+                if ($status === 'inactive') {
+                    $q->whereIn('status', ['inactive', 'blocked']);
+                } else {
+                    $q->where('status', $status);
+                }
             });
         }
 
@@ -109,7 +113,8 @@ class MaintenanceCompanyController extends Controller
 
     public function create()
     {
-        return view('admin.maintenance_companies.create');
+        $cities = \App\Models\City::all();
+        return view('admin.maintenance_companies.create', compact('cities'));
     }
 
     public function store(Request $request)
@@ -141,6 +146,7 @@ class MaintenanceCompanyController extends Controller
             'email'                     => 'required|string|email|max:255|unique:users',
             'password'                  => 'nullable|string|min:8',
             'phone'                     => ['required', 'string', 'unique:users', 'regex:/^[0-9]{9}$/'],
+            'city_id'                   => 'nullable|exists:cities,id',
             'tax_number'                => 'nullable|digits_between:1,20|unique:maintenance_companies,tax_number',
             'commercial_record_number'  => 'required|digits_between:1,20|unique:maintenance_companies,commercial_record_number',
             'commercial_record_file'    => 'required|file|mimes:pdf,jpg,png,jpeg,doc,docx|max:10240',
@@ -199,6 +205,7 @@ class MaintenanceCompanyController extends Controller
 
             MaintenanceCompany::create([
                 'user_id' => $user->id,
+                'city_id' => $request->city_id,
                 'name' => $request->name,
                 'company_name_en' => $request->name,
                 'company_name_ar' => $request->name,
@@ -316,7 +323,8 @@ class MaintenanceCompanyController extends Controller
     public function edit($id)
     {
         $company = MaintenanceCompany::with('user')->findOrFail($id);
-        return view('admin.maintenance_companies.edit', compact('company'));
+        $cities = \App\Models\City::all();
+        return view('admin.maintenance_companies.edit', compact('company', 'cities'));
     }
 
     public function update(Request $request, $id)
@@ -349,6 +357,7 @@ class MaintenanceCompanyController extends Controller
             'email'                     => 'required|string|email|max:255|unique:users,email,'.$company->user_id,
             'password'                  => 'nullable|string|min:8',
             'phone'                     => ['required', 'string', 'unique:users,phone,'.$company->user_id, 'regex:/^[0-9]{9}$/'],
+            'city_id'                   => 'nullable|exists:cities,id',
             'tax_number'                => 'nullable|digits_between:1,20|unique:maintenance_companies,tax_number,'.$company->id,
             'commercial_record_number'  => 'required|digits_between:1,20|unique:maintenance_companies,commercial_record_number,'.$company->id,
             'commercial_record_file'    => 'nullable|file|mimes:pdf,jpg,png,jpeg,doc,docx|max:10240',
@@ -546,7 +555,11 @@ class MaintenanceCompanyController extends Controller
         if ($request->has('status') && $request->status) {
              $status = $request->status; 
             $query->whereHas('user', function ($q) use ($status) {
-                $q->where('status', $status);
+                if ($status === 'inactive') {
+                    $q->whereIn('status', ['inactive', 'blocked']);
+                } else {
+                    $q->where('status', $status);
+                }
             });
         }
 
@@ -608,25 +621,70 @@ class MaintenanceCompanyController extends Controller
     {
         $company = MaintenanceCompany::where('user_id', $id)->orWhere('id', $id)->firstOrFail();
         
-        $filePath = public_path($company->commercial_record_file);
+        $file = $company->commercial_record_file;
+        if (!$file) {
+            abort(404, __('Commercial record file not found.'));
+        }
+
+        $fileName = basename($file);
         
-        if (!$company->commercial_record_file || !file_exists($filePath)) {
-            $pathsToTry = [
-                public_path('uploads/maintenance/cr/' . basename($company->commercial_record_file)),
-                public_path('uploads/commercial_records/' . basename($company->commercial_record_file)),
-                public_path(basename($company->commercial_record_file)),
-            ];
+        $pathsToTry = [
+            // Standard public path checks
+            public_path($file),
+            base_path('public/' . $file),
+            base_path('../public_html/' . $file),
+            base_path('../' . $file),
             
-            foreach ($pathsToTry as $path) {
-                if (file_exists($path)) {
-                    $filePath = $path;
-                    break;
-                }
+            // Storage checks
+            storage_path('app/public/' . $file),
+            storage_path('app/' . $file),
+            base_path('storage/app/public/' . $file),
+            base_path('storage/app/' . $file),
+            public_path('storage/' . $file),
+            
+            // Subfolder custom upload checks
+            public_path('uploads/maintenance/cr/' . $fileName),
+            public_path('uploads/commercial_records/' . $fileName),
+            public_path($fileName),
+            base_path('public/uploads/maintenance/cr/' . $fileName),
+            base_path('../public_html/uploads/maintenance/cr/' . $fileName),
+        ];
+
+        $filePath = null;
+        foreach ($pathsToTry as $path) {
+            if (file_exists($path) && !is_dir($path)) {
+                $filePath = $path;
+                break;
             }
         }
         
-        if (!file_exists($filePath)) {
-            abort(404, __('Commercial record file not found.'));
+        if (!$filePath) {
+            $debugInfo = [
+                'Database Value' => $file,
+                'Public Path' => public_path(),
+                'Base Path' => base_path(),
+                'Paths Searched' => []
+            ];
+            foreach ($pathsToTry as $path) {
+                $debugInfo['Paths Searched'][] = [
+                    'path' => $path,
+                    'exists' => file_exists($path) ? 'Yes' : 'No',
+                    'is_dir' => is_dir($path) ? 'Yes' : 'No'
+                ];
+            }
+            
+            $html = "<html><head><title>Debug CR File</title></head><body style='font-family: Arial; padding: 20px; direction: rtl; text-align: right;'>";
+            $html .= "<h2 style='color: red;'>الملف غير موجود في السيرفر (File Not Found)</h2>";
+            $html .= "<p>قيمة الحقل في قاعدة البيانات: <strong>" . htmlspecialchars($debugInfo['Database Value']) . "</strong></p>";
+            $html .= "<p>مسار public_path: <code>" . htmlspecialchars($debugInfo['Public Path']) . "</code></p>";
+            $html .= "<p>مسار base_path: <code>" . htmlspecialchars($debugInfo['Base Path']) . "</code></p>";
+            $html .= "<h3>المسارات التي تم البحث فيها:</h3><ul>";
+            foreach ($debugInfo['Paths Searched'] as $search) {
+                $statusColor = $search['exists'] === 'Yes' ? 'green' : 'red';
+                $html .= "<li style='margin-bottom: 8px;'><code>" . htmlspecialchars($search['path']) . "</code> - موجود: <strong style='color: {$statusColor};'>" . $search['exists'] . "</strong> (مجلد: " . $search['is_dir'] . ")</li>";
+            }
+            $html .= "</ul></body></html>";
+            return response($html, 404);
         }
         
         return response()->file($filePath);

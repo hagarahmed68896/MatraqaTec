@@ -43,7 +43,11 @@ class IndividualCustomerController extends Controller
         if ($request->has('status') && $request->status) {
             $status = $request->status;
             $query->whereHas('user', function ($q) use ($status) {
-                $q->where('status', $status);
+                if ($status === 'inactive') {
+                    $q->whereIn('status', ['inactive', 'blocked']);
+                } else {
+                    $q->where('status', $status);
+                }
             });
         }
 

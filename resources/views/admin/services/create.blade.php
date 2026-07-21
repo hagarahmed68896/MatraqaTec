@@ -26,6 +26,10 @@
                 image: null,
                 preview: null
             },
+            errors: {
+                name_ar: '',
+                name_en: ''
+            },
             selectedCities: @js(array_values(array_map('strval', \App\Models\District::whereIn('id', (array)old('districts', []))->pluck('city_id')->unique()->toArray()))),
             selectedDistricts: @js(array_values(array_map('strval', (array)old('districts', [])))),
             districtCityMap: @js(\App\Models\District::pluck('city_id', 'id')->toArray()),
@@ -49,7 +53,19 @@
                 };
             },
             addSubService() {
-                if(!this.newSubService.name_ar || !this.newSubService.name_en) return;
+                this.errors.name_ar = '';
+                this.errors.name_en = '';
+                
+                let hasError = false;
+                if(!this.newSubService.name_ar) {
+                    this.errors.name_ar = '{{ __("Please enter the sub-service name in Arabic") }}';
+                    hasError = true;
+                }
+                if(!this.newSubService.name_en) {
+                    this.errors.name_en = '{{ __("Please enter the sub-service name in English") }}';
+                    hasError = true;
+                }
+                if(hasError) return;
                 
                 if (this.editingIndex !== null) {
                     const sub = this.subServices[this.editingIndex];
@@ -78,6 +94,7 @@
                 
                 // Reset form
                 this.newSubService = { name_ar: '', name_en: '', price: '', description_ar: '', description_en: '', image: null, preview: null };
+                this.errors = { name_ar: '', name_en: '' };
                 this.$refs.subImageInput.value = '';
             },
             removeSubService(index) {
@@ -85,6 +102,7 @@
                 if (this.editingIndex === index) {
                     this.editingIndex = null;
                     this.newSubService = { name_ar: '', name_en: '', price: '', description_ar: '', description_en: '', image: null, preview: null };
+                    this.errors = { name_ar: '', name_en: '' };
                     this.$refs.subImageInput.value = '';
                 }
             },
@@ -240,11 +258,13 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div class="space-y-4">
                             <label class="block text-sm font-black text-[#1A1A31] dark:text-slate-300">{{ __('Service Name (Arabic)') }}</label>
-                            <input type="text" x-model="newSubService.name_ar" placeholder="{{ __('Enter service name: e.g. plumbing') }}" class="w-full px-6 py-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-sm font-bold text-[#1A1A31] dark:text-white focus:ring-4 focus:ring-[#1A1A31]/5 transition-all outline-none">
+                            <input type="text" x-model="newSubService.name_ar" @input="errors.name_ar = ''" placeholder="{{ __('Enter service name: e.g. plumbing') }}" class="w-full px-6 py-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-sm font-bold text-[#1A1A31] dark:text-white focus:ring-4 focus:ring-[#1A1A31]/5 transition-all outline-none">
+                            <p x-show="errors.name_ar" x-text="errors.name_ar" class="text-xs text-red-500 font-bold mt-1"></p>
                         </div>
                         <div class="space-y-4">
                             <label class="block text-sm font-black text-[#1A1A31] dark:text-slate-300 text-left">{{ __('Service Name (English)') }}</label>
-                            <input type="text" x-model="newSubService.name_en" placeholder="{{ __('Enter service name: e.g. plumbing') }}" class="w-full px-6 py-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-sm font-bold text-[#1A1A31] dark:text-white focus:ring-4 focus:ring-[#1A1A31]/5 transition-all outline-none text-left">
+                            <input type="text" x-model="newSubService.name_en" @input="errors.name_en = ''" placeholder="{{ __('Enter service name: e.g. plumbing') }}" class="w-full px-6 py-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-sm font-bold text-[#1A1A31] dark:text-white focus:ring-4 focus:ring-[#1A1A31]/5 transition-all outline-none text-left">
+                            <p x-show="errors.name_en" x-text="errors.name_en" class="text-xs text-red-500 font-bold mt-1 text-left"></p>
                         </div>
                     </div>
 
@@ -265,9 +285,10 @@
 
                     <div class="flex justify-center gap-4">
                         <button type="button" @click="addSubService()" class="px-8 py-4 bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] rounded-2xl font-black text-sm hover:scale-[1.02] transition-all shadow-lg">
-                            <span x-text="editingIndex !== null ? '{{ __('Update Sub-service') }}' : '{{ __('Add Sub-service') }}'"></span>
+                            <span x-show="editingIndex !== null">{{ __('Update Sub-service') }}</span>
+                            <span x-show="editingIndex === null">{{ __('Add Sub-service') }}</span>
                         </button>
-                        <button type="button" x-show="editingIndex !== null" @click="editingIndex = null; newSubService = { name_ar: '', name_en: '', price: '', description_ar: '', description_en: '', image: null, preview: null }; $refs.subImageInput.value = '';" class="px-8 py-4 bg-gray-200 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-2xl font-black text-sm hover:scale-[1.02] transition-all">
+                        <button type="button" @click="editingIndex = null; newSubService = { name_ar: '', name_en: '', price: '', description_ar: '', description_en: '', image: null, preview: null }; errors = { name_ar: '', name_en: '' }; $refs.subImageInput.value = '';" class="px-8 py-4 bg-gray-200 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-2xl font-black text-sm hover:scale-[1.02] transition-all">
                             {{ __('Cancel') }}
                         </button>
                     </div>

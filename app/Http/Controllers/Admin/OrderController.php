@@ -653,7 +653,10 @@ class OrderController extends Controller
                 $q->where('status', 'active');
             })
             ->when($cityId, function($q) use ($cityId) {
-                return $q->where('city_id', $cityId);
+                return $q->where(function($query) use ($cityId) {
+                    $query->where('city_id', $cityId)
+                          ->orWhereNull('city_id');
+                });
             })
             ->whereHas('services', function($q) use ($order, $categoryId) {
                 $q->where('services.id', $order->service_id)

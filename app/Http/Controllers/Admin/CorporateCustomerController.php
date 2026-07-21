@@ -41,7 +41,11 @@ class CorporateCustomerController extends Controller
         if ($request->has('status') && $request->status) {
             $status = $request->status;
             $query->whereHas('user', function ($q) use ($status) {
-                $q->where('status', $status);
+                if ($status === 'inactive') {
+                    $q->whereIn('status', ['inactive', 'blocked']);
+                } else {
+                    $q->where('status', $status);
+                }
             });
         }
 
@@ -518,25 +522,70 @@ class CorporateCustomerController extends Controller
     {
         $item = CorporateCustomer::where('user_id', $id)->orWhere('id', $id)->firstOrFail();
         
-        $filePath = public_path($item->commercial_record_file);
+        $file = $item->commercial_record_file;
+        if (!$file) {
+            abort(404, __('Commercial record file not found.'));
+        }
+
+        $fileName = basename($file);
         
-        if (!$item->commercial_record_file || !file_exists($filePath)) {
-            $pathsToTry = [
-                public_path('uploads/corporate/cr/' . basename($item->commercial_record_file)),
-                public_path('uploads/commercial_records/' . basename($item->commercial_record_file)),
-                public_path(basename($item->commercial_record_file)),
-            ];
+        $pathsToTry = [
+            // Standard public path checks
+            public_path($file),
+            base_path('public/' . $file),
+            base_path('../public_html/' . $file),
+            base_path('../' . $file),
             
-            foreach ($pathsToTry as $path) {
-                if (file_exists($path)) {
-                    $filePath = $path;
-                    break;
-                }
+            // Storage checks
+            storage_path('app/public/' . $file),
+            storage_path('app/' . $file),
+            base_path('storage/app/public/' . $file),
+            base_path('storage/app/' . $file),
+            public_path('storage/' . $file),
+            
+            // Subfolder custom upload checks
+            public_path('uploads/corporate/cr/' . $fileName),
+            public_path('uploads/commercial_records/' . $fileName),
+            public_path($fileName),
+            base_path('public/uploads/corporate/cr/' . $fileName),
+            base_path('../public_html/uploads/corporate/cr/' . $fileName),
+        ];
+
+        $filePath = null;
+        foreach ($pathsToTry as $path) {
+            if (file_exists($path) && !is_dir($path)) {
+                $filePath = $path;
+                break;
             }
         }
         
-        if (!file_exists($filePath)) {
-            abort(404, __('Commercial record file not found.'));
+        if (!$filePath) {
+            $debugInfo = [
+                'Database Value' => $file,
+                'Public Path' => public_path(),
+                'Base Path' => base_path(),
+                'Paths Searched' => []
+            ];
+            foreach ($pathsToTry as $path) {
+                $debugInfo['Paths Searched'][] = [
+                    'path' => $path,
+                    'exists' => file_exists($path) ? 'Yes' : 'No',
+                    'is_dir' => is_dir($path) ? 'Yes' : 'No'
+                ];
+            }
+            
+            $html = "<html><head><title>Debug CR File</title></head><body style='font-family: Arial; padding: 20px; direction: rtl; text-align: right;'>";
+            $html .= "<h2 style='color: red;'>الملف غير موجود في السيرفر (File Not Found)</h2>";
+            $html .= "<p>قيمة الحقل في قاعدة البيانات: <strong>" . htmlspecialchars($debugInfo['Database Value']) . "</strong></p>";
+            $html .= "<p>مسار public_path: <code>" . htmlspecialchars($debugInfo['Public Path']) . "</code></p>";
+            $html .= "<p>مسار base_path: <code>" . htmlspecialchars($debugInfo['Base Path']) . "</code></p>";
+            $html .= "<h3>المسارات التي تم البحث فيها:</h3><ul>";
+            foreach ($debugInfo['Paths Searched'] as $search) {
+                $statusColor = $search['exists'] === 'Yes' ? 'green' : 'red';
+                $html .= "<li style='margin-bottom: 8px;'><code>" . htmlspecialchars($search['path']) . "</code> - موجود: <strong style='color: {$statusColor};'>" . $search['exists'] . "</strong> (مجلد: " . $search['is_dir'] . ")</li>";
+            }
+            $html .= "</ul></body></html>";
+            return response($html, 404);
         }
         
         return response()->file($filePath);

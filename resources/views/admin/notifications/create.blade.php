@@ -95,15 +95,27 @@
                 </div>
 
                 <!-- Status -->
-                <div class="pt-4">
-                    <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2 mb-4">{{ __('Status') }}</label>
-                    <select name="status" required 
-                            class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none border-r-[16px] border-r-transparent">
-                        <option value="">{{ __('Select Status') }}</option>
-                        @foreach(['sent', 'scheduled', 'unsent'] as $s)
-                            <option value="{{ $s }}" {{ old('status') == $s ? 'selected' : '' }}>{{ __($s) }}</option>
-                        @endforeach
-                    </select>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">{{ __('Status') }}</label>
+                        <select name="status" required x-model="status"
+                                class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none border-r-[16px] border-r-transparent">
+                            <option value="">{{ __('Select Status') }}</option>
+                            @foreach(['sent', 'scheduled', 'unsent'] as $s)
+                                <option value="{{ $s }}" {{ old('status') == $s ? 'selected' : '' }}>{{ __($s) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Scheduled Date & Time -->
+                    <div x-show="status === 'scheduled'" class="space-y-4" x-transition>
+                        <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">{{ __('Scheduled Date & Time') }}</label>
+                        <input type="datetime-local" name="scheduled_at" value="{{ old('scheduled_at') }}" :required="status === 'scheduled'"
+                               class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl text-sm font-bold transition-all outline-none text-right">
+                        @error('scheduled_at')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
             </div>
 

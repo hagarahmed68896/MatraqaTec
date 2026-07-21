@@ -1934,10 +1934,16 @@ class OrderController extends Controller
 
     private function notifyNewOrder($order)
     {
+        $categoryId = $order->service?->parent_id ?? $order->service_id;
+
         // For companies that might provide this service
-        $companies = \App\Models\MaintenanceCompany::whereHas('services', function($q) use ($order) {
-            $q->where('services.id', $order->service_id);
-        })->where('city_id', $order->city_id)->distinct()->get();
+        $companies = \App\Models\MaintenanceCompany::whereHas('services', function($q) use ($order, $categoryId) {
+            $q->where('services.id', $order->service_id)
+              ->orWhere('services.id', $categoryId);
+        })->where(function($query) use ($order) {
+            $query->where('city_id', $order->city_id)
+                  ->orWhereNull('city_id');
+        })->distinct()->get();
 
         // Extra layer of protection in case of duplicate user_ids
         $companies = $companies->unique('user_id');

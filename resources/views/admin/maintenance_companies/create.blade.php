@@ -63,6 +63,20 @@
                            class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none @error('password') border-red-500 @enderror">
                     @error('password') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
+
+                <!-- City -->
+                <div class="space-y-3">
+                    <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">{{ __('City') }}</label>
+                    <select name="city_id" class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none @error('city_id') border-red-500 @enderror">
+                        <option value="">{{ __('Select City') }}</option>
+                        @foreach($cities as $city)
+                            <option value="{{ $city->id }}" {{ old('city_id') == $city->id ? 'selected' : '' }}>
+                                {{ app()->getLocale() == 'ar' ? $city->name_ar : $city->name_en }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('city_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
             </div>
         </div>
 

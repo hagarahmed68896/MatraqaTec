@@ -230,4 +230,48 @@ class NotificationController extends Controller
 
         return redirect()->route('admin.broadcast-notifications.index')->with('success', __('Notifications deleted successfully.'));
     }
+
+    public function send($id)
+    {
+        $notification = Notification::findOrFail($id);
+
+        $fcmService = app(\App\Services\FcmService::class);
+        $details = [
+            'type' => $notification->type,
+            'title_ar' => $notification->title_ar,
+            'title_en' => $notification->title_en,
+            'body_ar' => $notification->body_ar,
+            'body_en' => $notification->body_en,
+            'data' => $notification->data ?? [],
+        ];
+
+        if ($notification->target_audience === 'individual_user' && $notification->user_id) {
+            $fcmService->sendToUser($notification->user, $details, false);
+        } else {
+            $query = \App\Models\User::whereNotNull('fcm_token');
+            
+            switch ($notification->target_audience) {
+                case 'clients':
+                    $query->whereIn('type', ['individual', 'corporate_customer']);
+                    break;
+                case 'technicians':
+                    $query->where('type', 'technician');
+                    break;
+                case 'companies':
+                    $query->where('type', 'maintenance_company');
+                    break;
+            }
+            
+            $query->chunk(100, function ($users) use ($fcmService, $details) {
+                foreach ($users as $user) {
+                    $fcmService->sendToUser($user, $details, false);
+                }
+            });
+        }
+
+        $notification->status = 'sent';
+        $notification->save();
+
+        return redirect()->route('admin.broadcast-notifications.index')->with('success', __('Notification sent successfully.'));
+    }
 }
