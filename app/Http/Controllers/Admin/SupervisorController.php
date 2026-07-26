@@ -167,6 +167,18 @@ class SupervisorController extends Controller
         return back()->with('success', __('Supervisor deleted successfully.'));
     }
 
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->input('ids');
+        if (empty($ids)) {
+            return back()->with('error', __('No supervisors selected.'));
+        }
+
+        User::where('type', 'supervisor')->whereIn('id', $ids)->delete();
+
+        return back()->with('success', __('Selected supervisors deleted successfully.'));
+    }
+
     public function bulkBlock(Request $request)
     {
         $ids = $request->input('ids');

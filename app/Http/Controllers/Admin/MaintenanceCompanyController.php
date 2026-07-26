@@ -44,6 +44,10 @@ class MaintenanceCompanyController extends Controller
                     $q->where('status', $status);
                 }
             });
+        } else {
+            $query->whereHas('user', function ($q) {
+                $q->where('status', 'active');
+            });
         }
 
         // 3. Sorting Logic
@@ -242,12 +246,14 @@ class MaintenanceCompanyController extends Controller
 
     public function show(Request $request, $id)
     {
-        $company = MaintenanceCompany::with(['user', 'technicians.service', 'orders.service', 'financialSettlements', 'user.city', 'schedules'])
+        $company = MaintenanceCompany::with(['user', 'orders.service', 'financialSettlements', 'user.city', 'schedules'])
             ->where('user_id', $id)
             ->orWhere('id', $id)
             ->firstOrFail();
         
-        $technicians = $company->technicians;
+        $technicians = $company->technicians()->whereHas('user', function($q) {
+            $q->where('status', 'active');
+        })->with(['user', 'service', 'category'])->get();
         $orders = Order::where('maintenance_company_id', $company->id)->with(['service', 'user', 'technician.user'])->latest()->get();
         $settlements = $company->financialSettlements()->latest()->get();
         
@@ -446,14 +452,33 @@ class MaintenanceCompanyController extends Controller
         $company = MaintenanceCompany::find($id);
         if ($company && $company->user) {
             $company->user->update(['status' => 'inactive']);
-            $message = __('Company deactivated successfully.');
+            $message = __('Company deleted successfully.');
         } else {
             // Fallback: treat the id as a direct user id and deactivate the user
             $user = User::findOrFail($id);
             $user->update(['status' => 'inactive']);
-            $message = __('User deactivated successfully.');
+            $message = __('Company deleted successfully.');
         }
         return redirect()->route('admin.maintenance-companies.index')->with('success', $message);
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->input('ids');
+        if (empty($ids)) {
+            return back()->with('error', __('No companies selected.'));
+        }
+
+        $companies = MaintenanceCompany::whereIn('id', $ids)->get();
+        foreach ($companies as $company) {
+            if ($company->user) {
+                $company->user->update(['status' => 'inactive']);
+            } else {
+                $company->delete();
+            }
+        }
+
+        return back()->with('success', __('Selected companies deleted successfully.'));
     }
 
     public function toggleBlock($id)

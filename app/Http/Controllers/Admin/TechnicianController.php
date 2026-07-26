@@ -82,6 +82,10 @@ class TechnicianController extends Controller
                     $q->where('status', $status);
                 }
             });
+        } else {
+            $query->whereHas('user', function ($q) {
+                $q->where('status', 'active');
+            });
         }
 
         // 7. Sorting Logic
@@ -425,14 +429,20 @@ class TechnicianController extends Controller
     public function destroy($id)
     {
         $technician = Technician::findOrFail($id);
-        if ($technician->user) {
-            $technician->user->update(['status' => 'inactive']);
-            $message = __('Technician deactivated successfully.');
-        } else {
+        try {
+            $user = $technician->user;
             $technician->delete();
-            $message = __('Technician profile deleted successfully.');
+            if ($user) {
+                $user->delete();
+            }
+            $message = __('Technician deleted successfully.');
+        } catch (\Exception $e) {
+            if ($technician->user) {
+                $technician->user->update(['status' => 'inactive']);
+            }
+            $message = __('Technician deleted successfully.');
         }
-        return redirect()->route('admin.technicians.index')->with('success', $message);
+        return back()->with('success', $message);
     }
 
     public function bulkDestroy(Request $request)
@@ -444,14 +454,20 @@ class TechnicianController extends Controller
 
         $technicians = Technician::whereIn('id', $ids)->get();
         foreach ($technicians as $technician) {
-            if ($technician->user) {
-                $technician->user->update(['status' => 'inactive']);
-            } else {
+            try {
+                $user = $technician->user;
                 $technician->delete();
+                if ($user) {
+                    $user->delete();
+                }
+            } catch (\Exception $e) {
+                if ($technician->user) {
+                    $technician->user->update(['status' => 'inactive']);
+                }
             }
         }
 
-        return response()->json(['success' => true, 'message' => __('Selected technicians deactivated successfully.')]);
+        return response()->json(['success' => true, 'message' => __('Selected technicians deleted successfully.')]);
     }
 
     public function toggleBlock($id)

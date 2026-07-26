@@ -8,7 +8,22 @@
     showFilters: false,
     selectedSort: '{{ request('sort_by', 'newest') }}',
     selectedStatus: '{{ request('status', '') }}',
-    search: '{{ request('search') }}'
+    search: '{{ request('search') }}',
+    showDeleteModal: false,
+    deleteTargetId: null,
+    isBulkDelete: false,
+    confirmDelete(id = null) {
+        this.deleteTargetId = id;
+        this.isBulkDelete = id === null;
+        this.showDeleteModal = true;
+    },
+    executeDelete() {
+        if (this.isBulkDelete) {
+            document.getElementById('bulk-delete-form').submit();
+        } else {
+            document.getElementById('delete-form-' + this.deleteTargetId).submit();
+        }
+    }
 }">
     <!-- Stats Cards
       (Redesigned with Sparklines) -->
@@ -108,6 +123,18 @@
                     <span x-text="selectedIds.length"></span> {{ __('Selected') }}
                 </span>
                 
+                <form id="bulk-delete-form" :action="'{{ url('admin') }}/' + '{{ $type == 'individual' ? 'individual-customers' : 'corporate-customers' }}/bulk-destroy'" method="POST" class="hidden">
+                    @csrf
+                    @method('DELETE')
+                    <template x-for="id in selectedIds" :key="id">
+                        <input type="hidden" name="ids[]" :value="id">
+                    </template>
+                </form>
+                <button type="button" @click="confirmDelete()" class="px-6 py-3 bg-rose-500 text-white rounded-2xl font-black text-xs hover:bg-rose-600 transition-all flex items-center gap-2 uppercase tracking-widest">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    {{ __('Delete Selected') }}
+                </button>
+
                 <form :action="'{{ url('admin') }}/' + '{{ $type == 'individual' ? 'individual-customers' : 'corporate-customers' }}/bulk-block'" method="POST" class="inline">
                     @csrf
                     <template x-for="id in selectedIds" :key="id">
@@ -371,11 +398,24 @@ class="absolute {{ app()->getLocale() == 'ar' ? 'right-4' : 'left-4' }} top-1/2 
         </form>
 
         <a href="{{ $type == 'individual' ? route('admin.individual-customers.edit', $item->id) : route('admin.corporate-customers.edit', $item->id) }}" 
-           class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-all">
+           class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 transition-all"
+           title="{{ __('Edit') }}">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
             </svg>
         </a>
+
+        <form id="delete-form-{{ $item->id }}" method="POST" action="{{ $type == 'individual' ? route('admin.individual-customers.destroy', $item->id) : route('admin.corporate-customers.destroy', $item->id) }}" class="hidden">
+            @csrf
+            @method('DELETE')
+        </form>
+        <button type="button" @click="confirmDelete({{ $item->id }})" 
+                class="w-10 h-10 rounded-xl flex items-center justify-center text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
+                title="{{ __('Delete') }}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+        </button>
     </div>
 </td>
                     </tr>
@@ -423,6 +463,67 @@ class="absolute {{ app()->getLocale() == 'ar' ? 'right-4' : 'left-4' }} top-1/2 
             </div>
         </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <template x-teleport="body">
+        <div x-show="showDeleteModal" 
+             class="fixed inset-0 z-[1000] flex items-center justify-center p-4 overflow-x-hidden overflow-y-auto"
+             x-cloak>
+            
+            <!-- Backdrop -->
+            <div x-show="showDeleteModal" 
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 @click="showDeleteModal = false"
+                 class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+
+            <!-- Modal Content -->
+            <div x-show="showDeleteModal"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+                 class="relative bg-white dark:bg-[#1A1A31] w-full max-w-md rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-white/10 overflow-hidden transform transition-all">
+                
+                <div class="p-10 text-center text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
+                    <div class="mx-auto w-24 h-24 bg-rose-50 dark:bg-rose-500/10 rounded-full flex items-center justify-center mb-8 relative">
+                        <div class="absolute inset-0 rounded-full bg-rose-500/10 animate-ping"></div>
+                        <svg class="w-10 h-10 text-rose-500 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </div>
+                    
+                    <h3 class="text-2xl font-black text-slate-800 dark:text-white mb-4 text-center">{{ __('Confirm Deletion') }}</h3>
+                    <p class="text-slate-500 dark:text-slate-400 font-bold leading-relaxed mb-10 text-center">
+                        <template x-if="isBulkDelete">
+                            <span>{{ __('Are you sure you want to delete the selected customers?') }}</span>
+                        </template>
+                        <template x-if="!isBulkDelete">
+                            <span>{{ __('Are you sure you want to delete this customer?') }}</span>
+                        </template>
+                    </p>
+                    
+                    <div class="flex gap-4">
+                        <button type="button" @click="showDeleteModal = false" 
+                                class="flex-1 py-4 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-2xl font-black hover:bg-slate-200 dark:hover:bg-white/10 transition-all uppercase tracking-widest text-md">
+                            {{ __('Cancel') }}
+                        </button>
+                        <button type="button" @click="executeDelete()" 
+                                class="flex-1 py-4 bg-rose-500 text-white rounded-2xl font-black hover:bg-rose-600 transition-all shadow-lg shadow-rose-500/20 uppercase tracking-widest text-md">
+                            {{ __('Delete') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
 </div>
 @endsection
 @section('scripts')

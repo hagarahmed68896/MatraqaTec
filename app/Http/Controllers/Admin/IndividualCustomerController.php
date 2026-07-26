@@ -49,6 +49,10 @@ class IndividualCustomerController extends Controller
                     $q->where('status', $status);
                 }
             });
+        } else {
+            $query->whereHas('user', function ($q) {
+                $q->where('status', 'active');
+            });
         }
 
         // 3. Sorting Logic
@@ -387,14 +391,45 @@ class IndividualCustomerController extends Controller
     public function destroy($id)
     {
         $profile = IndividualCustomer::findOrFail($id);
-        if ($profile->user) {
-            $profile->user->update(['status' => 'inactive']);
-            $message = __('Customer deactivated successfully.');
-        } else {
+        try {
+            $user = $profile->user;
             $profile->delete();
-            $message = __('Customer profile deleted successfully.');
+            if ($user) {
+                $user->delete();
+            }
+            $message = __('Customer deleted successfully.');
+        } catch (\Exception $e) {
+            if ($profile->user) {
+                $profile->user->update(['status' => 'inactive']);
+            }
+            $message = __('Customer deleted successfully.');
         }
         return redirect()->route('admin.individual-customers.index')->with('success', $message);
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->input('ids');
+        if (empty($ids)) {
+            return back()->with('error', __('No customers selected.'));
+        }
+
+        $customers = IndividualCustomer::whereIn('id', $ids)->get();
+        foreach ($customers as $customer) {
+            try {
+                $user = $customer->user;
+                $customer->delete();
+                if ($user) {
+                    $user->delete();
+                }
+            } catch (\Exception $e) {
+                if ($customer->user) {
+                    $customer->user->update(['status' => 'inactive']);
+                }
+            }
+        }
+
+        return back()->with('success', __('Selected customers deleted successfully.'));
     }
 
     public function toggleBlock($id)

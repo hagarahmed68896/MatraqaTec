@@ -191,7 +191,7 @@ Route::prefix('admin')->group(function () {
                 if (method_exists($controller, 'refuse')) {
                     Route::post('/{id}/refuse', [$controller, 'refuse'])->name('refuse');
                 }
-                if ($prefix === 'technicians' || $prefix === 'terms' || $prefix === 'privacy-policies' || $prefix === 'faqs' || $prefix === 'complaints') {
+                if (in_array($prefix, ['technicians', 'terms', 'privacy-policies', 'faqs', 'complaints', 'supervisors', 'individual-customers', 'corporate-customers', 'maintenance-companies'])) {
                     Route::post('/bulk-destroy', [$controller, 'bulkDestroy'])->name('bulk-destroy');
                 }
                 

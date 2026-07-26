@@ -379,8 +379,19 @@
         </div>{{-- end overview --}}
 
 
-        <!-- Technicians Tab -->
-        <div x-show="activeTab === 'technicians'" x-transition class="space-y-6" x-data="{ techView: 'list', techSearch: '' }">
+        <div x-show="activeTab === 'technicians'" x-transition class="space-y-6" x-data="{ 
+            techView: 'list', 
+            techSearch: '',
+            showDeleteModal: false,
+            deleteTargetId: null,
+            confirmDelete(id) {
+                this.deleteTargetId = id;
+                this.showDeleteModal = true;
+            },
+            executeDelete() {
+                document.getElementById('delete-form-' + this.deleteTargetId).submit();
+            }
+        }">
 
             <!-- Header: title + view toggle + search -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -429,6 +440,7 @@
                                     <th class="pb-4 pt-6 px-5">{{ __('Availability') }}</th>
                                     <th class="pb-4 pt-6 px-5">{{ __('Account Status') }}</th>
                                     <th class="pb-4 pt-6 px-5">{{ __('Date') }}</th>
+                                    <th class="pb-4 pt-6 px-5 text-center">{{ __('Actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody class="text-xs font-bold divide-y divide-slate-50 dark:divide-white/5">
@@ -468,6 +480,21 @@
                                         </span>
                                     </td>
                                     <td class="py-4 px-5 text-slate-400">{{ $tech->created_at->format('Y/m/d') }}</td>
+                                    <td class="py-4 px-5 text-center" @click.stop>
+                                        <div class="flex items-center justify-center gap-1">
+                                            <form id="delete-form-{{ $tech->id }}" action="{{ route('admin.technicians.destroy', $tech->id) }}" method="POST" class="hidden">
+                                                @csrf
+                                                @method('DELETE')
+                                            </form>
+                                            <button type="button" @click="confirmDelete({{ $tech->id }})" 
+                                                    class="w-8 h-8 rounded-lg flex items-center justify-center text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
+                                                    title="{{ __('Delete') }}">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
                                 @empty
                                 <tr><td colspan="9" class="py-14 text-center text-slate-400">{{ __('No technicians found') }}</td></tr>
@@ -530,18 +557,82 @@
                             </div>
                         </div>
 
-                        {{-- View Details Button --}}
-                        @if(Route::has('admin.technicians.show'))
-                        <a href="{{ route('admin.technicians.show', $tech->id) }}"
-                           class="w-full py-3 flex items-center justify-center font-black text-xs rounded-2xl bg-[#1A1A31] dark:bg-white/10 text-white hover:bg-indigo-600 transition-all">
-                            {{ __('View Details') }}
-                        </a>
-                        @endif
+                        {{-- View Details & Delete Buttons --}}
+                        <div class="flex gap-2">
+                            @if(Route::has('admin.technicians.show'))
+                            <a href="{{ route('admin.technicians.show', $tech->id) }}"
+                               class="flex-1 py-3 flex items-center justify-center font-black text-xs rounded-2xl bg-[#1A1A31] dark:bg-white/10 text-white hover:bg-indigo-600 transition-all">
+                                {{ __('View Details') }}
+                            </a>
+                            @endif
+                            <button type="button" @click="confirmDelete({{ $tech->id }})" 
+                                    class="w-10 h-10 rounded-2xl flex items-center justify-center text-red-500 border border-slate-100 dark:border-white/10 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
+                                    title="{{ __('Delete') }}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                     @endforeach
                 </div>
                 @endif
             </div>
+
+    <!-- Delete Confirmation Modal -->
+    <template x-teleport="body">
+        <div x-show="showDeleteModal" 
+             class="fixed inset-0 z-[1000] flex items-center justify-center p-4 overflow-x-hidden overflow-y-auto"
+             x-cloak>
+            
+            <!-- Backdrop -->
+            <div x-show="showDeleteModal" 
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 @click="showDeleteModal = false"
+                 class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+
+            <!-- Modal Content -->
+            <div x-show="showDeleteModal"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+                 class="relative bg-white dark:bg-[#1A1A31] w-full max-w-md rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-white/10 overflow-hidden transform transition-all">
+                
+                <div class="p-10 text-center text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
+                    <div class="mx-auto w-24 h-24 bg-rose-50 dark:bg-rose-500/10 rounded-full flex items-center justify-center mb-8 relative">
+                        <div class="absolute inset-0 rounded-full bg-rose-500/10 animate-ping"></div>
+                        <svg class="w-10 h-10 text-rose-500 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </div>
+                    
+                    <h3 class="text-2xl font-black text-slate-800 dark:text-white mb-4 text-center">{{ __('Confirm Deletion') }}</h3>
+                    <p class="text-slate-500 dark:text-slate-400 font-bold leading-relaxed mb-10 text-center">
+                        {{ __('Are you sure you want to delete this technician?') }}
+                    </p>
+                    
+                    <div class="flex gap-4">
+                        <button type="button" @click="showDeleteModal = false" 
+                                class="flex-1 py-4 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-2xl font-black hover:bg-slate-200 dark:hover:bg-white/10 transition-all uppercase tracking-widest text-md">
+                            {{ __('Cancel') }}
+                        </button>
+                        <button type="button" @click="executeDelete()" 
+                                class="flex-1 py-4 bg-rose-500 text-white rounded-2xl font-black hover:bg-rose-600 transition-all shadow-lg shadow-rose-500/20 uppercase tracking-widest text-md">
+                            {{ __('Delete') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
 
         </div>
 
