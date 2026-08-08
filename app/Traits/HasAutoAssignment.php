@@ -108,8 +108,32 @@ trait HasAutoAssignment
             $query->where('users.city_id', $cityId)
                   ->select('technicians.*');
         }
+        $techs = $query->with('schedules')->get();
 
-        return $query->first();
+        $bookingDay = $time->format('l'); // 'Sunday', 'Monday', etc.
+        $bookingTimeStr = $time->format('H:i:s');
+
+        foreach ($techs as $tech) {
+            // Check if it's a platform technician (independent)
+            if (!$tech->maintenance_company_id) {
+                $schedules = $tech->schedules;
+                if ($schedules->isNotEmpty()) {
+                    // Check if they work on this day
+                    $daySchedule = $schedules->where('day', $bookingDay)->first();
+                    if (!$daySchedule) {
+                        continue; // Off day
+                    }
+                    // Check if within start_time and end_time
+                    if ($bookingTimeStr < $daySchedule->start_time || $bookingTimeStr > $daySchedule->end_time) {
+                        continue; // Outside working hours
+                    }
+                }
+            }
+
+            return $tech;
+        }
+
+        return null;
     }
 
     /**

@@ -93,6 +93,9 @@
         <button @click="activeTab = 'tasks'" :class="activeTab === 'tasks' ? 'bg-[#1A1A31] text-white shadow-lg dark:bg-white/10' : 'text-slate-500 dark:text-white hover:bg-slate-50 dark:hover:bg-white/10'" class="px-8 py-3 rounded-[1.5rem] text-sm font-black transition-all uppercase tracking-wider whitespace-nowrap">{{ __('Tasks') }}</button>
         <button @click="activeTab = 'settlements'" :class="activeTab === 'settlements' ? 'bg-[#1A1A31] text-white shadow-lg dark:bg-white/10' : 'text-slate-500 dark:text-white hover:bg-slate-50 dark:hover:bg-white/10'" class="px-8 py-3 rounded-[1.5rem] text-sm font-black transition-all uppercase tracking-wider whitespace-nowrap">{{ __('Financial Settlements') }}</button>
         <button @click="activeTab = 'reviews'" :class="activeTab === 'reviews' ? 'bg-[#1A1A31] text-white shadow-lg dark:bg-white/10' : 'text-slate-500 dark:text-white hover:bg-slate-50 dark:hover:bg-white/10'" class="px-8 py-3 rounded-[1.5rem] text-sm font-black transition-all uppercase tracking-wider whitespace-nowrap">{{ __('Reviews') }}</button>
+        @if(!$item->maintenance_company_id)
+        <button @click="activeTab = 'schedules'" :class="activeTab === 'schedules' ? 'bg-[#1A1A31] text-white shadow-lg dark:bg-white/10' : 'text-slate-500 dark:text-white hover:bg-slate-50 dark:hover:bg-white/10'" class="px-8 py-3 rounded-[1.5rem] text-sm font-black transition-all uppercase tracking-wider whitespace-nowrap">{{ __('Working Hours') }}</button>
+        @endif
     </div>
 
     <!-- Tab Content -->
@@ -333,6 +336,7 @@
                     </div>
                 </div>
             </div>
+        </div>
 
             <!-- Tasks Tab Content -->
             <div x-show="activeTab === 'tasks'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-100 transform translate-y-0" class="bg-white dark:bg-[#1A1A31] rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-sm overflow-hidden">
@@ -504,6 +508,87 @@
                     @endforelse
                 </div>
             </div>
+
+            <!-- Schedules Tab Content -->
+            @if(!$item->maintenance_company_id)
+            <div x-show="activeTab === 'schedules'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-100 transform translate-y-0" class="bg-white dark:bg-[#1A1A31] p-10 rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-sm overflow-hidden">
+                <div class="mb-10">
+                    <h3 class="text-xl font-black text-slate-800 dark:text-white">{{ __('Working Hours') }}</h3>
+                    <div class="h-1.5 w-12 bg-primary mt-2 rounded-full"></div>
+                </div>
+
+                @if($errors->any())
+                <div class="mb-6 p-4 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 text-xs font-bold space-y-1">
+                    @foreach($errors->all() as $error)
+                        <p>{{ $error }}</p>
+                    @endforeach
+                </div>
+                @endif
+
+                <form action="{{ route('admin.technicians.update-schedules', $item->id) }}" method="POST" class="space-y-6">
+                    @csrf
+                    
+                    @php
+                        $daysMapAr = [
+                            'Sunday' => 'الأحد',
+                            'Monday' => 'الإثنين',
+                            'Tuesday' => 'الثلاثاء',
+                            'Wednesday' => 'الأربعاء',
+                            'Thursday' => 'الخميس',
+                            'Friday' => 'الجمعة',
+                            'Saturday' => 'السبت',
+                        ];
+                    @endphp
+
+                    <div class="space-y-4">
+                        @foreach($days as $day)
+                            @php
+                                $schedule = $item->schedules->where('day', $day)->first();
+                                $isActive = !empty($schedule);
+                                $startTime = $isActive ? \Carbon\Carbon::parse($schedule->start_time)->format('H:i') : '08:00';
+                                $endTime = $isActive ? \Carbon\Carbon::parse($schedule->end_time)->format('H:i') : '17:00';
+                            @endphp
+                            
+                            <div x-data="{ active: {{ $isActive ? 'true' : 'false' }} }" class="flex flex-col md:flex-row md:items-center justify-between p-6 rounded-[1.5rem] bg-slate-50/70 dark:bg-white/5 border border-slate-100 dark:border-white/5 gap-4">
+                                <!-- Day Name & Active Switch -->
+                                <div class="flex items-center gap-4 min-w-[150px]">
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" name="schedules[{{ $day }}][active]" value="1" x-model="active" class="sr-only">
+                                        <div :class="active ? 'bg-[#1A1A31] dark:bg-white/20' : 'bg-slate-200 dark:bg-slate-700'" class="w-11 h-6 rounded-full transition-colors relative">
+                                            <div :style="active ? '{{ app()->getLocale() == 'ar' ? 'right: 22px' : 'left: 22px' }}' : '{{ app()->getLocale() == 'ar' ? 'right: 2px' : 'left: 2px' }}'" class="absolute top-0.5 bg-white rounded-full h-5 w-5 transition-all duration-200 shadow-sm"></div>
+                                        </div>
+                                    </label>
+                                    <span class="text-base font-black text-slate-800 dark:text-white">
+                                        {{ app()->getLocale() == 'ar' ? ($daysMapAr[$day] ?? __($day)) : __($day) }}
+                                    </span>
+                                </div>
+
+                                <!-- Time Pickers -->
+                                <div class="flex items-center gap-4 flex-1 max-w-md" x-show="active" x-transition>
+                                    <div class="flex items-center gap-2 flex-1">
+                                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ __('From') }}</span>
+                                        <input type="time" name="schedules[{{ $day }}][start_time]" value="{{ $startTime }}" class="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-white/10 dark:bg-[#1A1A31] text-sm font-bold text-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                    </div>
+                                    <div class="flex items-center gap-2 flex-1">
+                                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ __('To') }}</span>
+                                        <input type="time" name="schedules[{{ $day }}][end_time]" value="{{ $endTime }}" class="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-white/10 dark:bg-[#1A1A31] text-sm font-bold text-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                    </div>
+                                </div>
+                                <div class="flex-1 text-slate-400 text-sm font-bold" x-show="!active">
+                                    {{ __('Off/Closed') }}
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div class="flex justify-end pt-4">
+                        <button type="submit" class="px-8 py-4 bg-[#1A1A31] dark:bg-white dark:text-[#1A1A31] text-white rounded-2xl font-black text-sm shadow-lg hover:scale-[1.02] transition-all">
+                            {{ __('Save Changes') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+            @endif
 
     </div>
 </div>

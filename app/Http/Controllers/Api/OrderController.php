@@ -19,35 +19,7 @@ class OrderController extends Controller
         $user = $request->user();
         if (!$user) return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
 
-        // Auto-detach expired unaccepted orders for all technicians before retrieving the list
-        $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
-        
-        // 1. Company-assigned orders whose technician timed out: remove technician, keep 'scheduled' under company
-        \App\Models\Order::whereNotNull('technician_id')
-            ->whereNotNull('maintenance_company_id')
-            ->where('sub_status', 'pending_tech_acceptance')
-            ->where('assigned_at', '<', now()->subMinutes($duration))
-            ->update([
-                'technician_id' => null,
-                'assigned_at' => null,
-                'sub_status' => null,
-                // Keep status as 'scheduled' — company still owns it, just needs to re-assign
-            ]);
 
-        // 2. Independent (marketplace) orders whose technician timed out: reset fully to 'new'
-        \App\Models\Order::whereNotNull('technician_id')
-            ->whereNull('maintenance_company_id')
-            ->where(function($q) {
-                $q->where('status', 'scheduled')
-                  ->orWhere('status', 'new');
-            })
-            ->where('assigned_at', '<', now()->subMinutes($duration))
-            ->update([
-                'technician_id' => null,
-                'status' => 'new',
-                'assigned_at' => null,
-                'sub_status' => null,
-            ]);
 
         $query = Order::with(['user', 'technician' => function($q) {
             $q->withAvg('reviews', 'rating')->withCount('reviews');
@@ -326,6 +298,11 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
+        $isImmediate = $request->boolean('is_immediate');
+        if ($isImmediate) {
+            $request->merge(['scheduled_at' => now()->toDateTimeString()]);
+        }
+
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'service_id' => 'required|exists:services,id',
             'sub_service_id' => 'nullable|exists:services,id',
@@ -333,7 +310,7 @@ class OrderController extends Controller
             'city_id' => 'nullable|exists:cities,id',
             'address' => 'required|string',
             'payment_method' => 'nullable|string|in:cash,credit_card,apple_pay,wallet',
-            'scheduled_at' => 'required|date|after:now',
+            'scheduled_at' => $isImmediate ? 'nullable|date' : 'required|date|after:now',
             'attachments' => 'nullable',
             'attachments.*' => 'file|mimes:jpg,jpeg,png,mp4,mov|max:10240',
             'latitude' => 'nullable|numeric',
@@ -351,11 +328,13 @@ class OrderController extends Controller
         }
 
         $scheduledAt = \Carbon\Carbon::parse($request->scheduled_at);
-        if ($scheduledAt->isToday() && $scheduledAt->lt(now()->addHour())) {
-            return response()->json([
-                'status' => false,
-                'message' => __('Appointments must start from the first hour after the current time (at least 1 hour from now).')
-            ], 422);
+        if (!$isImmediate) {
+            if ($scheduledAt->isToday() && $scheduledAt->lt(now()->addHour())) {
+                return response()->json([
+                    'status' => false,
+                    'message' => __('Appointments must start from the first hour after the current time (at least 1 hour from now).')
+                ], 422);
+            }
         }
 
         // Detect City from Logic if not provided
@@ -400,7 +379,8 @@ class OrderController extends Controller
 
         // 2. Create Order
         $data = $request->except(['attachments', 'force', 'description', 'sub_service_id']);
-        $data['city_id'] = $cityId;
+        $data['service_id'] = $request->sub_service_id ?? $request->service_id;
+        $data['is_immediate'] = $request->boolean('is_immediate');
         $data['city_id'] = $cityId;
         // Generate Sequential Order Number (using ID + 1 or a timestamp based logic for simplicity)
         // Since we can't know the exact ID before insertion without locking, we can use a timestamp 
@@ -471,12 +451,17 @@ class OrderController extends Controller
                 }
             }
 
+            $isImmediate = $request->boolean('is_immediate');
             $this->sendNotification($notificationTargetId, [
                 'type' => \App\Models\Notification::TYPE_NEW_ORDER ?? 'new_order',
-                'title_ar' => 'مهمة جديدة',
-                'title_en' => 'New Task',
-                'body_ar' => 'تم استلام طلب جديد، يرجى مراجعته وقبوله',
-                'body_en' => 'A new task has been received. Please review and accept it.',
+                'title_ar' => $isImmediate ? 'طلب فوري جديد!' : 'مهمة جديدة',
+                'title_en' => $isImmediate ? 'New Immediate Order!' : 'New Task',
+                'body_ar' => $isImmediate 
+                    ? "لديك طلب فوري جديد رقم #{$order->order_number}. يرجى الاستجابة والوصول خلال 60 دقيقة." 
+                    : 'تم استلام طلب جديد، يرجى مراجعته وقبوله',
+                'body_en' => $isImmediate 
+                    ? "You have a new immediate order #{$order->order_number}. Please respond and arrive within 60 minutes." 
+                    : 'A new task has been received. Please review and accept it.',
                 'data' => ['order_id' => $order->id]
             ]);
         } else {
@@ -512,7 +497,9 @@ class OrderController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => __('Order created successfully and scheduled.'),
+            'message' => $isImmediate 
+                ? __('Order created successfully. The work will start within 60 minutes.') 
+                : __('Order created successfully and scheduled.'),
             'data' => [
                 'order' => $order,
                 'invoice' => [
@@ -1673,7 +1660,9 @@ class OrderController extends Controller
             $order->assigned_at = now();
         }
 
-            $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
+            $durationKey = $order->is_immediate ? 'immediate_order_acceptance_duration' : 'order_acceptance_duration';
+            $defaultDuration = $order->is_immediate ? 5 : 15;
+            $duration = (int) \App\Models\Setting::getByKey($durationKey, $defaultDuration);
         
             // Notify Technician
             $tech = \App\Models\Technician::find($order->technician_id);
@@ -1739,11 +1728,20 @@ class OrderController extends Controller
         }
 
         if ($order->technician_id !== $technician->id) {
-            return response()->json(['status' => false, 'message' => 'Order is not assigned to you'], 403);
+            $durationKey = $order->is_immediate ? 'immediate_order_acceptance_duration' : 'order_acceptance_duration';
+            $defaultDuration = $order->is_immediate ? 5 : 15;
+            $duration = (int) \App\Models\Setting::getByKey($durationKey, $defaultDuration);
+            return response()->json([
+                'status' => false,
+                'message' => __('This order is no longer assigned to you or the acceptance time limit of :minutes minutes has expired.', ['minutes' => $duration])
+            ], 403);
         }
 
         // Expiration check using dynamic duration
-        $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
+        $durationKey = $order->is_immediate ? 'immediate_order_acceptance_duration' : 'order_acceptance_duration';
+        $defaultDuration = $order->is_immediate ? 5 : 15;
+        $duration = (int) \App\Models\Setting::getByKey($durationKey, $defaultDuration);
+        
         if ($order->assigned_at && $order->assigned_at->diffInMinutes(now()) > $duration) {
             return response()->json(['status' => false, 'message' => "Order request expired ($duration minutes limit)"], 422);
         }
@@ -1755,7 +1753,7 @@ class OrderController extends Controller
         }
 
         // Only orders waiting for tech acceptance can be accepted here
-        if ($order->sub_status !== 'pending_tech_acceptance') {
+        if ($order->sub_status !== 'pending_tech_acceptance' && $order->status !== 'scheduled') {
             return response()->json(['status' => false, 'message' => 'This order is not pending your acceptance'], 422);
         }
 
@@ -1806,10 +1804,20 @@ class OrderController extends Controller
         $technician = \App\Models\Technician::where('user_id', $user->id)->first();
         if (!$technician) return response()->json(['status' => false, 'message' => 'Technician profile not found'], 404);
 
-        $order = Order::where('id', $id)->where('technician_id', $technician->id)->first();
+        $order = Order::find($id);
 
         if (!$order) {
-            return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+            return response()->json(['status' => false, 'message' => __('Order not found')], 404);
+        }
+
+        if ($order->technician_id !== $technician->id) {
+            $durationKey = $order->is_immediate ? 'immediate_order_acceptance_duration' : 'order_acceptance_duration';
+            $defaultDuration = $order->is_immediate ? 5 : 15;
+            $duration = (int) \App\Models\Setting::getByKey($durationKey, $defaultDuration);
+            return response()->json([
+                'status' => false,
+                'message' => __('This order is no longer assigned to you or the acceptance time limit of :minutes minutes has expired.', ['minutes' => $duration])
+            ], 403);
         }
 
         if (!$this->checkRejectionLimit($user)) {
@@ -1901,9 +1909,65 @@ class OrderController extends Controller
             'rejection_reason' => 'nullable|string|max:500',
         ]);
 
-        $order->status = 'rejected';
-        $order->rejection_reason = $request->rejection_reason;
-        $order->save();
+        $isImmediate = $order->is_immediate;
+
+        if ($isImmediate) {
+            $order->status = 'new';
+            $order->technician_id = null;
+            $order->maintenance_company_id = null;
+            $order->rejection_reason = null;
+            $order->assigned_at = null;
+            $order->save();
+
+            // Broadcast to other available providers in the city
+            $this->notifyNewOrder($order);
+        } else {
+            // For scheduled/regular orders:
+            if ($user->type === 'maintenance_company') {
+                // The company manager is refusing the order completely for their company
+                // Release from the company, return to platform pool as 'new'
+                $order->technician_id = null;
+                $order->maintenance_company_id = null;
+                $order->status = 'new';
+                $order->rejection_reason = $request->rejection_reason;
+                $order->save();
+
+                // Notify Admins & broadcast to others
+                $this->notifyNewOrder($order);
+            } else {
+                // The technician is refusing the order
+                if ($order->maintenance_company_id) {
+                    // If it belongs to a company, unassign the technician, but keep it with the company.
+                    // Status goes back to 'new' (pending assignment inside the company) so manager can reassign
+                    $order->technician_id = null;
+                    $order->status = 'new';
+                    $order->rejection_reason = $request->rejection_reason;
+                    $order->save();
+
+                    // Notify Company Manager
+                    $company = \App\Models\MaintenanceCompany::find($order->maintenance_company_id);
+                    if ($company && $company->user_id) {
+                        $this->sendNotification($company->user_id, [
+                            'type' => \App\Models\Notification::TYPE_NEW_ORDER,
+                            'title_ar' => 'اعتذار فني وإعادة تعيين',
+                            'title_en' => 'Technician Declined Task',
+                            'body_ar' => "قام الفني بالاعتذار عن الطلب رقم #{$order->order_number}. يرجى إعادة تعيين فني آخر من طرفكم.",
+                            'body_en' => "Technician declined order #{$order->order_number}. Please assign another technician.",
+                            'data' => ['order_id' => $order->id]
+                        ]);
+                    }
+                } else {
+                    // If it's an independent platform technician, return it to the platform pool
+                    $order->technician_id = null;
+                    $order->status = 'new';
+                    $order->rejection_reason = $request->rejection_reason;
+                    $order->save();
+
+                    // Notify Admins & broadcast to other platform techs
+                    $this->notifyNewOrder($order);
+                }
+            }
+        }
 
         // Check for penalties (Company)
         $this->handleRejectionPenalty($order, $user);
@@ -1912,31 +1976,22 @@ class OrderController extends Controller
         $this->updateNotificationType($user->id, $order->id, \App\Models\Notification::TYPE_ORDER_REJECTED);
 
         // Reset technician status
-        if ($order->technician) {
-            $order->technician->update(['availability_status' => 'available']);
+        if ($user->type === 'technician') {
+            $technician = \App\Models\Technician::where('user_id', $user->id)->first();
+            if ($technician) {
+                $technician->update(['availability_status' => 'available']);
+            }
         }
 
-        // Notify client
-        $reasonAr = $order->rejection_reason ? (' للسبب التالي: ' . $order->rejection_reason) : '';
-        $reasonEn = $order->rejection_reason ? (' for: ' . $order->rejection_reason) : '';
-
-        $this->sendNotification($order->user_id, [
-            'type' => \App\Models\Notification::TYPE_ORDER_REJECTED,
-            'title_ar' => 'تم رفض طلبك',
-            'title_en' => 'Your order was rejected',
-            'body_ar' => 'نعتذر، تم رفض طلبك' . $reasonAr,
-            'body_en' => 'Sorry, your order was rejected' . $reasonEn,
-            'data' => ['order_id' => $order->id]
-        ]);
-
-        return response()->json(['status' => true, 'message' => 'Order refused', 'data' => $order]);
+        return response()->json(['status' => true, 'message' => 'Order status reset successfully', 'data' => $order]);
     }
 
     private function notifyNewOrder($order)
     {
         $categoryId = $order->service?->parent_id ?? $order->service_id;
+        $isImmediate = $order->is_immediate;
 
-        // For companies that might provide this service
+        // 1. Broadcast to Maintenance Companies that might provide this service
         $companies = \App\Models\MaintenanceCompany::whereHas('services', function($q) use ($order, $categoryId) {
             $q->where('services.id', $order->service_id)
               ->orWhere('services.id', $categoryId);
@@ -1951,10 +2006,59 @@ class OrderController extends Controller
         foreach ($companies as $company) {
             $this->sendNotification($company->user_id, [
                 'type' => \App\Models\Notification::TYPE_NEW_ORDER,
-                'title_ar' => 'طلب صيانة جديد',
-                'title_en' => 'New Maintenance Request',
-                'body_ar' => 'يوجد طلب جديد لخدمة ' . ($order->service->name_ar ?? ''),
-                'body_en' => 'New request for ' . ($order->service->name_en ?? '') . ' service',
+                'title_ar' => $isImmediate ? 'طلب فوري جديد!' : 'طلب صيانة جديد',
+                'title_en' => $isImmediate ? 'New Immediate Order!' : 'New Maintenance Request',
+                'body_ar' => $isImmediate 
+                    ? 'يوجد طلب فوري جديد لخدمة ' . ($order->service->name_ar ?? '') . ' يرجى الاستجابة والوصول خلال 60 دقيقة.'
+                    : 'يوجد طلب جديد لخدمة ' . ($order->service->name_ar ?? ''),
+                'body_en' => $isImmediate 
+                    ? 'New immediate request for ' . ($order->service->name_en ?? '') . ' service. Must arrive within 60 minutes.'
+                    : 'New request for ' . ($order->service->name_en ?? '') . ' service',
+                'data' => ['order_id' => $order->id]
+            ]);
+        }
+
+        // 2. Broadcast to Independent Platform Technicians (Available & Online only)
+        $capacity = (int) \App\Models\Setting::getByKey('hourly_booking_capacity', 5);
+        $time = $order->scheduled_at ?? now();
+        $start = (clone $time)->subHours(1)->addMinute();
+        $end = (clone $time)->addHours(1)->subMinute();
+
+        $techs = \App\Models\Technician::whereNull('maintenance_company_id')
+            ->where('technicians.availability_status', 'available')
+            ->where(function($q) use ($order, $categoryId) {
+                $q->where('technicians.service_id', $order->service_id)
+                  ->orWhere('technicians.category_id', $categoryId)
+                  ->orWhereJsonContains('technicians.service_ids', (int)$order->service_id)
+                  ->orWhereJsonContains('technicians.service_ids', (string)$order->service_id);
+            })
+            ->whereHas('user', function($q) use ($order) {
+                $q->where('users.status', 'active')
+                  ->where(function($sub) use ($order) {
+                      $sub->where('users.city_id', $order->city_id)
+                          ->orWhereNull('users.city_id');
+                  });
+            })
+            ->where(function($q) use ($start, $end, $capacity) {
+                $q->whereRaw("(
+                    (SELECT COUNT(*) FROM orders WHERE orders.technician_id = technicians.id AND orders.status IN ('new', 'accepted', 'scheduled', 'in_progress') AND orders.scheduled_at BETWEEN ? AND ?)
+                    +
+                    (SELECT COUNT(*) FROM appointments WHERE appointments.technician_id = technicians.id AND appointments.status IN ('scheduled', 'in_progress') AND appointments.appointment_date BETWEEN ? AND ?)
+                ) < ?", [$start, $end, $start, $end, $capacity]);
+            })
+            ->get();
+
+        foreach ($techs as $tech) {
+            $this->sendNotification($tech->user_id, [
+                'type' => \App\Models\Notification::TYPE_NEW_ORDER,
+                'title_ar' => $isImmediate ? 'طلب فوري جديد!' : 'مهمة جديدة',
+                'title_en' => $isImmediate ? 'New Immediate Order!' : 'New Task',
+                'body_ar' => $isImmediate 
+                    ? 'يوجد طلب فوري جديد لخدمة ' . ($order->service->name_ar ?? '') . ' يرجى القبول والوصول خلال 60 دقيقة.'
+                    : 'يوجد طلب جديد لخدمة ' . ($order->service->name_ar ?? ''),
+                'body_en' => $isImmediate 
+                    ? 'New immediate request for ' . ($order->service->name_en ?? '') . ' service. Must arrive within 60 minutes.'
+                    : 'New request for ' . ($order->service->name_en ?? '') . ' service',
                 'data' => ['order_id' => $order->id]
             ]);
         }

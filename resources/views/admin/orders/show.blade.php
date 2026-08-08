@@ -18,6 +18,8 @@
                 activeTab: '{{ ($item->technician || $item->maintenanceCompany) ? 'technician' : 'order' }}',
                 showAcceptModal: false,
                 showRefuseModal: false,
+                showRescheduleModal: false,
+                showCancelModal: false,
                 selectedOrder: {{ $item->id }},
                 viewMode: 'list',
                 map: null,
@@ -185,13 +187,40 @@
     <!-- Header -->
     <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
-            <a href="{{ route('admin.orders.index') }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-100 dark:border-white/10 text-[#1A1A31] dark:text-white hover:bg-slate-50 transition-all">
+            @php
+                $previousUrl = url()->previous();
+                $backUrl = route('admin.orders.index');
+                if ($previousUrl && str_contains($previousUrl, url('/admin')) && !str_contains($previousUrl, route('admin.orders.show', $item->id))) {
+                    $backUrl = $previousUrl;
+                }
+            @endphp
+            <a href="{{ $backUrl }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-100 dark:border-white/10 text-[#1A1A31] dark:text-white hover:bg-slate-50 transition-all">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ app()->getLocale() == 'ar' ? 'M14 5l7 7m0 0l-7 7m7-7H3' : 'M10 19l-7-7m0 0l7-7m-7 7h18' }}"></path></svg>
             </a>
             <h1 class="text-2xl font-black text-[#1A1A31] dark:text-white">{{ __('Order') }} - #{{ $item->id }}</h1>
         </div>
 
         <div class="flex items-center gap-3">
+            @if(!in_array($item->status, ['completed', 'rejected', 'cancelled']))
+                <!-- Edit Order -->
+                <a href="{{ route('admin.orders.edit', $item->id) }}" class="px-5 py-2 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-white font-bold text-xs hover:bg-slate-200 dark:hover:bg-white/10 transition-all flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    {{ __('Edit Order') }}
+                </a>
+
+                <!-- Reschedule Appointment -->
+                <button @click="showRescheduleModal = true" class="px-5 py-2 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-all flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    {{ __('Reschedule') }}
+                </button>
+
+                <!-- Cancel Order -->
+                <button @click="showCancelModal = true" class="px-5 py-2 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-500 font-bold text-xs hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-all flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    {{ __('Cancel Order') }}
+                </button>
+            @endif
+
             @if($item->status == 'new')
                 <button @click="showRefuseModal = true" class="px-6 py-2 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs hover:bg-slate-200 transition-all flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -273,7 +302,7 @@
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         </div>
                         <div>
-                            <span class="block text-sm font-bold text-[#1A1A31] dark:text-white">{{ __('Address') }}: <span class="text-slate-400 font-bold ml-1">{{ __('Address') }}</span></span>
+                            <span class="block text-sm font-bold text-[#1A1A31] dark:text-white">{{ __('Address') }}: <span class="text-slate-400 font-bold ml-1">{{ $item->address ?? '-' }}</span></span>
                         </div>
                     </div>
 
@@ -283,7 +312,14 @@
                             <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle">
                         </div>
                         <div>
-                            <span class="block text-sm font-bold text-[#1A1A31] dark:text-white">{{ __('Price') }}: <span class="text-slate-400 font-bold ml-1">{{ $item->total_price ?? '-' }} <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></span></span>
+                            <span class="block text-sm font-bold text-[#1A1A31] dark:text-white">{{ __('Price') }}: 
+                                <span class="text-slate-400 font-bold ml-1">
+                                    {{ number_format($item->total_price ?? 0, 2) }} ر.س
+                                    @if($item->discount_amount > 0)
+                                        <span class="text-xs text-rose-500 font-bold ml-2">({{ __('Discount') }}: {{ number_format($item->discount_amount, 2) }} ر.س)</span>
+                                    @endif
+                                </span>
+                            </span>
                         </div>
                     </div>
 
@@ -293,7 +329,7 @@
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                         </div>
                         <div>
-                            <span class="block text-sm font-bold text-[#1A1A31] dark:text-white">{{ __('Payment Method') }}: <span class="text-slate-400 font-bold ml-1">{{ $item->payment_method ?? __('Payment Method') }}</span></span>
+                            <span class="block text-sm font-bold text-[#1A1A31] dark:text-white">{{ __('Payment Method') }}: <span class="text-slate-400 font-bold ml-1">{{ $item->payment_method ? __(ucfirst($item->payment_method)) : '-' }}</span></span>
                         </div>
                     </div>
 
@@ -306,7 +342,7 @@
                         <div>
                             <span class="block text-sm font-bold text-[#1A1A31] dark:text-white">
                                 {{ $item->technician ? __('Technician') : __('Maintenance Company') }}: 
-                                <a href="#" @click.prevent="activeTab = 'technician'" class="text-primary font-bold ml-1 hover:underline">
+                                <a href="#" @click.prevent="activeTab = 'technician'" class="text-blue-500 dark:text-blue-400 font-bold ml-1 hover:underline">
                                     {{ $item->technician ? (optional($item->technician->user)->name ?? '-') : (optional($item->maintenanceCompany->user)->name ?? '-') }}
                                 </a>
                             </span>
@@ -328,25 +364,55 @@
                         </div>
                     </div>
 
-                    <!-- Date -->
+                    <!-- Order Date -->
                     <div class="flex items-start gap-4">
                         <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 shrink-0">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                         </div>
                         <div>
-                            <span class="block text-sm font-bold text-[#1A1A31] dark:text-white">{{ __('Date') }}: <span class="text-slate-400 font-bold ml-1">{{ $item->created_at->format('j/n/2025') }}</span></span>
+                            <span class="block text-sm font-bold text-[#1A1A31] dark:text-white">{{ __('Order Date') }}: <span class="text-slate-400 font-bold ml-1">{{ $item->created_at->format('Y-m-d g:i A') }}</span></span>
                         </div>
                     </div>
 
-                    <!-- Time -->
+                    <!-- Scheduled Visit -->
                     <div class="flex items-start gap-4">
                         <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 shrink-0">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </div>
                         <div>
-                            <span class="block text-sm font-bold text-[#1A1A31] dark:text-white">{{ __('Time') }}: <span class="text-slate-400 font-bold ml-1">{{ $item->created_at->format('g:i A') }}</span></span>
+                            <span class="block text-sm font-bold text-[#1A1A31] dark:text-white">{{ __('Scheduled Visit') }}: <span class="text-slate-400 font-bold ml-1">{{ $item->scheduled_at ? $item->scheduled_at->format('Y-m-d g:i A') : __('Not scheduled yet') }}</span></span>
                         </div>
                     </div>
+
+                    @if($item->original_scheduled_at)
+                    <!-- Rescheduled Notice -->
+                    <div class="flex items-start gap-4 col-span-1 md:col-span-2 mt-4 bg-yellow-500/5 border border-yellow-500/20 rounded-[1.5rem] p-5 text-right">
+                        <div class="w-10 h-10 rounded-xl bg-yellow-500/10 flex items-center justify-center text-yellow-600 dark:text-yellow-500 shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div class="space-y-1">
+                            <span class="block text-xs font-black text-yellow-600 dark:text-yellow-500">{{ __('Rescheduled') }}</span>
+                            <span class="block text-xs font-bold text-slate-500 dark:text-slate-400">
+                                {{ __('Original Date') }}: {{ $item->original_scheduled_at->format('Y-m-d g:i A') }}
+                            </span>
+                        </div>
+                    </div>
+                    @endif
+
+                    @if($item->is_immediate)
+                    <!-- Immediate SLA Notice -->
+                    <div class="flex items-start gap-4 col-span-1 md:col-span-2 mt-4 bg-amber-500/5 border border-amber-500/20 rounded-[1.5rem] p-5 text-right">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-500 shrink-0">
+                            <svg class="w-5 h-5 fill-current animate-pulse text-amber-500" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        </div>
+                        <div class="space-y-1">
+                            <span class="block text-xs font-black text-amber-600 dark:text-amber-500">{{ __('Instant') }}</span>
+                            <span class="block text-xs font-bold text-slate-500 dark:text-slate-400">
+                                {{ __('Must arrive within 60 minutes of request date.') }}
+                            </span>
+                        </div>
+                    </div>
+                    @endif
                 </div>
 
 
@@ -429,7 +495,7 @@
             @if(!empty($item->spare_parts_metadata))
             <div class="bg-white dark:bg-[#1A1A31] rounded-[2.5rem] border border-slate-50 dark:border-white/5 shadow-sm p-10">
                 <h3 class="text-lg font-black text-[#1A1A31] dark:text-white mb-6 flex items-center gap-2">
-                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <svg class="w-6 h-6 text-slate-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     {{ __('Used Spare Parts') }}
                 </h3>
                 <div class="space-y-4">
@@ -439,7 +505,7 @@
                         
                         <!-- Part Info -->
                         <div class="flex items-center gap-4 w-full md:w-auto mb-4 md:mb-0">
-                            <div class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                            <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-white/10 text-blue-500 dark:text-blue-400 flex items-center justify-center shrink-0">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path></svg>
                             </div>
                             <div class="flex-1">
@@ -459,7 +525,7 @@
                             </div>
                             <div class="flex flex-col items-end pl-4 border-l-2 border-slate-100 dark:border-white/10 ml-auto md:ml-0">
                                 <span class="text-xs text-slate-400 font-bold mb-1">{{ __('Total') }}</span>
-                                <span class="text-lg font-black text-primary">{{ $part['total'] }} <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></span>
+                                <span class="text-lg font-black text-primary dark:text-white">{{ $part['total'] }} <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle"></span>
                             </div>
                         </div>
 
@@ -472,7 +538,7 @@
             <!-- Client Signature -->
             <div class="bg-white dark:bg-[#1A1A31] rounded-[2.5rem] border border-slate-50 dark:border-white/5 shadow-sm p-10">
                 <h3 class="text-lg font-black text-[#1A1A31] dark:text-white mb-6 flex items-center gap-2">
-                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                    <svg class="w-6 h-6 text-slate-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                     {{ __('Client Signature') }}
                 </h3>
                 <div class="h-48 rounded-2xl bg-slate-50 dark:bg-white/5 border-2 border-dashed border-slate-100 dark:border-white/10 flex items-center justify-center overflow-hidden relative">
@@ -575,7 +641,7 @@
                     </div>
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>
-                        <span class="text-sm font-bold text-[#1A1A31] dark:text-white">{{ __('Address') }}: <span class="text-slate-400 ml-1">{{ __('Address') }}</span></span>
+                        <span class="text-sm font-bold text-[#1A1A31] dark:text-white">{{ __('Address') }}: <span class="text-slate-400 ml-1">{{ $item->user->address ?? '-' }}</span></span>
                     </div>
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 shrink-0"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg></div>

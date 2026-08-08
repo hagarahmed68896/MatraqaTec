@@ -134,4 +134,9 @@ class Technician extends Model
     {
         return $this->hasMany(Appointment::class);
     }
+
+    public function schedules()
+    {
+        return $this->hasMany(TechnicianSchedule::class);
+    }
 }

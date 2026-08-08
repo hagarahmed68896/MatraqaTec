@@ -278,7 +278,7 @@ class TechnicianController extends Controller
 
     public function show(Request $request, $id)
     {
-        $item = Technician::with(['user', 'service', 'category', 'maintenanceCompany', 'user.city'])->findOrFail($id);
+        $item = Technician::with(['user', 'service', 'category', 'maintenanceCompany', 'user.city', 'schedules'])->findOrFail($id);
         
         // Detailed Stats
         $stats = [
@@ -347,7 +347,52 @@ class TechnicianController extends Controller
             return response()->json(['performanceData' => $performanceData]);
         }
 
-        return view('admin.technicians.show', compact('item', 'stats', 'orders', 'reviews', 'performanceData', 'chartType', 'settlements'));
+        $days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+        return view('admin.technicians.show', compact('item', 'stats', 'orders', 'reviews', 'performanceData', 'chartType', 'settlements', 'days'));
+    }
+
+    public function updateSchedules(Request $request, $id)
+    {
+        $technician = Technician::findOrFail($id);
+
+        $request->validate([
+            'schedules' => 'nullable|array',
+        ]);
+
+        $days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+        // Validate first
+        foreach ($days as $day) {
+            $input = $request->input("schedules.{$day}");
+            if ($input && !empty($input['active'])) {
+                if (empty($input['start_time']) || empty($input['end_time'])) {
+                    return back()->withErrors(["schedules.{$day}.start_time" => __('Start and end times are required for active days.')])->withInput();
+                }
+                if ($input['end_time'] <= $input['start_time']) {
+                    return back()->withErrors(["schedules.{$day}.end_time" => __('End time must be after start time.')])->withInput();
+                }
+            }
+        }
+
+        // Sync to database
+        foreach ($days as $day) {
+            $input = $request->input("schedules.{$day}");
+
+            if ($input && !empty($input['active'])) {
+                $technician->schedules()->updateOrCreate(
+                    ['day' => $day],
+                    [
+                        'start_time' => $input['start_time'],
+                        'end_time' => $input['end_time']
+                    ]
+                );
+            } else {
+                $technician->schedules()->where('day', $day)->delete();
+            }
+        }
+
+        return redirect()->route('admin.technicians.show', $technician->id)->with('success', __('Working hours updated successfully.'));
     }
 
     public function edit($id)

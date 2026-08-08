@@ -279,6 +279,33 @@
         </div>
     </div>
 
+    <!-- Bulk Actions (Show when items are selected) -->
+    <div x-show="selectedItems.length > 0" x-cloak x-transition class="flex items-center justify-between w-full bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-primary/20 mt-8" dir="rtl">
+        <div class="flex items-center gap-4 px-4 text-primary">
+            <div class="w-10 h-10 rounded-xl bg-[#1A1A31] dark:bg-primary text-white flex items-center justify-center font-black shadow-lg shadow-primary/20">
+                <span x-text="selectedItems.length"></span>
+            </div>
+            <span class="text-sm font-black dark:text-white uppercase tracking-widest">{{ __('Selected Items') }}</span>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <form id="bulk-delete-form" action="{{ route('admin.orders.bulk-destroy') }}" method="POST" class="hidden">
+                @csrf
+                @method('DELETE')
+                <template x-for="id in selectedItems" :key="id">
+                    <input type="hidden" name="ids[]" :value="id">
+                </template>
+            </form>
+            <button type="button" @click="confirmDelete()" class="px-6 py-3 bg-rose-500 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-rose-600 transition-all flex items-center gap-2 shadow-lg shadow-rose-500/20">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                {{ __('Delete Selected') }}
+            </button>
+            <button type="button" @click="selectedItems = []; selectAll = false" class="px-6 py-3 bg-white dark:bg-[#1A1A31] text-slate-500 dark:text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-white/10 transition-all border border-slate-200 dark:border-white/10">
+                {{ __('Cancel') }}
+            </button>
+        </div>
+    </div>
+
     <!-- Orders Table Section -->
     <div class="bg-white dark:bg-[#1A1A31] rounded-[2.5rem] border border-slate-50 dark:border-white/5 shadow-sm overflow-hidden min-h-[600px] mt-8">
         <div class="overflow-x-auto">
@@ -286,7 +313,7 @@
                 <thead>
                     <tr class="bg-slate-50/50 dark:bg-white/5 text-[12px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest border-b border-slate-50 dark:border-white/5">
                         <th class="py-6 px-8 flex items-center gap-4">
-                            <input type="checkbox" class="w-5 h-5 rounded-lg border-2 border-slate-200 text-[#1A1A31] focus:ring-0">
+                            <input type="checkbox" @click="toggleAll()" :checked="selectAll" class="w-5 h-5 rounded-lg border-2 border-slate-200 text-[#1A1A31] focus:ring-0 cursor-pointer">
                             <span>#</span>
                         </th>
                         <th class="py-6 px-4">{{ __('Order Number') }}</th>
@@ -313,11 +340,19 @@
                     @forelse($items as $item)
                     <tr onclick="window.location.href='{{ route('admin.orders.show', $item->id) }}'" class="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-all group cursor-pointer">
                         <td class="py-6 px-8 flex items-center gap-4" onclick="event.stopPropagation()">
-                            <input type="checkbox" class="w-5 h-5 rounded-lg border-2 border-slate-200 text-[#1A1A31] focus:ring-0">
+                            <input type="checkbox" :value="{{ $item->id }}" @click="toggleItem('{{ $item->id }}')" :checked="selectedItems.includes('{{ $item->id }}')" class="row-checkbox w-5 h-5 rounded-lg border-2 border-slate-200 text-[#1A1A31] focus:ring-0 cursor-pointer">
                             <span class="text-xs font-mono opacity-40">{{ $loop->iteration }}</span>
                         </td>
                         <td class="py-6 px-4">
-                            <a href="{{ route('admin.orders.show', $item->id) }}" class="text-primary font-black text-md hover:underline">{{ app()->getLocale() == 'ar' ? 'طلب-' : 'Order-' }}{{ $item->order_number }}</a>
+                            <div class="flex flex-col gap-1 items-start">
+                                <a href="{{ route('admin.orders.show', $item->id) }}" class="text-primary font-black text-md hover:underline">{{ app()->getLocale() == 'ar' ? 'طلب-' : 'Order-' }}{{ $item->order_number }}</a>
+                                @if($item->is_immediate)
+                                <span class="text-[9px] font-black text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-500/20 px-2 py-0.5 rounded-lg inline-flex items-center gap-1">
+                                    <svg class="w-2.5 h-2.5 fill-current animate-pulse" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                    {{ __('Instant') }}
+                                </span>
+                                @endif
+                            </div>
                         </td>
                         <td class="py-6 px-4">
                             <span class="text-md font-bold text-[#1A1A31] dark:text-white">{{ $item->user->name }}</span>
@@ -350,7 +385,7 @@
                             <span class="text-[11px] font-bold text-slate-400">{{ __('Address') }}</span>
                         </td>
                         <td class="py-6 px-4">
-                            <span class="text-[11px] font-bold text-slate-400">{{ $item->created_at->format('j/n/2025 - g:i') }}</span>
+                            <span class="text-[11px] font-bold text-slate-400">{{ $item->scheduled_at ? $item->scheduled_at->format('j/n/Y - g:i') : $item->created_at->format('j/n/Y - g:i') }}</span>
                         </td>
                         @if($currentTab == 'rejected')
                         <td class="py-6 px-4">
@@ -709,6 +744,61 @@
                 </div>
             </div>
 
+    <!-- Delete Confirmation Modal -->
+    <template x-teleport="body">
+        <div x-show="showDeleteModal" 
+             class="fixed inset-0 z-[1000] flex items-center justify-center p-4 overflow-x-hidden overflow-y-auto"
+             x-cloak>
+            
+            <!-- Backdrop -->
+            <div x-show="showDeleteModal" 
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 @click="showDeleteModal = false"
+                 class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+
+            <!-- Modal Content -->
+            <div x-show="showDeleteModal"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+                 class="relative bg-white dark:bg-[#1A1A31] w-full max-w-md rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-white/10 overflow-hidden transform transition-all">
+                
+                <div class="p-10 text-center text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
+                    <div class="mx-auto w-24 h-24 bg-rose-50 dark:bg-rose-500/10 rounded-full flex items-center justify-center mb-8 relative">
+                        <div class="absolute inset-0 rounded-full bg-rose-500/10 animate-ping"></div>
+                        <svg class="w-10 h-10 text-rose-500 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </div>
+                    
+                    <h3 class="text-2xl font-black text-slate-800 dark:text-white mb-4 text-center">{{ __('Confirm Deletion') }}</h3>
+                    <p class="text-slate-500 dark:text-slate-400 font-bold leading-relaxed mb-10 text-center">
+                        <span>{{ __('Are you sure you want to delete the selected orders?') }}</span>
+                    </p>
+                    
+                    <div class="flex gap-4">
+                        <button type="button" @click="showDeleteModal = false" 
+                                class="flex-1 py-4 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-2xl font-black hover:bg-slate-200 dark:hover:bg-white/10 transition-all uppercase tracking-widest text-md">
+                            {{ __('Cancel') }}
+                        </button>
+                        <button type="button" @click="executeDelete()" 
+                                class="flex-1 py-4 bg-rose-500 text-white rounded-2xl font-black hover:bg-rose-600 transition-all shadow-lg shadow-rose-500/20 uppercase tracking-widest text-md">
+                            {{ __('Delete') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
         </div> <!-- Outer Wrapper -->
     </div> <!-- Main Alpine Container -->
 
@@ -740,6 +830,39 @@
             showRefuseModal: false,
             rejectionReason: '',
             showAll: false,
+            selectedItems: [],
+            selectAll: false,
+            showDeleteModal: false,
+            deleteTargetId: null,
+            isBulkDelete: false,
+            confirmDelete(id = null) {
+                this.deleteTargetId = id;
+                this.isBulkDelete = id === null;
+                this.showDeleteModal = true;
+            },
+            executeDelete() {
+                if (this.isBulkDelete) {
+                    document.getElementById('bulk-delete-form').submit();
+                } else {
+                    document.getElementById('delete-form-' + this.deleteTargetId).submit();
+                }
+            },
+            toggleAll() {
+                this.selectAll = !this.selectAll;
+                if (this.selectAll) {
+                    this.selectedItems = Array.from(document.querySelectorAll('.row-checkbox')).map(el => el.value);
+                } else {
+                    this.selectedItems = [];
+                }
+            },
+            toggleItem(id) {
+                if (this.selectedItems.includes(id)) {
+                    this.selectedItems = this.selectedItems.filter(item => item !== id);
+                } else {
+                    this.selectedItems.push(id);
+                }
+                this.selectAll = this.selectedItems.length === document.querySelectorAll('.row-checkbox').length;
+            },
             
             searchQuery: '{{ request('search') }}',
             sortBy: '{{ request('sort_by', 'newest') }}',

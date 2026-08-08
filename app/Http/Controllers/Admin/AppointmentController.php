@@ -22,7 +22,8 @@ class AppointmentController extends Controller
             'order.user',
             'technician.user',
             'order.reviews'
-        ])->whereBetween('appointment_date', [$startDate, $endDate]);
+        ])->whereBetween('appointment_date', [$startDate, $endDate])
+          ->whereNotIn('status', ['cancelled', 'rejected']);
 
         // 2. Filter by status
         if ($request->filled('status') && $request->status !== 'all') {
@@ -45,7 +46,7 @@ class AppointmentController extends Controller
 
         // 4. Stats (Filtered by the current week view or global? Let's do global for overview as per standard)
         $stats = [
-            'all' => Appointment::whereBetween('appointment_date', [$startDate, $endDate])->count(),
+            'all' => Appointment::whereBetween('appointment_date', [$startDate, $endDate])->whereNotIn('status', ['cancelled', 'rejected'])->count(),
             'scheduled' => Appointment::whereBetween('appointment_date', [$startDate, $endDate])->where('status', 'scheduled')->count(),
             'in_progress' => Appointment::whereBetween('appointment_date', [$startDate, $endDate])->where('status', 'in_progress')->count(),
             'completed' => Appointment::whereBetween('appointment_date', [$startDate, $endDate])->where('status', 'completed')->count(),

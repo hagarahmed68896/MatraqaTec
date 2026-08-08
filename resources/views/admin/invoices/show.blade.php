@@ -58,6 +58,7 @@
                         <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{{ __('From') }}</h4>
                         <div class="space-y-1">
                             <p class="text-sm font-black text-[#1A1A31] dark:text-white">{{ __('Matraqa Tec Company') }}</p>
+                            <p class="text-[11px] font-bold text-slate-500 dark:text-white tracking-wide">{{ __('VAT Number') }}: {{ \App\Models\Setting::getByKey('company_vat_number', '300012345600003') }}</p>
                             <p class="text-[11px] font-bold text-slate-500 dark:text-white tracking-wide">example@gmail.com</p>
                             <p class="text-[11px] font-bold text-slate-500 dark:text-white tracking-wide">+966 123 1234 123</p>
                         </div>
@@ -122,10 +123,35 @@
             </div>
 
             <!-- Summary Section -->
-            <div class="flex justify-end">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 border-t border-slate-50 dark:border-white/5 pt-10">
+                <!-- ZATCA QR Code -->
+                <div class="flex flex-col items-center md:items-start gap-3">
+                    <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{{ __('ZATCA QR Code') }}</h4>
+                    <div class="p-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ urlencode($item->zatca_qr_code) }}" alt="ZATCA QR Code" class="w-32 h-32 select-none">
+                    </div>
+                </div>
+
+                <!-- Totals Breakdown -->
                 <div class="w-full md:w-80 space-y-6">
+                    @if($item->order && $item->order->discount_amount > 0)
                     <div class="flex items-center justify-between text-xs font-bold">
-                        <span class="text-slate-400">{{ __('Subtotal') }}</span>
+                        <span class="text-slate-400">{{ __('Original Price') }}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[#1A1A31] dark:text-white font-black">{{ number_format($item->order->original_price_before_tax, 2) }}</span>
+                            <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-4 h-4 opacity-40">
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between text-xs font-bold text-rose-500">
+                        <span>{{ __('Discount') }}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="font-black">-{{ number_format($item->order->discount_amount, 2) }}</span>
+                            <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-4 h-4 opacity-40">
+                        </div>
+                    </div>
+                    @endif
+                    <div class="flex items-center justify-between text-xs font-bold">
+                        <span class="text-slate-400">{{ __('Taxable Amount') }}</span>
                         <div class="flex items-center gap-2">
                             <span class="text-[#1A1A31] dark:text-white font-black">{{ number_format($item->amount, 2) }}</span>
                             <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-4 h-4 opacity-40">

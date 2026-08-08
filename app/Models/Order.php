@@ -20,8 +20,10 @@ class Order extends Model
         'status',
         'sub_status',
         'total_price',
+        'discount',
         'payment_method',
         'scheduled_at',
+        'original_scheduled_at',
         'address',
         'notes',
         'rejection_reason',
@@ -33,16 +35,20 @@ class Order extends Model
         'proposed_scheduled_at',
         'reschedule_requested_by',
         'rejected_by_user_id',
+        'is_immediate',
     ];
 
     protected $casts = [
         'scheduled_at' => 'datetime',
+        'original_scheduled_at' => 'datetime',
         'assigned_at' => 'datetime',
         'proposed_scheduled_at' => 'datetime',
         'spare_parts_metadata' => 'array',
+        'is_immediate' => 'boolean',
+        'discount' => 'decimal:2',
     ];
 
-    protected $appends = ['status_label', 'status_color', 'formatted_scheduled_date', 'formatted_scheduled_time', 'formatted_proposed_scheduled_date', 'formatted_proposed_scheduled_time', 'client_name', 'client_phone', 'technician_name', 'technician_phone', 'technician_avatar', 'acceptance_duration_minutes', 'acceptance_expiry_time', 'remaining_acceptance_seconds', 'client_signature_url', 'attachment_urls', 'image', 'can_reschedule', 'is_paid', 'required_photos_before_count', 'required_photos_after_count'];
+    protected $appends = ['status_label', 'status_color', 'formatted_scheduled_date', 'formatted_scheduled_time', 'formatted_proposed_scheduled_date', 'formatted_proposed_scheduled_time', 'client_name', 'client_phone', 'technician_name', 'technician_phone', 'technician_avatar', 'acceptance_duration_minutes', 'acceptance_expiry_time', 'remaining_acceptance_seconds', 'client_signature_url', 'attachment_urls', 'image', 'can_reschedule', 'is_paid', 'required_photos_before_count', 'required_photos_after_count', 'subtotal_before_vat', 'vat_amount', 'discount_amount', 'original_price_before_tax'];
 
     protected static function booted()
     {
@@ -69,6 +75,30 @@ class Order extends Model
                 }
             }
         });
+    }
+
+    public function getSubtotalBeforeVatAttribute()
+    {
+        $vatRate = (float) \App\Models\Setting::getByKey('vat_rate', 15);
+        $divisor = 1 + ($vatRate / 100);
+        $total = (float) ($this->total_price ?? 0);
+        return round($total / $divisor, 2);
+    }
+
+    public function getVatAmountAttribute()
+    {
+        $total = (float) ($this->total_price ?? 0);
+        return round($total - $this->subtotal_before_vat, 2);
+    }
+
+    public function getDiscountAmountAttribute()
+    {
+        return (float) ($this->discount ?? 0);
+    }
+
+    public function getOriginalPriceBeforeTaxAttribute()
+    {
+        return round($this->subtotal_before_vat + $this->discount_amount, 2);
     }
 
     public function getClientSignatureUrlAttribute()
@@ -148,7 +178,10 @@ class Order extends Model
 
     public function getAcceptanceDurationMinutesAttribute()
     {
-        $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
+        $durationKey = $this->is_immediate ? 'immediate_order_acceptance_duration' : 'order_acceptance_duration';
+        $defaultDuration = $this->is_immediate ? 5 : 15;
+        $duration = (int) \App\Models\Setting::getByKey($durationKey, $defaultDuration);
+        
         if ($this->assigned_at) {
             $expiryTime = $this->assigned_at->copy()->addMinutes($duration);
             $remaining = now()->diffInMinutes($expiryTime, false);
@@ -159,7 +192,10 @@ class Order extends Model
 
     public function getRemainingAcceptanceSecondsAttribute()
     {
-        $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
+        $durationKey = $this->is_immediate ? 'immediate_order_acceptance_duration' : 'order_acceptance_duration';
+        $defaultDuration = $this->is_immediate ? 5 : 15;
+        $duration = (int) \App\Models\Setting::getByKey($durationKey, $defaultDuration);
+        
         if ($this->assigned_at) {
             $expiryTime = $this->assigned_at->copy()->addMinutes($duration);
             $remainingSeconds = now()->diffInSeconds($expiryTime, false);
@@ -171,7 +207,10 @@ class Order extends Model
     public function getAcceptanceExpiryTimeAttribute()
     {
         if (!$this->assigned_at) return null;
-        $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
+        $durationKey = $this->is_immediate ? 'immediate_order_acceptance_duration' : 'order_acceptance_duration';
+        $defaultDuration = $this->is_immediate ? 5 : 15;
+        $duration = (int) \App\Models\Setting::getByKey($durationKey, $defaultDuration);
+        
         return $this->assigned_at->copy()->addMinutes($duration);
     }
 
@@ -241,6 +280,69 @@ class Order extends Model
      */
     public static function syncExpiredOrders()
     {
+        // 1. Clean up expired technician assignments first
+        $durationScheduled = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
+        $durationImmediate = (int) \App\Models\Setting::getByKey('immediate_order_acceptance_duration', 5);
+        
+        // --- 1.1 CLEAN UP IMMEDIATE ORDERS (TIMEOUT = 5 MINUTES) ---
+        // Independent immediate orders
+        self::where('is_immediate', true)
+            ->whereNotNull('technician_id')
+            ->whereNull('maintenance_company_id')
+            ->where(function($q) {
+                $q->where('status', 'scheduled')
+                  ->orWhere('status', 'new');
+            })
+            ->where('assigned_at', '<', now()->subMinutes($durationImmediate))
+            ->update([
+                'technician_id' => null,
+                'status' => 'new',
+                'assigned_at' => null,
+                'sub_status' => null,
+            ]);
+
+        // Company immediate orders
+        self::where('is_immediate', true)
+            ->whereNotNull('technician_id')
+            ->whereNotNull('maintenance_company_id')
+            ->where('sub_status', 'pending_tech_acceptance')
+            ->where('assigned_at', '<', now()->subMinutes($durationImmediate))
+            ->update([
+                'technician_id' => null,
+                'assigned_at' => null,
+                'sub_status' => null,
+            ]);
+
+        // --- 1.2 CLEAN UP SCHEDULED ORDERS (TIMEOUT = 15 MINUTES) ---
+        // Independent scheduled orders
+        self::where('is_immediate', false)
+            ->whereNotNull('technician_id')
+            ->whereNull('maintenance_company_id')
+            ->where(function($q) {
+                $q->where('status', 'scheduled')
+                  ->orWhere('status', 'new');
+            })
+            ->where('assigned_at', '<', now()->subMinutes($durationScheduled))
+            ->update([
+                'technician_id' => null,
+                'status' => 'new',
+                'assigned_at' => null,
+                'sub_status' => null,
+            ]);
+
+        // Company scheduled orders
+        self::where('is_immediate', false)
+            ->whereNotNull('technician_id')
+            ->whereNotNull('maintenance_company_id')
+            ->where('sub_status', 'pending_tech_acceptance')
+            ->where('assigned_at', '<', now()->subMinutes($durationScheduled))
+            ->update([
+                'technician_id' => null,
+                'assigned_at' => null,
+                'sub_status' => null,
+            ]);
+
+        // 2. Mark overdue orders as expired
         return self::whereIn('status', ['new', 'scheduled', 'accepted'])
             ->where('scheduled_at', '<', now())
             ->where('status', '!=', 'expired')

@@ -119,15 +119,27 @@
                     </div>
                 </div>
 
+                <!-- Credentials Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-3">
+                        <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">{{ __('Password') }}</label>
+                        <input type="password" name="password" placeholder="{{ __('Leave blank to auto-generate and send via SMS') }}"
+                               class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none">
+                        <span class="text-xs text-slate-400 block pr-2">
+                            {{ __('will_create_account_email_hint') }}
+                        </span>
+                    </div>
+                </div>
+
                 <!-- Services Logic -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="space-y-4">
                         <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">{{ __('Category') }}</label>
                         <select name="category_id" required x-model="selectedCategory"
-                                class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent rounded-2xl text-sm font-bold transition-all outline-none border-r-[16px] border-r-transparent">
-                            <option value="">{{ __('Select Category') }}</option>
+                                class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent rounded-2xl text-sm font-bold transition-all outline-none border-r-[16px] border-r-transparent text-[#1A1A31] dark:text-white">
+                            <option value="" class="bg-white dark:bg-[#1A1A31] text-[#1A1A31] dark:text-white">{{ __('Select Category') }}</option>
                             @foreach($services as $cat)
-                                <option value="{{ $cat->id }}">{{ $cat->name_ar }}</option>
+                                <option value="{{ $cat->id }}" class="bg-white dark:bg-[#1A1A31] text-[#1A1A31] dark:text-white">{{ $cat->name_ar }}</option>
                             @endforeach
                         </select>
 
@@ -150,10 +162,10 @@
                     <div class="space-y-4">
                         <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">{{ __('Working Regions') }}</label>
                         <select name="city_id" x-model="selectedCity"
-                                class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent rounded-2xl text-sm font-bold transition-all outline-none border-r-[16px] border-r-transparent">
-                            <option value="">{{ __('Select City') }}</option>
+                                class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent rounded-2xl text-sm font-bold transition-all outline-none border-r-[16px] border-r-transparent text-[#1A1A31] dark:text-white">
+                            <option value="" class="bg-white dark:bg-[#1A1A31] text-[#1A1A31] dark:text-white">{{ __('Select City') }}</option>
                             @foreach($cities as $city)
-                                <option value="{{ $city->id }}">{{ $city->name_ar }}</option>
+                                <option value="{{ $city->id }}" class="bg-white dark:bg-[#1A1A31] text-[#1A1A31] dark:text-white">{{ $city->name_ar }}</option>
                             @endforeach
                         </select>
 
@@ -193,20 +205,20 @@
                 <!-- Status -->
                 <div class="pt-8">
                     <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2 mb-6">{{ __('Account Status') }}</label>
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-2 gap-4" x-data="{ status: 'active' }">
                         <label class="relative flex items-center gap-4 p-5 rounded-3xl border-2 cursor-pointer transition-all hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white border-transparent bg-slate-50 dark:bg-white/5"
-                               :class="status === 'active' ? 'border-primary ring-4 ring-primary/10' : ''"
-                               x-data="{ status: 'active' }" @click="status = 'active'">
-                            <input type="radio" name="status" value="active" class="hidden" checked>
+                               :class="status === 'active' ? 'border-green-500 ring-4 ring-green-500/10 bg-green-50/50 dark:bg-green-500/5' : ''"
+                               @click="status = 'active'">
+                            <input type="radio" name="status" value="active" class="hidden" :checked="status === 'active'">
                             <div class="w-10 h-10 rounded-2xl bg-green-500/10 text-green-500 flex items-center justify-center">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
                             </div>
                             <span class="text-sm font-black text-slate-800 dark:text-white">{{ __('Active') }}</span>
                         </label>
                         <label class="relative flex items-center gap-4 p-5 rounded-3xl border-2 cursor-pointer transition-all hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white border-transparent bg-slate-50 dark:bg-white/5"
-                               :class="status === 'inactive' ? 'border-red-500 ring-4 ring-red-500/10' : ''"
-                               x-data="{ status: 'active' }" @click="status = 'inactive'">
-                            <input type="radio" name="status" value="inactive" class="hidden">
+                               :class="status === 'inactive' ? 'border-red-500 ring-4 ring-red-500/10 bg-red-50/50 dark:bg-red-500/5' : ''"
+                               @click="status = 'inactive'">
+                            <input type="radio" name="status" value="inactive" class="hidden" :checked="status === 'inactive'">
                             <div class="w-10 h-10 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                             </div>

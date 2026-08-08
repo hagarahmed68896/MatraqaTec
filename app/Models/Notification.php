@@ -17,6 +17,7 @@ class Notification extends Model
     const TYPE_NEW_ORDER = 'new_order';
     const TYPE_ORDER_ACCEPTED = 'order_accepted';
     const TYPE_ORDER_REJECTED = 'order_rejected';
+    const TYPE_ORDER_CANCELLED = 'order_cancelled';
     const TYPE_ORDER_RESCHEDULED = 'order_rescheduled';
     const TYPE_WORK_STARTED = 'work_started';
     const TYPE_WORK_FINISHED = 'work_finished';

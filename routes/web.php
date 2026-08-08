@@ -75,6 +75,11 @@ Route::prefix('admin')->group(function () {
     
     Route::get('/switch-language/{lang}', [AdminController::class, 'switchLanguage'])->name('admin.switch-language');
 
+    Route::get('/clear-cache', function() {
+        \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+        return "Cache cleared successfully!";
+    });
+
     // Protected Routes
     Route::middleware(['admin.auth', 'permission'])->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\AdminController::class, 'dashboard'])->name('admin.dashboard');
@@ -163,6 +168,8 @@ Route::prefix('admin')->group(function () {
 
                 if ($prefix === 'orders') {
                     Route::get('/premium', [$controller, 'premium'])->name('premium');
+                    Route::post('/{id}/cancel', [$controller, 'cancel'])->name('cancel');
+                    Route::post('/{id}/reschedule', [$controller, 'reschedule'])->name('reschedule');
                 }
 
                 if (in_array($prefix, ['corporate-customers', 'maintenance-companies'])) {
@@ -172,6 +179,12 @@ Route::prefix('admin')->group(function () {
                 Route::get('/', [$controller, 'index'])->name('index');
                 Route::get('/create', [$controller, 'create'])->name('create');
                 Route::post('/', [$controller, 'store'])->name('store');
+
+                if (in_array($prefix, ['orders', 'technicians', 'terms', 'privacy-policies', 'privacy_policies', 'faqs', 'complaints', 'supervisors', 'individual-customers', 'individual_customers', 'corporate-customers', 'corporate_customers', 'maintenance-companies', 'maintenance_companies'])) {
+                    Route::match(['post', 'delete'], '/bulk-destroy', [$controller, 'bulkDestroy'])->name('bulk-destroy');
+                    Route::match(['post', 'delete'], '/bulk_destroy', [$controller, 'bulkDestroy'])->name('bulk_destroy');
+                }
+
                 Route::get('/{id}', [$controller, 'show'])->name('show');
                 Route::get('/{id}/edit', [$controller, 'edit'])->name('edit');
                 Route::put('/{id}', [$controller, 'update'])->name('update');
@@ -191,11 +204,12 @@ Route::prefix('admin')->group(function () {
                 if (method_exists($controller, 'refuse')) {
                     Route::post('/{id}/refuse', [$controller, 'refuse'])->name('refuse');
                 }
-                if (in_array($prefix, ['technicians', 'terms', 'privacy-policies', 'faqs', 'complaints', 'supervisors', 'individual-customers', 'corporate-customers', 'maintenance-companies'])) {
-                    Route::post('/bulk-destroy', [$controller, 'bulkDestroy'])->name('bulk-destroy');
+                
+                if ($prefix === 'technicians') {
+                    Route::post('/{id}/schedules', [$controller, 'updateSchedules'])->name('update-schedules');
                 }
                 
-                if (in_array($prefix, ['individual-customers', 'corporate-customers', 'maintenance-companies'])) {
+                if (in_array($prefix, ['individual-customers', 'individual_customers', 'corporate-customers', 'corporate_customers', 'maintenance-companies', 'maintenance_companies'])) {
                     Route::post('/bulk-block', [$controller, 'bulkBlock'])->name('bulk-block');
                     Route::post('/bulk-unblock', [$controller, 'bulkUnblock'])->name('bulk-unblock');
                 }
@@ -239,7 +253,22 @@ Route::prefix('admin')->group(function () {
             Route::get('/technicians', [App\Http\Controllers\Admin\BlockedUserController::class, 'technicians'])->name('technicians');
             Route::get('/supervisors', [App\Http\Controllers\Admin\BlockedUserController::class, 'supervisors'])->name('supervisors');
             Route::get('/download', [App\Http\Controllers\Admin\BlockedUserController::class, 'download'])->name('download');
-            Route::post('/bulk-unblock', [App\Http\Controllers\Admin\BlockedUserController::class, 'bulkUnblock'])->name('bulk-unblock');
         });
+
+        // Manual Fallback Routes for Maintenance Companies Bulk Actions
+        Route::match(['post', 'delete'], 'maintenance-companies/bulk-destroy', [App\Http\Controllers\Admin\MaintenanceCompanyController::class, 'bulkDestroy'])->name('admin.maintenance-companies.bulk-destroy');
+        Route::match(['post', 'delete'], 'maintenance-companies/bulk_destroy', [App\Http\Controllers\Admin\MaintenanceCompanyController::class, 'bulkDestroy'])->name('admin.maintenance-companies.bulk_destroy');
+        Route::match(['post', 'delete'], 'maintenance_companies/bulk-destroy', [App\Http\Controllers\Admin\MaintenanceCompanyController::class, 'bulkDestroy'])->name('admin.maintenance_companies.bulk-destroy');
+        Route::match(['post', 'delete'], 'maintenance_companies/bulk_destroy', [App\Http\Controllers\Admin\MaintenanceCompanyController::class, 'bulkDestroy'])->name('admin.maintenance_companies.bulk_destroy');
+
+        Route::post('maintenance-companies/bulk-block', [App\Http\Controllers\Admin\MaintenanceCompanyController::class, 'bulkBlock'])->name('admin.maintenance-companies.bulk-block');
+        Route::post('maintenance-companies/bulk_block', [App\Http\Controllers\Admin\MaintenanceCompanyController::class, 'bulkBlock'])->name('admin.maintenance-companies.bulk_block');
+        Route::post('maintenance_companies/bulk-block', [App\Http\Controllers\Admin\MaintenanceCompanyController::class, 'bulkBlock'])->name('admin.maintenance_companies.bulk-block');
+        Route::post('maintenance_companies/bulk_block', [App\Http\Controllers\Admin\MaintenanceCompanyController::class, 'bulkBlock'])->name('admin.maintenance_companies.bulk_block');
+
+        Route::post('maintenance-companies/bulk-unblock', [App\Http\Controllers\Admin\MaintenanceCompanyController::class, 'bulkUnblock'])->name('admin.maintenance-companies.bulk-unblock');
+        Route::post('maintenance-companies/bulk_unblock', [App\Http\Controllers\Admin\MaintenanceCompanyController::class, 'bulkUnblock'])->name('admin.maintenance-companies.bulk_unblock');
+        Route::post('maintenance_companies/bulk-unblock', [App\Http\Controllers\Admin\MaintenanceCompanyController::class, 'bulkUnblock'])->name('admin.maintenance_companies.bulk-unblock');
+        Route::post('maintenance_companies/bulk_unblock', [App\Http\Controllers\Admin\MaintenanceCompanyController::class, 'bulkUnblock'])->name('admin.maintenance_companies.bulk_unblock');
     });
 });

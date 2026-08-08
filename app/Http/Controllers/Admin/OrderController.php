@@ -20,11 +20,13 @@ class OrderController extends Controller
         Order::syncExpiredOrders();
 
         $query = Order::with(['user', 'technician.user', 'maintenanceCompany.user', 'service.parent'])
-            ->whereIn('status', ['scheduled', 'in_progress', 'completed']);
+            ->whereIn('status', ['scheduled', 'accepted', 'in_progress', 'completed']);
 
         // 1. Filter by status via tabs
         $currentTab = $request->get('tab', 'scheduled');
-        if (in_array($currentTab, ['scheduled', 'in_progress', 'completed'])) {
+        if ($currentTab === 'scheduled') {
+            $query->whereIn('status', ['scheduled', 'accepted']);
+        } elseif (in_array($currentTab, ['in_progress', 'completed'])) {
             $query->where('status', $currentTab);
         }
 
@@ -127,12 +129,12 @@ class OrderController extends Controller
 
         $items = $query->paginate(25);
         
-        $totalPremium = Order::whereIn('status', ['scheduled', 'in_progress', 'completed'])->count();
-        $totalPremiumLastWeek = Order::whereIn('status', ['scheduled', 'in_progress', 'completed'])->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
+        $totalPremium = Order::whereIn('status', ['scheduled', 'accepted', 'in_progress', 'completed'])->count();
+        $totalPremiumLastWeek = Order::whereIn('status', ['scheduled', 'accepted', 'in_progress', 'completed'])->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
         $totalPremiumGrowth = $totalPremiumLastWeek > 0 ? (($totalPremium - $totalPremiumLastWeek) / $totalPremiumLastWeek) * 100 : ($totalPremium > 0 ? 100 : 0);
 
-        $scheduledPremium = Order::where('status', 'scheduled')->count();
-        $scheduledPremiumLastWeek = Order::where('status', 'scheduled')->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
+        $scheduledPremium = Order::whereIn('status', ['scheduled', 'accepted'])->count();
+        $scheduledPremiumLastWeek = Order::whereIn('status', ['scheduled', 'accepted'])->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
         $scheduledPremiumGrowth = $scheduledPremiumLastWeek > 0 ? (($scheduledPremium - $scheduledPremiumLastWeek) / $scheduledPremiumLastWeek) * 100 : ($scheduledPremium > 0 ? 100 : 0);
 
         $inProgressPremium = Order::where('status', 'in_progress')->count();
@@ -179,7 +181,7 @@ class OrderController extends Controller
                   ->whereNull('maintenance_company_id');
         } elseif ($currentTab === 'scheduled') {
             $query->where(function($q) {
-                $q->where('status', 'scheduled')
+                $q->whereIn('status', ['scheduled', 'accepted'])
                   ->orWhere(function($sub) {
                       $sub->where('status', 'new')
                           ->where(function($sub2) {
@@ -295,7 +297,7 @@ class OrderController extends Controller
         $totalOrdersGrowth = $totalOrdersLastWeek > 0 ? (($totalOrders - $totalOrdersLastWeek) / $totalOrdersLastWeek) * 100 : ($totalOrders > 0 ? 100 : 0);
 
         $scheduledOrders = Order::where(function($q) {
-            $q->where('status', 'scheduled')
+            $q->whereIn('status', ['scheduled', 'accepted'])
               ->orWhere(function($sub) {
                   $sub->where('status', 'new')
                       ->where(function($sub2) {
@@ -305,7 +307,7 @@ class OrderController extends Controller
               });
         })->count();
         $scheduledOrdersLastWeek = Order::where(function($q) {
-            $q->where('status', 'scheduled')
+            $q->whereIn('status', ['scheduled', 'accepted'])
               ->orWhere(function($sub) {
                   $sub->where('status', 'new')
                       ->where(function($sub2) {
@@ -338,10 +340,14 @@ class OrderController extends Controller
             ->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
         $newOrdersGrowth = $newOrdersLastWeek > 0 ? (($newOrders - $newOrdersLastWeek) / $newOrdersLastWeek) * 100 : ($newOrders > 0 ? 100 : 0);
 
+        $managementOrdersTotal = $newOrders + $scheduledOrders + $rejectedOrders;
+        $managementOrdersTotalLastWeek = $newOrdersLastWeek + $scheduledOrdersLastWeek + $rejectedOrdersLastWeek;
+        $managementOrdersTotalGrowth = $managementOrdersTotalLastWeek > 0 ? (($managementOrdersTotal - $managementOrdersTotalLastWeek) / $managementOrdersTotalLastWeek) * 100 : ($managementOrdersTotal > 0 ? 100 : 0);
+
         $stats = [
-            'total' => $totalOrders,
-            'total_trend' => ($totalOrdersGrowth >= 0 ? '+' : '') . number_format($totalOrdersGrowth, 2) . '%',
-            'total_trend_value' => $totalOrdersGrowth,
+            'total' => $managementOrdersTotal,
+            'total_trend' => ($managementOrdersTotalGrowth >= 0 ? '+' : '') . number_format($managementOrdersTotalGrowth, 2) . '%',
+            'total_trend_value' => $managementOrdersTotalGrowth,
             'scheduled' => $scheduledOrders,
             'scheduled_trend' => ($scheduledOrdersGrowth >= 0 ? '+' : '') . number_format($scheduledOrdersGrowth, 2) . '%',
             'scheduled_trend_value' => $scheduledOrdersGrowth,
@@ -369,7 +375,8 @@ class OrderController extends Controller
         $users = User::all();
         $services = Service::whereNotNull('parent_id')->get();
         $technicians = Technician::with('user')->get();
-        return view('admin.orders.create', compact('users', 'services', 'technicians'));
+        $companies = MaintenanceCompany::with('user')->get();
+        return view('admin.orders.create', compact('users', 'services', 'technicians', 'companies'));
     }
 
     public function store(Request $request)
@@ -396,6 +403,8 @@ class OrderController extends Controller
 
     public function show($id)
     {
+        Order::syncExpiredOrders();
+        
         $item = Order::with(['user', 'technician.user', 'technician.category', 'maintenanceCompany.user', 'service.parent', 'attachments', 'reviews', 'payments', 'appointments'])->findOrFail($id);
         $technicians = Technician::with('user')->get();
         $companies = MaintenanceCompany::with('user')->get();
@@ -408,23 +417,62 @@ class OrderController extends Controller
         $users = User::all();
         $services = Service::whereNotNull('parent_id')->get();
         $technicians = Technician::with('user')->get();
-        return view('admin.orders.edit', compact('item', 'users', 'services', 'technicians'));
+        $companies = MaintenanceCompany::with('user')->get();
+        return view('admin.orders.edit', compact('item', 'users', 'services', 'technicians', 'companies'));
     }
 
     public function update(Request $request, $id)
     {
         $item = Order::findOrFail($id);
         $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'service_id' => 'required|exists:services,id',
             'status' => 'required|string',
-            'total_price' => 'nullable|numeric',
+            'scheduled_at' => 'nullable|date',
+            'notes' => 'nullable|string',
+            'base_price' => 'nullable|numeric|min:0',
+            'discount' => 'nullable|numeric|min:0',
             'technician_id' => 'nullable|exists:technicians,id',
             'maintenance_company_id' => 'nullable|exists:maintenance_companies,id',
         ]);
 
-        // Send notifications if newly assigned
+        $basePrice = (float) ($request->base_price ?? 0);
+        $discount = (float) ($request->discount ?? 0);
+        $totalPrice = ($basePrice - $discount) * 1.15;
+        if ($totalPrice < 0) $totalPrice = 0;
+
+        $validated['total_price'] = $totalPrice;
+        $validated['discount'] = $discount;
+
+        // Check if date changed to send notification
+        $dateChanged = false;
+        if ($request->filled('scheduled_at') && \Carbon\Carbon::parse($request->scheduled_at)->ne(\Carbon\Carbon::parse($item->scheduled_at))) {
+            $dateChanged = true;
+            if (!$item->original_scheduled_at && $item->scheduled_at) {
+                $validated['original_scheduled_at'] = $item->scheduled_at;
+            }
+        }
+
+        // Check if status changed to cancelled
+        $statusChangedToCancelled = false;
+        if ($validated['status'] === 'cancelled' && $item->status !== 'cancelled') {
+            $statusChangedToCancelled = true;
+        }
+
+        // Restore status if it was expired and scheduled in the future
+        if ($item->status === 'expired' && $request->filled('scheduled_at') && \Carbon\Carbon::parse($request->scheduled_at)->gt(now())) {
+            $validated['status'] = $request->technician_id ? 'scheduled' : 'new';
+            $validated['sub_status'] = null;
+        }
+
+        // If assigned to an independent technician, it's scheduled.
+        // If assigned to a company, it remains 'new' so it appears in their New tab.
         if ($request->filled('technician_id') && ($request->technician_id != $item->technician_id)) {
             $validated['assigned_at'] = now();
             $tech = \App\Models\Technician::find($request->technician_id);
+            if ($tech && !$tech->maintenance_company_id) {
+                $validated['status'] = 'scheduled';
+            }
             if ($tech && $tech->user) {
                 $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
                 $this->sendNotification($tech->user_id, [
@@ -451,7 +499,90 @@ class OrderController extends Controller
             }
         }
 
+        // Check if discount changed to send notification
+        $discountChanged = false;
+        $oldDiscount = (float) ($item->discount ?? 0);
+        if ($discount > 0 && $discount != $oldDiscount) {
+            $discountChanged = true;
+        }
+
         $item->update($validated);
+
+        // Send discount notification to user
+        if ($discountChanged && $item->user_id) {
+            $formattedDiscount = number_format($discount, 2);
+            $this->sendNotification($item->user_id, [
+                'type' => \App\Models\Notification::TYPE_STATUS_UPDATE,
+                'title_ar' => 'تمت إضافة خصم لطلبك',
+                'title_en' => 'Discount added to your order',
+                'body_ar' => "تمت إضافة خصم بقيمة {$formattedDiscount} ر.س على طلبك رقم #{$item->order_number}.",
+                'body_en' => "A discount of {$formattedDiscount} SAR has been added to your order #{$item->order_number}.",
+                'data' => ['order_id' => $item->id]
+            ]);
+        }
+
+        // Send reschedule notification to user
+        if ($dateChanged && $item->user_id) {
+            $formattedTime = \Carbon\Carbon::parse($item->scheduled_at)->format('Y-m-d g:i A');
+            $this->sendNotification($item->user_id, [
+                'type' => \App\Models\Notification::TYPE_ORDER_RESCHEDULED,
+                'title_ar' => 'إعادة جدولة الطلب',
+                'title_en' => 'Order Rescheduled',
+                'body_ar' => "تم تغيير موعد طلبك رقم #{$item->order_number} إلى {$formattedTime}",
+                'body_en' => "Your order #{$item->order_number} has been rescheduled to {$formattedTime}",
+                'data' => ['order_id' => $item->id]
+            ]);
+        }
+
+        // Send reschedule notification to technician
+        if ($dateChanged && $item->technician_id && $item->technician && $item->technician->user_id) {
+            $formattedTime = \Carbon\Carbon::parse($item->scheduled_at)->format('Y-m-d g:i A');
+            $this->sendNotification($item->technician->user_id, [
+                'type' => \App\Models\Notification::TYPE_ORDER_RESCHEDULED,
+                'title_ar' => 'إعادة جدولة المهمة',
+                'title_en' => 'Task Rescheduled',
+                'body_ar' => "تم تغيير موعد المهمة رقم #{$item->order_number} إلى {$formattedTime}",
+                'body_en' => "Task #{$item->order_number} has been rescheduled to {$formattedTime}",
+                'data' => ['order_id' => $item->id]
+            ]);
+        }
+
+        // Send cancellation notification to user & technician
+        if ($statusChangedToCancelled) {
+            if ($item->user_id) {
+                $this->sendNotification($item->user_id, [
+                    'type' => \App\Models\Notification::TYPE_ORDER_CANCELLED,
+                    'title_ar' => 'تم إلغاء الطلب',
+                    'title_en' => 'Order Cancelled',
+                    'body_ar' => "تم إلغاء طلبك رقم #{$item->order_number} من قبل الإدارة",
+                    'body_en' => "Your order #{$item->order_number} has been cancelled by administration",
+                    'data' => ['order_id' => $item->id]
+                ]);
+            }
+            if ($item->technician_id && $item->technician && $item->technician->user_id) {
+                $this->sendNotification($item->technician->user_id, [
+                    'type' => \App\Models\Notification::TYPE_ORDER_CANCELLED,
+                    'title_ar' => 'تم إلغاء المهمة',
+                    'title_en' => 'Task Cancelled',
+                    'body_ar' => "تم إلغاء المهمة رقم #{$item->order_number} من قبل الإدارة",
+                    'body_en' => "Task #{$item->order_number} has been cancelled by administration",
+                    'data' => ['order_id' => $item->id]
+                ]);
+            }
+        }
+
+        // Sync Appointment
+        if ($item->scheduled_at) {
+            \App\Models\Appointment::updateOrCreate(
+                ['order_id' => $item->id],
+                [
+                    'technician_id' => $item->technician_id,
+                    'appointment_date' => $item->scheduled_at,
+                    'status' => $item->status === 'cancelled' ? 'cancelled' : ($item->status === 'completed' ? 'completed' : ($item->status === 'in_progress' ? 'in_progress' : 'scheduled')),
+                ]
+            );
+        }
+
         return redirect()->route('admin.orders.index')->with('success', __('Order updated successfully.'));
     }
 
@@ -528,6 +659,17 @@ class OrderController extends Controller
             }
         }
 
+        if ($order->scheduled_at) {
+            \App\Models\Appointment::updateOrCreate(
+                ['order_id' => $order->id],
+                [
+                    'technician_id' => $order->technician_id,
+                    'appointment_date' => $order->scheduled_at,
+                    'status' => $order->status === 'cancelled' ? 'cancelled' : ($order->status === 'completed' ? 'completed' : ($order->status === 'in_progress' ? 'in_progress' : 'scheduled')),
+                ]
+            );
+        }
+
         return redirect()->back()->with('success', __('Order accepted and assigned successfully.'));
     }
 
@@ -557,7 +699,23 @@ class OrderController extends Controller
     {
         $item = Order::findOrFail($id);
         $item->delete();
+        
+        \App\Models\Appointment::where('order_id', $item->id)->delete();
+
         return redirect()->back()->with('success', __('Order deleted successfully.'));
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->input('ids');
+        if (empty($ids)) {
+            return back()->with('error', __('No orders selected.'));
+        }
+
+        Order::whereIn('id', $ids)->delete();
+        \App\Models\Appointment::whereIn('order_id', $ids)->delete();
+
+        return back()->with('success', __('Selected orders deleted successfully.'));
     }
     public function getAvailableTechnicians(Request $request, $id)
     {
@@ -592,12 +750,14 @@ class OrderController extends Controller
             $start = $order->scheduled_at->copy()->subHours(1)->addMinute();
             $end = $order->scheduled_at->copy()->addHours(1)->subMinute();
             
-            $query->whereDoesntHave('orders', function($q) use ($start, $end) {
-                $q->whereIn('status', ['accepted', 'scheduled', 'in_progress'])
+            $query->whereDoesntHave('orders', function($q) use ($start, $end, $order) {
+                $q->where('id', '!=', $order->id)
+                  ->whereIn('status', ['accepted', 'scheduled', 'in_progress'])
                   ->whereBetween('scheduled_at', [$start, $end]);
             })
-            ->whereDoesntHave('appointments', function($q) use ($start, $end) {
-                $q->whereIn('status', ['scheduled', 'in_progress'])
+            ->whereDoesntHave('appointments', function($q) use ($start, $end, $order) {
+                $q->where('order_id', '!=', $order->id)
+                  ->whereIn('status', ['scheduled', 'in_progress'])
                   ->whereBetween('appointment_date', [$start, $end]);
             });
         }
@@ -690,6 +850,100 @@ class OrderController extends Controller
                 ];
             })
         ]);
+    }
+
+    public function cancel($id)
+    {
+        $order = Order::findOrFail($id);
+        $order->status = 'cancelled';
+        $order->save();
+
+        \App\Models\Appointment::where('order_id', $order->id)->update([
+            'status' => 'cancelled',
+        ]);
+
+        if ($order->user_id) {
+            $this->sendNotification($order->user_id, [
+                'type' => \App\Models\Notification::TYPE_ORDER_CANCELLED,
+                'title_ar' => 'تم إلغاء الطلب',
+                'title_en' => 'Order Cancelled',
+                'body_ar' => "تم إلغاء طلبك رقم #{$order->order_number} من قبل الإدارة",
+                'body_en' => "Your order #{$order->order_number} has been cancelled by administration",
+                'data' => ['order_id' => $order->id]
+            ]);
+        }
+
+        if ($order->technician_id && $order->technician && $order->technician->user_id) {
+            $this->sendNotification($order->technician->user_id, [
+                'type' => \App\Models\Notification::TYPE_ORDER_CANCELLED,
+                'title_ar' => 'تم إلغاء المهمة',
+                'title_en' => 'Task Cancelled',
+                'body_ar' => "تم إلغاء المهمة رقم #{$order->order_number} من قبل الإدارة",
+                'body_en' => "Task #{$order->order_number} has been cancelled by administration",
+                'data' => ['order_id' => $order->id]
+            ]);
+        }
+
+        return redirect()->back()->with('success', __('Order cancelled successfully.'));
+    }
+
+    public function reschedule(Request $request, $id)
+    {
+        $request->validate([
+            'scheduled_at' => 'required|date',
+        ]);
+
+        $order = Order::findOrFail($id);
+        
+        // Save the first original scheduled date if not set yet
+        if (!$order->original_scheduled_at && $order->scheduled_at) {
+            $order->original_scheduled_at = $order->scheduled_at;
+        }
+
+        $order->scheduled_at = $request->scheduled_at;
+
+        // Restore status if it was expired
+        if ($order->status === 'expired') {
+            $order->status = $order->technician_id ? 'scheduled' : 'new';
+        }
+        $order->sub_status = null; // Clear expired/reschedule_requested sub_status
+
+        $order->save();
+
+        \App\Models\Appointment::updateOrCreate(
+            ['order_id' => $order->id],
+            [
+                'technician_id' => $order->technician_id,
+                'appointment_date' => $order->scheduled_at,
+                'status' => $order->status === 'cancelled' ? 'cancelled' : ($order->status === 'completed' ? 'completed' : ($order->status === 'in_progress' ? 'in_progress' : 'scheduled')),
+            ]
+        );
+
+        if ($order->user_id) {
+            $formattedTime = $order->scheduled_at->format('Y-m-d g:i A');
+            $this->sendNotification($order->user_id, [
+                'type' => \App\Models\Notification::TYPE_ORDER_RESCHEDULED,
+                'title_ar' => 'إعادة جدولة الطلب',
+                'title_en' => 'Order Rescheduled',
+                'body_ar' => "تم تغيير موعد طلبك رقم #{$order->order_number} إلى {$formattedTime}",
+                'body_en' => "Your order #{$order->order_number} has been rescheduled to {$formattedTime}",
+                'data' => ['order_id' => $order->id]
+            ]);
+        }
+
+        if ($order->technician_id && $order->technician && $order->technician->user_id) {
+            $formattedTime = $order->scheduled_at->format('Y-m-d g:i A');
+            $this->sendNotification($order->technician->user_id, [
+                'type' => \App\Models\Notification::TYPE_ORDER_RESCHEDULED,
+                'title_ar' => 'إعادة جدولة المهمة',
+                'title_en' => 'Task Rescheduled',
+                'body_ar' => "تم تغيير موعد المهمة رقم #{$order->order_number} إلى {$formattedTime}",
+                'body_en' => "Task #{$order->order_number} has been rescheduled to {$formattedTime}",
+                'data' => ['order_id' => $order->id]
+            ]);
+        }
+
+        return redirect()->back()->with('success', __('Order rescheduled successfully.'));
     }
 
     private function sendNotification($userId, $details)
