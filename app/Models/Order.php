@@ -465,6 +465,11 @@ class Order extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function invoice()
+    {
+        return $this->hasOne(Invoice::class);
+    }
+
     public function services()
     {
         return $this->belongsToMany(Service::class, 'order_services');

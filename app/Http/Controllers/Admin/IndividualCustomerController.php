@@ -21,7 +21,9 @@ class IndividualCustomerController extends Controller
 {
     public function index(Request $request)
     {
-        $query = IndividualCustomer::with('user');
+        $query = IndividualCustomer::whereHas('user', function ($q) {
+            $q->whereIn('type', ['individual', 'client']);
+        })->with('user');
 
         // 1. Search Logic
         if ($request->has('search') && $request->search) {

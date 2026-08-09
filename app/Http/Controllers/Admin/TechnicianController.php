@@ -21,7 +21,9 @@ class TechnicianController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Technician::with(['user', 'service', 'category', 'maintenanceCompany'])
+        $query = Technician::whereHas('user', function ($q) {
+            $q->where('type', 'technician');
+        })->with(['user', 'service', 'category', 'maintenanceCompany'])
             ->withCount(['orders' => function($q) {
                 $q->where('status', 'completed');
             }]);

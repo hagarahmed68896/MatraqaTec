@@ -1455,7 +1455,7 @@ class OrderController extends Controller
 
     public function getInvoice($id)
     {
-        $order = Order::with(['service', 'user'])->find($id);
+        $order = Order::with(['service', 'user', 'invoice'])->find($id);
         if (!$order) return response()->json(['status' => false, 'message' => 'Order not found'], 404);
 
         $serviceTaxRate = (float) \App\Models\Setting::getByKey('vat_rate_services', 15) / 100;
@@ -1507,6 +1507,7 @@ class OrderController extends Controller
                 'total_commission' => number_format($totalCommission, 2),
                 'total_company_share' => number_format($totalCompanyShare, 2),
                 'total' => number_format($grandTotal, 2),
+                'zatca_qr_code' => $order->invoice ? $order->invoice->zatca_qr_code : null,
                 'spare_parts' => $order->spare_parts_metadata ?? [],
             ]
         ]);

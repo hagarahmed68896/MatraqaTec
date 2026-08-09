@@ -56,23 +56,38 @@
                 <div class="grid grid-cols-2 gap-8">
                     <div class="space-y-4">
                         <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{{ __('From') }}</h4>
-                        <div class="space-y-1">
+                        <div class="space-y-2">
                             <p class="text-sm font-black text-[#1A1A31] dark:text-white">{{ __('Matraqa Tec Company') }}</p>
-                            <p class="text-[11px] font-bold text-slate-500 dark:text-white tracking-wide">{{ __('VAT Number') }}: {{ \App\Models\Setting::getByKey('company_vat_number', '300012345600003') }}</p>
-                            <p class="text-[11px] font-bold text-slate-500 dark:text-white tracking-wide">example@gmail.com</p>
-                            <p class="text-[11px] font-bold text-slate-500 dark:text-white tracking-wide">+966 123 1234 123</p>
+                            <div class="flex items-center gap-2 text-[11px] font-bold text-slate-500 dark:text-white tracking-wide">
+                                <svg class="w-3.5 h-3.5 text-slate-400 dark:text-white/40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                <span>{{ __('VAT Number') }}: {{ \App\Models\Setting::getByKey('company_vat_number', '300012345600003') }}</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-[11px] font-bold text-slate-500 dark:text-white tracking-wide">
+                                <svg class="w-3.5 h-3.5 text-slate-400 dark:text-white/40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                <span>example@gmail.com</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-[11px] font-bold text-slate-500 dark:text-white tracking-wide font-mono">
+                                <svg class="w-3.5 h-3.5 text-slate-400 dark:text-white/40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                                <span>+966 123 1234 123</span>
+                            </div>
                         </div>
                     </div>
                     <div class="space-y-4">
                         <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{{ __('To') }}</h4>
-                        <div class="space-y-1">
+                        <div class="space-y-2">
                             <p class="text-sm font-black text-[#1A1A31] dark:text-white">{{ $item->order->user->name ?? '-' }}</p>
-                            <p class="text-[11px] font-bold text-slate-500 dark:text-white tracking-wide">{{ $item->order->user->email ?? 'no-email@example.com' }}</p>
-                            <p class="text-[11px] font-bold text-slate-500 dark:text-white tracking-wide">{{ $item->order->user->phone ?? '-' }}</p>
+                            <div class="flex items-center gap-2 text-[11px] font-bold text-slate-500 dark:text-white tracking-wide">
+                                <svg class="w-3.5 h-3.5 text-slate-400 dark:text-white/40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                <span>{{ $item->order->user->email ?? 'no-email@example.com' }}</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-[11px] font-bold text-slate-500 dark:text-white tracking-wide font-mono">
+                                <svg class="w-3.5 h-3.5 text-slate-400 dark:text-white/40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                                <span>{{ $item->order->user->phone ?? '-' }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-
+ 
                 <!-- Invoice Meta -->
                 <div class="flex {{ app()->getLocale() == 'ar' ? 'justify-start' : 'justify-end' }} items-center gap-16">
                     <div class="space-y-4 text-center">
@@ -85,42 +100,91 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Items Table -->
-            <div class="rounded-[2rem] border border-slate-50 dark:border-white/5 overflow-hidden mb-12">
-                <table class="w-full text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
-                    <thead>
-                        <tr class="bg-slate-50/50 dark:bg-white/5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-50 dark:border-white/5">
-                            <th class="py-6 px-10">{{ __('Description') }}</th>
-                            <th class="py-6 px-4 text-center">{{ __('Quantity') }}</th>
-                            <th class="py-6 px-8 text-center">{{ __('Unit Price') }}</th>
-                            <th class="py-6 px-10 {{ app()->getLocale() == 'ar' ? 'text-right' : 'text-right' }}">{{ __('Total') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-50 dark:divide-white/5">
-                        @foreach($items_details as $detail)
-                        <tr class="text-xs font-bold text-slate-600 dark:text-white/70">
-                            <td class="py-6 px-10">
-                                <span class="text-sm font-black text-[#1A1A31] dark:text-white">{{ $detail['description'] }}</span>
-                            </td>
-                            <td class="py-6 px-4 text-center text-slate-400">{{ $detail['quantity'] == 1 ? '-' : $detail['quantity'] }}</td>
-                            <td class="py-6 px-8 text-center">
-                                <div class="flex items-center justify-center gap-1.5 ml-2">
-                                    <span class="text-sm font-black text-[#1A1A31] dark:text-white">{{ number_format($detail['price'], 2) }}</span>
-                                    <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-3.5 h-3.5 opacity-40">
-                                </div>
-                            </td>
-                            <td class="py-6 px-10 text-right">
-                                <div class="flex items-center justify-end gap-1.5">
-                                    <span class="text-sm font-black text-[#1A1A31] dark:text-white">{{ number_format($detail['total'], 2) }}</span>
-                                    <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-3.5 h-3.5 opacity-40">
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+ 
+            <!-- Service Table -->
+            <div class="space-y-4 mb-8">
+                <h3 class="text-xs font-black uppercase tracking-[0.2em] text-slate-400">{{ __('Service') }}</h3>
+                <div class="rounded-[2rem] border border-slate-50 dark:border-white/5 overflow-hidden">
+                    <table class="w-full text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
+                        <thead>
+                            <tr class="bg-slate-50/50 dark:bg-white/5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-50 dark:border-white/5">
+                                <th class="py-6 px-10">{{ __('Description') }}</th>
+                                <th class="py-6 px-10 text-right">{{ __('Total') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50 dark:divide-white/5">
+                            @foreach($items_details as $detail)
+                            @if(isset($detail['type']) && $detail['type'] === 'service')
+                            <tr class="text-xs font-bold text-slate-600 dark:text-white/70">
+                                <td class="py-6 px-10">
+                                    <span class="text-sm font-black text-[#1A1A31] dark:text-white">{{ $detail['description'] }}</span>
+                                </td>
+                                <td class="py-6 px-10 text-right">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <span class="text-sm font-black text-[#1A1A31] dark:text-white">{{ number_format($detail['total'], 2) }}</span>
+                                        <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-3.5 h-3.5 opacity-40">
+                                    </div>
+                                </td>
+                            </tr>
+                            @endif
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
+
+            @php
+                $hasSpareParts = false;
+                foreach($items_details as $detail) {
+                    if(isset($detail['type']) && $detail['type'] === 'spare_part') {
+                        $hasSpareParts = true;
+                        break;
+                    }
+                }
+            @endphp
+
+            @if($hasSpareParts)
+            <!-- Spare Parts Table -->
+            <div class="space-y-4 mb-12">
+                <h3 class="text-xs font-black uppercase tracking-[0.2em] text-slate-400">{{ __('Spare Parts') }}</h3>
+                <div class="rounded-[2rem] border border-slate-50 dark:border-white/5 overflow-hidden">
+                    <table class="w-full text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
+                        <thead>
+                            <tr class="bg-slate-50/50 dark:bg-white/5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-50 dark:border-white/5">
+                                <th class="py-6 px-10">{{ __('Spare Part') }}</th>
+                                <th class="py-6 px-4 text-center">{{ __('Quantity') }}</th>
+                                <th class="py-6 px-8 text-center">{{ __('Unit Price') }}</th>
+                                <th class="py-6 px-10 text-right">{{ __('Total') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50 dark:divide-white/5">
+                            @foreach($items_details as $detail)
+                            @if(isset($detail['type']) && $detail['type'] === 'spare_part')
+                            <tr class="text-xs font-bold text-slate-600 dark:text-white/70">
+                                <td class="py-6 px-10">
+                                    <span class="text-sm font-black text-[#1A1A31] dark:text-white">{{ $detail['description'] }}</span>
+                                </td>
+                                <td class="py-6 px-4 text-center text-slate-400">{{ $detail['quantity'] }}</td>
+                                <td class="py-6 px-8 text-center">
+                                    <div class="flex items-center justify-center gap-1.5 ml-2">
+                                        <span class="text-sm font-black text-[#1A1A31] dark:text-white">{{ number_format($detail['price'], 2) }}</span>
+                                        <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-3.5 h-3.5 opacity-40">
+                                    </div>
+                                </td>
+                                <td class="py-6 px-10 text-right">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <span class="text-sm font-black text-[#1A1A31] dark:text-white">{{ number_format($detail['total'], 2) }}</span>
+                                        <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-3.5 h-3.5 opacity-40">
+                                    </div>
+                                </td>
+                            </tr>
+                            @endif
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endif
 
             <!-- Summary Section -->
             <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 border-t border-slate-50 dark:border-white/5 pt-10">

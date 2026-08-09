@@ -100,7 +100,7 @@ class AuthController extends Controller
                 'commercial_record_file' => $crFilePath,
                 'tax_number' => $request->tax_number,
                 'address' => $request->address,
-                'city_id' => $request->city_id ?? 1, 
+                'city_id' => $request->city_id, 
             ]);
         } elseif ($request->type === 'corporate_customer') {
             // Handle CR File Upload

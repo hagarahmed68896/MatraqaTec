@@ -17,14 +17,14 @@ class AdminAuth
     public function handle(Request $request, Closure $next): Response
     {
         if (!Auth::check()) {
-            return redirect()->route('admin.login')->with('error', 'Please login to access the dashboard.');
+            return redirect()->route('admin.login')->with('error', __('Please login to access the dashboard.'));
         }
 
         if (!in_array(Auth::user()->type, ['supervisor', 'admin'])) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
-            return redirect()->route('admin.login')->with('error', 'Access denied. Authorized personnel only.');
+            return redirect()->route('admin.login')->with('error', __('Access denied. Authorized personnel only.'));
         }
 
         return $next($request);

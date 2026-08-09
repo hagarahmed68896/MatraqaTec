@@ -16,7 +16,9 @@ class MaintenanceCompanyController extends Controller
 {
     public function index(Request $request)
     {
-        $query = MaintenanceCompany::with(['user', 'technicians.service', 'orders', 'financialSettlements']);
+        $query = MaintenanceCompany::whereHas('user', function ($q) {
+            $q->where('type', 'maintenance_company');
+        })->with(['user', 'technicians.service', 'orders', 'financialSettlements']);
 
         // 1. Search Logic
         if ($request->has('search') && $request->search) {
@@ -328,9 +330,10 @@ class MaintenanceCompanyController extends Controller
 
     public function edit($id)
     {
-        $company = MaintenanceCompany::with('user')->findOrFail($id);
+        $company = MaintenanceCompany::with(['user', 'services'])->findOrFail($id);
         $cities = \App\Models\City::all();
-        return view('admin.maintenance_companies.edit', compact('company', 'cities'));
+        $services = \App\Models\Service::whereNull('parent_id')->get();
+        return view('admin.maintenance_companies.edit', compact('company', 'cities', 'services'));
     }
 
     public function update(Request $request, $id)
@@ -359,7 +362,26 @@ class MaintenanceCompanyController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'name'                      => 'required|string|max:255|unique:maintenance_companies,name,'.$company->id.'|unique:maintenance_companies,company_name_ar,'.$company->id.'|unique:maintenance_companies,company_name_en,'.$company->id,
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                function ($attribute, $value, $fail) use ($company) {
+                    $exists = \App\Models\MaintenanceCompany::where('id', '<>', $company->id)
+                        ->whereHas('user', function ($q) {
+                            $q->where('type', 'maintenance_company');
+                        })
+                        ->where(function ($q) use ($value) {
+                            $q->where('name', $value)
+                              ->orWhere('company_name_ar', $value)
+                              ->orWhere('company_name_en', $value);
+                        })
+                        ->exists();
+                    if ($exists) {
+                        $fail('اسم الشركة مسجل مسبقاً في النظام كشركة صيانة');
+                    }
+                }
+            ],
             'email'                     => 'required|string|email|max:255|unique:users,email,'.$company->user_id,
             'password'                  => 'nullable|string|min:8',
             'phone'                     => ['required', 'string', 'unique:users,phone,'.$company->user_id, 'regex:/^[0-9]{9}$/'],
@@ -422,6 +444,20 @@ class MaintenanceCompanyController extends Controller
             $oldFilePath = $company->commercial_record_file;
 
             $company->update($data);
+
+            if ($request->has('services')) {
+                $syncData = [];
+                $existingServices = $company->services->keyBy('id');
+                foreach ($request->input('services') as $serviceId) {
+                    $existing = $existingServices->get($serviceId);
+                    $syncData[$serviceId] = [
+                        'district_ids' => $existing ? $existing->pivot->district_ids : json_encode([])
+                    ];
+                }
+                $company->services()->sync($syncData);
+            } else {
+                $company->services()->sync([]);
+            }
 
             \Illuminate\Support\Facades\DB::commit();
 

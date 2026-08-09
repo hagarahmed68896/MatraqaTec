@@ -21,6 +21,8 @@
                 showRescheduleModal: false,
                 showCancelModal: false,
                 selectedOrder: {{ $item->id }},
+                orderLat: {{ $item->latitude ?? 'null' }},
+                orderLng: {{ $item->longitude ?? 'null' }},
                 viewMode: 'list',
                 map: null,
                 markers: [],
@@ -55,10 +57,12 @@
 
                 initMap() {
                     if (!this.map) {
+                        const centerLat = this.orderLat || 24.7136;
+                        const centerLng = this.orderLng || 46.6753;
                         this.map = L.map('tech-map', {
                             zoomControl: false,
                             attributionControl: false
-                        }).setView([24.7136, 46.6753], 12);
+                        }).setView([centerLat, centerLng], 12);
                         
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
                     }
@@ -69,6 +73,26 @@
                     if (!this.map) return;
                     this.markers.forEach(m => this.map.removeLayer(m));
                     this.markers = [];
+
+                    // Add Client / Order location marker
+                    if (this.orderLat && this.orderLng) {
+                        const clientIcon = L.divIcon({
+                            className: 'custom-div-icon',
+                            html: `<div class="w-10 h-10 rounded-full bg-rose-600 border-[3px] border-white flex items-center justify-center shadow-2xl animate-pulse">
+                                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                   </div>`,
+                            iconSize: [40, 40],
+                            iconAnchor: [20, 40]
+                        });
+                        const clientMarker = L.marker([this.orderLat, this.orderLng], { icon: clientIcon }).addTo(this.map);
+                        clientMarker.bindPopup(`
+                            <div style="font-family: inherit; font-size: 13px; text-align: right; direction: rtl; padding: 4px;">
+                                <h4 style="margin: 0 0 5px 0; font-weight: bold; font-size: 14px; color: #e11d48;">{{ __("Client Location") }}</h4>
+                                <p style="margin: 0; color: #64748b;">{{ $item->address ?? "" }}</p>
+                            </div>
+                        `);
+                        this.markers.push(clientMarker);
+                    }
 
                     let data = this.modalTab === 'platform' ? this.technicians : this.companies;
                     if (this.searchMap.trim()) {
@@ -302,7 +326,16 @@
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         </div>
                         <div>
-                            <span class="block text-sm font-bold text-[#1A1A31] dark:text-white">{{ __('Address') }}: <span class="text-slate-400 font-bold ml-1">{{ $item->address ?? '-' }}</span></span>
+                            <span class="block text-sm font-bold text-[#1A1A31] dark:text-white">
+                                {{ __('Address') }}: 
+                                <span class="text-slate-400 font-bold ml-1">{{ $item->address ?? '-' }}</span>
+                                @if($item->latitude && $item->longitude)
+                                    <a href="https://www.google.com/maps/search/?api=1&query={{ $item->latitude }},{{ $item->longitude }}" target="_blank" class="inline-flex items-center gap-1 text-xs text-blue-500 hover:underline ml-2">
+                                        <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L16 4m0 13V4m0 0L9 7"></path></svg>
+                                        {{ __('Show on Google Maps') }}
+                                    </a>
+                                @endif
+                            </span>
                         </div>
                     </div>
 

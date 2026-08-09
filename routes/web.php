@@ -272,3 +272,4 @@ Route::prefix('admin')->group(function () {
         Route::post('maintenance_companies/bulk_unblock', [App\Http\Controllers\Admin\MaintenanceCompanyController::class, 'bulkUnblock'])->name('admin.maintenance_companies.bulk_unblock');
     });
 });
+

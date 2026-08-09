@@ -405,7 +405,10 @@ class TechnicianProfileController extends Controller
      */
     public function home(Request $request)
     {
-        $user = $request->user();
+        $user = $request->user('sanctum') ?? auth('sanctum')->user() ?? $request->user();
+        if (!$user) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+        }
         $technician = $user->technician;
         
         $audienceType = 'technicians';

@@ -20,7 +20,9 @@ class CorporateCustomerController extends Controller
 {
     public function index(Request $request)
     {
-        $query = CorporateCustomer::with('user');
+        $query = CorporateCustomer::whereHas('user', function ($q) {
+            $q->where('type', 'corporate_customer');
+        })->with('user');
 
         // 1. Search Logic
         if ($request->has('search') && $request->search) {
@@ -308,7 +310,25 @@ class CorporateCustomerController extends Controller
         $rules = [
             'email'                     => 'required|string|email|max:255|unique:users,email,'.$profile->user_id,
             'phone'                     => ['required', 'string', 'unique:users,phone,'.$profile->user_id, 'regex:/^[0-9]{9}$/'],
-            'name'                      => 'required|string|max:255|unique:corporate_customers,company_name_ar,'.$profile->id.'|unique:corporate_customers,company_name_en,'.$profile->id,
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                function ($attribute, $value, $fail) use ($profile) {
+                    $exists = \App\Models\CorporateCustomer::where('id', '<>', $profile->id)
+                        ->whereHas('user', function ($q) {
+                            $q->where('type', 'corporate_customer');
+                        })
+                        ->where(function ($q) use ($value) {
+                            $q->where('company_name_ar', $value)
+                              ->orWhere('company_name_en', $value);
+                        })
+                        ->exists();
+                    if ($exists) {
+                        $fail('اسم الشركة مسجل مسبقاً في النظام كعميل شركات');
+                    }
+                }
+            ],
             'tax_number'                => 'nullable|digits_between:1,20|unique:corporate_customers,tax_number,'.$profile->id,
             'commercial_record_number'  => 'required|digits_between:1,20|unique:corporate_customers,commercial_record_number,'.$profile->id,
             'commercial_record_file'    => 'nullable|file|mimes:pdf,jpg,png,jpeg,doc,docx|max:10240',

@@ -49,12 +49,32 @@ class InvoiceController extends Controller
                 ? (app()->getLocale() == 'ar' ? $item->order->service->name_ar : $item->order->service->name_en) 
                 : __('Service');
 
+            // 1. Main Service Item
+            $servicePrice = $item->order->price ?? 50.00;
             $items_details[] = [
+                'type' => 'service',
                 'description' => $serviceName,
                 'quantity' => 1,
-                'price' => $item->amount,
-                'total' => $item->amount
+                'price' => $servicePrice,
+                'total' => $servicePrice
             ];
+
+            // 2. Spare Parts Items
+            $spareParts = $item->order->spare_parts_metadata;
+            if (is_string($spareParts)) {
+                $spareParts = json_decode($spareParts, true);
+            }
+            if (is_array($spareParts)) {
+                foreach ($spareParts as $part) {
+                    $items_details[] = [
+                        'type' => 'spare_part',
+                        'description' => $part['name'] ?? __('Spare Part'),
+                        'quantity' => $part['qty'] ?? 1,
+                        'price' => $part['price'] ?? 0.00,
+                        'total' => ($part['qty'] ?? 1) * ($part['price'] ?? 0.00)
+                    ];
+                }
+            }
         }
 
         return view('admin.invoices.show', compact('item', 'items_details'));

@@ -154,6 +154,43 @@
             </div>
         </div>
 
+        <!-- Assigned Services -->
+        <div class="bg-white dark:bg-[#1A1A31] rounded-[2.5rem] p-8 md:p-12 border border-slate-100 dark:border-white/5 shadow-sm">
+            <div class="mb-10 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                </div>
+                <div>
+                    <h3 class="text-xl font-black text-slate-800 dark:text-white">{{ __('Assigned Services') }}</h3>
+                    <p class="text-xs text-slate-400 font-bold mt-1">{{ __('Select the services this company provides') }}</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                @foreach($services as $service)
+                @php
+                    $isAssigned = $company->services->contains($service->id);
+                @endphp
+                <label class="relative flex items-center gap-4 p-5 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-2xl hover:border-primary/30 dark:hover:border-white/20 transition-all cursor-pointer select-none">
+                    <input type="checkbox" name="services[]" value="{{ $service->id }}" {{ $isAssigned ? 'checked' : '' }}
+                           class="w-5 h-5 rounded border-slate-300 text-primary focus:ring-primary dark:bg-white/5 dark:border-white/10">
+                    
+                    @if($service->icon)
+                    <div class="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center shrink-0">
+                        <img src="{{ asset($service->icon) }}" alt="" class="w-7 h-7 object-contain">
+                    </div>
+                    @endif
+
+                    <div class="flex-1">
+                        <span class="block text-sm font-black text-slate-800 dark:text-white">
+                            {{ app()->getLocale() == 'ar' ? $service->name_ar : $service->name_en }}
+                        </span>
+                    </div>
+                </label>
+                @endforeach
+            </div>
+        </div>
+
         <!-- Submit -->
         <div class="flex items-center gap-4">
             <button type="submit" class="flex-1 py-5 bg-primary text-white rounded-[2.5rem] font-black hover:bg-primary-dark transition-all shadow-xl shadow-primary/20 uppercase tracking-widest text-sm">
