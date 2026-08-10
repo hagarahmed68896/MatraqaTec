@@ -72,212 +72,14 @@
 
         @foreach($tabs as $tab)
         <a href="{{ request()->fullUrlWithQuery(['tab' => $tab['id']]) }}" 
-           class="flex items-center gap-3 px-8 py-3 rounded-2xl font-black text-md transition-all {{ $currentTab == $tab['id'] ? 'bg-[#1A1A31] text-white dark:bg-white/10 dark:text-[#1A1A31] shadow-lg' : 'bg-white dark:bg-[#1A1A31] text-[#1A1A31] dark:text-white border border-slate-100 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5' }}">
+           class="flex items-center gap-3 px-8 py-3 rounded-2xl font-black text-md transition-all {{ $currentTab == $tab['id'] ? 'bg-[#1A1A31] text-white dark:bg-white/10 dark:text-white shadow-lg' : 'bg-white dark:bg-[#1A1A31] text-[#1A1A31] dark:text-white border border-slate-100 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5' }}">
             {{ __($tab['label']) }}
-            <span class="w-6 h-6 rounded-lg {{ $currentTab == $tab['id'] ? 'bg-white/20 text-white dark:bg-[#1A1A31]/20 dark:text-[#1A1A31]' : 'bg-slate-100 dark:bg-white/10 text-[#1A1A31] dark:text-white' }} flex items-center justify-center text-[11px]">{{ $tab['count'] }}</span>
+            <span class="w-6 h-6 rounded-lg {{ $currentTab == $tab['id'] ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-white/10 text-[#1A1A31] dark:text-white' }} flex items-center justify-center text-[11px]">{{ $tab['count'] }}</span>
         </a>
         @endforeach
     </div>
 
-    <!-- SEARCH & FILTERS -->
-    <div class="flex items-center justify-center gap-6 relative">
-        <div class="w-full max-w-2xl relative group">
-            <input type="text" x-model="searchQuery" @keyup.enter="document.getElementById('filterForm').submit()"
-                   class="w-full h-16 pr-14 pl-6 bg-white dark:bg-[#1A1A31] border border-slate-50 dark:border-white/10 rounded-[1.5rem] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1A1A31]/5 transition-all font-bold text-md text-[#1A1A31] dark:text-white">
-            <div class="absolute right-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            </div>
-        </div>
 
-        <!-- Filter Dropdown Wrapper -->
-        <div class="relative">
-            <!-- Filter Dropdown Trigger -->
-            <button @click="showFilters = !showFilters" 
-                    class="w-16 h-16 flex items-center justify-center bg-white dark:bg-[#1A1A31] rounded-2xl shadow-sm border border-slate-50 dark:border-white/10 text-[#1A1A31] dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
-                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                <div x-show="showFilters" class="absolute top-0 right-0 w-3 h-3 bg-red-500 border-2 border-white dark:border-[#1A1A31] rounded-full"></div>
-            </button>
-
-            <!-- Filter Dropdown Panel -->
-            <div x-show="showFilters" @click.away="showFilters = false" x-cloak 
-                 x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="opacity-0 scale-95 translate-y-2"
-                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                 class="absolute top-full {{ app()->getLocale() == 'ar' ? 'right-0' : 'left-0' }} mt-4 w-80 bg-white dark:bg-[#1A1A31] rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-white/10 z-[100] p-6 space-y-6 text-right overflow-y-auto max-h-[calc(100vh-200px)] custom-scrollbar">
-            
-            <form id="filterForm" action="{{ route('admin.orders.index') }}" method="GET" class="space-y-8">
-                <input type="hidden" name="tab" value="{{ request('tab') }}">
-                <input type="hidden" name="search" :value="searchQuery">
-                
-                <!-- Filter Section: Sort -->
-                <div class="space-y-4">
-                    <h4 class="text-xs font-black text-[#1A1A31] dark:text-white opacity-60 uppercase tracking-widest">
-                        {{ __('Sort by:') }}
-                    </h4>
-                    <div class="space-y-3">
-                        @foreach(['newest' => __('Newest'), 'oldest' => __('Oldest'), 'name' => __('Name')] as $val => $label)
-                        <label class="flex items-center justify-between cursor-pointer group">
-                             <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
-                             <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
-                                  :class="sortBy == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200'">
-                                 <input type="radio" name="sort_by" value="{{ $val }}" x-model="sortBy" class="hidden">
-                                 <template x-if="sortBy == '{{ $val }}'">
-                                     <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
-                                 </template>
-                             </div>
-                        </label>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div class="h-px bg-slate-50 dark:bg-white/5"></div>
-
-                <!-- Filter Section: Customer Type -->
-                <div class="space-y-4">
-                    <h4 class="text-xs font-black text-[#1A1A31] dark:text-white opacity-60 uppercase tracking-widest">{{ __('Customer Type:') }}</h4>
-                    <div class="space-y-3">
-                        @foreach(['' => __('All'), 'client' => __('Individual'), 'corporate' => __('Corporate')] as $val => $label)
-                        <label class="flex items-center justify-between cursor-pointer group">
-                             <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
-                             <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
-                                  :class="customerType == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200'">
-                                 <input type="radio" name="customer_type" value="{{ $val }}" x-model="customerType" class="hidden">
-                                 <template x-if="customerType == '{{ $val }}'">
-                                     <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
-                                 </template>
-                             </div>
-                        </label>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div class="h-px bg-slate-50 dark:bg-white/5"></div>
-
-                <!-- Filter Section: Technician Type -->
-                <div class="space-y-4">
-                    <h4 class="text-xs font-black text-[#1A1A31] dark:text-white opacity-60 uppercase tracking-widest">{{ __('Technician Type:') }}</h4>
-                    <div class="space-y-3">
-                        @foreach(['' => __('All'), 'platform' => __('Platform'), 'company' => __('Company')] as $val => $label)
-                        <label class="flex items-center justify-between cursor-pointer group">
-                             <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
-                             <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
-                                  :class="technicianType == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200'">
-                                 <input type="radio" name="technician_type" value="{{ $val }}" x-model="technicianType" class="hidden">
-                                 <template x-if="technicianType == '{{ $val }}'">
-                                     <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
-                                 </template>
-                             </div>
-                        </label>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div class="h-px bg-slate-50 dark:bg-white/5"></div>
-
-                <!-- Filter Section: Appointment Status -->
-                <div class="space-y-4">
-                    <h4 class="text-xs font-black text-[#1A1A31] dark:text-white opacity-60 uppercase tracking-widest">{{ __('Status:') }}</h4>
-                    <div class="space-y-3">
-                        @foreach(['' => __('All'), 'assigned' => __('Assigned'), 'waiting' => __('Waiting')] as $val => $label)
-                        <label class="flex items-center justify-between cursor-pointer group">
-                             <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
-                             <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
-                                  :class="appointmentStatus == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200'">
-                                 <input type="radio" name="appointment_status" value="{{ $val }}" x-model="appointmentStatus" class="hidden">
-                                 <template x-if="appointmentStatus == '{{ $val }}'">
-                                     <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
-                                 </template>
-                             </div>
-                        </label>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div class="h-px bg-slate-50 dark:bg-white/5"></div>
-
-                <!-- Filter Section: Sub Status -->
-                <div class="space-y-4">
-                    <h4 class="text-xs font-black text-[#1A1A31] dark:text-white opacity-60 uppercase tracking-widest">{{ __('Sub Status:') }}</h4>
-                    <div class="space-y-3">
-                        @foreach(['' => __('All'), 'on_way' => __('On Way'), 'arrived' => __('Arrived'), 'work_started' => __('Work Started'), 'additional_visit' => __('Additional Visit'), 'completed' => __('Completed')] as $val => $label)
-                        <label class="flex items-center justify-between cursor-pointer group">
-                                <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
-                                <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
-                                    :class="subStatus == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-200'">
-                                    <input type="radio" name="sub_status" value="{{ $val }}" x-model="subStatus" class="hidden">
-                                    <template x-if="subStatus == '{{ $val }}'">
-                                        <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
-                                    </template>
-                                </div>
-                        </label>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div class="h-px bg-slate-50 dark:bg-white/5"></div>
-
-                    <!-- Filter Section: Service Category (RADIO) -->
-                    <div class="space-y-4">
-                        <h4 class="text-xs font-black text-[#1A1A31] dark:text-white opacity-60 uppercase tracking-widest">{{ __('Service Category:') }}</h4>
-                        <div class="space-y-3">
-                            <label class="flex items-center justify-between cursor-pointer group">
-                                 <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ __('All') }}</span>
-                                 <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
-                                      :class="!selectedCategoryId ? 'border-primary bg-primary' : 'border-slate-200'">
-                                     <input type="radio" name="service_category_id" value="" x-model="selectedCategoryId" class="hidden">
-                                     <template x-if="!selectedCategoryId">
-                                         <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
-                                     </template>
-                                 </div>
-                            </label>
-                            @foreach($categories as $cat)
-                            <label class="flex items-center justify-between cursor-pointer group" @click="selectedServiceIds = []">
-                                 <span class="text-xs font-bold text-slate-500 dark:text-white transition-colors">{{ $cat->name_ar }}</span>
-                                 <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
-                                      :class="selectedCategoryId == {{ $cat->id }} ? 'border-primary bg-primary' : 'border-slate-200'">
-                                     <input type="radio" name="service_category_id" value="{{ $cat->id }}" x-model="selectedCategoryId" class="hidden">
-                                     <template x-if="selectedCategoryId == {{ $cat->id }}">
-                                         <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
-                                     </template>
-                                 </div>
-                            </label>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    <!-- Filter Section: Service Type (Child Services) - DYNAMIC MULTISELECT -->
-                    <div class="space-y-4" x-show="filteredServices.length > 0" x-cloak>
-                        <div class="h-px bg-slate-50 dark:bg-white/5 mb-4"></div>
-                        <h4 class="text-xs font-black text-[#1A1A31] dark:text-white opacity-60 uppercase tracking-widest">{{ __('Service Type:') }}</h4>
-                        <div class="space-y-3 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
-                            <template x-for="service in filteredServices" :key="service.id">
-                                <label class="flex items-center justify-between cursor-pointer group">
-                                     <span class="text-[11px] font-bold text-slate-500 dark:text-white transition-colors" x-text="service.name_ar"></span>
-                                     <div class="relative w-5 h-5 border-2 rounded-lg transition-all flex items-center justify-center"
-                                          :class="selectedServiceIds.includes(String(service.id)) ? 'border-primary bg-primary' : 'border-slate-200'">
-                                         <input type="checkbox" name="service_ids[]" :value="service.id" x-model="selectedServiceIds" class="hidden">
-                                         <template x-if="selectedServiceIds.includes(String(service.id))">
-                                             <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
-                                         </template>
-                                     </div>
-                                </label>
-                            </template>
-                        </div>
-                    </div>
-
-                <!-- Actions -->
-                <div class="flex gap-2 pt-4">
-                    <button type="submit" class="flex-1 py-3 bg-[#1A1A31] dark:bg-white dark:text-[#1A1A31] text-white rounded-xl font-black text-[10px] shadow-lg hover:scale-[1.02] transition-all">
-                        {{ __('Apply') }}
-                    </button>
-                    <a href="{{ route('admin.orders.index') }}" class="flex-1 py-3 bg-slate-50 dark:bg-white/10 text-slate-400 dark:text-slate-300 rounded-xl font-bold text-[10px] text-center hover:bg-slate-100 dark:hover:bg-white/5 transition-all">
-                        {{ __('Cancel') }}
-                    </a>
-                </div>
-            </form>
-        </div>
-        </div>
-    </div>
 
     <!-- Bulk Actions (Show when items are selected) -->
     <div x-show="selectedItems.length > 0" x-cloak x-transition class="flex items-center justify-between w-full bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-primary/20 mt-8" dir="rtl">
@@ -307,7 +109,180 @@
     </div>
 
     <!-- Orders Table Section -->
-    <div class="bg-white dark:bg-[#1A1A31] rounded-[2.5rem] border border-slate-50 dark:border-white/5 shadow-sm overflow-hidden min-h-[600px] mt-8">
+    <div class="bg-white dark:bg-[#1A1A31] rounded-[2.5rem] border border-slate-50 dark:border-white/5 shadow-sm overflow-visible min-h-[600px] mt-8 text-right" dir="rtl">
+        <!-- Controls Row -->
+        <div class="p-6">
+            <div x-show="selectedItems.length === 0" class="flex flex-col md:flex-row items-center justify-between gap-6 w-full">
+                <!-- Group: Filter & Search -->
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <!-- Filter Button -->
+                    <div class="relative">
+                        <button @click="showFilters = !showFilters" 
+                                class="w-12 h-12 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-slate-400 hover:text-primary dark:hover:text-white transition shadow-sm relative">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-sliders" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z"/>
+                            </svg>
+                            <div x-show="showFilters" class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></div>
+                        </button>
+
+                        <!-- Filter Dropdown Panel -->
+                        <div x-show="showFilters" @click.away="showFilters = false" x-cloak 
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+                             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                             class="absolute {{ app()->getLocale() == 'ar' ? 'right-0' : 'left-0' }} mt-3 w-80 bg-white dark:bg-[#1A1A31] rounded-[2rem] shadow-2xl border border-slate-100 dark:border-white/10 z-[100] p-6 space-y-6 text-right overflow-y-auto max-h-[calc(100vh-200px)] custom-scrollbar">
+                        
+                            <form id="filterForm" action="{{ route('admin.orders.index') }}" method="GET" class="space-y-8">
+                                <input type="hidden" name="tab" value="{{ request('tab') }}">
+                                <input type="hidden" name="search" :value="searchQuery">
+                                
+                                <!-- Sort By -->
+                                <div class="space-y-4">
+                                    <label class="text-sm font-black text-slate-950 dark:text-white">{{ __('Sort by') }}:</label>
+                                    <div class="space-y-3">
+                                        @foreach(['newest' => __('Newest'), 'oldest' => __('Oldest'), 'name' => __('Name')] as $val => $label)
+                                        <label class="flex items-center justify-between cursor-pointer group">
+                                             <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
+                                             <input type="radio" name="sort_by" value="{{ $val }}" x-model="sortBy" 
+                                                    class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
+                                        </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <div class="h-px bg-slate-100 dark:bg-white/5"></div>
+
+                                <!-- Customer Type -->
+                                <div class="space-y-4">
+                                    <label class="text-sm font-black text-slate-955 dark:text-white">{{ __('Customer Type:') }}</label>
+                                    <div class="space-y-3">
+                                        @foreach(['' => __('All'), 'client' => __('Individual'), 'corporate' => __('Corporate')] as $val => $label)
+                                        <label class="flex items-center justify-between cursor-pointer group">
+                                             <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
+                                             <input type="radio" name="customer_type" value="{{ $val }}" x-model="customerType" 
+                                                    class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
+                                        </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <div class="h-px bg-slate-100 dark:bg-white/5"></div>
+
+                                <!-- Technician Type -->
+                                <div class="space-y-4">
+                                    <label class="text-sm font-black text-slate-955 dark:text-white">{{ __('Technician Type:') }}</label>
+                                    <div class="space-y-3">
+                                        @foreach(['' => __('All'), 'platform' => __('Platform'), 'company' => __('Company')] as $val => $label)
+                                        <label class="flex items-center justify-between cursor-pointer group">
+                                             <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
+                                             <input type="radio" name="technician_type" value="{{ $val }}" x-model="technicianType" 
+                                                    class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
+                                        </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <div class="h-px bg-slate-100 dark:bg-white/5"></div>
+
+                                <!-- Appointment Status -->
+                                <div class="space-y-4">
+                                    <label class="text-sm font-black text-slate-955 dark:text-white">{{ __('Status:') }}</label>
+                                    <div class="space-y-3">
+                                        @foreach(['' => __('All'), 'assigned' => __('Assigned'), 'waiting' => __('Waiting')] as $val => $label)
+                                        <label class="flex items-center justify-between cursor-pointer group">
+                                             <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
+                                             <input type="radio" name="appointment_status" value="{{ $val }}" x-model="appointmentStatus" 
+                                                    class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
+                                        </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <div class="h-px bg-slate-100 dark:bg-white/5"></div>
+
+                                <!-- Sub Status -->
+                                <div class="space-y-4">
+                                    <label class="text-sm font-black text-slate-955 dark:text-white">{{ __('Sub Status:') }}</label>
+                                    <div class="space-y-3">
+                                        @foreach(['' => __('All'), 'on_way' => __('On Way'), 'arrived' => __('Arrived'), 'work_started' => __('Work Started'), 'additional_visit' => __('Additional Visit'), 'completed' => __('Completed')] as $val => $label)
+                                        <label class="flex items-center justify-between cursor-pointer group">
+                                             <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ $label }}</span>
+                                             <input type="radio" name="sub_status" value="{{ $val }}" x-model="subStatus" 
+                                                    class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
+                                        </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <div class="h-px bg-slate-100 dark:bg-white/5"></div>
+
+                                <!-- Service Category -->
+                                <div class="space-y-4">
+                                    <label class="text-sm font-black text-slate-955 dark:text-white">{{ __('Service Category:') }}</label>
+                                    <div class="space-y-3">
+                                        <label class="flex items-center justify-between cursor-pointer group">
+                                             <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ __('All') }}</span>
+                                             <input type="radio" name="service_category_id" value="" x-model="selectedCategoryId" 
+                                                    class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
+                                        </label>
+                                        @foreach($categories as $cat)
+                                        <label class="flex items-center justify-between cursor-pointer group" @click="selectedServiceIds = []">
+                                             <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ $cat->name_ar }}</span>
+                                             <input type="radio" name="service_category_id" value="{{ $cat->id }}" x-model="selectedCategoryId" 
+                                                    class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
+                                        </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <!-- Service Type (Dynamic) -->
+                                <div class="space-y-4" x-show="filteredServices.length > 0" x-cloak>
+                                    <div class="h-px bg-slate-100 dark:bg-white/5 mb-4"></div>
+                                    <label class="text-sm font-black text-slate-955 dark:text-white">{{ __('Service Type:') }}</label>
+                                    <div class="space-y-3 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                                        <template x-for="service in filteredServices" :key="service.id">
+                                            <label class="flex items-center justify-between cursor-pointer group">
+                                                 <span class="text-[11px] font-bold text-slate-500 dark:text-white transition-colors" x-text="service.name_ar"></span>
+                                                 <div class="relative w-5 h-5 border-2 rounded-lg transition-all flex items-center justify-center"
+                                                      :class="selectedServiceIds.includes(String(service.id)) ? 'border-primary bg-primary' : 'border-slate-200'">
+                                                     <input type="checkbox" name="service_ids[]" :value="service.id" x-model="selectedServiceIds" class="hidden">
+                                                     <template x-if="selectedServiceIds.includes(String(service.id))">
+                                                         <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
+                                                     </template>
+                                                 </div>
+                                            </label>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="flex gap-3 pt-6 border-t border-slate-100 dark:border-white/5">
+                                    <button type="submit" class="flex-1 py-3 bg-[#1A1A31] dark:bg-white dark:text-[#1A1A31] text-white text-xs font-black rounded-xl hover:bg-[#2A2A41] transition-all shadow-lg shadow-[#1A1A31]/20">
+                                        {{ __('Apply') }}
+                                    </button>
+                                    <a href="{{ route('admin.orders.index') }}" class="flex-1 py-3 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-xs font-black rounded-xl hover:bg-slate-200 text-center transition-all">
+                                        {{ __('Reset') }}
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Search Input -->
+                    <div class="relative md:w-80 flex-1">
+                        <input type="text" x-model="searchQuery" @keyup.enter="document.getElementById('filterForm').submit()"
+                               placeholder="{{ __('Search...') }}"
+                               class="w-full pr-12 pl-4 py-3 bg-[#FBFBFF] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 dark:text-white text-md font-bold">
+                        <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Side 2: Empty or extra actions if needed -->
+                <div></div>
+            </div>
+        </div>
         <div class="overflow-x-auto">
             <table class="w-full text-right">
                 <thead>
