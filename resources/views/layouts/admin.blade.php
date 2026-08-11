@@ -21,6 +21,10 @@
         }
         [x-cloak] { display: none !important; }
         .dark button:active, .dark a:active { color: white !important; }
+        .dark select option, .dark option {
+            background-color: #1A1A31 !important;
+            color: #ffffff !important;
+        }
     </style>
     @yield('styles')
 </head>

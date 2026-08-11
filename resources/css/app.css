@@ -50,6 +50,12 @@
     text-align: right;
 }
 
+[dir="rtl"] input:not([type="email"]):not([type="url"]):not([dir="ltr"]),
+[dir="rtl"] textarea:not([dir="ltr"]),
+[dir="rtl"] select:not([dir="ltr"]) {
+    text-align: right;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
 }

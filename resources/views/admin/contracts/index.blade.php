@@ -59,159 +59,135 @@
         @endforeach
     </div>
 
-    <!-- Actions Bar -->
-    <div class="flex flex-wrap items-center justify-between gap-4 relative z-50">
-      
-         <!-- Bulk Download Button (Visible only when rows selected) -->
-        <div x-show="selectedRows.length > 0" x-cloak class="flex items-center gap-4 animate-fade-in-up">
-            <span class="text-sm font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/5 px-4 py-3 rounded-2xl">
-                <span x-text="selectedRows.length"></span> {{ __('Selected') }}
-            </span>
-            <button @click="bulkDownload()" class="px-6 py-4 bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] rounded-2xl font-black text-xs shadow-lg shadow-[#1A1A31]/20 hover:scale-[1.02] transition-all flex items-center gap-2 uppercase tracking-widest">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                {{ __('Download Selected') }}
-            </button>
-        </div>
-
-        <!-- Search and Filter (Visible when no rows selected) -->
-        <div x-show="selectedRows.length === 0" class="flex items-center gap-4 relative">
-            
-            <!-- Filter Button & Dropdown -->
-            <div class="relative">
-                <button @click="showFilters = !showFilters" class="w-14 h-14 flex items-center justify-center bg-white dark:bg-[#1A1A31] rounded-2xl shadow-sm text-[#1A1A31] dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-all relative border border-transparent dark:border-white/10">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                     <!-- Red Dot Indicator -->
-                     @if(request('status') || request('sort_by'))
-                     <div class="absolute top-3 right-4 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-[#1A1A31]"></div>
-                     @endif
-                </button>
-
-                <!-- Filter Dropdown Panel -->
-                <div x-show="showFilters" 
-                     @click.away="showFilters = false" 
-                     x-cloak 
-                     x-transition:enter="transition ease-out duration-200"
-                     x-transition:enter-start="scale-95 translate-y-2" 
-                     x-transition:enter-end="scale-100 translate-y-0"
-                     class="absolute top-16 right-0 w-72 bg-white dark:bg-[#1A1A31] rounded-[2rem] shadow-2xl border border-slate-100 dark:border-white/10 z-[100] p-6 space-y-6 text-right">
-                    
-                    <form id="filterForm" action="{{ route('admin.contracts.index') }}" method="GET" class="space-y-6">
-                        <input type="hidden" name="search" value="{{ request('search') }}">
-                        
-                        <!-- Sort By -->
-                        <div class="space-y-4">
-                            <h4 class="text-xs font-black text-[#1A1A31] dark:text-white opacity-60 uppercase tracking-widest text-right">{{ __('Sort By:') }}</h4>
-                            <div class="space-y-3">
-                                @foreach(['' => __('All'), 'name' => __('Name'), 'newest' => __('Newest'), 'oldest' => __('Oldest')] as $val => $label)
-                                <label class="flex items-center justify-between cursor-pointer group">
-                                     <span class="text-xs font-bold text-slate-500 dark:text-slate-400 transition-colors">{{ $label }}</span>
-                                     <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
-                                          :class="sortBy == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-300 dark:border-white/20'">
-                                         <input type="radio" name="sort_by" value="{{ $val }}" x-model="sortBy" class="hidden">
-                                         <template x-if="sortBy == '{{ $val }}'">
-                                             <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
-                                         </template>
-                                     </div>
-                                </label>
-                                @endforeach
-                            </div>
-                        </div>
-
-                        <!-- Status -->
-                        <div class="space-y-4">
-                            <h4 class="text-xs font-black text-[#1A1A31] dark:text-white opacity-60 uppercase tracking-widest text-right">{{ __('Status:') }}</h4>
-                            <div class="space-y-3">
-                                @php
-                                    $statuses = [
-                                        '' => __('All'),
-                                        'pending' => __('Pending'),
-                                        'offer_sent' => __('Offer Sent'),
-                                        'offer_accepted' => __('Offer Accepted'),
-                                        'offer_rejected' => __('Offer Rejected'),
-                                        'awaiting_signed_contract' => __('Awaiting Signed Contract'),
-                                        'awaiting_payment_proof' => __('Awaiting Payment Proof'),
-                                        'active' => __('Active'),
-                                        'completed' => __('Completed'),
-                                        'expired' => __('Expired')
-                                    ];
-                                @endphp
-                                @foreach($statuses as $val => $label)
-                                <label class="flex items-center justify-between cursor-pointer group">
-                                         <span class="text-xs font-bold text-slate-500 dark:text-slate-400 transition-colors">{{ $label }}</span>
-                                         <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center"
-                                              :class="status == '{{ $val }}' ? 'border-primary bg-primary' : 'border-slate-300 dark:border-white/20'">
-                                             <input type="radio" name="status" value="{{ $val }}" x-model="status" class="hidden">
-                                             <template x-if="status == '{{ $val }}'">
-                                                 <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
-                                             </template>
-                                         </div>
-                                </label>
-                                @endforeach
-                            </div>
-                        </div>
-
-                        <div class="flex items-center gap-3 pt-4 border-t border-slate-200 dark:border-white/10">
-                            <a href="{{ route('admin.contracts.index') }}" class="flex-1 py-3 bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-xl font-bold text-xs text-center hover:bg-slate-100 dark:hover:bg-white/10 transition-all">
-                                {{ __('Reset') }}
-                            </a>
-                            <button type="submit" class="flex-[2] p-3 bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] rounded-xl font-black text-xs shadow-lg hover:scale-[1.02] transition-all">
-                                {{ __('Apply') }}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-     
-            <!-- Search -->
-            <div class="relative w-full max-w-md group">
-                <input type="text" name="search" value="{{ request('search') }}" 
-                       placeholder="{{ __('Search...') }}" 
-                       onkeydown="if(event.key === 'Enter') { window.location.href = '{{ route('admin.contracts.index') }}?search=' + this.value }"
-                       class="w-full h-14 pr-12 pl-6 bg-white dark:bg-[#1A1A31] rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/5 dark:focus:ring-white/5 transition-all font-bold text-sm text-[#1A1A31] dark:text-white border border-transparent dark:border-white/10">
-                <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-primary transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </div>
-            </div>
-        </div>
-
-        <!-- Download Button (Visible when no rows selected) -->
-        <div x-show="selectedRows.length === 0" class="flex items-center gap-4">
-            <a href="{{ route('admin.contracts.download') }}" class="px-6 py-4 bg-white dark:bg-[#1A1A31] text-[#1A1A31] dark:text-white rounded-2xl font-black text-xs border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-all flex items-center gap-2 uppercase tracking-widest">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                {{ __('Download') }}
-            </a>
-        </div>
-    </div>
-    
-    {{-- Tabs --}}
-    @php
-        $activeTab = request('tab', '');
-    @endphp
-    <div class="flex flex-wrap items-center gap-2 pb-4 mb-6 border-b border-slate-100 dark:border-white/10" dir="rtl">
-        <a href="{{ route('admin.contracts.index', array_filter(array_merge(request()->only(['search', 'sort_by']), ['tab' => '']))) }}" 
-           class="px-5 py-3 rounded-2xl text-xs font-black transition-all {{ $activeTab === '' ? 'bg-[#1A1A31] text-white dark:bg-white dark:text-[#1A1A31]' : 'bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10' }}">
-            {{ __('All') }}
-        </a>
-        <a href="{{ route('admin.contracts.index', array_filter(array_merge(request()->only(['search', 'sort_by']), ['tab' => 'requests']))) }}" 
-           class="px-5 py-3 rounded-2xl text-xs font-black transition-all {{ $activeTab === 'requests' ? 'bg-[#1A1A31] text-white dark:bg-white dark:text-[#1A1A31]' : 'bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10' }}">
-            {{ __('Quotation Requests') }}
-        </a>
-        <a href="{{ route('admin.contracts.index', array_filter(array_merge(request()->only(['search', 'sort_by']), ['tab' => 'awaiting']))) }}" 
-           class="px-5 py-3 rounded-2xl text-xs font-black transition-all {{ $activeTab === 'awaiting' ? 'bg-[#1A1A31] text-white dark:bg-white dark:text-[#1A1A31]' : 'bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10' }}">
-            {{ __('Awaiting Action') }}
-        </a>
-        <a href="{{ route('admin.contracts.index', array_filter(array_merge(request()->only(['search', 'sort_by']), ['tab' => 'active']))) }}" 
-           class="px-5 py-3 rounded-2xl text-xs font-black transition-all {{ $activeTab === 'active' ? 'bg-[#1A1A31] text-white dark:bg-white dark:text-[#1A1A31]' : 'bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10' }}">
-            {{ __('Active Contracts') }}
-        </a>
-        <a href="{{ route('admin.contracts.index', array_filter(array_merge(request()->only(['search', 'sort_by']), ['tab' => 'archived']))) }}" 
-           class="px-5 py-3 rounded-2xl text-xs font-black transition-all {{ $activeTab === 'archived' ? 'bg-[#1A1A31] text-white dark:bg-white dark:text-[#1A1A31]' : 'bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10' }}">
-            {{ __('Completed & Expired') }}
-        </a>
-    </div>
-
     <!-- Contracts Table Section -->
-    <div class="bg-white dark:bg-[#1A1A31] rounded-[2.5rem] shadow-sm overflow-hidden border border-transparent dark:border-white/5">
+    <div class="bg-white dark:bg-[#1A1A31] rounded-[2.5rem] shadow-sm border border-transparent dark:border-white/5 overflow-visible">
+        <!-- Controls Row -->
+        <div class="p-6 border-b border-slate-50 dark:border-white/5 relative min-h-[5rem]">
+            <!-- Default Controls (Show when no items selected) -->
+            <div x-show="selectedRows.length === 0" class="flex flex-col md:flex-row items-center justify-between gap-6 w-full">
+                
+                {{-- Right Side (Filter + Search) --}}
+                <div class="flex items-center gap-3 flex-1 max-w-2xl justify-start">
+                    <!-- Filter Button & Dropdown -->
+                    <div class="relative">
+                        <button @click="showFilters = !showFilters" class="w-12 h-12 flex items-center justify-center bg-slate-50 dark:bg-white/5 rounded-xl text-slate-400 hover:text-primary dark:hover:text-white transition shadow-sm relative border border-transparent dark:border-white/10 shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-sliders" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z"/>
+                            </svg>
+                             <!-- Red Dot Indicator -->
+                             @if(request('status') || request('sort_by'))
+                             <div class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-[#1A1A31]"></div>
+                             @endif
+                        </button>
+
+                        <!-- Filter Dropdown Panel -->
+                        <div x-show="showFilters" 
+                             @click.away="showFilters = false" 
+                             x-cloak 
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="scale-95 translate-y-2" 
+                             x-transition:enter-end="scale-100 translate-y-0"
+                             class="absolute top-full right-0 mt-3 w-72 bg-white dark:bg-[#1A1A31] rounded-[2rem] shadow-2xl border border-slate-100 dark:border-white/10 z-[100] p-6 space-y-6 text-right">
+                            
+                            <form id="filterForm" action="{{ route('admin.contracts.index') }}" method="GET" class="space-y-6">
+                                <input type="hidden" name="search" value="{{ request('search') }}">
+                                <input type="hidden" name="tab" value="{{ request('tab') }}">
+                                
+                                <!-- Sort By -->
+                                <div class="space-y-4">
+                                    <label class="text-sm font-black text-[#1A1A31] dark:text-white text-right block">{{ __('Sort By:') }}</label>
+                                    <div class="space-y-3">
+                                        @foreach(['' => __('All'), 'name' => __('Name'), 'newest' => __('Newest'), 'oldest' => __('Oldest')] as $val => $label)
+                                        <label class="flex items-center justify-between cursor-pointer group">
+                                             <span class="text-xs font-bold text-slate-500 dark:text-slate-400 transition-colors">{{ $label }}</span>
+                                             <input type="radio" name="sort_by" value="{{ $val }}" x-model="sortBy" 
+                                                    class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
+                                        </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <div class="h-px bg-slate-100 dark:bg-white/5"></div>
+
+                                <!-- Status -->
+                                <div class="space-y-4">
+                                    <label class="text-sm font-black text-[#1A1A31] dark:text-white text-right block">{{ __('Status:') }}</label>
+                                    <div class="space-y-3">
+                                        @php
+                                            $statuses = [
+                                                '' => __('All'),
+                                                'pending' => __('Pending'),
+                                                'offer_sent' => __('Offer Sent'),
+                                                'offer_accepted' => __('Offer Accepted'),
+                                                'offer_rejected' => __('Offer Rejected'),
+                                                'awaiting_signed_contract' => __('Awaiting Signed Contract'),
+                                                'awaiting_payment_proof' => __('Awaiting Payment Proof'),
+                                                'active' => __('Active'),
+                                                'completed' => __('Completed'),
+                                                'expired' => __('Expired')
+                                            ];
+                                        @endphp
+                                        @foreach($statuses as $val => $label)
+                                        <label class="flex items-center justify-between cursor-pointer group">
+                                                 <span class="text-xs font-bold text-slate-500 dark:text-slate-400 transition-colors">{{ $label }}</span>
+                                                 <input type="radio" name="status" value="{{ $val }}" x-model="status" 
+                                                        class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
+                                        </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-3 pt-4 border-t border-slate-200 dark:border-white/10">
+                                    <a href="{{ route('admin.contracts.index') }}" class="flex-1 py-3 bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-xl font-bold text-xs text-center hover:bg-slate-100 dark:hover:bg-white/10 transition-all">
+                                        {{ __('Reset') }}
+                                    </a>
+                                    <button type="submit" class="flex-[2] p-3 bg-[#1A1A31] dark:bg-white text-white dark:text-[#1A1A31] rounded-xl font-black text-xs shadow-lg hover:scale-[1.02] transition-all">
+                                        {{ __('Apply') }}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Search Input -->
+                    <div class="relative md:w-80 flex-1">
+                        <input type="text" name="search" value="{{ request('search') }}" 
+                               placeholder="{{ __('Search...') }}" 
+                               onkeydown="if(event.key === 'Enter') { window.location.href = '{{ route('admin.contracts.index') }}?search=' + this.value }"
+                               class="w-full pr-12 pl-4 py-3 bg-[#FBFBFF] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 dark:text-white text-md font-bold">
+                        <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Left Side (Download) --}}
+                <div class="flex items-center gap-3 shrink-0">
+                    <a href="{{ route('admin.contracts.download') }}" class="flex items-center gap-2 px-5 py-3 border border-slate-200 dark:border-white/10 text-[#1A1A31] dark:text-white text-sm font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        {{ __('Download') }}
+                    </a>
+                </div>
+            </div>
+
+            <!-- Bulk Actions Bar (Visible when rows selected) -->
+            <div x-show="selectedRows.length > 0" x-cloak class="absolute inset-0 bg-white dark:bg-[#1A1A31] z-20 flex items-center justify-between px-6 border-b border-slate-50 dark:border-white/5 rounded-t-[2.5rem]">
+                <div class="flex items-center gap-4">
+                    <span class="text-sm font-bold text-slate-500 bg-slate-100 dark:bg-white/5 dark:text-slate-300 px-4 py-2.5 rounded-xl">
+                        <span x-text="selectedRows.length"></span> {{ __('Selected') }}
+                    </span>
+                    
+                    <button @click="bulkDownload()"
+                            class="px-6 py-3 bg-[#1A1A31] dark:bg-white dark:text-[#1A1A31] text-white rounded-xl text-xs font-black hover:bg-slate-800 transition-all flex items-center gap-2 shadow-lg shadow-black/20">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        {{ __('Download Selected') }}
+                    </button>
+                </div>
+                <button @click="selectedRows = []" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-red-500 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+        </div>
         <div class="overflow-x-auto">
             <table class="w-full text-right">
                 <thead>

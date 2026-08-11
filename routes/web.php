@@ -180,7 +180,7 @@ Route::prefix('admin')->group(function () {
                 Route::get('/create', [$controller, 'create'])->name('create');
                 Route::post('/', [$controller, 'store'])->name('store');
 
-                if (in_array($prefix, ['orders', 'technicians', 'terms', 'privacy-policies', 'privacy_policies', 'faqs', 'complaints', 'supervisors', 'individual-customers', 'individual_customers', 'corporate-customers', 'corporate_customers', 'maintenance-companies', 'maintenance_companies'])) {
+                if (in_array($prefix, ['reviews', 'orders', 'technicians', 'terms', 'privacy-policies', 'privacy_policies', 'faqs', 'complaints', 'supervisors', 'individual-customers', 'individual_customers', 'corporate-customers', 'corporate_customers', 'maintenance-companies', 'maintenance_companies'])) {
                     Route::match(['post', 'delete'], '/bulk-destroy', [$controller, 'bulkDestroy'])->name('bulk-destroy');
                     Route::match(['post', 'delete'], '/bulk_destroy', [$controller, 'bulkDestroy'])->name('bulk_destroy');
                 }

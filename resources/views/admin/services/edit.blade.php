@@ -7,8 +7,8 @@
     {{-- Header --}}
     <div class="flex items-center gap-4 mb-8">
         <a href="{{ route('admin.services.index') }}" class="w-10 h-10 flex items-center justify-center bg-white dark:bg-white/5 rounded-xl shadow-sm hover:bg-slate-50 dark:hover:bg-white/10 transition-colors">
-            <svg class="w-6 h-6 text-slate-400 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ app()->getLocale() == 'ar' ? 'M14 5l7 7m0 0l-7 7m7-7H3' : 'M10 19l-7-7m0 0l7-7m-7 7h18' }}"/>
             </svg>
         </a>
         <h2 class="text-2xl font-black text-[#1A1A31] dark:text-white">{{ __('Edit Service Data') }}</h2>
@@ -186,8 +186,8 @@
                 <div class="space-y-4">
                     <label class="block text-sm font-black text-[#1A1A31] dark:text-slate-300">{{ __('Price') }}</label>
                     <div class="relative">
-                        <input type="number" step="0.01" name="price" value="{{ old('price', $item->price) }}" placeholder="{{ __('Enter service price') }}" class="w-full px-16 py-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-sm font-bold text-[#1A1A31] dark:text-white focus:ring-4 focus:ring-[#1A1A31]/5 transition-all outline-none">
-                        <div class="absolute right-6 top-1/2 -translate-y-1/2">
+                        <input type="number" step="0.01" name="price" value="{{ old('price', $item->price) }}" placeholder="{{ __('Enter service price') }}" class="w-full px-8 py-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-sm font-bold text-[#1A1A31] dark:text-white focus:ring-4 focus:ring-[#1A1A31]/5 transition-all outline-none">
+                        <div class="absolute left-6 top-1/2 -translate-y-1/2">
                             <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="w-5 h-5 opacity-40 dark:invert">
                         </div>
                     </div>

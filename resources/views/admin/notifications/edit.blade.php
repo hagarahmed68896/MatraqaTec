@@ -62,11 +62,11 @@
                     <div class="space-y-3">
                         <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">{{ __('Notification Title (Arabic)') }}</label>
                         <input type="text" name="title_ar" value="{{ old('title_ar', $item->title_ar) }}" required placeholder="{{ __('Enter Title') }}"
-                               class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none">
+                               class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none text-right">
                     </div>
                     <div class="space-y-3 text-left">
                         <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">{{ __('Notification Title (English)') }}</label>
-                        <input type="text" name="title_en" value="{{ old('title_en', $item->title_en) }}" required dir="ltr" placeholder="{{ __('Enter Title') }}"
+                        <input type="text" name="title_en" value="{{ old('title_en', $item->title_en) }}" required dir="ltr" placeholder="Enter Title"
                                class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none">
                     </div>
                 </div>
@@ -76,11 +76,11 @@
                     <div class="space-y-3">
                         <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">{{ __('Notification Body (Arabic)') }}</label>
                         <textarea name="body_ar" rows="4" required placeholder="{{ __('Enter Body') }}"
-                                  class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none resize-none">{{ old('body_ar', $item->body_ar) }}</textarea>
+                                  class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none resize-none text-right">{{ old('body_ar', $item->body_ar) }}</textarea>
                     </div>
                     <div class="space-y-3 text-left">
                         <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">{{ __('Notification Body (English)') }}</label>
-                        <textarea name="body_en" rows="4" required dir="ltr" placeholder="{{ __('Enter Body') }}"
+                        <textarea name="body_en" rows="4" required dir="ltr" placeholder="Enter Body"
                                   class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none resize-none">{{ old('body_en', $item->body_en) }}</textarea>
                     </div>
                 </div>

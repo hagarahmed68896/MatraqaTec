@@ -6,7 +6,9 @@
     <div class="flex items-center justify-between mb-8">
         <div class="flex items-center gap-4">
             <a href="{{ route('admin.reviews.index') }}" class="w-10 h-10 flex items-center justify-center bg-white rounded-xl shadow-sm border border-slate-100 text-slate-400 hover:text-primary dark:hover:text-white transition-all">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 12H5m7 7l-7-7 7-7"></path></svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="{{ app()->getLocale() == 'ar' ? 'M5 12h14M12 5l7 7-7 7' : 'M19 12H5m7 7l-7-7 7-7' }}"/>
+                </svg>
             </a>
             <h1 class="text-2xl font-black text-[#1A1A31]">{{ __('Evaluation Data') }}</h1>
         </div>

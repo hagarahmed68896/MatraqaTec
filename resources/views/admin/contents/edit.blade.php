@@ -39,7 +39,9 @@
     {{-- Header --}}
     <div class="flex items-center gap-4 mb-10">
         <a href="{{ route('admin.contents.index') }}" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white dark:bg-[#1A1A31] text-[#1A1A31] dark:text-white shadow-sm border border-slate-100 dark:border-white/5 hover:scale-105 transition-all">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5m7 7l-7-7 7-7"></path></svg>
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ app()->getLocale() == 'ar' ? 'M5 12h14M12 5l7 7-7 7' : 'M19 12H5m7 7l-7-7 7-7' }}"/>
+            </svg>
         </a>
         <h2 class="text-2xl font-black text-[#1A1A31] dark:text-white">{{ __('Update Content Data') }}</h2>
     </div>

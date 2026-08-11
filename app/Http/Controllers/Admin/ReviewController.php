@@ -210,6 +210,20 @@ class ReviewController extends Controller
         return redirect()->route('admin.reviews.index')->with('success', __('Review deleted successfully.'));
     }
 
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->ids;
+        if (!is_array($ids)) {
+            $ids = is_string($ids) ? explode(',', $ids) : [];
+        }
+
+        if (count($ids) > 0) {
+            Review::whereIn('id', $ids)->delete();
+        }
+
+        return redirect()->route('admin.reviews.index')->with('success', __('Reviews deleted successfully.'));
+    }
+
     public function download(Request $request)
     {
         $query = Review::with(['user', 'technician.user', 'technician.maintenanceCompany', 'service']);

@@ -59,19 +59,23 @@
         @endforeach
     </div>
 
-    <!-- SEARCH & FILTERS -->
-    <div class="flex items-center justify-center gap-6 relative" dir="rtl">
-        <template x-if="selectedRows.length === 0">
-            <div class="flex items-center justify-between gap-4 w-full">
+    <!-- Evaluations Table Section -->
+    <div class="bg-white dark:bg-[#1A1A31] rounded-[2.5rem] border border-slate-50 dark:border-white/5 shadow-sm overflow-visible min-h-[600px]" dir="rtl">
+        <!-- Controls Row -->
+        <div class="p-6 border-b border-slate-50 dark:border-white/5 relative min-h-[5rem]">
+            <!-- Default Controls (Show when no items selected) -->
+            <div x-show="selectedRows.length === 0" class="flex flex-col md:flex-row items-center justify-between gap-6 w-full">
                 
                 {{-- Right Side (Filter + Search) --}}
-                <div class="flex items-center gap-4 flex-1">
+                <div class="flex items-center gap-3 flex-1 max-w-2xl justify-start">
                     <!-- Filter Toggle & Panel Wrapper -->
                     <div class="relative">
                         <button @click="showFilters = !showFilters" 
-                                class="w-14 h-14 flex items-center justify-center bg-slate-50 rounded-2xl border border-slate-100 text-slate-400 hover:bg-slate-100 transition-all relative shrink-0">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                            <div x-show="sortBy != 'newest' || clientType != '' || technicianType != '' || selectedCategoryId != ''" class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></div>
+                                class="w-12 h-12 flex items-center justify-center bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 text-slate-400 hover:text-primary dark:hover:text-white transition shadow-sm relative shrink-0 rounded-xl">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-sliders" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z"/>
+                            </svg>
+                            <div x-show="sortBy != 'newest' || clientType != '' || technicianType != '' || selectedCategoryId != ''" class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></div>
                         </button>
 
                         <!-- Filter Dropdown Panel (Anchored to Trigger) -->
@@ -79,87 +83,57 @@
                              x-transition:enter="transition ease-out duration-200"
                              x-transition:enter-start="opacity-0 scale-95 translate-y-2"
                              x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                             class="absolute top-16 right-0 mt-2 w-80 bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-white/10 z-[100] p-8 space-y-8 text-right overflow-y-auto max-h-[calc(100vh-200px)] custom-scrollbar">
+                             class="absolute top-full right-0 mt-3 w-80 bg-white dark:bg-[#1A1A31] rounded-[2rem] shadow-2xl border border-slate-100 dark:border-white/10 z-[100] p-6 space-y-6 text-right overflow-y-auto max-h-[calc(100vh-200px)] custom-scrollbar">
                             
-                            <form id="filterForm" action="{{ route('admin.reviews.index') }}" method="GET" class="space-y-8">
+                            <form id="filterForm" action="{{ route('admin.reviews.index') }}" method="GET" class="space-y-6">
                                 <input type="hidden" name="search" :value="searchQuery">
                                 
                                 <!-- Sort -->
                                 <div class="space-y-4">
-                                    <h4 class="text-xs font-black text-[#1A1A31] opacity-60 uppercase tracking-widest px-4">{{ __('Sort by:') }}</h4>
-                                    <div class="space-y-1">
+                                    <label class="text-sm font-black text-[#1A1A31] dark:text-white">{{ __('Sort by:') }}</label>
+                                    <div class="space-y-3">
                                         @foreach(['newest' => __('All'), 'name' => __('Name'), 'rating' => __('Rating'), 'oldest' => __('Oldest')] as $val => $label)
-                                        <label class="flex items-center justify-between cursor-pointer group px-4 py-3 rounded-2xl transition-all"
-                                               :class="sortBy == '{{ $val }}' ? 'bg-blue-50/60' : 'hover:bg-slate-50/50'">
-                                             <span class="text-xs font-bold transition-colors"
-                                                   :class="sortBy == '{{ $val }}' ? 'text-blue-700' : 'text-slate-500 dark:text-white'">{{ $label }}</span>
-                                             <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center shrink-0"
-                                                  :class="sortBy == '{{ $val }}' ? 'border-blue-500 bg-blue-500' : 'border-slate-200'">
-                                                 <input type="radio" name="sort_by" value="{{ $val }}" x-model="sortBy" class="hidden">
-                                                 <template x-if="sortBy == '{{ $val }}'">
-                                                     <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
-                                                 </template>
-                                             </div>
+                                        <label class="flex items-center justify-between cursor-pointer group">
+                                             <span class="text-sm font-bold text-slate-500 dark:text-slate-300 transition-colors">{{ $label }}</span>
+                                             <input type="radio" name="sort_by" value="{{ $val }}" x-model="sortBy" 
+                                                    class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
                                         </label>
                                         @endforeach
                                     </div>
                                 </div>
 
-                                <div class="h-px bg-slate-50"></div>
+                                <div class="h-px bg-slate-100 dark:bg-white/5"></div>
 
                                 <!-- Customer Type -->
                                 <div class="space-y-4">
-                                    <h4 class="text-xs font-black text-[#1A1A31] opacity-60 uppercase tracking-widest px-4">{{ __('Customer Type:') }}</h4>
-                                    <div class="space-y-1">
+                                    <label class="text-sm font-black text-[#1A1A31] dark:text-white">{{ __('Customer Type:') }}</label>
+                                    <div class="space-y-3">
                                         @foreach(['' => __('All'), 'individual' => __('Individual'), 'company' => __('Corporate')] as $val => $label)
-                                        <label class="flex items-center justify-between cursor-pointer group px-4 py-3 rounded-2xl transition-all"
-                                               :class="clientType == '{{ $val }}' ? 'bg-blue-50/60' : 'hover:bg-slate-50/50'">
-                                             <span class="text-xs font-bold transition-colors"
-                                                   :class="clientType == '{{ $val }}' ? 'text-blue-700' : 'text-slate-500 dark:text-white'">{{ $label }}</span>
-                                             <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center shrink-0"
-                                                  :class="clientType == '{{ $val }}' ? 'border-blue-500 bg-blue-500' : 'border-slate-200'">
-                                                 <input type="radio" name="client_type" value="{{ $val }}" x-model="clientType" class="hidden">
-                                                 <template x-if="clientType == '{{ $val }}'">
-                                                     <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
-                                                 </template>
-                                             </div>
+                                        <label class="flex items-center justify-between cursor-pointer group">
+                                             <span class="text-sm font-bold text-slate-500 dark:text-slate-300 transition-colors">{{ $label }}</span>
+                                             <input type="radio" name="client_type" value="{{ $val }}" x-model="clientType" 
+                                                    class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
                                         </label>
                                         @endforeach
                                     </div>
                                 </div>
 
-                                <div class="h-px bg-slate-50"></div>
+                                <div class="h-px bg-slate-100 dark:bg-white/5"></div>
 
                                 <!-- Service Category -->
                                 <div class="space-y-4">
-                                    <h4 class="text-xs font-black text-[#1A1A31] opacity-60 uppercase tracking-widest px-4">{{ __('Service Category:') }}</h4>
-                                    <div class="space-y-1">
-                                        <label class="flex items-center justify-between cursor-pointer group px-4 py-3 rounded-2xl transition-all" 
-                                               @click="selectedServiceIds = []"
-                                               :class="!selectedCategoryId ? 'bg-blue-50/60' : 'hover:bg-slate-50/50'">
-                                             <span class="text-xs font-bold transition-colors"
-                                                   :class="!selectedCategoryId ? 'text-blue-700' : 'text-slate-500 dark:text-white'">{{ __('All') }}</span>
-                                             <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center shrink-0"
-                                                  :class="!selectedCategoryId ? 'border-blue-500 bg-blue-500' : 'border-slate-200'">
-                                                 <input type="radio" name="service_category_id" value="" x-model="selectedCategoryId" class="hidden">
-                                                 <template x-if="!selectedCategoryId">
-                                                     <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
-                                                 </template>
-                                             </div>
+                                    <label class="text-sm font-black text-[#1A1A31] dark:text-white">{{ __('Service Category:') }}</label>
+                                    <div class="space-y-3">
+                                        <label class="flex items-center justify-between cursor-pointer group" @click="selectedServiceIds = []">
+                                             <span class="text-sm font-bold text-slate-500 dark:text-slate-300 transition-colors">{{ __('All') }}</span>
+                                             <input type="radio" name="service_category_id" value="" x-model="selectedCategoryId" 
+                                                    class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
                                         </label>
                                         @foreach($categories as $cat)
-                                        <label class="flex items-center justify-between cursor-pointer group px-4 py-3 rounded-2xl transition-all" 
-                                               @click="selectedServiceIds = []"
-                                               :class="selectedCategoryId == {{ $cat->id }} ? 'bg-blue-50/60' : 'hover:bg-slate-50/50'">
-                                             <span class="text-xs font-bold transition-colors"
-                                                   :class="selectedCategoryId == {{ $cat->id }} ? 'text-blue-700' : 'text-slate-500 dark:text-white'">{{ app()->getLocale() == 'ar' ? $cat->name_ar : $cat->name_en }}</span>
-                                             <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center shrink-0"
-                                                  :class="selectedCategoryId == {{ $cat->id }} ? 'border-blue-500 bg-blue-500' : 'border-slate-200'">
-                                                 <input type="radio" name="service_category_id" value="{{ $cat->id }}" x-model="selectedCategoryId" class="hidden">
-                                                 <template x-if="selectedCategoryId == {{ $cat->id }}">
-                                                     <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
-                                                 </template>
-                                             </div>
+                                        <label class="flex items-center justify-between cursor-pointer group" @click="selectedServiceIds = []">
+                                             <span class="text-sm font-bold text-slate-500 dark:text-slate-300 transition-colors">{{ app()->getLocale() == 'ar' ? $cat->name_ar : $cat->name_en }}</span>
+                                             <input type="radio" name="service_category_id" value="{{ $cat->id }}" x-model="selectedCategoryId" 
+                                                    class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
                                         </label>
                                         @endforeach
                                     </div>
@@ -167,17 +141,15 @@
 
                                 <!-- Service Type -->
                                 <div x-show="filteredServices.length > 0" x-cloak class="space-y-4">
-                                    <div class="h-px bg-slate-50"></div>
-                                    <h4 class="text-xs font-black text-[#1A1A31] opacity-60 uppercase tracking-widest px-4">{{ __('Service Type:') }}</h4>
-                                    <div class="space-y-1 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                                    <div class="h-px bg-slate-100 dark:bg-white/5"></div>
+                                    <label class="text-sm font-black text-[#1A1A31] dark:text-white">{{ __('Service Type:') }}</label>
+                                    <div class="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                                         <template x-for="service in filteredServices" :key="service.id">
-                                            <label class="flex items-center justify-between cursor-pointer group px-4 py-3 rounded-2xl transition-all"
-                                                    :class="selectedServiceIds.includes(String(service.id)) ? 'bg-blue-50/60' : 'hover:bg-slate-50/50'">
-                                                 <span class="text-[11px] font-bold transition-colors" 
-                                                       :class="selectedServiceIds.includes(String(service.id)) ? 'text-blue-700' : 'text-slate-500 dark:text-white'"
+                                            <label class="flex items-center justify-between cursor-pointer group">
+                                                 <span class="text-[11px] font-bold text-slate-500 dark:text-slate-300 transition-colors" 
                                                        x-text="service.name_{{ app()->getLocale() }}"></span>
                                                  <div class="relative w-5 h-5 border-2 rounded-lg transition-all flex items-center justify-center shrink-0"
-                                                      :class="selectedServiceIds.includes(String(service.id)) ? 'border-blue-500 bg-blue-500' : 'border-slate-200'">
+                                                      :class="selectedServiceIds.includes(String(service.id)) ? 'border-primary bg-primary' : 'border-slate-200'">
                                                      <input type="checkbox" name="service_ids[]" :value="service.id" x-model="selectedServiceIds" class="hidden">
                                                      <template x-if="selectedServiceIds.includes(String(service.id))">
                                                          <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
@@ -188,35 +160,28 @@
                                     </div>
                                 </div>
 
-                                <div class="h-px bg-slate-50"></div>
+                                <div class="h-px bg-slate-100 dark:bg-white/5"></div>
 
                                 <!-- Technician Type -->
                                 <div class="space-y-4">
-                                    <h4 class="text-xs font-black text-[#1A1A31] opacity-60 uppercase tracking-widest px-4">{{ __('Technician Type:') }}</h4>
-                                    <div class="space-y-1">
+                                    <label class="text-sm font-black text-[#1A1A31] dark:text-white">{{ __('Technician Type:') }}</label>
+                                    <div class="space-y-3">
                                         @foreach(['' => __('All'), 'platform' => __('Platform'), 'company' => __('Company')] as $val => $label)
-                                        <label class="flex items-center justify-between cursor-pointer group px-4 py-3 rounded-2xl transition-all"
-                                               :class="technicianType == '{{ $val }}' ? 'bg-blue-50/60' : 'hover:bg-slate-50/50'">
-                                             <span class="text-xs font-bold transition-colors"
-                                                   :class="technicianType == '{{ $val }}' ? 'text-blue-700' : 'text-slate-500 dark:text-white'">{{ $label }}</span>
-                                             <div class="relative w-5 h-5 border-2 rounded-full transition-all flex items-center justify-center shrink-0"
-                                                  :class="technicianType == '{{ $val }}' ? 'border-blue-500 bg-blue-500' : 'border-slate-200'">
-                                                 <input type="radio" name="technician_type" value="{{ $val }}" x-model="technicianType" class="hidden">
-                                                 <template x-if="technicianType == '{{ $val }}'">
-                                                     <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
-                                                 </template>
-                                             </div>
+                                        <label class="flex items-center justify-between cursor-pointer group">
+                                             <span class="text-sm font-bold text-slate-500 dark:text-slate-300 transition-colors">{{ $label }}</span>
+                                             <input type="radio" name="technician_type" value="{{ $val }}" x-model="technicianType" 
+                                                    class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
                                         </label>
                                         @endforeach
                                     </div>
                                 </div>
 
                                 <!-- Actions -->
-                                <div class="flex gap-4 pt-4">
-                                    <button type="submit" class="flex-1 py-4 bg-[#1A1A31] text-white rounded-2xl font-black text-xs shadow-xl shadow-[#1A1A31]/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                                <div class="flex gap-3 pt-6 border-t border-slate-100 dark:border-white/5">
+                                    <button type="submit" class="flex-1 py-3 bg-[#1A1A31] dark:bg-white dark:text-[#1A1A31] text-white text-xs font-black rounded-xl hover:bg-slate-800 transition-all shadow-lg">
                                         {{ __('Apply') }}
                                     </button>
-                                    <button type="button" @click="resetFilters()" class="flex-1 py-4 bg-slate-50 text-slate-400 rounded-2xl font-black text-xs hover:bg-slate-100 transition-all">
+                                    <button type="button" @click="resetFilters()" class="flex-1 py-3 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-xs font-black rounded-xl hover:bg-slate-200 transition-all text-center">
                                         {{ __('Reset') }}
                                     </button>
                                 </div>
@@ -224,68 +189,76 @@
                         </div>
                     </div>
 
-                    <!-- Search Bar -->
-                    <div class="flex-1 max-w-2xl relative group">
+                    <!-- Search Input -->
+                    <div class="relative md:w-80 flex-1">
                         <input type="text" x-model="searchQuery" @keyup.enter="applySearch()"
-                               class="w-full h-14 pr-12 pl-6 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:border-primary transition-all font-bold text-sm text-[#1A1A31] placeholder:text-slate-300"
-                               placeholder="{{ __('Search...') }}">
-                        <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                               placeholder="{{ __('Search...') }}"
+                               class="w-full pr-12 pl-4 py-3 bg-[#FBFBFF] dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 dark:text-white text-md font-bold">
+                        <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         </div>
                     </div>
                 </div>
 
                 {{-- Left Side (Download + Quick Filter) --}}
-                <div class="flex items-center gap-3">
-                    <!-- Download All -->
-                    <a href="{{ route('admin.reviews.download', request()->query()) }}" class="h-14 px-8 flex items-center gap-3 bg-white border border-slate-200 rounded-2xl text-[#1A1A31] hover:bg-slate-50 transition-all font-bold text-sm shrink-0">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        {{ __('Download All') }}
-                    </a>
-
+                <div class="flex items-center gap-3 shrink-0">
                     <!-- Quick Filter -->
                     <div x-data="{ open: false }" class="relative">
-                        <button @click="open = !open" class="h-14 px-8 flex items-center gap-3 bg-[#1A1A31] text-white rounded-2xl shadow-lg hover:bg-[#252545] transition-all shrink-0">
-                            <span class="font-black text-sm">{{ __('All Evaluations') }}</span>
+                        <button @click="open = !open" class="flex items-center gap-2 px-5 py-3 bg-[#1A1A31] border border-slate-200 dark:border-white/10 text-white text-sm font-bold rounded-xl hover:bg-black transition-all">
+                            <span class="font-bold text-sm">{{ __('All Evaluations') }}</span>
                             <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
                         <div x-show="open" @click.away="open = false" x-cloak 
                              x-transition:enter="transition ease-out duration-100"
                              x-transition:enter-start="opacity-0 scale-95"
                              x-transition:enter-end="opacity-100 scale-100"
-                             class="absolute top-16 left-0 w-48 bg-white rounded-2xl shadow-xl border border-slate-50 z-50 overflow-hidden py-2">
-                            <a href="{{ route('admin.reviews.index') }}" class="block px-4 py-3 text-xs font-bold text-slate-600 dark:text-white hover:bg-slate-50">{{ __('All') }}</a>
-                            <a href="{{ route('admin.reviews.index', ['status' => 'positive']) }}" class="block px-4 py-3 text-xs font-bold text-slate-600 dark:text-white hover:bg-slate-50">{{ __('Positive') }}</a>
-                            <a href="{{ route('admin.reviews.index', ['status' => 'negative']) }}" class="block px-4 py-3 text-xs font-bold text-slate-600 dark:text-white hover:bg-slate-50">{{ __('Negative') }}</a>
+                             class="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-[#1A1A31] rounded-xl shadow-xl border border-slate-50 dark:border-white/5 z-50 overflow-hidden py-2">
+                            <a href="{{ route('admin.reviews.index') }}" class="block px-4 py-3 text-xs font-bold text-slate-600 dark:text-white hover:bg-slate-50 dark:hover:bg-white/10">{{ __('All') }}</a>
+                            <a href="{{ route('admin.reviews.index', ['status' => 'positive']) }}" class="block px-4 py-3 text-xs font-bold text-slate-600 dark:text-white hover:bg-slate-50 dark:hover:bg-white/10">{{ __('Positive') }}</a>
+                            <a href="{{ route('admin.reviews.index', ['status' => 'negative']) }}" class="block px-4 py-3 text-xs font-bold text-slate-600 dark:text-white hover:bg-slate-50 dark:hover:bg-white/10">{{ __('Negative') }}</a>
                         </div>
                     </div>
-                </div>
-        </template>
 
-        {{-- When rows ARE selected: show count + download button --}}
-        <template x-if="selectedRows.length > 0">
-            <div class="flex items-center justify-between w-full h-16 px-8 bg-[#1A1A31] rounded-2xl shadow-xl shadow-[#1A1A31]/10"
-                 x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0 text-right" dir="rtl">
-                <div class="flex items-center gap-6">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-white/10 text-white flex items-center justify-center text-sm font-black" x-text="selectedRows.length"></div>
-                        <span class="text-sm font-black text-white">{{ __('selected items') }}</span>
-                    </div>
+                    <!-- Download All -->
+                    <a href="{{ route('admin.reviews.download', request()->query()) }}" class="flex items-center gap-2 px-5 py-3 border border-slate-200 dark:border-white/10 text-[#1A1A31] dark:text-white text-sm font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        {{ __('Download All') }}
+                    </a>
                 </div>
+            </div>
+
+            <!-- Bulk Actions Bar (Visible when rows selected) -->
+            <div x-show="selectedRows.length > 0" x-cloak class="absolute inset-0 bg-white dark:bg-[#1A1A31] z-20 flex items-center justify-between px-6 border-b border-slate-50 dark:border-white/5 rounded-t-[2.5rem]">
                 <div class="flex items-center gap-4">
+                    <span class="text-sm font-bold text-slate-500 bg-slate-100 dark:bg-white/5 dark:text-slate-300 px-4 py-2.5 rounded-xl">
+                        <span x-text="selectedRows.length"></span> {{ __('selected items') }}
+                    </span>
+                    
                     <button @click="downloadSelected()"
-                            class="h-10 px-6 flex items-center gap-3 bg-white text-[#1A1A31] rounded-xl font-black text-xs hover:bg-slate-50 transition-all">
+                            class="px-6 py-3 bg-[#1A1A31] dark:bg-white dark:text-[#1A1A31] text-white rounded-xl text-xs font-black hover:bg-slate-800 transition-all flex items-center gap-2 shadow-lg shadow-black/20">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                         {{ __('Download Selected') }}
                     </button>
-                    <button @click="selectedRows = []" class="text-white opacity-60 hover:opacity-100 text-xs font-bold transition-all">{{ __('Clear Selection') }}</button>
-                </div>
-            </div>
-        </template>
-    </div>
 
-    <!-- Evaluations Table Section -->
-    <div class="bg-white rounded-[2.5rem] border border-slate-50 shadow-sm overflow-hidden min-h-[600px]" dir="rtl">
+                    <form id="bulk-delete-form" action="{{ route('admin.reviews.bulk-destroy') }}" method="POST" class="hidden">
+                        @csrf
+                        @method('DELETE')
+                        <template x-for="id in selectedRows" :key="id">
+                            <input type="hidden" name="ids[]" :value="id">
+                        </template>
+                    </form>
+                    
+                    <button @click="deleteSelected()"
+                            class="px-6 py-3 bg-rose-500 text-white rounded-xl text-xs font-black hover:bg-rose-600 transition-all flex items-center gap-2 shadow-lg shadow-rose-500/20">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        {{ __('Delete Selected') }}
+                    </button>
+                </div>
+                <button @click="selectedRows = []" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-red-500 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+        </div>
         <div class="overflow-x-auto">
             <table class="w-full text-right" dir="rtl">
                 <thead>
@@ -419,6 +392,7 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 function reviewManagement() {
@@ -464,6 +438,34 @@ function reviewManagement() {
 
         resetFilters() {
             window.location.href = "{{ route('admin.reviews.index') }}";
+        },
+
+        deleteSelected() {
+            const isDark = document.documentElement.classList.contains('dark');
+            Swal.fire({
+                title: "{{ __('Are you sure?') }}",
+                text: "{{ __('Are you sure you want to delete the selected reviews?') }}",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: "{{ __('Delete') }}",
+                cancelButtonText: "{{ __('Cancel') }}",
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-2xl p-8',
+                    title: 'text-xl font-black text-slate-800 dark:text-white pt-4',
+                    htmlContainer: 'text-sm font-bold text-slate-500 dark:text-slate-400 mt-2',
+                    confirmButton: 'px-8 py-3.5 swal2-delete-btn text-white rounded-2xl font-black text-sm transition-all mx-2 cursor-pointer shadow-lg shadow-rose-500/20',
+                    cancelButton: 'px-8 py-3.5 bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 rounded-2xl font-black text-sm hover:bg-slate-200 dark:hover:bg-white/20 transition-all mx-2 cursor-pointer'
+                },
+                background: isDark ? '#1A1A31' : '#ffffff',
+                color: isDark ? '#ffffff' : '#1e293b',
+                iconColor: '#ef4444',
+                heightAuto: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('bulk-delete-form').submit();
+                }
+            });
         }
     }
 }
@@ -536,5 +538,12 @@ document.addEventListener('DOMContentLoaded', () => {
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
 [x-cloak] { display: none !important; }
+.swal2-delete-btn {
+    background-color: #ef4444 !important;
+    color: #ffffff !important;
+}
+.swal2-delete-btn:hover {
+    background-color: #dc2626 !important;
+}
 </style>
 @endsection
