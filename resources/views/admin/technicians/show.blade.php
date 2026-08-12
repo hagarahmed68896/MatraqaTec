@@ -367,7 +367,8 @@
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-white/5">
                             @foreach($orders as $index => $order)
-                            <tr class="hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all group">
+                            <tr @click="window.location.href = '{{ route('admin.orders.show', $order->id) }}'"
+                                class="hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all group cursor-pointer">
                                 <td class="py-6 px-8 text-xs font-black text-slate-400">{{ $index + 1 }}</td>
                                 <td class="py-6 px-8 text-sm font-black text-slate-800 dark:text-white">#{{ $order->order_number }}</td>
                                 <td class="py-6 px-8">

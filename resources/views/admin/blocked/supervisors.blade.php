@@ -125,8 +125,9 @@
                 </thead>
                 <tbody class="text-sm font-bold text-slate-600 dark:text-slate-300">
                     @forelse($items as $item)
-                    <tr class="border-b border-slate-50 dark:border-white/[0.02] hover:bg-slate-50/80 dark:hover:bg-white/[0.03] transition-all duration-300 group">
-                        <td class="py-6 px-8 text-center">
+                    <tr @click="window.location.href = '{{ route('admin.supervisors.show', $item->id) }}'" 
+                        class="border-b border-slate-50 dark:border-white/[0.02] hover:bg-slate-50/80 dark:hover:bg-white/[0.03] transition-all duration-300 group cursor-pointer">
+                        <td class="py-6 px-8 text-center" @click.stop>
                             <input type="checkbox" x-model="selectedIds" value="{{ $item->id }}" class="row-checkbox w-5 h-5 border-2 border-slate-200 dark:border-white/10 rounded-lg text-primary focus:ring-primary focus:ring-offset-0 transition-all cursor-pointer">
                         </td>
                         <td class="py-6 px-6 whitespace-nowrap">
@@ -135,7 +136,7 @@
                                     {{ mb_substr($item->name, 0, 1) }}
                                 </div>
                                 <div class="flex flex-col">
-                                    <span class="text-slate-900 dark:text-white font-black text-sm">{{ $item->name }}</span>
+                                    <span class="text-slate-900 dark:text-white font-black text-sm group-hover:text-primary transition-colors">{{ $item->name }}</span>
                                     <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">ID: #{{ $item->id }}</span>
                                 </div>
                             </div>
@@ -158,7 +159,7 @@
                         <td class="py-6 px-6 whitespace-nowrap">
                             <span class="text-xs text-slate-400 font-bold">{{ $item->created_at->format('M d, Y') }}</span>
                         </td>
-                        <td class="py-6 px-8 text-center">
+                        <td class="py-6 px-8 text-center" @click.stop>
                             <button @click="unblockIds = [{{ $item->id }}]; unblockModal = true"
                                     class="w-11 h-11 rounded-2xl mx-auto flex items-center justify-center text-green-500 hover:bg-green-500 hover:text-white dark:hover:bg-green-500/20 dark:hover:text-green-400 transition-all duration-300 transform group-hover:scale-110 shadow-sm" title="{{ __('Unblock') }}">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

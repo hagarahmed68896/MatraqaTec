@@ -78,15 +78,11 @@ class TechnicianController extends Controller
         if ($request->filled('status')) {
             $status = $request->status; 
             $query->whereHas('user', function ($q) use ($status) {
-                if ($status === 'inactive') {
+                if ($status === 'inactive' || $status === 'blocked') {
                     $q->whereIn('status', ['inactive', 'blocked']);
                 } else {
                     $q->where('status', $status);
                 }
-            });
-        } else {
-            $query->whereHas('user', function ($q) {
-                $q->where('status', 'active');
             });
         }
 
@@ -149,7 +145,10 @@ class TechnicianController extends Controller
     public function top(Request $request)
     {
         // Get all top technicians sorted by completed orders and ratings
-        $query = Technician::with(['user', 'service', 'category', 'maintenanceCompany'])
+        $query = Technician::whereHas('user', function ($q) {
+            $q->where('type', 'technician')
+              ->where('status', 'active');
+        })->with(['user', 'service', 'category', 'maintenanceCompany'])
             ->withCount(['orders' => function($q) {
                 $q->where('status', 'completed');
             }])

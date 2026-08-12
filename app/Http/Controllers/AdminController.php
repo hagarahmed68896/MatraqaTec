@@ -362,7 +362,10 @@ class AdminController extends Controller
         }
 
         // 3. Top Technicians
-        $topTechnicians = Technician::with(['user', 'category'])
+        $topTechnicians = Technician::whereHas('user', function ($q) {
+            $q->where('type', 'technician')
+              ->where('status', 'active');
+        })->with(['user', 'category'])
             ->withCount(['orders' => function($q) {
                 $q->where('status', 'completed');
             }])

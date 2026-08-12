@@ -15,7 +15,7 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('orderManagementShow', () => ({
-                activeTab: '{{ ($item->technician || $item->maintenanceCompany) ? 'technician' : 'order' }}',
+                activeTab: 'order',
                 showAcceptModal: false,
                 showRefuseModal: false,
                 showRescheduleModal: false,

@@ -364,7 +364,8 @@
                         </thead>
                         <tbody class="text-xs font-bold">
                             @foreach($orders as $index => $order)
-                            <tr class="border-b border-slate-50 dark:border-white/5 last:border-0 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-all"
+                            <tr @click="window.location.href = '{{ route('admin.orders.show', $order->id) }}'"
+                                class="border-b border-slate-50 dark:border-white/5 last:border-0 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-all cursor-pointer"
                                 x-show="(orderSubTab === 'all' || orderSubTab === '{{ $order->status }}') && 
                                        ('{{ $order->order_number }}'.includes(orderSearch) || 
                                         '{{ optional($order->service)->{'name_'.app()->getLocale()} }}'.toLowerCase().includes(orderSearch.toLowerCase()) ||

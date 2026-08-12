@@ -253,6 +253,7 @@ Route::prefix('admin')->group(function () {
             Route::get('/technicians', [App\Http\Controllers\Admin\BlockedUserController::class, 'technicians'])->name('technicians');
             Route::get('/supervisors', [App\Http\Controllers\Admin\BlockedUserController::class, 'supervisors'])->name('supervisors');
             Route::get('/download', [App\Http\Controllers\Admin\BlockedUserController::class, 'download'])->name('download');
+            Route::post('/bulk-unblock', [App\Http\Controllers\Admin\BlockedUserController::class, 'bulkUnblock'])->name('bulk-unblock');
         });
 
         // Manual Fallback Routes for Maintenance Companies Bulk Actions

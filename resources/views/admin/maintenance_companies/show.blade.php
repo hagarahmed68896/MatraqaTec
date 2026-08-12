@@ -173,6 +173,16 @@
                                     </div>
                                 </div>
 
+                                <div class="flex items-center gap-4 group">
+                                    <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-[12px] font-bold text-slate-400 uppercase tracking-widest">{{ __('Mobile Number') }}</p>
+                                        <p class="text-md font-black text-slate-700 dark:text-white/50 truncate" dir="ltr">{{ $company->user->phone }}</p>
+                                    </div>
+                                </div>
+
                                 <!-- Status Row -->
                                 <div class="flex items-center gap-4 group mb-1">
                                     <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all shrink-0">
@@ -765,7 +775,8 @@
                                 ];
                             @endphp
                             @foreach($orders as $index => $order)
-                            <tr class="border-b border-slate-50 dark:border-white/5 last:border-0 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-all"
+                            <tr @click="window.location.href = '{{ route('admin.orders.show', $order->id) }}'"
+                                class="border-b border-slate-50 dark:border-white/5 last:border-0 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-all cursor-pointer"
                                 x-show="(orderSubTab === 'all' || orderSubTab === '{{ $order->status }}') && 
                                        ('{{ $order->order_number }}'.includes(orderSearch) || 
                                         '{{ optional($order->service)->{'name_'.app()->getLocale()} }}'.toLowerCase().includes(orderSearch.toLowerCase()) ||
