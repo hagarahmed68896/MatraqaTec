@@ -218,7 +218,7 @@
                     $backUrl = $previousUrl;
                 }
             @endphp
-            <a href="{{ $backUrl }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-100 dark:border-white/10 text-[#1A1A31] dark:text-white hover:bg-slate-50 transition-all">
+            <a href="{{ $backUrl }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-[#1A1A31] dark:text-white hover:bg-slate-50 dark:hover:bg-white/10 transition-all">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ app()->getLocale() == 'ar' ? 'M14 5l7 7m0 0l-7 7m7-7H3' : 'M10 19l-7-7m0 0l7-7m-7 7h18' }}"></path></svg>
             </a>
             <h1 class="text-2xl font-black text-[#1A1A31] dark:text-white">{{ __('Order') }} - #{{ $item->id }}</h1>

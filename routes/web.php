@@ -190,7 +190,7 @@ Route::prefix('admin')->group(function () {
                 Route::put('/{id}', [$controller, 'update'])->name('update');
                 Route::delete('/{id}', [$controller, 'destroy'])->name('destroy');
 
-                if ($prefix === 'supervisors') {
+                if (in_array($prefix, ['supervisors', 'technicians', 'individual-customers', 'corporate-customers', 'maintenance-companies'])) {
                     Route::post('/bulk-block', [$controller, 'bulkBlock'])->name('bulk-block');
                     Route::post('/bulk-unblock', [$controller, 'bulkUnblock'])->name('bulk-unblock');
                 }

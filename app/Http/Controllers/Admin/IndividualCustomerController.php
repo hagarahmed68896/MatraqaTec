@@ -413,6 +413,9 @@ class IndividualCustomerController extends Controller
     {
         $ids = $request->input('ids');
         if (empty($ids)) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => __('No customers selected.')]);
+            }
             return back()->with('error', __('No customers selected.'));
         }
 
@@ -431,6 +434,9 @@ class IndividualCustomerController extends Controller
             }
         }
 
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => __('Selected customers deleted successfully.')]);
+        }
         return back()->with('success', __('Selected customers deleted successfully.'));
     }
 
@@ -486,6 +492,9 @@ class IndividualCustomerController extends Controller
             }
         }
         
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => __('Customers blocked successfully.')]);
+        }
         return back()->with('success', __('Customers blocked successfully.'));
     }
 
@@ -500,6 +509,9 @@ class IndividualCustomerController extends Controller
             }
         }
         
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => __('Customers unblocked successfully.')]);
+        }
         return back()->with('success', __('Customers unblocked successfully.'));
     }
 }

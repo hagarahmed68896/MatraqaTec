@@ -25,6 +25,10 @@
             background-color: #1A1A31 !important;
             color: #ffffff !important;
         }
+        .dark img[src*="Vector (1)"], 
+        .dark img[src*="Vector%20(1)"] {
+            filter: brightness(0) invert(1);
+        }
     </style>
     @yield('styles')
 </head>

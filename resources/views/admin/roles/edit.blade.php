@@ -401,7 +401,9 @@ input:checked + .slider:before {
                                                             <span class="slider"></span>
                                                         </label>
                                                         <template x-for="id in {{ $jsonIds }}">
-                                                            <input type="hidden" name="permissions[]" :value="id" x-if="permissions.includes(id)">
+                                                            <template x-if="permissions.includes(id)">
+                                                                <input type="hidden" name="permissions[]" :value="id">
+                                                            </template>
                                                         </template>
                                                     @else
                                                         <div class="w-8 h-px bg-slate-200 dark:bg-white/10 rounded-full mx-auto opacity-30"></div>

@@ -622,4 +622,42 @@ class TechnicianController extends Controller
             fclose($handle);
         }, 200, $headers);
     }
+
+    public function bulkBlock(Request $request)
+    {
+        $ids = $request->input('ids');
+        if (empty($ids)) {
+            return response()->json(['success' => false, 'message' => __('No technicians selected.')]);
+        }
+
+        $technicians = Technician::whereIn('id', $ids)->with('user')->get();
+        foreach ($technicians as $technician) {
+            if ($technician->user && $technician->user->status !== 'blocked') {
+                $technician->user->status = 'blocked';
+                $technician->user->blocked_at = now();
+                $technician->user->save();
+            }
+        }
+
+        return response()->json(['success' => true, 'message' => __('Selected technicians have been blocked.')]);
+    }
+
+    public function bulkUnblock(Request $request)
+    {
+        $ids = $request->input('ids');
+        if (empty($ids)) {
+            return response()->json(['success' => false, 'message' => __('No technicians selected.')]);
+        }
+
+        $technicians = Technician::whereIn('id', $ids)->with('user')->get();
+        foreach ($technicians as $technician) {
+            if ($technician->user && $technician->user->status === 'blocked') {
+                $technician->user->status = 'active';
+                $technician->user->blocked_at = null;
+                $technician->user->save();
+            }
+        }
+
+        return response()->json(['success' => true, 'message' => __('Selected technicians have been unblocked.')]);
+    }
 }
