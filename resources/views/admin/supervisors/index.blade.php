@@ -25,6 +25,21 @@
             document.getElementById('delete-form-' + this.deleteTargetId).submit();
         }
     },
+    showBlockModal: false,
+    blockTargetId: null,
+    isBulkBlock: false,
+    confirmBlock(id = null) {
+        this.blockTargetId = id;
+        this.isBulkBlock = id === null;
+        this.showBlockModal = true;
+    },
+    executeBlock() {
+        if (this.isBulkBlock) {
+            document.getElementById('bulk-block-form').submit();
+        } else {
+            document.getElementById('block-form-' + this.blockTargetId).submit();
+        }
+    },
     
     // Sort & Filter state
     sortBy: '{{ request('sort', 'all') }}',
@@ -176,16 +191,16 @@
                         {{ __('Delete Selected') }}
                     </button>
 
-                    <form action="{{ route('admin.supervisors.bulk-block') }}" method="POST" class="inline">
+                    <form id="bulk-block-form" action="{{ route('admin.supervisors.bulk-block') }}" method="POST" class="hidden">
                         @csrf
                         <template x-for="id in selectedItems" :key="id">
                             <input type="hidden" name="ids[]" :value="id">
                         </template>
-                        <button type="submit" class="px-6 py-3 bg-red-500 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-600 transition-all flex items-center gap-2 shadow-lg shadow-red-500/20">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
-                            {{ __('Block') }}
-                        </button>
                     </form>
+                    <button type="button" @click="confirmBlock()" class="px-6 py-3 bg-red-500 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-600 transition-all flex items-center gap-2 shadow-lg shadow-red-500/20">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                        {{ __('Block') }}
+                    </button>
 
                     <form action="{{ route('admin.supervisors.bulk-unblock') }}" method="POST" class="inline">
                         @csrf
@@ -259,16 +274,18 @@
                                 <a href="{{ route('admin.supervisors.edit', $item->id) }}" title="{{ __('Edit') }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-400 hover:text-primary dark:hover:text-white transition-all">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                                 </a>
-                                <form action="{{ route('admin.supervisors.toggle-block', $item->id) }}" method="POST" class="inline">
+                                <form id="block-form-{{ $item->id }}" action="{{ route('admin.supervisors.toggle-block', $item->id) }}" method="POST" class="hidden">
                                     @csrf
-                                    <button type="submit" title="{{ $item->status == 'active' ? __('Block') : __('Unblock') }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-400 hover:text-red-500 transition-all">
-                                        @if($item->status == 'active')
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
-                                        @else
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        @endif
-                                    </button>
                                 </form>
+                                @if($item->status == 'active')
+                                    <button type="button" @click="confirmBlock({{ $item->id }})" title="{{ __('Block') }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-400 hover:text-red-500 transition-all">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                                    </button>
+                                @else
+                                    <button type="submit" form="block-form-{{ $item->id }}" title="{{ __('Unblock') }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-400 hover:text-green-500 transition-all">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    </button>
+                                @endif
                                 <form id="delete-form-{{ $item->id }}" action="{{ route('admin.supervisors.destroy', $item->id) }}" method="POST" class="hidden">
                                     @csrf
                                     @method('DELETE')
@@ -494,6 +511,66 @@
                         <button type="button" @click="executeDelete()" 
                                 class="flex-1 py-4 bg-rose-500 text-white rounded-2xl font-black hover:bg-rose-600 transition-all shadow-lg shadow-rose-500/20 uppercase tracking-widest text-md">
                             {{ __('Delete') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Block Confirmation Modal -->
+    <template x-teleport="body">
+        <div x-show="showBlockModal" 
+             class="fixed inset-0 z-[1000] flex items-center justify-center p-4 overflow-x-hidden overflow-y-auto"
+             x-cloak>
+            
+            <!-- Backdrop -->
+            <div x-show="showBlockModal" 
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 @click="showBlockModal = false"
+                 class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+
+            <!-- Modal Content -->
+            <div x-show="showBlockModal"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+                 class="relative bg-white dark:bg-[#1A1A31] w-full max-w-md rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-white/10 overflow-hidden transform transition-all">
+                
+                <div class="p-10 text-center text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
+                    <div class="mx-auto w-24 h-24 bg-amber-50 dark:bg-amber-500/10 rounded-full flex items-center justify-center mb-8 relative">
+                        <div class="absolute inset-0 rounded-full bg-amber-500/10 animate-ping"></div>
+                        <svg class="w-10 h-10 text-amber-500 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                        </svg>
+                    </div>
+                    
+                    <h3 class="text-2xl font-black text-slate-800 dark:text-white mb-4 text-center">{{ __('Confirm Blocking') }}</h3>
+                    <p class="text-slate-500 dark:text-slate-400 font-bold leading-relaxed mb-10 text-center">
+                        <template x-if="isBulkBlock">
+                            <span>{{ __('Are you sure you want to block the selected supervisors?') }}</span>
+                        </template>
+                        <template x-if="!isBulkBlock">
+                            <span>{{ __('Are you sure you want to block this supervisor?') }}</span>
+                        </template>
+                    </p>
+                    
+                    <div class="flex gap-4">
+                        <button type="button" @click="showBlockModal = false" 
+                                class="flex-1 py-4 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-2xl font-black hover:bg-slate-200 dark:hover:bg-white/10 transition-all uppercase tracking-widest text-md">
+                            {{ __('Cancel') }}
+                        </button>
+                        <button type="button" @click="executeBlock()" 
+                                class="flex-1 py-4 bg-amber-500 text-white rounded-2xl font-black hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/20 uppercase tracking-widest text-md">
+                            {{ __('Block') }}
                         </button>
                     </div>
                 </div>

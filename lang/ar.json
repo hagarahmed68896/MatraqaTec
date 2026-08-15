@@ -87,6 +87,8 @@
     "Confirm Blocking": "تأكيد الحظر",
     "Are you sure you want to block the selected technicians?": "هل أنت متأكد من رغبتك في حظر الفنيين المحددين؟",
     "Are you sure you want to block the selected customers?": "هل أنت متأكد من رغبتك في حظر العملاء المحددين؟",
+    "Are you sure you want to block the selected supervisors?": "هل أنت متأكد من رغبتك في حظر المشرفين المحددين؟",
+    "Are you sure you want to block this supervisor?": "هل أنت متأكد من رغبتك في حظر هذا المشرف؟",
     "Operation - #": "العملية - #",
     "Resend via Email": "إعادة الإرسال عبر البريد الإلكتروني",
     "Send via Email": "إرسال عبر البريد الإلكتروني",
