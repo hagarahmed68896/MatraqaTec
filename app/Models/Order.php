@@ -346,7 +346,10 @@ class Order extends Model
         return self::whereIn('status', ['new', 'scheduled', 'accepted'])
             ->where('scheduled_at', '<', now())
             ->where('status', '!=', 'expired')
-            ->whereNotIn('sub_status', ['reschedule_requested', 'additional_visit', 'pending_tech_acceptance'])
+            ->where(function($query) {
+                $query->whereNotIn('sub_status', ['reschedule_requested', 'additional_visit', 'pending_tech_acceptance'])
+                      ->orWhereNull('sub_status');
+            })
             ->update([
                 'status' => 'expired',
                 'sub_status' => 'expired'

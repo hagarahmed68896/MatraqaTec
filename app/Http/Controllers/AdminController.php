@@ -373,6 +373,9 @@ class AdminController extends Controller
             ->take(5)
             ->get();
 
+        // Sync expired/overdue orders
+        Order::syncExpiredOrders();
+
         // 4. Recent Orders (Initial load)
         $recent_orders = Order::with(['user', 'service', 'technician'])
             ->where('status', 'new')
@@ -405,6 +408,9 @@ class AdminController extends Controller
 
     public function dashboardOrders(Request $request)
     {
+        // Sync expired/overdue orders
+        Order::syncExpiredOrders();
+
         $status = $request->get('status', 'all');
         $query = Order::with(['user', 'service', 'technician']);
         
