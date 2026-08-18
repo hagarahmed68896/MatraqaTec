@@ -303,6 +303,18 @@ class OrderController extends Controller
             $request->merge(['scheduled_at' => now()->toDateTimeString()]);
         }
 
+        // Fallback to user's profile location if request coordinates are empty or are Riyadh center defaults
+        $reqLat = $request->latitude;
+        $reqLng = $request->longitude;
+        if (empty($reqLat) || empty($reqLng) || ($reqLat == 24.81 && $reqLng == 46.77) || ($reqLat == 24.7136 && $reqLng == 46.6753)) {
+            if ($user && $user->latitude && $user->longitude) {
+                $request->merge([
+                    'latitude' => $user->latitude,
+                    'longitude' => $user->longitude,
+                ]);
+            }
+        }
+
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'service_id' => 'required|exists:services,id',
             'sub_service_id' => 'nullable|exists:services,id',
@@ -312,7 +324,7 @@ class OrderController extends Controller
             'payment_method' => 'nullable|string|in:cash,credit_card,apple_pay,wallet',
             'scheduled_at' => $isImmediate ? 'nullable|date' : 'required|date|after:now',
             'attachments' => 'nullable',
-            'attachments.*' => 'file|mimes:jpg,jpeg,png,mp4,mov|max:10240',
+            'attachments.*' => 'file|mimes:jpg,jpeg,png,mp4,mov|max:51200',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'force' => 'nullable|boolean',
@@ -1066,10 +1078,18 @@ class OrderController extends Controller
         $order->spare_parts_metadata = $sparePartsMetadata;
         $order->total_price = $finalGrandTotal; 
         
-        if ($request->filled('client_signature') && Str::startsWith($request->client_signature, 'data:image')) {
-            $order->client_signature = $this->uploadBase64Image($request->client_signature, 'signatures');
-        } elseif ($request->filled('client_signature')) {
-            $order->client_signature = $request->client_signature;
+        if ($request->filled('client_signature')) {
+            $sig = $request->client_signature;
+            // Prepend base64 data URL header if it's a raw base64 string
+            if (!Str::startsWith($sig, 'data:image') && !Str::contains($sig, '.') && strlen($sig) > 100) {
+                $sig = 'data:image/png;base64,' . $sig;
+            }
+
+            if (Str::startsWith($sig, 'data:image')) {
+                $order->client_signature = $this->uploadBase64Image($sig, 'signatures');
+            } else {
+                $order->client_signature = $sig;
+            }
         }
         
         $order->save();
@@ -2144,7 +2164,7 @@ class OrderController extends Controller
 
         $request->validate([
             'attachments' => 'required|array',
-            'attachments.*' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'attachments.*' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:51200',
             'type' => 'nullable|string|in:before,after,during'
         ]);
 

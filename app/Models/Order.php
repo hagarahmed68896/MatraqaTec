@@ -107,8 +107,27 @@ class Order extends Model
         if (Str::startsWith($this->client_signature, 'data:image')) {
             return $this->client_signature;
         }
+        // Check if it is a raw base64 string (no dot extension and length > 100)
+        if (!Str::contains($this->client_signature, '.') && strlen($this->client_signature) > 100) {
+            return 'data:image/png;base64,' . $this->client_signature;
+        }
         // Since we now save directly to public/, asset() will link to it correctly
         return asset($this->client_signature);
+    }
+
+    public function getPaymentMethodAttribute($value)
+    {
+        if ($value) {
+            return $value;
+        }
+
+        // Fallback to the first completed payment's method if exists
+        $completedPayment = $this->payments()->where('status', 'completed')->first();
+        if ($completedPayment) {
+            return $completedPayment->payment_method;
+        }
+
+        return null;
     }
 
     public function getIsPaidAttribute()

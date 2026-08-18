@@ -1,4 +1,11 @@
 {
+    "Client Location": "موقع العميل",
+    "Client Signature": "توقيع العميل",
+    "Not Signed": "لم يتم التوقيع",
+    "Client Rating": "تقييم العميل",
+    "Work Documentation": "توثيق العمل",
+    "Before Start": "قبل البدء",
+    "After Completion": "بعد الانتهاء",
     "Please login to access the dashboard.": "يرجى تسجيل الدخول للوصول إلى لوحة التحكم",
     "Please enter the sub-service name in Arabic": "يرجى إدخال اسم الخدمة الفرعية باللغة العربية",
     "Please enter the sub-service name in English": "يرجى إدخال اسم الخدمة الفرعية باللغة الإنجليزية",

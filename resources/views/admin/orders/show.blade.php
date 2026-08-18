@@ -472,8 +472,8 @@
                 <h3 class="text-lg font-black text-[#1A1A31] dark:text-white mb-8">{{ __('Attachments') }}</h3>
                 <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4">
                     @foreach($item->attachments as $attachment)
-                        <a href="{{ Storage::url($attachment->file_path) }}" target="_blank" class="aspect-square rounded-2xl overflow-hidden border border-slate-100 dark:border-white/10 group relative">
-                            <img src="{{ Storage::url($attachment->file_path) }}" alt="Attachment" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        <a href="{{ asset($attachment->file_path) }}" target="_blank" class="aspect-square rounded-2xl overflow-hidden border border-slate-100 dark:border-white/10 group relative">
+                            <img src="{{ asset($attachment->file_path) }}" alt="Attachment" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                             <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                             </div>
@@ -495,8 +495,8 @@
                         <h4 class="text-sm font-bold text-slate-400">{{ __('Before Start') }}</h4>
                         <div class="grid grid-cols-3 gap-3">
                             @forelse($item->attachments->where('type', 'before') as $photo)
-                                <a href="{{ Storage::url($photo->file_path) }}" target="_blank" class="aspect-square rounded-xl overflow-hidden border border-slate-100 dark:border-white/10 relative group">
-                                    <img src="{{ Storage::url($photo->file_path) }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                                <a href="{{ asset($photo->file_path) }}" target="_blank" class="aspect-square rounded-xl overflow-hidden border border-slate-100 dark:border-white/10 relative group">
+                                    <img src="{{ asset($photo->file_path) }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                                 </a>
                             @empty
                                 <div class="col-span-3 py-8 text-center text-xs text-slate-300 border-2 border-dashed border-slate-100 dark:border-white/10 rounded-xl">
@@ -511,8 +511,8 @@
                         <h4 class="text-sm font-bold text-slate-400">{{ __('After Completion') }}</h4>
                         <div class="grid grid-cols-3 gap-3">
                             @forelse($item->attachments->where('type', 'after') as $photo)
-                                <a href="{{ Storage::url($photo->file_path) }}" target="_blank" class="aspect-square rounded-xl overflow-hidden border border-slate-100 dark:border-white/10 relative group">
-                                    <img src="{{ Storage::url($photo->file_path) }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                                <a href="{{ asset($photo->file_path) }}" target="_blank" class="aspect-square rounded-xl overflow-hidden border border-slate-100 dark:border-white/10 relative group">
+                                    <img src="{{ asset($photo->file_path) }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                                 </a>
                             @empty
                                 <div class="col-span-3 py-8 text-center text-xs text-slate-300 border-2 border-dashed border-slate-100 dark:border-white/10 rounded-xl">
@@ -576,11 +576,7 @@
                 </h3>
                 <div class="h-48 rounded-2xl bg-slate-50 dark:bg-white/5 border-2 border-dashed border-slate-100 dark:border-white/10 flex items-center justify-center overflow-hidden relative">
                     @if($item->client_signature)
-                        @if(Str::startsWith($item->client_signature, 'data:image'))
-                            <img src="{{ $item->client_signature }}" alt="Signature" class="max-h-full max-w-full object-contain">
-                        @else
-                            <img src="{{ asset($item->client_signature) }}" alt="Signature" class="max-h-full max-w-full object-contain">
-                        @endif
+                        <img src="{{ $item->client_signature_url }}" alt="Signature" class="max-h-[90%] max-w-[90%] object-contain bg-white rounded-xl p-2 shadow-sm border border-slate-100">
                     @else
                         <span class="text-xs font-bold text-slate-300 uppercase tracking-widest">{{ __('Not Signed') }}</span>
                     @endif

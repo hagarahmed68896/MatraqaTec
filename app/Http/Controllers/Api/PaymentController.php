@@ -137,6 +137,9 @@ class PaymentController extends Controller
                     'payment_date' => now(),
                 ]);
 
+                // Update Order Payment Method
+                $order->update(['payment_method' => $request->payment_method]);
+
                 return response()->json([
                     'status' => true,
                     'message' => 'Payment successful via wallet',

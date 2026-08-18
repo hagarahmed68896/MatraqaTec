@@ -375,7 +375,7 @@
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
                                 </button>
                                 <!-- Accept Button (Checkmark) -->
-                                <button type="button" @click.stop="openAcceptModal({{ $item->id }})" class="w-10 h-10 flex items-center justify-center rounded-xl bg-[#1A1A31] text-white shadow-lg shadow-[#1A1A31]/20 hover:scale-110 transition-all">
+                                <button type="button" @click.stop="openAcceptModal({{ $item->id }}, {{ $item->latitude ?? 'null' }}, {{ $item->longitude ?? 'null' }}, '{{ addslashes($item->address ?? "") }}')" class="w-10 h-10 flex items-center justify-center rounded-xl bg-[#1A1A31] text-white shadow-lg shadow-[#1A1A31]/20 hover:scale-110 transition-all">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                                 </button>
                             </div>
@@ -850,6 +850,9 @@
             categories: @json($categories),
             selectedCategoryId: '{{ request('service_category_id') }}',
             selectedServiceIds: @json(request('service_ids', [])),
+            orderLat: null,
+            orderLng: null,
+            orderAddress: '',
 
             get filteredServices() {
                 if (!this.selectedCategoryId) return [];
@@ -857,8 +860,11 @@
                 return cat ? cat.children : [];
             },
 
-            async openAcceptModal(orderId) {
+            async openAcceptModal(orderId, lat = null, lng = null, address = '') {
                 this.selectedOrder = orderId;
+                this.orderLat = lat;
+                this.orderLng = lng;
+                this.orderAddress = address;
                 this.showAcceptModal = true;
                 this.selectedTechId = null;
                 this.selectedCompanyId = null;
@@ -877,12 +883,18 @@
 
             initMap() {
                 if (!this.map) {
+                    const centerLat = this.orderLat || 24.7136;
+                    const centerLng = this.orderLng || 46.6753;
                     this.map = L.map('tech-map', {
                         zoomControl: false,
                         attributionControl: false
-                    }).setView([24.7136, 46.6753], 12);
+                    }).setView([centerLat, centerLng], 12);
                     
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
+                } else {
+                    const centerLat = this.orderLat || 24.7136;
+                    const centerLng = this.orderLng || 46.6753;
+                    this.map.setView([centerLat, centerLng], 12);
                 }
                 
                 this.renderMarkers();
@@ -892,6 +904,26 @@
                 if (!this.map) return;
                 this.markers.forEach(m => this.map.removeLayer(m));
                 this.markers = [];
+
+                // Add Client / Order location marker
+                if (this.orderLat && this.orderLng) {
+                    const clientIcon = L.divIcon({
+                        className: 'custom-div-icon',
+                        html: `<div class="w-10 h-10 rounded-full bg-rose-600 border-[3px] border-white flex items-center justify-center shadow-2xl animate-pulse">
+                                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                               </div>`,
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 40]
+                    });
+                    const clientMarker = L.marker([this.orderLat, this.orderLng], { icon: clientIcon }).addTo(this.map);
+                    clientMarker.bindPopup(`
+                        <div style="font-family: inherit; font-size: 13px; text-align: right; direction: rtl; padding: 4px;">
+                            <h4 style="margin: 0 0 5px 0; font-weight: bold; font-size: 14px; color: #e11d48;">{{ __("Client Location") }}</h4>
+                            <p style="margin: 0; color: #64748b;">${this.orderAddress}</p>
+                        </div>
+                    `);
+                    this.markers.push(clientMarker);
+                }
 
                 let data = this.activeTab === 'platform' ? this.technicians : this.companies;
                 

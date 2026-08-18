@@ -56,6 +56,9 @@ class MyFatoorahCallbackController extends Controller
                     ]
                 );
 
+                // Update Order Payment Method
+                $order->update(['payment_method' => 'online']);
+
                 // Option: Update order status to paid or anything specific
                 // $order->update(['is_paid' => true]);
 
