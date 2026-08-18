@@ -614,6 +614,11 @@ class OrderController extends Controller
 
         // Note: Photo validation moved to workStarted (actual start of work) step.
 
+        $user = $request->user();
+        if ($user && $user->type === 'technician' && !$user->is_online) {
+            $user->update(['is_online' => true]);
+        }
+
         $order->update([
             'status' => 'in_progress',
             'sub_status' => 'on_way'

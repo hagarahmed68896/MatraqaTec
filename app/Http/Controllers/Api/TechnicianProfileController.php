@@ -446,20 +446,7 @@ class TechnicianProfileController extends Controller
         $statusTab = $request->input('tab', 'all'); 
         
         // Auto-detach expired unaccepted orders for all technicians before retrieving the list
-        $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
-        \App\Models\Order::whereNotNull('technician_id')
-            ->where(function($q) {
-                $q->where('status', 'scheduled') // Only scheduled (waiting for tech)
-                  ->orWhere(function($sq) {
-                      $sq->where('status', 'new')->whereNull('maintenance_company_id'); // Or new marketplace orders (independent)
-                  });
-            })
-            ->where('assigned_at', '<', now()->subMinutes($duration))
-            ->update([
-                'technician_id' => null,
-                'status' => 'new',
-                'assigned_at' => null
-            ]);
+        \App\Models\Order::syncExpiredOrders();
 
         $assignedQuery = Order::where('technician_id', $technician->id ?? null);
         if ($technician && $technician->maintenance_company_id) {

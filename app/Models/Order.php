@@ -128,6 +128,11 @@ class Order extends Model
         $user = auth()->user();
         if (!$user) return false;
 
+        // Technicians can only reschedule orders they have already accepted
+        if ($user->type === 'technician' && $this->status !== 'accepted') {
+            return false;
+        }
+
         // Common status check: only scheduled/accepted/new orders can be rescheduled
         if (!in_array($this->status, ['new', 'scheduled', 'accepted'])) {
             return false;
@@ -343,17 +348,49 @@ class Order extends Model
             ]);
 
         // 2. Mark overdue orders as expired
-        return self::whereIn('status', ['new', 'scheduled', 'accepted'])
-            ->where('scheduled_at', '<', now())
+        $overdueOrders = self::whereIn('status', ['new', 'scheduled', 'accepted'])
+            ->where(function($query) {
+                $query->where(function($q) {
+                    $q->where('is_immediate', false)
+                      ->where('scheduled_at', '<', now());
+                })->orWhere(function($q) {
+                    $q->where('is_immediate', true)
+                      ->where('scheduled_at', '<', now()->subHour());
+                });
+            })
             ->where('status', '!=', 'expired')
             ->where(function($query) {
                 $query->whereNotIn('sub_status', ['reschedule_requested', 'additional_visit', 'pending_tech_acceptance'])
                       ->orWhereNull('sub_status');
             })
-            ->update([
+            ->get();
+
+        foreach ($overdueOrders as $order) {
+            $order->update([
                 'status' => 'expired',
                 'sub_status' => 'expired'
             ]);
+
+            // Notify the client about expiration and option to reschedule
+            $client = \App\Models\User::find($order->user_id);
+            if ($client) {
+                $details = [
+                    'type' => \App\Models\Notification::TYPE_STATUS_UPDATE ?? 'status_update',
+                    'title_ar' => 'انتهت صلاحية طلبك الفوري',
+                    'title_en' => 'Your immediate order has expired',
+                    'body_ar' => 'عذراً، لم نتمكن من العثور على فني متاح لطلبك الفوري في الوقت المحدد. هل ترغب في إعادة جدولته لأقرب موعد متاح؟',
+                    'body_en' => 'Sorry, we could not find an available technician for your immediate order in time. Would you like to reschedule it to the nearest available slot?',
+                    'data' => [
+                        'order_id' => $order->id,
+                        'suggest_reschedule' => true
+                    ]
+                ];
+
+                $client->sendFcmNotification($details, true);
+            }
+        }
+
+        return $overdueOrders->count();
     }
 
 
