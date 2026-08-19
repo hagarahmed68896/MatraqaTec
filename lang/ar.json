@@ -1,4 +1,7 @@
 {
+    "Please ensure the invoice is paid before finishing the work.": "يرجى التأكد من سداد الفاتورة قبل إنهاء العمل.",
+    "Please ensure the invoice is paid before finishing the work. Required: :total SAR, Paid: :paid SAR": "يرجى التأكد من سداد الفاتورة قبل إنهاء العمل. المطلوب: :total ريال، المدفوع: :paid ريال",
+    "You have exceeded the maximum limit of rescheduling for this order.": "لقد تجاوزت الحد الأقصى لإعادة جدولة هذا الطلب.",
     "Client Location": "موقع العميل",
     "Client Signature": "توقيع العميل",
     "Not Signed": "لم يتم التوقيع",

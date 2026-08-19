@@ -36,6 +36,7 @@ class Order extends Model
         'reschedule_requested_by',
         'rejected_by_user_id',
         'is_immediate',
+        'reschedule_count',
     ];
 
     protected $casts = [
@@ -409,7 +410,54 @@ class Order extends Model
             }
         }
 
-        return $overdueOrders->count();
+        // 3. Mark stuck in-progress orders (more than 24 hours overdue) as expired and free technicians
+        $stuckInProgressOrders = self::where('status', 'in_progress')
+            ->where('scheduled_at', '<', now()->subHours(24))
+            ->get();
+
+        foreach ($stuckInProgressOrders as $order) {
+            $order->update([
+                'status' => 'expired',
+                'sub_status' => 'expired'
+            ]);
+
+            // Release technician to available
+            if ($order->technician) {
+                $order->technician->update(['availability_status' => 'available']);
+            }
+
+            // Notify Admins
+            try {
+                $admins = \App\Models\User::where('type', 'admin')->get();
+                foreach ($admins as $admin) {
+                    $admin->sendFcmNotification([
+                        'type' => 'stuck_order_expired',
+                        'title_ar' => 'تنبيه: طلب معلق منتهي الصلاحية',
+                        'title_en' => 'Alert: Stuck Order Expired',
+                        'body_ar' => "الطلب رقم {$order->order_number} المنسوب للفني معلق منذ أكثر من 24 ساعة وتم إلغاؤه تلقائياً.",
+                        'body_en' => "Order #{$order->order_number} has been stuck in progress for over 24 hours and was automatically expired.",
+                        'data' => ['order_id' => $order->id]
+                    ], true);
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('FCM Error (stuck_order_expired): ' . $e->getMessage());
+            }
+
+            // Notify Client
+            $client = \App\Models\User::find($order->user_id);
+            if ($client) {
+                $client->sendFcmNotification([
+                    'type' => \App\Models\Notification::TYPE_STATUS_UPDATE ?? 'status_update',
+                    'title_ar' => 'تم تعليق طلبك لعدم استجابة الفني',
+                    'title_en' => 'Your order expired due to technician inactivity',
+                    'body_ar' => "عذراً، تم إلغاء طلبك رقم {$order->order_number} تلقائياً لعدم اكتماله من الفني. هل ترغب في إعادة جدولته؟",
+                    'body_en' => "Sorry, your order #{$order->order_number} was automatically expired due to technician inactivity. Would you like to reschedule it?",
+                    'data' => ['order_id' => $order->id, 'suggest_reschedule' => true]
+                ], true);
+            }
+        }
+
+        return $overdueOrders->count() + $stuckInProgressOrders->count();
     }
 
 

@@ -47,5 +47,9 @@ class HandleExpiredOrders extends Command
                 'sub_status' => 'expired'
             ]);
         }
+
+        // Trigger central expired/stuck orders syncing and notifications
+        $syncedCount = \App\Models\Order::syncExpiredOrders();
+        $this->info("Completed sync. Total expired/stuck orders processed: {$syncedCount}");
     }
 }

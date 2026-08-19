@@ -627,8 +627,26 @@ class OrderController extends Controller
         // Note: Photo validation moved to workStarted (actual start of work) step.
 
         $user = $request->user();
-        if ($user && $user->type === 'technician' && !$user->is_online) {
-            $user->update(['is_online' => true]);
+        if ($user && $user->type === 'technician') {
+            if (!$user->is_online) {
+                $user->update(['is_online' => true]);
+            }
+
+            // Sync and save initial location if provided
+            if ($request->filled('latitude') && $request->filled('longitude')) {
+                $user->update([
+                    'latitude' => $request->latitude,
+                    'longitude' => $request->longitude,
+                ]);
+
+                \App\Models\TechnicianLocation::updateOrCreate(
+                    ['technician_id' => $user->id],
+                    [
+                        'latitude' => $request->latitude,
+                        'longitude' => $request->longitude,
+                    ]
+                );
+            }
         }
 
         $order->update([
@@ -684,15 +702,6 @@ class OrderController extends Controller
 
         if ($order->status !== 'in_progress') {
             return response()->json(['status' => false, 'message' => 'Order must be in progress to update sub-status'], 422);
-        }
-
-        // Validation: Prevent updating if scheduled_at is more than 24 hours in the past
-        if ($this->isOrderExpired($order)) {
-            return response()->json([
-                'status' => false, 
-                'message' => __('This order status cannot be updated because its time is too old (more than 24 hours). Please reschedule the order first.'),
-                'data' => $order
-            ], 422);
         }
 
         // Handle Attachments if provided
@@ -1320,6 +1329,11 @@ class OrderController extends Controller
             return response()->json(['status' => false, 'message' => __('This order cannot be rescheduled in its current status.')], 422);
         }
 
+        // Limit check: Prevent rescheduling if it has been rescheduled 3 or more times
+        if ($order->reschedule_count >= 3) {
+            return response()->json(['status' => false, 'message' => __('You have exceeded the maximum limit of rescheduling for this order.')], 422);
+        }
+
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'scheduled_at' => 'required|date|after:now',
         ], [
@@ -1399,12 +1413,15 @@ class OrderController extends Controller
         }
 
         if ($request->action === 'accept') {
+            $newRescheduleCount = ($order->reschedule_count ?? 0) + 1;
+
             // Apply the proposed change
             $order->update([
                 'scheduled_at' => $order->proposed_scheduled_at,
                 'proposed_scheduled_at' => null,
                 'reschedule_requested_by' => null,
                 'sub_status' => null,
+                'reschedule_count' => $newRescheduleCount,
             ]);
 
             // Update the reschedule notification type to hide action buttons in the app
@@ -1414,6 +1431,25 @@ class OrderController extends Controller
             \App\Models\Appointment::where('order_id', $order->id)->update([
                 'appointment_date' => $order->scheduled_at,
             ]);
+
+            // Alert admins if reschedule count is 3 or more
+            if ($newRescheduleCount >= 3) {
+                try {
+                    $admins = \App\Models\User::where('type', 'admin')->get();
+                    foreach ($admins as $admin) {
+                        $admin->sendFcmNotification([
+                            'type' => 'reschedule_limit_exceeded',
+                            'title_ar' => 'تنبيه: تجاوز حد إعادة الجدولة',
+                            'title_en' => 'Reschedule Limit Exceeded Alert',
+                            'body_ar' => "الطلب رقم {$order->order_number} تم إعادة جدولته {$newRescheduleCount} مرات. يرجى مراجعة المشكلة لمعرفة السبب.",
+                            'body_en' => "Order #{$order->order_number} has been rescheduled {$newRescheduleCount} times. Please review to check if the issue is from the technician or the client.",
+                            'data' => ['order_id' => $order->id]
+                        ], true);
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('FCM Error (reschedule_limit_exceeded): ' . $e->getMessage());
+                }
+            }
 
             // Notify Initiator of Acceptance
             $notifyUserId = $requestWasByClient ? $order->user_id : ($order->technician->user_id ?? ($order->maintenanceCompany->user_id ?? null));
@@ -1540,21 +1576,35 @@ class OrderController extends Controller
 
     public function getTechnicianLocation($id)
     {
-        $order = Order::with('technician')->find($id);
-        if (!$order || !$order->technician_id) {
+        $order = Order::with(['technician.user'])->find($id);
+        if (!$order || !$order->technician) {
             return response()->json(['status' => false, 'message' => 'Technician not assigned'], 404);
         }
 
-        $loc = \App\Models\TechnicianLocation::where('technician_id', $order->technician->user_id)->first();
-        if (!$loc) return response()->json(['status' => false, 'message' => 'Location unavailable'], 404);
+        $user = $order->technician->user;
+        if (!$user) {
+            return response()->json(['status' => false, 'message' => 'Technician user profile not found'], 404);
+        }
+
+        $loc = \App\Models\TechnicianLocation::where('technician_id', $user->id)->first();
+        
+        $latitude = $loc ? $loc->latitude : $user->latitude;
+        $longitude = $loc ? $loc->longitude : $user->longitude;
+        $updatedAt = $loc ? $loc->updated_at : ($user->updated_at ?? now());
+
+        if (is_null($latitude) || is_null($longitude)) {
+            return response()->json(['status' => false, 'message' => 'Location unavailable'], 404);
+        }
 
         return response()->json([
             'status' => true,
             'data' => [
-                'name' => $order->technician->user->name ?? 'Unknown',
-                'latitude' => $loc->latitude,
-                'longitude' => $loc->longitude,
-                'updated' => $loc->updated_at->diffForHumans(),
+                'name' => $user->name ?? 'Unknown',
+                'phone' => $user->phone ?? '',
+                'latitude' => (float) $latitude,
+                'longitude' => (float) $longitude,
+                'updated' => $updatedAt->diffForHumans(),
+                'updated_timestamp' => $updatedAt->timestamp,
             ]
         ]);
     }

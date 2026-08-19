@@ -46,6 +46,12 @@ class TrackingController extends Controller
             ]
         );
 
+        // Update coordinates in the users table so distance calculations are accurate
+        $user->update([
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+        ]);
+
         return response()->json([
             'status' => true,
             'message' => 'Location updated successfully',
