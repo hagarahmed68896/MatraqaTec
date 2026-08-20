@@ -107,6 +107,15 @@ class TechnicianProfileController extends Controller
             $user->latitude = $latitude;
             $user->longitude = $longitude;
 
+            // Sync with technician_locations table
+            \App\Models\TechnicianLocation::updateOrCreate(
+                ['technician_id' => $user->id],
+                [
+                    'latitude' => $latitude,
+                    'longitude' => $longitude,
+                ]
+            );
+
             // Auto-detect City and verify against DB
             $locationData = $this->getLocationDataFromCoords($latitude, $longitude);
             if ($locationData) {

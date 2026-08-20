@@ -1588,9 +1588,16 @@ class OrderController extends Controller
 
         $loc = \App\Models\TechnicianLocation::where('technician_id', $user->id)->first();
         
-        $latitude = $loc ? $loc->latitude : $user->latitude;
-        $longitude = $loc ? $loc->longitude : $user->longitude;
-        $updatedAt = $loc ? $loc->updated_at : ($user->updated_at ?? now());
+        // Compare timestamps and use the latest updated location
+        $latitude = $user->latitude;
+        $longitude = $user->longitude;
+        $updatedAt = $user->updated_at ?? now();
+
+        if ($loc && (!$user->updated_at || $loc->updated_at->gt($user->updated_at))) {
+            $latitude = $loc->latitude;
+            $longitude = $loc->longitude;
+            $updatedAt = $loc->updated_at;
+        }
 
         if (is_null($latitude) || is_null($longitude)) {
             return response()->json(['status' => false, 'message' => 'Location unavailable'], 404);
