@@ -532,8 +532,10 @@ class TechnicianProfileController extends Controller
             ->latest()
             ->paginate($request->per_page ?? 10);
 
-        $orders->getCollection()->transform(function($order) {
+        $orders->getCollection()->transform(function($order) use ($technician) {
             if ($order->sub_status === 'pending_tech_acceptance') {
+                $order->status = 'new';
+            } elseif ($technician && $order->technician_id === $technician->id && $order->status === 'scheduled' && is_null($order->sub_status)) {
                 $order->status = 'new';
             }
             return $order;

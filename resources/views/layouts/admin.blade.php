@@ -362,7 +362,28 @@
                                     $notifBody  = $locale === 'ar' ? ($notification->body_ar ?? $notification->body_en ?? '') : ($notification->body_en ?? $notification->body_ar ?? '');
                                 @endphp
                                 <div x-data="{ expanded: false }" 
-                                     @click="expanded = !expanded"
+                                     @click="
+                                        if ($event.target.closest('button') || $event.target.closest('a') || $event.target.closest('form')) return;
+                                        @if($notification->url)
+                                            @if(!$notification->is_read)
+                                                fetch('{{ route('admin.notifications.markRead', $notification->id) }}', {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                        'Content-Type': 'application/json'
+                                                    }
+                                                }).then(() => {
+                                                    window.location.href = '{{ $notification->url }}';
+                                                }).catch(() => {
+                                                    window.location.href = '{{ $notification->url }}';
+                                                });
+                                            @else
+                                                window.location.href = '{{ $notification->url }}';
+                                            @endif
+                                        @else
+                                            expanded = !expanded;
+                                        @endif
+                                     "
                                      class="notification-item px-5 py-4 border-b border-slate-50 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 dark:hover:text-white transition-all relative cursor-pointer {{ $notification->is_read ? 'opacity-60' : '' }}">
                                     <!-- Unread dot -->
                                     @if(!$notification->is_read)
@@ -441,6 +462,43 @@
                                                                 </form>
                                                             </div>
                                                             @endif
+                                                        @endif
+                                                        
+                                                        <!-- General Actions for notifications with a target URL -->
+                                                        @php
+                                                            $isCustomAction = false;
+                                                            if (($notification->data['type'] ?? $notification->type) == 'technician_request' && isset($notification->data['request_id'])) {
+                                                                $techRequest = \App\Models\TechnicianRequest::find($notification->data['request_id']);
+                                                                if ($techRequest && $techRequest->status === 'pending') {
+                                                                    $isCustomAction = true;
+                                                                }
+                                                            }
+                                                            if (($notification->data['type'] ?? $notification->type) == 'new_order' && isset($notification->data['order_id'])) {
+                                                                $order = \App\Models\Order::find($notification->data['order_id']);
+                                                                if ($order && $order->status === 'new') {
+                                                                    $isCustomAction = true;
+                                                                }
+                                                            }
+                                                        @endphp
+
+                                                        @if(!$isCustomAction && $notification->url)
+                                                            <div class="flex items-center gap-2">
+                                                                <a href="{{ $notification->url }}" onclick="
+                                                                    event.stopPropagation();
+                                                                    @if(!$notification->is_read)
+                                                                        fetch('{{ route('admin.notifications.markRead', $notification->id) }}', {
+                                                                            method: 'POST',
+                                                                            headers: {
+                                                                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                                                'Content-Type': 'application/json'
+                                                                            }
+                                                                        });
+                                                                    @endif
+                                                                " class="flex-1 py-1.5 bg-primary text-white rounded-xl text-[10px] font-black flex items-center justify-center gap-1 hover:brightness-110 transition-all shadow-lg shadow-primary/20">
+                                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                                    {{ __('Details') }}
+                                                                </a>
+                                                            </div>
                                                         @endif
                                                     </div>
                                                 </div>

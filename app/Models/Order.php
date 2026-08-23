@@ -20,6 +20,8 @@ class Order extends Model
         'status',
         'sub_status',
         'total_price',
+        'additional_fees',
+        'additional_fees_description',
         'discount',
         'payment_method',
         'scheduled_at',
@@ -47,6 +49,7 @@ class Order extends Model
         'spare_parts_metadata' => 'array',
         'is_immediate' => 'boolean',
         'discount' => 'decimal:2',
+        'additional_fees' => 'decimal:2',
     ];
 
     protected $appends = ['status_label', 'status_color', 'formatted_scheduled_date', 'formatted_scheduled_time', 'formatted_proposed_scheduled_date', 'formatted_proposed_scheduled_time', 'client_name', 'client_phone', 'technician_name', 'technician_phone', 'technician_avatar', 'acceptance_duration_minutes', 'acceptance_expiry_time', 'remaining_acceptance_seconds', 'client_signature_url', 'attachment_urls', 'image', 'can_reschedule', 'is_paid', 'required_photos_before_count', 'required_photos_after_count', 'subtotal_before_vat', 'vat_amount', 'discount_amount', 'original_price_before_tax'];
@@ -585,5 +588,34 @@ class Order extends Model
     public function city()
     {
         return $this->belongsTo(City::class);
+    }
+
+    public function getServiceIdAttribute($value)
+    {
+        if ($value !== null) {
+            return $value;
+        }
+        return $this->services()->first()?->id;
+    }
+
+    public function getServiceAttribute($value)
+    {
+        if ($this->relationLoaded('service')) {
+            $relation = $this->getRelation('service');
+            if ($relation !== null) {
+                return $relation;
+            }
+        }
+
+        $serviceId = $this->service_id;
+        if ($serviceId) {
+            $service = Service::find($serviceId);
+            if ($service) {
+                $this->setRelation('service', $service);
+                return $service;
+            }
+        }
+
+        return null;
     }
 }

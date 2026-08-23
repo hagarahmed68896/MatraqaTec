@@ -155,6 +155,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('orders/{id}/work-started', [OrderController::class, 'workStarted']); // بدأ العمل
     Route::post('orders/{id}/update-sub-status', [OrderController::class, 'updateSubStatus']);
     Route::post('orders/{id}/update-spare-parts', [OrderController::class, 'updateSpareParts']);
+    Route::post('orders/{id}/additional-fees', [OrderController::class, 'updateAdditionalFees']);
     Route::post('orders/{id}/additional-visit', [OrderController::class, 'requestAdditionalVisit']);
     Route::post('orders/{id}/send-invoice', [OrderController::class, 'sendInvoiceToClient']);
     Route::post('orders/{id}/save-completion-photos', [OrderController::class, 'saveCompletionPhotos']);

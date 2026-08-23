@@ -8,6 +8,8 @@ use App\Models\Notification as NotificationModel;
 
 class FcmService
 {
+    protected static $sentTokens = [];
+
     /**
      * Send notification to a specific user
      */
@@ -19,6 +21,19 @@ class FcmService
         $titleEn = $details['title_en'] ?? '';
         $bodyAr = $details['body_ar'] ?? '';
         $bodyEn = $details['body_en'] ?? '';
+
+        // Prevent duplicate FCM sending to the same token for the same message in a single request execution
+        if ($user->fcm_token) {
+            $messageHash = md5($titleAr . $bodyAr . $user->fcm_token);
+            if (in_array($messageHash, self::$sentTokens)) {
+                \Log::info("FcmService: Duplicate message to token already sent in this request: " . substr($user->fcm_token, 0, 10));
+                if ($saveToDb) {
+                    return $this->saveToDatabase($user, $type, $titleAr, $titleEn, $bodyAr, $bodyEn, $data, 'sent');
+                }
+                return true;
+            }
+            self::$sentTokens[] = $messageHash;
+        }
 
         // Select title/body based on user language
         $lang = $user->language ?? 'ar';

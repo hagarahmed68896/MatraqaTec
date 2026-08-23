@@ -67,4 +67,40 @@ class Notification extends Model
     {
         $this->update(['is_read' => true]);
     }
+
+    public function getUrlAttribute()
+    {
+        if (empty($this->data)) {
+            return null;
+        }
+
+        try {
+            if (isset($this->data['order_id'])) {
+                return route('admin.orders.show', $this->data['order_id']);
+            }
+            if (isset($this->data['request_id'])) {
+                return route('admin.technician-requests.show', $this->data['request_id']);
+            }
+            if (isset($this->data['complaint_id'])) {
+                return route('admin.complaints.show', $this->data['complaint_id']);
+            }
+            if (isset($this->data['inquiry_id'])) {
+                return route('admin.inquiries.show', $this->data['inquiry_id']);
+            }
+            if (isset($this->data['contract_id'])) {
+                return route('admin.contracts.show', $this->data['contract_id']);
+            }
+            if (isset($this->data['technician_id'])) {
+                return route('admin.technicians.show', $this->data['technician_id']);
+            }
+            if (isset($this->data['user_id'])) {
+                return route('admin.users.show', $this->data['user_id']);
+            }
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        return null;
+    }
 }
+

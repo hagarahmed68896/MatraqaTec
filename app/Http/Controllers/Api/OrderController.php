@@ -273,8 +273,13 @@ class OrderController extends Controller
         $orders = $query->latest()->paginate(10);
         
         $orders->getCollection()->transform(function ($order) use ($user) {
-            if ($user->type === 'technician' && $order->sub_status === 'pending_tech_acceptance') {
-                $order->status = 'new';
+            if ($user->type === 'technician') {
+                $technician = $user->technician;
+                if ($order->sub_status === 'pending_tech_acceptance') {
+                    $order->status = 'new';
+                } elseif ($technician && $order->technician_id === $technician->id && $order->status === 'scheduled' && is_null($order->sub_status)) {
+                    $order->status = 'new';
+                }
             }
 
             if ($order->technician) {
@@ -548,6 +553,15 @@ class OrderController extends Controller
 
         if (!$order) {
             return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+        }
+
+        if ($user->type === 'technician') {
+            $technician = \App\Models\Technician::where('user_id', $user->id)->first();
+            if ($order->sub_status === 'pending_tech_acceptance') {
+                $order->status = 'new';
+            } elseif ($technician && $order->technician_id === $technician->id && $order->status === 'scheduled' && is_null($order->sub_status)) {
+                $order->status = 'new';
+            }
         }
 
         if ($order->technician) {
