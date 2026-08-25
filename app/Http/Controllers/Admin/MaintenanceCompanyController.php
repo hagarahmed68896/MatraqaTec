@@ -200,6 +200,7 @@ class MaintenanceCompanyController extends Controller
                 'password' => Hash::make($password),
                 'type' => 'maintenance_company',
                 'phone' => $request->phone,
+                'city_id' => $request->city_id,
                 'status' => $status,
             ]);
 
@@ -429,6 +430,7 @@ class MaintenanceCompanyController extends Controller
                 if ($request->has('phone')) $user->phone = $request->phone;
                 if ($request->has('name')) $user->name = $request->name;
                 if ($request->has('status')) $user->status = $request->status;
+                if ($request->has('city_id')) $user->city_id = $request->city_id;
                 $user->save();
             }
 

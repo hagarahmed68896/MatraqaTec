@@ -195,13 +195,18 @@
                             </div>
 
                             <!-- Address -->
-                            <div class="flex items-center gap-4 group mb-1">
+                            <div class="flex items-center gap-4 group">
                                 <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all shrink-0">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                 </div>
-                                <div class="flex-1 min-w-0 flex items-center gap-1">
-                                    <p class="text-[12px] font-bold text-slate-400 uppercase tracking-widest shrink-0">{{ __('Address') }}:</p>
-                                    <p class="text-md font-black text-slate-700 dark:text-white/50 truncate">{{ $item->address ?? '-' }}</p>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-[12px] font-bold text-slate-400 uppercase tracking-widest">{{ __('Address') }}</p>
+                                    <p class="text-md font-black text-slate-700 dark:text-white/50 break-words">
+                                        {{ $item->address ?? '-' }}
+                                        @if($item->user && $item->user->city)
+                                            - {{ app()->getLocale() == 'ar' ? $item->user->city->name_ar : $item->user->city->name_en }}
+                                        @endif
+                                    </p>
                                 </div>
                             </div>
 

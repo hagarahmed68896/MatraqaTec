@@ -1,4 +1,4 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('title', __('Invoices Management'))
 @section('page_title', __('Invoices Management'))
@@ -215,7 +215,7 @@
                             <span class="text-sm font-bold text-slate-500 dark:text-white">{{ $items->firstItem() + $index }}</span>
                         </td>
                         <td class="py-6 px-4">
-                            <span class="text-primary font-black text-sm">{{ __('Operation') }} - #{{ $item->order->order_number ?? $item->order_id }}</span>
+                            <span class="text-primary dark:text-white font-black text-sm">{{ __('Operation') }} - #{{ $item->order->order_number ?? $item->order_id }}</span>
                         </td>
                         <td class="py-6 px-4">
                             <span class="text-sm font-bold text-[#1A1A31] dark:text-white">{{ $item->order->user->name ?? '-' }}</span>

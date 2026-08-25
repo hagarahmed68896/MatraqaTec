@@ -35,4 +35,15 @@ class City extends Model
     {
         return $this->hasMany(Service::class);
     }
+
+    public static function detectFromText($text)
+    {
+        if (empty($text)) return null;
+        foreach (self::all() as $city) {
+            if (str_contains($text, $city->name_ar) || ($city->name_en && str_contains(strtolower($text), strtolower($city->name_en)))) {
+                return $city->id;
+            }
+        }
+        return null;
+    }
 }

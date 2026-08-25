@@ -44,13 +44,14 @@
                 activeSlide: 0, 
                 slides: {{ json_encode($content->items) }},
                 get translation() {
-                    return this.activeSlide * 100;
+                    const isRtl = document.documentElement.dir === 'rtl';
+                    return this.activeSlide * 100 * (isRtl ? 1 : -1);
                 }
             }" class="relative overflow-hidden group/slider">
-                <div class="flex transition-transform duration-500 ease-out h-[350px] gap-6" 
+                <div class="flex transition-transform duration-500 ease-out h-[350px]" 
                      :style="'transform: translateX(' + translation + '%)'">
                     @foreach($content->items as $item)
-                    <div class="w-full md:w-[600px] flex-shrink-0 relative rounded-[2.5rem] overflow-hidden bg-slate-50 dark:bg-white/5 shadow-2xl group/card">
+                    <div class="w-full flex-shrink-0 relative rounded-[2.5rem] overflow-hidden bg-slate-50 dark:bg-white/5 shadow-2xl group/card">
                         @if($item->image)
                             <!-- Blurred Background Backdrop -->
                             <img src="{{ $item->full_image_url }}" class="absolute inset-0 w-full h-full object-cover blur-xl opacity-30 scale-110 pointer-events-none">
@@ -73,9 +74,6 @@
                                     {{ app()->getLocale() == 'ar' ? $item->button_text_ar : $item->button_text_en }}
                                 </button>
                                 @endif
-                                <div class="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-white opacity-0 group-hover/card:opacity-100 transition-opacity">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                </div>
                             </div>
                         </div>
                     </div>

@@ -77,7 +77,7 @@
                         <div>
                             <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">{{ __('Order Reference') }}</p>
                             @if($item->order_id)
-                                <a href="{{ route('admin.orders.show', $item->order_id) }}" class="text-md font-black text-primary hover:underline">#{{ $item->order_id }}</a>
+                                <a href="{{ route('admin.orders.show', $item->order_id) }}" class="text-md font-black text-primary dark:text-white hover:underline">#{{ $item->order_id }}</a>
                             @else
                                 <p class="text-md font-bold text-slate-400">-</p>
                             @endif

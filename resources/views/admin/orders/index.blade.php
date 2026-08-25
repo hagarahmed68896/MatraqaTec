@@ -320,7 +320,7 @@
                         </td>
                         <td class="py-6 px-4">
                             <div class="flex flex-col gap-1 items-start">
-                                <a href="{{ route('admin.orders.show', $item->id) }}" class="text-primary font-black text-md hover:underline">{{ app()->getLocale() == 'ar' ? 'طلب-' : 'Order-' }}{{ $item->order_number }}</a>
+                                <a href="{{ route('admin.orders.show', $item->id) }}" class="text-primary dark:text-white font-black text-md hover:underline">{{ app()->getLocale() == 'ar' ? 'طلب-' : 'Order-' }}{{ $item->order_number }}</a>
                                 @if($item->is_immediate)
                                 <span class="text-[9px] font-black text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-500/20 px-2 py-0.5 rounded-lg inline-flex items-center gap-1">
                                     <svg class="w-2.5 h-2.5 fill-current animate-pulse" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>

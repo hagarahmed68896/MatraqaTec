@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
+    use \App\Traits\HandlesLocation;
+
     //todo:otp from client
 
     public function register(Request $request)
@@ -61,13 +63,21 @@ class AuthController extends Controller
             ? $request->company_name 
             : $request->name;
 
+        $cityId = $request->city_id;
+        if (empty($cityId) && $request->filled('latitude') && $request->filled('longitude')) {
+            $cityId = $this->detectCityFromCoords($request->latitude, $request->longitude);
+        }
+        if (empty($cityId) && $request->filled('address')) {
+            $cityId = \App\Models\City::detectFromText($request->address);
+        }
+
         $user = User::create([
             'name' => $accountName,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'type' => $request->type,
             'phone' => $request->phone,
-            'city_id' => $request->city_id,
+            'city_id' => $cityId,
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
             'address' => $request->address,
@@ -100,7 +110,7 @@ class AuthController extends Controller
                 'commercial_record_file' => $crFilePath,
                 'tax_number' => $request->tax_number,
                 'address' => $request->address,
-                'city_id' => $request->city_id, 
+                'city_id' => $cityId, 
             ]);
         } elseif ($request->type === 'corporate_customer') {
             // Handle CR File Upload

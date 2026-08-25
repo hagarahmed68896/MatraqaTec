@@ -170,6 +170,9 @@ class TechnicianProfileController extends Controller
                 $profileData['company_name_ar'] = $request->name;
                 $profileData['company_name_en'] = $request->name;
             }
+            if ($user->city_id) {
+                $profileData['city_id'] = $user->city_id;
+            }
             $company->update($profileData);
             
             $user->load('maintenanceCompany.city', 'maintenanceCompany.services', 'maintenanceCompany.districts');

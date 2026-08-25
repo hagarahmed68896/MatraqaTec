@@ -1,4 +1,4 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('title', __('Payments Management'))
 @section('page_title', __('Payments Management'))
@@ -289,7 +289,7 @@
                                     <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
                                 </template>
                             </div>
-                            <span class="text-primary font-black text-sm" onclick="window.location.href='{{ route('admin.payments.show', $item->id) }}'">#{{ $item->order->order_number ?? $item->order_id }}</span>
+                            <span class="text-primary dark:text-white font-black text-sm" onclick="window.location.href='{{ route('admin.payments.show', $item->id) }}'">#{{ $item->order->order_number ?? $item->order_id }}</span>
                         </td>
                         <td class="py-6 px-4" onclick="window.location.href='{{ route('admin.payments.show', $item->id) }}'">
                             <span class="text-sm font-bold text-[#1A1A31] dark:text-white">{{ $item->user->name ?? '-' }}</span>
