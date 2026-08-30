@@ -1,4 +1,4 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('title', __('Reports Dashboard'))
 
@@ -298,7 +298,7 @@
                         </div>
                         <div class="space-y-1">
                             <p class="text-xs font-black text-[#1A1A31] dark:text-white">{{ $tech->user->name ?? $tech->name_ar }}</p>
-                            <p class="text-[10px] font-bold text-slate-400">{{ $tech->service->name_ar ?? '' }}</p>
+                            <p class="text-[10px] font-bold text-slate-400">{{ $tech->service->name_ar ?? $tech->category->name_ar ?? '' }}</p>
                             <div class="flex items-center gap-3">
                                 <div class="flex items-center gap-1">
                                     <svg class="w-3 h-3 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M10 15.27L16.18 19l-1.64-7.03L20 7.24l-7.19-.61L10 0 7.19 6.63 0 7.24l5.46 4.73L3.82 19z"></path></svg>

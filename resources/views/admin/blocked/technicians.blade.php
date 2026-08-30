@@ -156,7 +156,7 @@
                             <span class="text-slate-700 dark:text-slate-300 font-bold text-xs">{{ $item->maintenanceCompany->name ?? __('Independent') }}</span>
                         </td>
                         <td class="py-6 px-6 whitespace-nowrap">
-                            <span class="text-xs font-bold text-slate-500 dark:text-white">{{ $item->service->name_ar ?? $item->service->name ?? '-' }}</span>
+                            <span class="text-xs font-bold text-slate-500 dark:text-white">{{ $item->service->name_ar ?? $item->service->name ?? $item->category->name_ar ?? '-' }}</span>
                         </td>
                         <td class="py-6 px-6 whitespace-nowrap">
                             <span class="text-[10px] font-black uppercase bg-primary/5 text-primary px-2 py-0.5 rounded-lg">{{ $item->category->name_ar ?? $item->category->name ?? '-' }}</span>

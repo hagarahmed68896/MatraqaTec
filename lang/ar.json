@@ -1216,6 +1216,7 @@
     "Are you sure you want to unblock the selected customer(s)?": "هل أنت متأكد من إلغاء حظر العميل (العملاء) المحدد؟",
     "Customers Unblocked Successfully": "تم إلغاء حظر العملاء بنجاح",
     "No orders found.": "لا يوجد طلبات",
+    "No orders found": "لا يوجد طلبات",
     "Hold Ctrl\/Cmd to select multiple districts": "اضغط Ctrl\/Cmd لتحديد مناطق متعددة",
     "Item updated successfully.": "تم تحديث العنصر بنجاح",
     "SENT": "أرسلت",

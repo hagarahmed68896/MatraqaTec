@@ -362,7 +362,7 @@
                             <span class="text-slate-600 dark:text-slate-400">{{ $item->category->name_ar ?? '-' }}</span>
                         </td>
                         <td class="py-4 px-6">
-                            <span class="text-slate-600 dark:text-slate-400">{{ $item->service->name_ar ?? '-' }}</span>
+                            <span class="text-slate-600 dark:text-slate-400">{{ $item->service->name_ar ?? $item->category->name_ar ?? '-' }}</span>
                         </td>
                         <td class="py-4 px-6 text-center">
                             <span class="inline-flex items-center px-2 py-1 rounded-lg bg-indigo-50 dark:bg-[#1A1A31] text-indigo-600 dark:text-indigo-400 font-black whitespace-nowrap">

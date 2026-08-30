@@ -472,7 +472,7 @@
                         </td>
                         <td class="py-4 px-6">
                             <span class="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9px] font-black">
-                                {{ $item->service->name_ar ?? '-' }}
+                                {{ $item->service->name_ar ?? $item->category->name_ar ?? '-' }}
                             </span>
                         </td>
                         <td class="py-4 px-6 text-center">
@@ -683,6 +683,7 @@
         </div>
     </template>
 </div>
+@endsection
 
 @section('scripts')
 <script>
@@ -729,5 +730,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
-@endsection
 @endsection

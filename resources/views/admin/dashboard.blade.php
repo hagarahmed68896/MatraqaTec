@@ -352,13 +352,13 @@
                          x-transition:enter-start="opacity-0 scale-95"
                          x-transition:enter-end="opacity-100 scale-100"
                          class="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1e1b4b] border border-slate-100 dark:border-white/10 rounded-2xl shadow-xl z-20 py-2">
-                        <button @click="updateChart('all')" class="w-full text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }} px-4 py-2.5 text-xs font-bold hover:bg-slate-50 dark:hover:bg-white/10 transition-colors" :class="categoryType === 'all' ? 'text-primary' : 'text-slate-600 dark:text-slate-300'">
+                        <button @click="updateChart('all')" class="w-full text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }} px-4 py-2.5 text-xs font-bold hover:bg-slate-50 dark:hover:bg-white/10 transition-colors" :class="categoryType === 'all' ? 'text-primary dark:text-white font-black' : 'text-slate-600 dark:text-slate-300'">
                             {{ __('All Categories') }}
                         </button>
-                        <button @click="updateChart('individual')" class="w-full text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }} px-4 py-2.5 text-xs font-bold hover:bg-slate-50 dark:hover:bg-white/10 transition-colors" :class="categoryType === 'individual' ? 'text-primary' : 'text-slate-900 dark:text-slate-900'">
+                        <button @click="updateChart('individual')" class="w-full text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }} px-4 py-2.5 text-xs font-bold hover:bg-slate-50 dark:hover:bg-white/10 transition-colors" :class="categoryType === 'individual' ? 'text-primary dark:text-white font-black' : 'text-slate-600 dark:text-slate-300'">
                             {{ __('Individuals') }}
                         </button>
-                        <button @click="updateChart('corporate_customer')" class="w-full text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }} px-4 py-2.5 text-xs font-bold hover:bg-slate-50 dark:hover:bg-white/10 transition-colors" :class="categoryType === 'corporate_customer' ? 'text-primary' : 'text-slate-600 dark:text-slate-900'">
+                        <button @click="updateChart('corporate_customer')" class="w-full text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }} px-4 py-2.5 text-xs font-bold hover:bg-slate-50 dark:hover:bg-white/10 transition-colors" :class="categoryType === 'corporate_customer' ? 'text-primary dark:text-white font-black' : 'text-slate-600 dark:text-slate-300'">
                             {{ __('Corporate') }}
                         </button>
                     </div>

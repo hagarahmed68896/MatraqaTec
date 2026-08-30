@@ -447,14 +447,13 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <!-- Client App Card -->
             <div class="group relative bg-[#F8F9FC] dark:bg-[#111122] border border-slate-100 dark:border-slate-800/80 rounded-[2.5rem] p-8 lg:p-10 flex flex-col justify-between shadow-[0_10px_30px_rgba(0,0,0,0.02)] dark:shadow-none hover:shadow-[0_20px_50px_rgba(26,26,49,0.08)] dark:hover:shadow-[0_20px_50px_rgba(0,0,0,0.25)] hover:-translate-y-2 transition-all duration-500">
-                <div class="absolute inset-0 bg-gradient-to-tr from-indigo-500/5 to-transparent rounded-[2.5rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                 <div class="relative z-10">
                     <!-- Icon Container -->
                     <div class="w-16 h-16 rounded-3xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform duration-500">
                         📱
                     </div>
                     <!-- App Title -->
-                    <h3 class="text-2xl font-black text-[#1A1A31] dark:text-white mb-4 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    <h3 class="text-2xl font-black text-[#1A1A31] dark:text-white mb-4 transition-colors">
                         {{ __('Matraqa Tech') }} <span class="text-sm font-bold text-slate-400 block mt-1">({{ __('For Customers') }})</span>
                     </h3>
                     <!-- App Description -->
@@ -475,14 +474,13 @@
 
             <!-- Company App Card -->
             <div class="group relative bg-[#F8F9FC] dark:bg-[#111122] border border-slate-100 dark:border-slate-800/80 rounded-[2.5rem] p-8 lg:p-10 flex flex-col justify-between shadow-[0_10px_30px_rgba(0,0,0,0.02)] dark:shadow-none hover:shadow-[0_20px_50px_rgba(26,26,49,0.08)] dark:hover:shadow-[0_20px_50px_rgba(0,0,0,0.25)] hover:-translate-y-2 transition-all duration-500">
-                <div class="absolute inset-0 bg-gradient-to-tr from-emerald-500/5 to-transparent rounded-[2.5rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                 <div class="relative z-10">
                     <!-- Icon Container -->
                     <div class="w-16 h-16 rounded-3xl bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform duration-500">
                         🏢
                     </div>
                     <!-- App Title -->
-                    <h3 class="text-2xl font-black text-[#1A1A31] dark:text-white mb-4 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                    <h3 class="text-2xl font-black text-[#1A1A31] dark:text-white mb-4 transition-colors">
                         {{ __('Matraqa Company') }} <span class="text-sm font-bold text-slate-400 block mt-1">({{ __('For Companies') }})</span>
                     </h3>
                     <!-- App Description -->
@@ -503,14 +501,13 @@
 
             <!-- Technician App Card -->
             <div class="group relative bg-[#F8F9FC] dark:bg-[#111122] border border-slate-100 dark:border-slate-800/80 rounded-[2.5rem] p-8 lg:p-10 flex flex-col justify-between shadow-[0_10px_30px_rgba(0,0,0,0.02)] dark:shadow-none hover:shadow-[0_20px_50px_rgba(26,26,49,0.08)] dark:hover:shadow-[0_20px_50px_rgba(0,0,0,0.25)] hover:-translate-y-2 transition-all duration-500">
-                <div class="absolute inset-0 bg-gradient-to-tr from-amber-500/5 to-transparent rounded-[2.5rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                 <div class="relative z-10">
                     <!-- Icon Container -->
                     <div class="w-16 h-16 rounded-3xl bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform duration-500">
                         🛠️
                     </div>
                     <!-- App Title -->
-                    <h3 class="text-2xl font-black text-[#1A1A31] dark:text-white mb-4 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                    <h3 class="text-2xl font-black text-[#1A1A31] dark:text-white mb-4 transition-colors">
                         {{ __('Matraqa Technician') }} <span class="text-sm font-bold text-slate-400 block mt-1">({{ __('For Technicians') }})</span>
                     </h3>
                     <!-- App Description -->

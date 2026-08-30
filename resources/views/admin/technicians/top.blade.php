@@ -86,7 +86,7 @@
                     <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
                 </div>
                 <span class="text-xs font-bold min-w-[80px]">{{ __('Service Type') }}:</span>
-                <span class="text-xs text-slate-900 dark:text-white font-black">{{ app()->getLocale() == 'ar' ? ($item->service->name_ar ?? '-') : ($item->service->name_en ?? '-') }}</span>
+                <span class="text-xs text-slate-900 dark:text-white font-black">{{ app()->getLocale() == 'ar' ? ($item->service->name_ar ?? $item->category->name_ar ?? '-') : ($item->service->name_en ?? $item->category->name_en ?? '-') }}</span>
             </div>
 
             <div class="flex items-center gap-3 text-slate-600 dark:text-slate-300">
@@ -165,7 +165,7 @@
                         </td>
                         <td class="py-5 px-6">
                             <span class="px-3 py-1 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-black">
-                                {{ app()->getLocale() == 'ar' ? ($item->service->name_ar ?? '-') : ($item->service->name_en ?? '-') }}
+                                {{ app()->getLocale() == 'ar' ? ($item->service->name_ar ?? $item->category->name_ar ?? '-') : ($item->service->name_en ?? $item->category->name_en ?? '-') }}
                             </span>
                         </td>
                         <td class="py-5 px-6 text-center text-base dark:text-white">{{ $item->orders_count ?? 0 }}</td>

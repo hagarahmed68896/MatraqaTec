@@ -107,7 +107,7 @@
                     </div>
                     <div>
                         <p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">{{ __('Main Service') }}</p>
-                        <p class="text-md font-bold text-slate-900 dark:text-white">{{ $item->service->name_ar ?? '-' }}</p>
+                        <p class="text-md font-bold text-slate-900 dark:text-white">{{ $item->service->name_ar ?? $item->category->name_ar ?? '-' }}</p>
                     </div>
                 </div>
 
