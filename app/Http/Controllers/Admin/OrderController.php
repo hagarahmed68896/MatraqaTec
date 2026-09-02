@@ -950,17 +950,10 @@ class OrderController extends Controller
     {
         $user = \App\Models\User::find($userId);
         if ($user) {
-            $targetAudience = match ($user->type) {
-                'technician' => 'technicians',
-                'maintenance_company' => 'companies',
-                'individual', 'corporate_customer' => 'clients',
-                default => 'individual_user',
-            };
-
             \App\Models\Notification::create([
                 'user_id' => $userId,
                 'type' => $details['type'] ?? 'notification',
-                'target_audience' => $targetAudience,
+                'target_audience' => 'individual_user',
                 'title_ar' => $details['title_ar'],
                 'title_en' => $details['title_en'],
                 'body_ar' => $details['body_ar'],

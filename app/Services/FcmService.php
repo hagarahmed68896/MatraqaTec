@@ -167,16 +167,7 @@ class FcmService
      */
     private function saveToDatabase(User $user, $type, $titleAr, $titleEn, $bodyAr, $bodyEn, $data, $status = 'unsent')
     {
-        $targetAudience = $data['target_audience'] ?? null;
-        
-        if (!$targetAudience) {
-            $targetAudience = match ($user->type) {
-                'technician' => 'technicians',
-                'maintenance_company' => 'companies',
-                'individual', 'corporate_customer' => 'clients',
-                default => 'individual_user',
-            };
-        }
+        $targetAudience = $data['target_audience'] ?? 'individual_user';
 
         return NotificationModel::create([
             'user_id' => $user->id,

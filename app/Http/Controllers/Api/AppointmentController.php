@@ -274,19 +274,10 @@ class AppointmentController extends Controller
     {
         $user = \App\Models\User::find($userId);
         if ($user) {
-            // Set target audience based on user type for precise filtering
-            $details['target_audience'] = match ($user->type) {
-                'technician' => 'technicians',
-                'maintenance_company' => 'companies',
-                'individual', 'corporate_customer' => 'clients',
-                default => 'individual_user',
-            };
-            
-            // Replicate OrderController pattern: Save then send
             \App\Models\Notification::create([
                 'user_id' => $userId,
                 'type' => $details['type'] ?? 'notification',
-                'target_audience' => $details['target_audience'],
+                'target_audience' => 'individual_user',
                 'title_ar' => $details['title_ar'],
                 'title_en' => $details['title_en'],
                 'body_ar' => $details['body_ar'],

@@ -1176,6 +1176,7 @@
     "This order cannot be rescheduled in its current status.": "لا يمكن طلب تعديل موعد هذا الطلب في حالته الحالية.",
     "You cannot respond to your own reschedule request.": "لا يمكنك الرد على طلب إعادة الجدولة الخاص بك.",
     "No pending reschedule request found for this order.": "لا يوجد طلب إعادة جدولة معلق لهذا الطلب.",
+    "No pending reschedule or additional visit request found for this order.": "لا يوجد طلب إعادة جدولة أو زيارة إضافية معلق لهذا الطلب.",
     "Reschedule request accepted successfully.": "تمت الموافقة على طلب تعديل الموعد بنجاح.",
     "Reschedule request rejected.": "تم رفض مقترح الموعد الجديد.",
     "Reschedule request sent successfully awaiting approval.": "تم إرسال طلب تعديل الموعد بنجاح وبانتظار الموافقة.",

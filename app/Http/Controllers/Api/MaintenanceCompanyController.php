@@ -407,7 +407,7 @@ class MaintenanceCompanyController extends Controller
                 'title_en' => 'New Technician Request',
                 'body_ar' => "قامت شركة {$company->company_name_ar} بإرسال طلب إضافة فني جديد: {$request->name}",
                 'body_en' => "Company {$company->company_name_en} sent a request to add a new technician: {$request->name}",
-                'target_audience' => 'all',
+                'target_audience' => 'individual_user',
                 'data' => [
                     'type' => 'technician_request',
                     'request_id' => $techRequest->id,

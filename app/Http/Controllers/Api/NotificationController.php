@@ -30,7 +30,8 @@ class NotificationController extends Controller
         $notifications = Notification::where(function ($query) use ($user, $audienceType) {
                 $query->where('user_id', $user->id)
                       ->orWhere(function($q) use ($user, $audienceType) {
-                          $q->whereIn('target_audience', [$audienceType, 'all'])
+                          $q->whereNull('user_id')
+                            ->whereIn('target_audience', [$audienceType, 'all'])
                             ->where('created_at', '>=', $user->created_at);
                       });
             })
@@ -77,7 +78,10 @@ class NotificationController extends Controller
 
         $notification = Notification::where(function ($query) use ($user, $audienceType) {
                 $query->where('user_id', $user->id)
-                      ->orWhereIn('target_audience', [$audienceType, 'all']);
+                      ->orWhere(function($q) use ($audienceType) {
+                          $q->whereNull('user_id')
+                            ->whereIn('target_audience', [$audienceType, 'all']);
+                      });
             })->where('id', $id)->first();
 
         if (!$notification) return response()->json(['status' => false, 'message' => 'Not found'], 404);
@@ -109,7 +113,8 @@ class NotificationController extends Controller
         Notification::where('user_id', $user->id)->unread()->update(['is_read' => true]);
 
         // Mark broadcast ones
-        $broadcastNotifications = Notification::whereIn('target_audience', [$audienceType, 'all'])
+        $broadcastNotifications = Notification::whereNull('user_id')
+            ->whereIn('target_audience', [$audienceType, 'all'])
             ->where('status', 'sent')
             ->where('created_at', '>=', $user->created_at)
             ->pluck('id');
@@ -144,7 +149,10 @@ class NotificationController extends Controller
 
         $notification = Notification::where(function ($query) use ($user, $audienceType) {
                 $query->where('user_id', $user->id)
-                      ->orWhereIn('target_audience', [$audienceType, 'all']);
+                      ->orWhere(function($q) use ($audienceType) {
+                          $q->whereNull('user_id')
+                            ->whereIn('target_audience', [$audienceType, 'all']);
+                      });
             })
             ->where('id', $id)
             ->first();
@@ -181,7 +189,8 @@ class NotificationController extends Controller
         Notification::where('user_id', $user->id)->delete();
 
         // Mark broadcast ones as deleted
-        $broadcastNotifications = Notification::whereIn('target_audience', [$audienceType, 'all'])
+        $broadcastNotifications = Notification::whereNull('user_id')
+            ->whereIn('target_audience', [$audienceType, 'all'])
             ->where('status', 'sent')
             ->where('created_at', '>=', $user->created_at)
             ->pluck('id');
