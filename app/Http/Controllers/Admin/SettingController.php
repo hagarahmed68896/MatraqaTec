@@ -25,6 +25,8 @@ class SettingController extends Controller
             'reminder_type' => 'day',
             'reminder_custom_value' => null,
             'hourly_booking_capacity' => 5,
+            'copyright_text_ar' => '© ' . date('Y') . ' مطرقة تيك - جميع الحقوق محفوظة',
+            'copyright_text_en' => '© ' . date('Y') . ' MatraqaTec - All rights reserved.',
         ];
 
         $items = array_merge($defaults, $settings->toArray());
@@ -46,6 +48,8 @@ class SettingController extends Controller
             'reminder_type' => 'nullable|in:day,hour,custom',
             'reminder_custom_value' => 'nullable|integer|min:1',
             'hourly_booking_capacity' => 'nullable|integer|min:1',
+            'copyright_text_ar' => 'nullable|string|max:255',
+            'copyright_text_en' => 'nullable|string|max:255',
         ]);
 
         $settings = $request->only([
@@ -57,6 +61,8 @@ class SettingController extends Controller
             'reminder_type',
             'reminder_custom_value',
             'hourly_booking_capacity',
+            'copyright_text_ar',
+            'copyright_text_en',
         ]);
 
         foreach ($settings as $key => $value) {

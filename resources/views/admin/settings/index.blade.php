@@ -150,6 +150,22 @@
                 </p>
             </div>
 
+            <!-- Copyright Text (Arabic) -->
+            <div class="space-y-4 mt-6">
+                <label class="block text-sm font-black text-slate-800 dark:text-white text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
+                    {{ __('Copyright Text (Arabic)') }}
+                </label>
+                <input type="text" name="copyright_text_ar" value="{{ old('copyright_text_ar', $items['copyright_text_ar'] ?? '') }}" placeholder="{{ __('Enter copyright text for Arabic version') }}" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl px-6 py-4 text-sm font-bold text-slate-700 dark:text-white placeholder-slate-300 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-right" dir="rtl">
+            </div>
+
+            <!-- Copyright Text (English) -->
+            <div class="space-y-4 mt-6">
+                <label class="block text-sm font-black text-slate-800 dark:text-white text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
+                    {{ __('Copyright Text (English)') }}
+                </label>
+                <input type="text" name="copyright_text_en" value="{{ old('copyright_text_en', $items['copyright_text_en'] ?? '') }}" placeholder="{{ __('Enter copyright text for English version') }}" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl px-6 py-4 text-sm font-bold text-slate-700 dark:text-white placeholder-slate-300 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-left" dir="ltr">
+            </div>
+
             <!-- Form Actions -->
             <div class="flex items-center {{ app()->getLocale() == 'ar' ? 'justify-start' : 'justify-end' }} gap-4 pt-6 border-t border-slate-100 dark:border-white/5">
                 <button type="submit" class="px-8 py-4 bg-[#1A1A31] dark:bg-primary text-white rounded-2xl text-sm font-black hover:opacity-90 transition-all shadow-lg shadow-indigo-500/10 min-w-[140px]">

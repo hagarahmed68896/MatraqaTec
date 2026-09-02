@@ -551,7 +551,9 @@
             <div class="flex md:flex-row flex-col mt-4 justify-between items-center border-t border-white/10 
              md:pt-12 pt-4 gap-8 text-slate-400 font-bold text-sm tracking-wide">
                 {{-- Copyright - now on the right --}}
-                <div class="uppercase tracking-widest text-right">&copy; 2026 {{ __('MatraqaTec') }} - {{ __('All rights reserved.') }}</div>
+                <div class="uppercase tracking-widest text-right">
+                    {{ \App\Models\Setting::getByKey('copyright_text_' . app()->getLocale(), '© ' . date('Y') . ' ' . __('MatraqaTec') . ' - ' . __('All rights reserved.')) }}
+                </div>
                 
                 {{-- Social Icons - now on the left --}}
                 <div class="flex items-center gap-4 mt-4">

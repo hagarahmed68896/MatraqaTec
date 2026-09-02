@@ -155,7 +155,9 @@
             </div>
             
             <div class="flex md:flex-row flex-col mt-8 justify-between items-center border-t border-white/10 pt-8 gap-4 text-slate-400 font-bold text-xs tracking-wide">
-                <div class="uppercase tracking-widest text-center md:text-right">&copy; 2026 {{ __('MatraqaTec') }} - {{ __('All rights reserved.') }}</div>
+                <div class="uppercase tracking-widest text-center md:text-right">
+                    {{ \App\Models\Setting::getByKey('copyright_text_' . app()->getLocale(), '© ' . date('Y') . ' ' . __('MatraqaTec') . ' - ' . __('All rights reserved.')) }}
+                </div>
                 
                 <!-- Social Links -->
                 <div class="flex items-center gap-4">
