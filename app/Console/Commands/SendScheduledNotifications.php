@@ -58,7 +58,9 @@ class SendScheduledNotifications extends Command
                         $fcmService->sendToUser($notification->user, $details, false);
                     }
                 } else {
-                    $query = User::whereNotNull('fcm_token');
+                    $query = User::whereNotNull('fcm_token')
+                        ->where('fcm_token', '!=', '')
+                        ->where('notification_enabled', true);
                     
                     switch ($notification->target_audience) {
                         case 'clients':
@@ -72,9 +74,13 @@ class SendScheduledNotifications extends Command
                             break;
                     }
                     
-                    $query->chunk(100, function ($users) use ($fcmService, $details) {
+                    $sentDeviceTokens = [];
+                    $query->chunk(100, function ($users) use ($fcmService, $details, &$sentDeviceTokens) {
                         foreach ($users as $user) {
-                            $fcmService->sendToUser($user, $details, false);
+                            if ($user->fcm_token && !in_array($user->fcm_token, $sentDeviceTokens)) {
+                                $sentDeviceTokens[] = $user->fcm_token;
+                                $fcmService->sendToUser($user, $details, false);
+                            }
                         }
                     });
                 }

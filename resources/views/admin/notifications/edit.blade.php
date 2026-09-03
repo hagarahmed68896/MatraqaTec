@@ -50,11 +50,21 @@
                         <select name="target_audience" required x-model="audience"
                                 class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none border-r-[16px] border-r-transparent">
                             <option value="">{{ __('Select Target Audience') }}</option>
-                            @foreach(['all', 'clients', 'companies', 'technicians'] as $aud)
+                            @foreach(['all', 'clients', 'companies', 'technicians', 'individual_user'] as $aud)
                                 <option value="{{ $aud }}" {{ old('target_audience', $item->target_audience) == $aud ? 'selected' : '' }}>{{ __($aud) }}</option>
                             @endforeach
                         </select>
                     </div>
+                </div>
+
+                <!-- Specific User Phone (Conditional) -->
+                <div x-show="audience === 'individual_user'" class="space-y-3" x-transition>
+                    <label class="block text-sm font-black text-slate-700 dark:text-slate-300 pr-2">{{ __('Phone Number') }}</label>
+                    <input type="text" name="phone" value="{{ old('phone', $item->user?->phone) }}" :required="audience === 'individual_user'" placeholder="{{ __('Enter Phone Number') }}"
+                           class="w-full px-6 py-4 bg-slate-50 dark:bg-white/5 border border-transparent focus:border-primary focus:bg-white dark:focus:bg-[#1A1A31] rounded-2xl text-sm font-bold transition-all outline-none text-left" dir="ltr">
+                    @error('phone')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <!-- Title Grid -->

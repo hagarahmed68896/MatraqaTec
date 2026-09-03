@@ -139,9 +139,13 @@ class NotificationController extends Controller
             ];
 
             if ($notification->target_audience === 'individual_user' && $notification->user_id) {
-                $fcmService->sendToUser($notification->user, $details, false);
+                if ($notification->user) {
+                    $fcmService->sendToUser($notification->user, $details, false);
+                }
             } else {
-                $query = \App\Models\User::whereNotNull('fcm_token');
+                $query = \App\Models\User::whereNotNull('fcm_token')
+                    ->where('fcm_token', '!=', '')
+                    ->where('notification_enabled', true);
                 
                 switch ($notification->target_audience) {
                     case 'clients':
@@ -156,9 +160,13 @@ class NotificationController extends Controller
                     // 'all' doesn't need extra filter
                 }
                 
-                $query->chunk(100, function ($users) use ($fcmService, $details) {
+                $sentDeviceTokens = [];
+                $query->chunk(100, function ($users) use ($fcmService, $details, &$sentDeviceTokens) {
                     foreach ($users as $user) {
-                        $fcmService->sendToUser($user, $details, false);
+                        if ($user->fcm_token && !in_array($user->fcm_token, $sentDeviceTokens)) {
+                            $sentDeviceTokens[] = $user->fcm_token;
+                            $fcmService->sendToUser($user, $details, false);
+                        }
                     }
                 });
             }
@@ -175,7 +183,7 @@ class NotificationController extends Controller
 
     public function edit($id)
     {
-        $item = Notification::findOrFail($id);
+        $item = Notification::with('user')->findOrFail($id);
         return view('admin.notifications.edit', compact('item'));
     }
 
@@ -197,15 +205,19 @@ class NotificationController extends Controller
 
         $data = $request->except('phone');
 
-        if (isset($data['target_audience']) && $data['target_audience'] === 'individual_user' && $request->filled('phone')) {
-            $user = \App\Models\User::where('phone', $request->phone)
-                      ->orWhere('phone', 'like', '%' . ltrim($request->phone, '0'))
-                      ->first();
+        if (isset($data['target_audience'])) {
+            if ($data['target_audience'] === 'individual_user' && $request->filled('phone')) {
+                $user = \App\Models\User::where('phone', $request->phone)
+                          ->orWhere('phone', 'like', '%' . ltrim($request->phone, '0'))
+                          ->first();
 
-            if (!$user) {
-                return back()->withInput()->withErrors(['phone' => __('No user found with this phone number.')]);
+                if (!$user) {
+                    return back()->withInput()->withErrors(['phone' => __('No user found with this phone number.')]);
+                }
+                $data['user_id'] = $user->id;
+            } elseif ($data['target_audience'] !== 'individual_user') {
+                $data['user_id'] = null;
             }
-            $data['user_id'] = $user->id;
         }
 
         $notification->update($data);
@@ -246,9 +258,13 @@ class NotificationController extends Controller
         ];
 
         if ($notification->target_audience === 'individual_user' && $notification->user_id) {
-            $fcmService->sendToUser($notification->user, $details, false);
+            if ($notification->user) {
+                $fcmService->sendToUser($notification->user, $details, false);
+            }
         } else {
-            $query = \App\Models\User::whereNotNull('fcm_token');
+            $query = \App\Models\User::whereNotNull('fcm_token')
+                ->where('fcm_token', '!=', '')
+                ->where('notification_enabled', true);
             
             switch ($notification->target_audience) {
                 case 'clients':
@@ -262,9 +278,13 @@ class NotificationController extends Controller
                     break;
             }
             
-            $query->chunk(100, function ($users) use ($fcmService, $details) {
+            $sentDeviceTokens = [];
+            $query->chunk(100, function ($users) use ($fcmService, $details, &$sentDeviceTokens) {
                 foreach ($users as $user) {
-                    $fcmService->sendToUser($user, $details, false);
+                    if ($user->fcm_token && !in_array($user->fcm_token, $sentDeviceTokens)) {
+                        $sentDeviceTokens[] = $user->fcm_token;
+                        $fcmService->sendToUser($user, $details, false);
+                    }
                 }
             });
         }

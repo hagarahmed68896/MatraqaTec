@@ -71,6 +71,10 @@ class AuthController extends Controller
             $cityId = \App\Models\City::detectFromText($request->address);
         }
 
+        if ($request->filled('fcm_token')) {
+            User::where('fcm_token', $request->fcm_token)->update(['fcm_token' => null]);
+        }
+
         $user = User::create([
             'name' => $accountName,
             'email' => $request->email,
@@ -237,6 +241,7 @@ class AuthController extends Controller
 
         // Update FCM Token if provided
         if ($request->filled('fcm_token')) {
+            User::where('fcm_token', $request->fcm_token)->where('id', '!=', $user->id)->update(['fcm_token' => null]);
             $user->update(['fcm_token' => $request->fcm_token]);
         }
 
@@ -469,7 +474,11 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+        if ($user) {
+            $user->update(['fcm_token' => null]);
+            $user->currentAccessToken()->delete();
+        }
 
         return response()->json([
             'status' => true,
@@ -538,6 +547,8 @@ class AuthController extends Controller
         $request->validate([
             'fcm_token' => 'required|string',
         ]);
+
+        User::where('fcm_token', $request->fcm_token)->where('id', '!=', auth()->id())->update(['fcm_token' => null]);
 
         auth()->user()->update([
             'fcm_token' => $request->fcm_token

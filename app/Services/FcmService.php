@@ -21,10 +21,15 @@ class FcmService
         $titleEn = $details['title_en'] ?? '';
         $bodyAr = $details['body_ar'] ?? '';
         $bodyEn = $details['body_en'] ?? '';
+        $user->load('settings');
+        // Select title/body based on user language
+        $lang = $user->language ?? 'ar';
+        $title = ($lang === 'en' && !empty($titleEn)) ? $titleEn : $titleAr;
+        $body = ($lang === 'en' && !empty($bodyEn)) ? $bodyEn : $bodyAr;
 
         // Prevent duplicate FCM sending to the same token for the same message in a single request execution
         if ($user->fcm_token) {
-            $messageHash = md5($titleAr . $bodyAr . $user->fcm_token);
+            $messageHash = md5($title . $body . $user->fcm_token);
             if (in_array($messageHash, self::$sentTokens)) {
                 \Log::info("FcmService: Duplicate message to token already sent in this request: " . substr($user->fcm_token, 0, 10));
                 if ($saveToDb) {
@@ -34,11 +39,6 @@ class FcmService
             }
             self::$sentTokens[] = $messageHash;
         }
-
-        // Select title/body based on user language
-        $lang = $user->language ?? 'ar';
-        $title = ($lang === 'en' && !empty($titleEn)) ? $titleEn : $titleAr;
-        $body = ($lang === 'en' && !empty($bodyEn)) ? $bodyEn : $bodyAr;
 
         // Check if user has notifications enabled
         if (!$user->notification_enabled) {
@@ -85,10 +85,6 @@ class FcmService
                 ->withApnsConfig([
                     'payload' => [
                         'aps' => [
-                            'alert' => [
-                                'title' => $title,
-                                'body' => $body,
-                            ],
                             'sound' => 'default',
                         ],
                     ],
@@ -143,10 +139,6 @@ class FcmService
                 ->withApnsConfig([
                     'payload' => [
                         'aps' => [
-                            'alert' => [
-                                'title' => $title,
-                                'body' => $body,
-                            ],
                             'sound' => 'default',
                         ],
                     ],
