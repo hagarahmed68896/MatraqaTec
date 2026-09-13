@@ -92,6 +92,19 @@ class ComplaintController extends Controller
             'status' => 'pending',
         ]);
 
+        // Notify Admins
+        \App\Models\Notification::notifyAdmins([
+            'type' => 'alert',
+            'title_ar' => 'شكوى / تذكرة جديدة',
+            'title_en' => 'New Ticket / Complaint',
+            'body_ar' => "تم استلام تذكرة جديدة برقم #{$complaint->ticket_number}",
+            'body_en' => "New ticket received #{$complaint->ticket_number}",
+            'data' => [
+                'complaint_id' => $complaint->id,
+                'customer_name' => $user->name ?? '',
+            ]
+        ]);
+
         return response()->json(['status' => true, 'message' => __('Ticket created successfully'), 'data' => $complaint]);
     }
 

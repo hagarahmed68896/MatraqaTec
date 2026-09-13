@@ -339,13 +339,13 @@
                         </div>
                     </div>
 
-                    <!-- Price -->
+                    <!-- Price & Payment Summary -->
                     <div class="flex items-start gap-4">
                         <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 shrink-0 font-black text-xs">
                             <img src="{{ asset('assets/images/Vector (1).svg') }}" alt="SAR" class="inline-block w-4 h-4 align-middle">
                         </div>
                         <div>
-                            <span class="block text-sm font-bold text-[#1A1A31] dark:text-white">{{ __('Price') }}: 
+                            <span class="block text-sm font-bold text-[#1A1A31] dark:text-white">{{ __('Total Price') }}: 
                                 <span class="text-slate-400 font-bold ml-1">
                                     {{ number_format($item->total_price ?? 0, 2) }} ر.س
                                     @if($item->discount_amount > 0)
@@ -353,6 +353,20 @@
                                     @endif
                                 </span>
                             </span>
+                            <div class="flex items-center gap-3 mt-1.5 text-xs font-bold">
+                                <span class="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800/40">
+                                    {{ __('Paid') }}: {{ number_format($item->paid_amount, 2) }} ر.س
+                                </span>
+                                @if($item->remaining_amount > 0)
+                                <span class="text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800/40">
+                                    {{ __('Remaining') }}: {{ number_format($item->remaining_amount, 2) }} ر.س
+                                </span>
+                                @else
+                                <span class="text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2.5 py-0.5 rounded-lg border border-blue-200 dark:border-blue-800/40">
+                                    {{ __('Fully Paid') }}
+                                </span>
+                                @endif
+                            </div>
                         </div>
                     </div>
 

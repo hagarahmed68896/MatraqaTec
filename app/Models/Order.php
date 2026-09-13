@@ -52,10 +52,26 @@ class Order extends Model
         'additional_fees' => 'decimal:2',
     ];
 
-    protected $appends = ['status_label', 'status_color', 'formatted_scheduled_date', 'formatted_scheduled_time', 'formatted_proposed_scheduled_date', 'formatted_proposed_scheduled_time', 'client_name', 'client_phone', 'technician_name', 'technician_phone', 'technician_avatar', 'acceptance_duration_minutes', 'acceptance_expiry_time', 'remaining_acceptance_seconds', 'client_signature_url', 'attachment_urls', 'image', 'can_reschedule', 'is_paid', 'required_photos_before_count', 'required_photos_after_count', 'subtotal_before_vat', 'vat_amount', 'discount_amount', 'original_price_before_tax'];
+    protected $appends = ['status_label', 'status_color', 'formatted_scheduled_date', 'formatted_scheduled_time', 'formatted_proposed_scheduled_date', 'formatted_proposed_scheduled_time', 'client_name', 'client_phone', 'technician_name', 'technician_phone', 'technician_avatar', 'acceptance_duration_minutes', 'acceptance_expiry_time', 'remaining_acceptance_seconds', 'client_signature_url', 'attachment_urls', 'image', 'can_reschedule', 'is_paid', 'paid_amount', 'remaining_amount', 'required_photos_before_count', 'required_photos_after_count', 'subtotal_before_vat', 'vat_amount', 'discount_amount', 'original_price_before_tax'];
 
     protected static function booted()
     {
+        static::created(function ($order) {
+            $isImmediate = (bool) $order->is_immediate;
+            \App\Models\Notification::notifyAdmins([
+                'type' => \App\Models\Notification::TYPE_NEW_ORDER,
+                'title_ar' => $isImmediate ? 'طلب فوري جديد' : 'طلب صيانة جديد',
+                'title_en' => $isImmediate ? 'New Immediate Order' : 'New Maintenance Order',
+                'body_ar' => "تم إنشاء طلب جديد برقم #{$order->order_number}" . ($isImmediate ? ' (فوري)' : ''),
+                'body_en' => "New order created #{$order->order_number}" . ($isImmediate ? ' (Immediate)' : ''),
+                'data' => [
+                    'type' => 'new_order',
+                    'order_id' => $order->id,
+                    'customer_name' => $order->user->name ?? '',
+                ]
+            ]);
+        });
+
         static::saved(function ($order) {
             if ($order->status === 'completed' && $order->total_price > 0) {
                 $hasCompletedPayment = $order->payments()->where('status', 'completed')->exists();
@@ -146,6 +162,19 @@ class Order extends Model
         return (round($totalPaid, 2) >= round($totalRequired - $tolerance, 2));
     }
 
+    public function getPaidAmountAttribute()
+    {
+        return round((float) $this->payments()->where('status', 'completed')->sum('amount'), 2);
+    }
+
+    public function getRemainingAmountAttribute()
+    {
+        $total = (float) $this->total_price;
+        $paid = $this->paid_amount;
+        $remaining = $total - $paid;
+        return $remaining > 0 ? round($remaining, 2) : 0.0;
+    }
+
     public function getCanRescheduleAttribute()
     {
         $user = auth()->user();
@@ -156,8 +185,8 @@ class Order extends Model
             return false;
         }
 
-        // Common status check: only scheduled/accepted/new orders can be rescheduled
-        if (!in_array($this->status, ['new', 'scheduled', 'accepted'])) {
+        // Common status check: only scheduled/accepted/new/expired orders can be rescheduled
+        if (!in_array($this->status, ['new', 'scheduled', 'accepted', 'expired'])) {
             return false;
         }
 
@@ -166,19 +195,16 @@ class Order extends Model
             return false;
         }
 
-        // Must not have started work (sub_status must be empty)
-        if ($this->sub_status) {
+        // Must not have started work (sub_status must be empty, null, or expired)
+        if ($this->sub_status && !in_array($this->sub_status, ['expired'])) {
             return false;
         }
 
-        // Must only allow rescheduling after the scheduled time has passed
+        // Must only allow rescheduling after the scheduled time has passed (overdue / expired)
         if ($this->scheduled_at && $this->scheduled_at->isFuture()) {
             return false;
         }
 
-        // Removed time restrictions for technicians. 
-        // Since we now use a Request & Approval system, anyone can *request* a reschedule at any time, 
-        // and the other party can simply accept or reject it.
         return true;
     }
 
@@ -394,17 +420,47 @@ class Order extends Model
                 'sub_status' => 'expired'
             ]);
 
-            // Notify the client about expiration and option to reschedule
+            // Release technician to available
+            if ($order->technician) {
+                $order->technician->update(['availability_status' => 'available']);
+            }
+
+            // Auto-refund any completed payments to the client's wallet
+            $totalPaid = (float) $order->payments()->where('status', 'completed')->sum('amount');
             $client = \App\Models\User::find($order->user_id);
+            
+            if ($totalPaid > 0 && $client) {
+                $client->wallet_balance = ($client->wallet_balance ?? 0) + $totalPaid;
+                $client->save();
+
+                \App\Models\WalletTransaction::create([
+                    'user_id' => $client->id,
+                    'amount' => $totalPaid,
+                    'type' => 'refund',
+                    'note' => 'استرداد قيمة الطلب رقم #' . $order->order_number . ' لعدم توفر فني / انتهاء صلاحية الطلب',
+                    'reference_id' => $order->id,
+                    'reference_type' => Order::class,
+                ]);
+
+                // Update payment status to refunded
+                $order->payments()->where('status', 'completed')->update(['status' => 'refunded']);
+            }
+
+            // Notify the client about expiration and wallet refund
             if ($client) {
+                $refundTextAr = ($totalPaid > 0) ? " وتم استرداد مبلغ {$totalPaid} ريال إلى محفظتك تلقائياً." : "";
+                $refundTextEn = ($totalPaid > 0) ? " An amount of {$totalPaid} SAR has been automatically refunded to your wallet." : "";
+
                 $details = [
                     'type' => \App\Models\Notification::TYPE_STATUS_UPDATE ?? 'status_update',
-                    'title_ar' => 'انتهت صلاحية طلبك الفوري',
-                    'title_en' => 'Your immediate order has expired',
-                    'body_ar' => 'عذراً، لم نتمكن من العثور على فني متاح لطلبك الفوري في الوقت المحدد. هل ترغب في إعادة جدولته لأقرب موعد متاح؟',
-                    'body_en' => 'Sorry, we could not find an available technician for your immediate order in time. Would you like to reschedule it to the nearest available slot?',
+                    'title_ar' => 'انتهت صلاحية الطلب واسترداد المبلغ',
+                    'title_en' => 'Order Expired & Amount Refunded',
+                    'body_ar' => 'عذراً، لم نتمكن من توفير فني متاح لطلبك رقم #' . $order->order_number . ' في الوقت المحدد' . $refundTextAr . ' هل ترغب في إعادة جدولته لأقرب موعد متاح؟',
+                    'body_en' => 'Sorry, we could not find an available technician for order #' . $order->order_number . ' in time' . $refundTextEn . ' Would you like to reschedule it to the nearest available slot?',
                     'data' => [
                         'order_id' => $order->id,
+                        'refunded' => ($totalPaid > 0),
+                        'refund_amount' => $totalPaid,
                         'suggest_reschedule' => true
                     ]
                 ];
@@ -460,9 +516,62 @@ class Order extends Model
             }
         }
 
+        // 4. Auto-release any technician marked as 'busy' who has no active 'in_progress' orders
+        \App\Models\Technician::where('availability_status', 'busy')
+            ->whereDoesntHave('orders', function ($q) {
+                $q->where('status', 'in_progress');
+            })
+            ->update(['availability_status' => 'available']);
+
+        // 5. Backfill missing admin notifications for recent orders
+        try {
+            $recentOrders = self::latest()->take(20)->get();
+            foreach ($recentOrders as $recentOrder) {
+                $orderId = $recentOrder->id;
+                $hasNotification = \App\Models\Notification::where(function($q) use ($orderId) {
+                    $q->where('data->order_id', $orderId)
+                      ->orWhere('data->order_id', (string) $orderId)
+                      ->orWhere('data', 'like', '%"order_id":' . $orderId . '%')
+                      ->orWhere('data', 'like', '%"order_id":"' . $orderId . '"%');
+                })->exists();
+
+                if (!$hasNotification) {
+                    $isImmediate = (bool) $recentOrder->is_immediate;
+                    \App\Models\Notification::notifyAdmins([
+                        'type' => \App\Models\Notification::TYPE_NEW_ORDER,
+                        'title_ar' => $isImmediate ? 'طلب فوري جديد' : 'طلب صيانة جديد',
+                        'title_en' => $isImmediate ? 'New Immediate Order' : 'New Maintenance Order',
+                        'body_ar' => "تم إنشاء طلب جديد برقم #{$recentOrder->order_number}" . ($isImmediate ? ' (فوري)' : ''),
+                        'body_en' => "New order created #{$recentOrder->order_number}" . ($isImmediate ? ' (Immediate)' : ''),
+                        'data' => [
+                            'type' => 'new_order',
+                            'order_id' => $recentOrder->id,
+                            'customer_name' => $recentOrder->user->name ?? '',
+                        ]
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Order sync backfill error: ' . $e->getMessage());
+        }
+
         return $overdueOrders->count() + $stuckInProgressOrders->count();
     }
 
+
+    public function getSubStatusAttribute($value)
+    {
+        if ($value !== null) {
+            return $value;
+        }
+
+        // If the order is in new or scheduled state and not paid, default to waiting_payment
+        if (in_array($this->attributes['status'] ?? null, ['new', 'scheduled']) && !$this->is_paid) {
+            return 'waiting_payment';
+        }
+
+        return $value;
+    }
 
     public function getStatusLabelAttribute()
     {
@@ -480,6 +589,11 @@ class Order extends Model
         // Handle expired sub-status or status for overdue appointments
         if ($this->sub_status === 'expired' || $this->status === 'expired') {
             return 'يحتاج لإعادة جدولة';
+        }
+
+        // Sub-status label for waiting payment
+        if (in_array($this->sub_status, ['waiting_payment', 'order_accepted_waiting_payment'])) {
+            return 'بانتظار الدفع من العميل';
         }
 
         // Sub-status label for pending tech acceptance
@@ -517,7 +631,7 @@ class Order extends Model
             return '#FF8C00'; // DarkOrange
         }
 
-        if (in_array($this->sub_status, ['pending_tech_acceptance', 'additional_visit', 'reschedule_requested'])) {
+        if (in_array($this->sub_status, ['waiting_payment', 'order_accepted_waiting_payment', 'pending_tech_acceptance', 'additional_visit', 'reschedule_requested'])) {
             return '#FF9800'; // Amber - awaiting action/confirmation
         }
 

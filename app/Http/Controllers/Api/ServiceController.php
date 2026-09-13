@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Validator;
 
 class ServiceController extends Controller
 {
-    use \App\Traits\HandlesLocation;
+    use \App\Traits\HandlesLocation, \App\Traits\HasAutoAssignment;
 
     public function index(Request $request)
     {
@@ -345,6 +345,118 @@ class ServiceController extends Controller
             'status' => true,
             'message' => __('Favorite services retrieved successfully'),
             'data' => $services
+        ]);
+    }
+
+    public function availableSlots(Request $request, $id)
+    {
+        $service = Service::find($id);
+        if (!$service) {
+            return response()->json(['status' => false, 'message' => __('Service not found')], 404);
+        }
+
+        $dateStr = $request->input('date', now()->format('Y-m-d'));
+        try {
+            $date = \Carbon\Carbon::parse($dateStr);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'message' => __('Invalid date format. Use YYYY-MM-DD')], 422);
+        }
+
+        $user = $request->user();
+        $cityId = $request->city_id ?? $this->detectCityFromCoords($request->latitude, $request->longitude);
+        if (!$cityId && $user) {
+            $cityId = $user->city_id;
+        }
+
+        $lat = $request->latitude ?? ($user->latitude ?? null);
+        $lng = $request->longitude ?? ($user->longitude ?? null);
+
+        // Working hours range (08:00 to 22:00)
+        $startHour = (int) \App\Models\Setting::getByKey('working_hours_start', 8);
+        $endHour = (int) \App\Models\Setting::getByKey('working_hours_end', 22);
+
+        // Group slots by technician and by period
+        $techniciansMap = [];
+        $periodsMap = [
+            'morning' => [],
+            'afternoon' => [],
+            'evening' => [],
+        ];
+        $availableTimes = [];
+        $allSlots = [];
+
+        for ($hour = $startHour; $hour <= $endHour; $hour++) {
+            $slotTime = $date->copy()->setHour($hour)->setMinute(0)->setSecond(0);
+
+            // Skip past slots or slots less than 1 hour away if today
+            if ($date->isToday() && $slotTime->lte(now()->addMinutes(59))) {
+                continue;
+            }
+            if ($slotTime->isPast()) {
+                continue;
+            }
+
+            $availableTech = $this->findAvailableTechnician($service->id, $cityId, $slotTime, $lat, $lng);
+
+            if ($availableTech) {
+                $techUser = $availableTech->user;
+                $period = ($hour < 12) ? 'morning' : (($hour < 17) ? 'afternoon' : 'evening');
+                $periodLabels = [
+                    'morning' => 'الفترة الصباحية',
+                    'afternoon' => 'فترة الظهيرة والمساء الباكر',
+                    'evening' => 'الفترة المسائية',
+                ];
+
+                $slotData = [
+                    'time' => $slotTime->format('H:i'),
+                    'datetime' => $slotTime->toDateTimeString(),
+                    'formatted_time' => $slotTime->translatedFormat('h:i a'),
+                    'period' => $period,
+                    'period_label' => $periodLabels[$period],
+                    'technician_id' => $availableTech->id,
+                ];
+
+                $availableTimes[] = $slotTime->format('H:i');
+                $periodsMap[$period][] = $slotData;
+                $allSlots[] = $slotData;
+
+                $techId = $availableTech->id;
+                if (!isset($techniciansMap[$techId])) {
+                    $techniciansMap[$techId] = [
+                        'id' => $availableTech->id,
+                        'name' => $techUser->name ?? ($availableTech->name ?? 'فني معتمد'),
+                        'avatar' => $techUser->avatar_url ?? null,
+                        'rating' => round((float) ($availableTech->reviews()->avg('rating') ?? 5.0), 1),
+                        'category' => $availableTech->category->name_ar ?? ($service->name_ar ?? ''),
+                        'available_times' => [],
+                        'slots' => []
+                    ];
+                }
+                $techniciansMap[$techId]['available_times'][] = $slotTime->format('H:i');
+                $techniciansMap[$techId]['slots'][] = [
+                    'time' => $slotTime->format('H:i'),
+                    'datetime' => $slotTime->toDateTimeString(),
+                    'formatted_time' => $slotTime->translatedFormat('h:i a'),
+                    'period' => $period,
+                    'period_label' => $periodLabels[$period],
+                ];
+            }
+        }
+
+        $techniciansList = array_values($techniciansMap);
+
+        return response()->json([
+            'status' => true,
+            'message' => __('Available slots retrieved successfully'),
+            'data' => [
+                'date' => $date->format('Y-m-d'),
+                'formatted_date' => $date->translatedFormat('l, d F Y'),
+                'total_available_slots' => count($allSlots),
+                'available_times' => $availableTimes,
+                'technicians' => $techniciansList,
+                'periods' => $periodsMap,
+                'available_slots' => $allSlots
+            ]
         ]);
     }
 

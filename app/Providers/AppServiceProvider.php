@@ -28,14 +28,20 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\View::composer('layouts.admin', function ($view) {
             if (\Illuminate\Support\Facades\Auth::check()) {
                 $userId = \Illuminate\Support\Facades\Auth::id();
-                $notifications = \App\Models\Notification::where('user_id', $userId)
-                    ->where('is_read', false)
+
+                try {
+                    \App\Models\Order::syncExpiredOrders();
+                } catch (\Exception $e) {}
+
+                $notifications = \App\Models\Notification::forAdmin($userId)
                     ->latest()
-                    ->take(5)
+                    ->take(15)
                     ->get();
-                $unreadCount = \App\Models\Notification::where('user_id', $userId)
+
+                $unreadCount = \App\Models\Notification::forAdmin($userId)
                     ->where('is_read', false)
                     ->count();
+
                 $view->with('adminNotifications', $notifications)->with('adminUnreadCount', $unreadCount);
             } else {
                 $view->with('adminNotifications', collect([]))->with('adminUnreadCount', 0);

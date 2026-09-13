@@ -34,6 +34,26 @@ class TechnicianRequest extends Model
         'service_ids' => 'array',
     ];
 
+    protected static function booted()
+    {
+        static::created(function ($request) {
+            $name = $request->name ?? $request->name_ar ?? $request->name_en ?? 'فني جديد';
+            Notification::notifyAdmins([
+                'type' => 'technician_request',
+                'title_ar' => 'طلب انضمام فني جديد',
+                'title_en' => 'New Technician Join Request',
+                'body_ar' => "قدم الفني {$name} طلب انضمام جديد للمنصة.",
+                'body_en' => "Technician {$name} submitted a new join request.",
+                'data' => [
+                    'type' => 'technician_request',
+                    'request_id' => $request->id,
+                    'name' => $name,
+                    'phone' => $request->phone,
+                ]
+            ]);
+        });
+    }
+
     protected $appends = ['photo_url', 'iqama_photo_url', 'services'];
 
     public function getServicesAttribute()

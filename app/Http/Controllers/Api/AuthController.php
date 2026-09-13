@@ -152,6 +152,28 @@ class AuthController extends Controller
 
         $this->sendOtp($user);
 
+        // Notify Admins about new registration
+        $typeLabels = [
+            'individual' => ['ar' => 'عميل أفراد جديد', 'en' => 'New Individual Customer'],
+            'technician' => ['ar' => 'فني جديد', 'en' => 'New Technician'],
+            'maintenance_company' => ['ar' => 'شركة صيانة جديدة', 'en' => 'New Maintenance Company'],
+            'corporate_customer' => ['ar' => 'عميل شركات جديد', 'en' => 'New Corporate Customer'],
+        ];
+        $typeInfo = $typeLabels[$request->type] ?? ['ar' => 'مستخدم جديد', 'en' => 'New User'];
+
+        \App\Models\Notification::notifyAdmins([
+            'type' => 'notification',
+            'title_ar' => "تسجيل {$typeInfo['ar']}",
+            'title_en' => "Registration: {$typeInfo['en']}",
+            'body_ar' => "تم تسجيل حساب جديد: {$user->name} ({$typeInfo['ar']})",
+            'body_en' => "New account registered: {$user->name} ({$typeInfo['en']})",
+            'data' => [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'user_type' => $user->type,
+            ]
+        ]);
+
         $profileData = $this->getProfileData($user);
 
         return response()->json([

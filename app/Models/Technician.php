@@ -100,6 +100,18 @@ class Technician extends Model
             })->toArray();
     }
 
+    public function getAvailabilityStatusAttribute($value)
+    {
+        // If marked as busy, verify if there is an actual in_progress order
+        if ($value === 'busy') {
+            $hasActiveTask = $this->orders()->where('status', 'in_progress')->exists();
+            if (!$hasActiveTask) {
+                return 'available';
+            }
+        }
+        return $value ?? 'available';
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

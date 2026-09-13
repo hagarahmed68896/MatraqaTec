@@ -30,6 +30,12 @@ class OrderController extends Controller
             $technician = \App\Models\Technician::where('user_id', $user->id)->first();
             if (!$technician) return response()->json(['status' => true, 'message' => 'No assigned orders', 'data' => []]);
             
+            // Strict Prepaid Rule: Technicians must NEVER see orders that are waiting for payment
+            $query->where(function($q) {
+                $q->whereNull('sub_status')
+                  ->orWhere('sub_status', '!=', 'waiting_payment');
+            });
+
             $query->where(function($q) use ($technician, $request, $user) {
                 // 1. Orders directly assigned to this technician
                 $q->where('technician_id', $technician->id);
@@ -128,8 +134,7 @@ class OrderController extends Controller
                 // 3. طلبات إعادة الجدولة المعلقة
                 // 4. طلبات التعيين التلقائي للفني المستقل (status=scheduled)
                 $query->where(function($q) use ($user) {
-                    $q->where('sub_status', 'pending_tech_acceptance') // ← جديد: معيّن من شركة
-                      ->orWhere('sub_status', 'reschedule_requested')  // طلب إعادة جدولة
+                    $q->whereIn('sub_status', ['pending_tech_acceptance', 'reschedule_requested', 'waiting_payment', 'order_accepted_waiting_payment'])
                       ->orWhere(function($sub) use ($user) {
                           $sub->where('status', 'new');
                           if ($user->type === 'technician') {
@@ -426,8 +431,18 @@ class OrderController extends Controller
         $tax = $basePrice * 0.15;
         $data['total_price'] = $basePrice + $tax;
 
-        // Initial Payment is now delayed until the end (Base Price + Spare Parts).
-        // Therefore, we do not deduct or check wallet balance here.
+        // Check if paying with Wallet balance
+        if ($request->payment_method === 'wallet') {
+            if (($user->wallet_balance ?? 0) < $data['total_price']) {
+                return response()->json([
+                    'status' => false,
+                    'message' => __('رصيد المحفظة غير كافٍ لسداد قيمة الخدمة (:amount ريال). رصيدك الحالي: :balance ريال. يمكنك الدفع عبر بوابة الدفع الإلكترونية (مدى / فيزا / أبل باي).', [
+                        'amount' => number_format($data['total_price'], 2),
+                        'balance' => number_format($user->wallet_balance ?? 0, 2),
+                    ]),
+                ], 422);
+            }
+        }
 
         if ($availableTech) {
             $data['technician_id'] = $availableTech->id;
@@ -438,7 +453,72 @@ class OrderController extends Controller
             $data['assigned_at'] = now();
         }
 
+        // Set sub_status to waiting_payment if order is not paid immediately via wallet
+        $data['sub_status'] = ($request->payment_method === 'wallet') ? null : 'waiting_payment';
+
         $order = Order::create($data);
+
+        $paymentUrl = null;
+        $invoiceId = null;
+
+        if ($request->payment_method === 'wallet') {
+            // Process Full Wallet Payment
+            $user->wallet_balance -= $data['total_price'];
+            $user->save();
+
+            \App\Models\WalletTransaction::create([
+                'user_id' => $user->id,
+                'amount' => -$data['total_price'],
+                'type' => 'payment',
+                'note' => 'سداد حجز طلب صيانة رقم #' . $order->order_number . ' من رصيد المحفظة',
+                'reference_id' => $order->id,
+                'reference_type' => Order::class,
+            ]);
+
+            \App\Models\Payment::create([
+                'user_id' => $user->id,
+                'order_id' => $order->id,
+                'amount' => $data['total_price'],
+                'payment_method' => 'wallet',
+                'status' => 'completed',
+                'payment_date' => now(),
+            ]);
+        } elseif (in_array($request->payment_method, ['credit_card', 'apple_pay'])) {
+            // Process Online Payment (Credit Card / Apple Pay / Mada / Visa) via MyFatoorah Gateway
+            try {
+                $cleanMobile = preg_replace('/[^0-9]/', '', $user->phone ?? '');
+                if (strlen($cleanMobile) > 11) {
+                    $cleanMobile = substr($cleanMobile, -10);
+                }
+
+                $isSandbox = config('myfatoorah.is_sandbox', false);
+                $baseUrl = $isSandbox ? 'https://apitest.myfatoorah.com' : 'https://api-sa.myfatoorah.com';
+                $apiToken = config('myfatoorah.api_token');
+
+                $payload = [
+                    'NotificationOption' => 'Lnk',
+                    'InvoiceValue'       => $data['total_price'],
+                    'CustomerName'       => $user->name ?: 'Customer',
+                    'DisplayCurrencyIso' => 'SAR',
+                    'CustomerEmail'      => $user->email ?: 'customer@example.com',
+                    'CustomerMobile'     => $cleanMobile,
+                    'CallBackUrl'        => config('myfatoorah.callback_url'),
+                    'ErrorUrl'           => config('myfatoorah.error_url'),
+                    'Language'           => 'ar',
+                    'CustomerReference'  => (string) $order->id,
+                ];
+
+                $mfResponse = \Illuminate\Support\Facades\Http::withToken($apiToken)
+                    ->post("$baseUrl/v2/SendPayment", $payload);
+
+                if ($mfResponse->successful() && $mfResponse->json('IsSuccess')) {
+                    $paymentUrl = $mfResponse->json('Data.InvoiceURL');
+                    $invoiceId = $mfResponse->json('Data.InvoiceId');
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('MyFatoorah initial payment initiation error: ' . $e->getMessage());
+            }
+        }
 
         // Sync Services to order_services
         $servicesToSync = [$request->service_id];
@@ -455,35 +535,49 @@ class OrderController extends Controller
             'status' => 'scheduled',
         ]);
 
-        // Trigger Notification for Tech if assigned, else Admin/Company
-        if ($availableTech) {
-            $notificationTargetId = $availableTech->user_id;
-            
-            // If it belongs to a company, notify the company user instead of the tech directly (or in addition to)
-            // Based on user request, the company should handle "New" orders.
-            if ($availableTech->maintenance_company_id) {
-                $company = \App\Models\MaintenanceCompany::find($availableTech->maintenance_company_id);
-                if ($company && $company->user_id) {
-                    $notificationTargetId = $company->user_id;
+        // Trigger Notification for Tech/Company ONLY if the order is already paid (e.g. via wallet)
+        if ($order->sub_status !== 'waiting_payment') {
+            if ($availableTech) {
+                $notificationTargetId = $availableTech->user_id;
+                
+                // If it belongs to a company, notify the company user instead of the tech directly (or in addition to)
+                if ($availableTech->maintenance_company_id) {
+                    $company = \App\Models\MaintenanceCompany::find($availableTech->maintenance_company_id);
+                    if ($company && $company->user_id) {
+                        $notificationTargetId = $company->user_id;
+                    }
                 }
-            }
 
-            $isImmediate = $request->boolean('is_immediate');
-            $this->sendNotification($notificationTargetId, [
-                'type' => \App\Models\Notification::TYPE_NEW_ORDER ?? 'new_order',
-                'title_ar' => $isImmediate ? 'طلب فوري جديد!' : 'مهمة جديدة',
-                'title_en' => $isImmediate ? 'New Immediate Order!' : 'New Task',
-                'body_ar' => $isImmediate 
-                    ? "لديك طلب فوري جديد رقم #{$order->order_number}. يرجى الاستجابة والوصول خلال 60 دقيقة." 
-                    : 'تم استلام طلب جديد، يرجى مراجعته وقبوله',
-                'body_en' => $isImmediate 
-                    ? "You have a new immediate order #{$order->order_number}. Please respond and arrive within 60 minutes." 
-                    : 'A new task has been received. Please review and accept it.',
-                'data' => ['order_id' => $order->id]
-            ]);
-        } else {
-            $this->notifyNewOrder($order);
+                $isImmediate = $request->boolean('is_immediate');
+                $this->sendNotification($notificationTargetId, [
+                    'type' => \App\Models\Notification::TYPE_NEW_ORDER ?? 'new_order',
+                    'title_ar' => $isImmediate ? 'طلب فوري جديد!' : 'مهمة جديدة',
+                    'title_en' => $isImmediate ? 'New Immediate Order!' : 'New Task',
+                    'body_ar' => $isImmediate 
+                        ? "لديك طلب فوري جديد رقم #{$order->order_number}. يرجى الاستجابة والوصول خلال 60 دقيقة." 
+                        : 'تم استلام طلب جديد مؤكد، يرجى مراجعته وقبوله',
+                    'body_en' => $isImmediate 
+                        ? "You have a new immediate order #{$order->order_number}. Please respond and arrive within 60 minutes." 
+                        : 'A new confirmed task has been received. Please review and accept it.',
+                    'data' => ['order_id' => $order->id]
+                ]);
+            } else {
+                $this->notifyNewOrder($order);
+            }
         }
+
+        // Notify Admins about the new order
+        \App\Models\Notification::notifyAdmins([
+            'type' => \App\Models\Notification::TYPE_NEW_ORDER,
+            'title_ar' => $isImmediate ? 'طلب فوري جديد' : 'طلب صيانة جديد',
+            'title_en' => $isImmediate ? 'New Immediate Order' : 'New Maintenance Order',
+            'body_ar' => "تم إنشاء طلب جديد برقم #{$order->order_number}" . ($isImmediate ? ' (فوري)' : ''),
+            'body_en' => "New order created #{$order->order_number}" . ($isImmediate ? ' (Immediate)' : ''),
+            'data' => [
+                'order_id' => $order->id,
+                'customer_name' => $user->name ?? '',
+            ]
+        ]);
 
         // 3. Handle Attachments
         if ($request->hasFile('attachments')) {
@@ -508,24 +602,37 @@ class OrderController extends Controller
                     'type' => 'before'
                 ]);
             }
-            // Refresh to load attachments relationships
-            $order->refresh();
         }
+
+        $order->load(['user', 'technician.user', 'technician.category', 'service.parent', 'attachments']);
+
+        $responseData = [
+            'order' => $order,
+            'invoice' => [
+                'base_price' => number_format($basePrice, 2),
+                'tax' => number_format($tax, 2),
+                'total' => number_format($data['total_price'], 2),
+                'currency' => 'SAR',
+                'is_paid_by_wallet' => ($request->payment_method === 'wallet'),
+            ],
+            'wallet_balance' => number_format($user->wallet_balance ?? 0, 2),
+        ];
+
+        if ($paymentUrl) {
+            $responseData['payment_url'] = $paymentUrl;
+            $responseData['invoice_id'] = $invoiceId;
+        }
+
+        $successMessage = ($request->payment_method === 'wallet')
+            ? __('تم إنشاء الطلب وسداد قيمة الخدمة من رصيد المحفظة بنجاح.')
+            : ($isImmediate 
+                ? __('Order created successfully. The work will start within 60 minutes.') 
+                : __('Order created successfully and scheduled.'));
 
         return response()->json([
             'status' => true,
-            'message' => $isImmediate 
-                ? __('Order created successfully. The work will start within 60 minutes.') 
-                : __('Order created successfully and scheduled.'),
-            'data' => [
-                'order' => $order,
-                'invoice' => [
-                    'base_price' => number_format($basePrice, 2),
-                    'tax' => number_format($tax, 2),
-                    'total' => number_format($data['total_price'], 2),
-                    'currency' => 'SAR'
-                ]
-            ]
+            'message' => $successMessage,
+            'data' => $responseData
         ]);
     }
 
@@ -607,6 +714,15 @@ class OrderController extends Controller
     {
         $order = $this->getOrderIfAuthorized($id);
         if (!$order) return response()->json(['status' => false, 'message' => __('Order not found')], 404);
+
+        // Validation: Prevent starting if order is waiting for client payment
+        if (in_array($order->sub_status, ['waiting_payment', 'order_accepted_waiting_payment']) || !$order->is_paid) {
+            return response()->json([
+                'status' => false,
+                'message' => __('لا يمكن بدء الرحلة. الطلب في انتظار سداد قيمة الخدمة من قبل العميل أولاً.'),
+                'data' => $order
+            ], 422);
+        }
 
         // Validation: Prevent starting if scheduled_at is more than 24 hours in the past
         if ($this->isOrderExpired($order)) {
@@ -897,6 +1013,16 @@ class OrderController extends Controller
             'data' => ['order_id' => $order->id, 'note' => $request->note, 'proposed_time' => $request->next_visit_time]
         ]);
 
+        // Notify Admins
+        \App\Models\Notification::notifyAdmins([
+            'type' => \App\Models\Notification::TYPE_ORDER_RESCHEDULED,
+            'title_ar' => 'طلب زيارة إضافية',
+            'title_en' => 'Additional Visit Request',
+            'body_ar' => "طلب الفني زيارة إضافية للطلب رقم #{$order->order_number}",
+            'body_en' => "Technician requested additional visit for order #{$order->order_number}",
+            'data' => ['order_id' => $order->id]
+        ]);
+
         return response()->json([
             'status' => true,
             'message' => __('Additional visit request sent successfully'),
@@ -929,15 +1055,21 @@ class OrderController extends Controller
         // Update total_price in DB now so client sees it
         $order->update(['total_price' => $grandTotal]);
 
+        $totalPaid = round((float) $order->payments()->where('status', 'completed')->sum('amount'), 2);
+        $remaining = max(0, round($grandTotal - $totalPaid, 2));
+
         $this->sendNotification($order->user_id, [
             'type' => \App\Models\Notification::TYPE_STATUS_UPDATE,
-            'title_ar' => 'متطلبات المهمة والتكاليف',
+            'title_ar' => 'متطلبات المهمة وتحديث الفاتورة',
             'title_en' => 'Mission Requirements & Billing',
-            'body_ar' => "تم إرسال تفاصيل الفاتورة لطلبك رقم {$order->order_number}. الإجمالي: {$grandTotal} ريال",
-            'body_en' => "Invoice details sent for your order #{$order->order_number}. Total: {$grandTotal} SAR",
+            'body_ar' => "تم تحديث فاتورة طلبك رقم #{$order->order_number}. الإجمالي: {$grandTotal} ريال (المسدد مسبقاً: {$totalPaid} ريال، المتبقي: {$remaining} ريال).",
+            'body_en' => "Invoice updated for order #{$order->order_number}. Total: {$grandTotal} SAR (Paid: {$totalPaid} SAR, Remaining: {$remaining} SAR).",
             'data' => [
+                'type' => 'invoice_updated',
                 'order_id' => $order->id, 
                 'total' => $grandTotal,
+                'paid_amount' => $totalPaid,
+                'remaining_amount' => $remaining,
                 'spare_parts' => $order->spare_parts_metadata
             ]
         ]);
@@ -947,6 +1079,8 @@ class OrderController extends Controller
             'message' => __('Invoice sent to client successfully'),
             'data' => [
                 'total_price' => $grandTotal,
+                'paid_amount' => $totalPaid,
+                'remaining_amount' => $remaining,
                 'spare_parts' => $order->spare_parts_metadata
             ]
         ]);
@@ -1264,26 +1398,59 @@ class OrderController extends Controller
                 $order->technician->update(['availability_status' => 'available']);
             }
 
-            // 2. Refund logic if paid via wallet or electronic payment
-            $paymentCount = $order->payments()->where('status', 'completed')->count();
-            if ($paymentCount > 0) {
-                $user = $order->user;
-                $user->wallet_balance += $order->total_price;
+            // Notify Admins about cancellation
+            \App\Models\Notification::notifyAdmins([
+                'type' => \App\Models\Notification::TYPE_ORDER_CANCELLED,
+                'title_ar' => 'إلغاء طلب',
+                'title_en' => 'Order Cancelled',
+                'body_ar' => "تم إلغاء الطلب رقم #{$order->order_number}. السبب: {$request->cancellation_reason}",
+                'body_en' => "Order #{$order->order_number} was cancelled. Reason: {$request->cancellation_reason}",
+                'data' => [
+                    'order_id' => $order->id,
+                    'customer_name' => $order->user->name ?? '',
+                ]
+            ]);
+
+            // 2. Refund logic if paid online via gateway
+            $totalPaid = (float) $order->payments()->where('status', 'completed')->sum('amount');
+            $user = $order->user;
+            if ($totalPaid > 0 && $user) {
+                $user->wallet_balance = ($user->wallet_balance ?? 0) + $totalPaid;
                 $user->save();
 
                 \App\Models\WalletTransaction::create([
                     'user_id' => $user->id,
-                    'amount' => $order->total_price,
+                    'amount' => $totalPaid,
                     'type' => 'refund',
-                    'note' => 'Refund for cancelled Order #' . $order->order_number,
+                    'note' => 'استرداد قيمة الطلب الملغي رقم #' . $order->order_number . ' إلى المحفظة',
                     'reference_id' => $order->id,
                     'reference_type' => Order::class,
                 ]);
+
+                $order->payments()->where('status', 'completed')->update(['status' => 'refunded']);
+
+                // Notify User with FCM
+                if ($user->fcm_token) {
+                    $firebaseService = app(\App\Services\FirebaseService::class);
+                    $firebaseService->sendNotification(
+                        $user->fcm_token,
+                        'تم استرداد المبلغ إلى المحفظة',
+                        "تم إلغاء الطلب رقم #{$order->order_number} وإعادة مبلغ {$totalPaid} ريال إلى محفظتك بنجاح.",
+                        [
+                            'type' => 'wallet_refund',
+                            'order_id' => (string) $order->id,
+                            'refund_amount' => (string) $totalPaid,
+                            'wallet_balance' => (string) $user->wallet_balance,
+                        ]
+                    );
+                }
             }
 
             return response()->json([
                 'status' => true,
-                'message' => 'Order cancelled and amount refunded to wallet',
+                'message' => $totalPaid > 0 
+                    ? __('Order cancelled and amount refunded to wallet')
+                    : __('Order cancelled successfully'),
                 'data' => $order
             ]);
         });
@@ -1393,6 +1560,16 @@ class OrderController extends Controller
                 'data' => ['order_id' => $order->id]
             ]);
         }
+
+        // Notify Admins
+        \App\Models\Notification::notifyAdmins([
+            'type' => \App\Models\Notification::TYPE_ORDER_RESCHEDULED,
+            'title_ar' => 'طلب تعديل موعد الطلب',
+            'title_en' => 'Order Reschedule Request',
+            'body_ar' => "طلب تعديل موعد للطلب رقم #{$order->order_number} إلى " . \Carbon\Carbon::parse($order->proposed_scheduled_at)->format('Y-m-d H:i'),
+            'body_en' => "Reschedule request for order #{$order->order_number} to " . \Carbon\Carbon::parse($order->proposed_scheduled_at)->format('Y-m-d H:i'),
+            'data' => ['order_id' => $order->id]
+        ]);
 
         return response()->json(['status' => true, 'message' => __('Reschedule request sent successfully awaiting approval.'), 'data' => $order]);
     }
@@ -1540,6 +1717,7 @@ class OrderController extends Controller
 
         $serviceBase = $order->service->price ?? 50;
         $serviceTax = $serviceBase * $serviceTaxRate;
+        $serviceTotal = $serviceBase + $serviceTax;
         $serviceCommission = $serviceBase * ($serviceCommissionRate / 100);
         $serviceCompanyShare = $serviceBase - $serviceCommission;
 
@@ -1550,6 +1728,7 @@ class OrderController extends Controller
             }
         }
         $sparePartsTax = $sparePartsBase * $partsTaxRate;
+        $sparePartsTotal = $sparePartsBase + $sparePartsTax;
         $sparePartsCommission = $sparePartsBase * ($partsCommissionRate / 100);
         $sparePartsCompanyShare = $sparePartsBase - $sparePartsCommission;
 
@@ -1559,22 +1738,28 @@ class OrderController extends Controller
         $totalCompanyShare = $serviceCompanyShare + $sparePartsCompanyShare;
         $grandTotal = $totalBase + $totalTax;
 
-        $isPaid = $order->payments()->where('status', 'completed')->exists();
+        $totalPaid = round((float) $order->payments()->where('status', 'completed')->sum('amount'), 2);
+        $remainingAmount = max(0, round($grandTotal - $totalPaid, 2));
+        $isPaid = ($remainingAmount <= 1.0);
+        $isServicePrepaid = ($totalPaid >= round($serviceTotal - 1.0, 2));
 
         return response()->json([
             'status' => true,
             'data' => [
                 'invoice_number' => 'INV-' . $order->order_number,
                 'date' => $order->created_at->format('Y-m-d'),
-                'client' => $order->user->name,
+                'client' => $order->user->name ?? 'عميل',
                 'is_paid' => $isPaid,
                 'service' => $order->service->name_ar ?? 'خدمة',
                 'service_amount' => number_format($serviceBase, 2),
                 'service_tax' => number_format($serviceTax, 2),
+                'service_total' => number_format($serviceTotal, 2),
+                'service_is_prepaid' => $isServicePrepaid,
                 'service_commission' => number_format($serviceCommission, 2),
                 'service_company_share' => number_format($serviceCompanyShare, 2),
                 'spare_parts_amount' => number_format($sparePartsBase, 2),
                 'spare_parts_tax' => number_format($sparePartsTax, 2),
+                'spare_parts_total' => number_format($sparePartsTotal, 2),
                 'spare_parts_commission' => number_format($sparePartsCommission, 2),
                 'spare_parts_company_share' => number_format($sparePartsCompanyShare, 2),
                 'base_amount' => number_format($totalBase, 2),
@@ -1582,6 +1767,8 @@ class OrderController extends Controller
                 'total_commission' => number_format($totalCommission, 2),
                 'total_company_share' => number_format($totalCompanyShare, 2),
                 'total' => number_format($grandTotal, 2),
+                'paid_amount' => number_format($totalPaid, 2),
+                'remaining_amount' => number_format($remainingAmount, 2),
                 'zatca_qr_code' => $order->invoice ? $order->invoice->zatca_qr_code : null,
                 'spare_parts' => $order->spare_parts_metadata ?? [],
             ]
@@ -1854,16 +2041,15 @@ class OrderController extends Controller
             return response()->json(['status' => false, 'message' => 'This order is not pending your acceptance'], 422);
         }
 
-        // Technician accepted -> move to 'accepted' and clear the pending sub_status
+        // Technician accepted -> move to 'accepted' and set sub_status = 'order_accepted_waiting_payment' if payment is pending
         $order->status = 'accepted';
-        $order->sub_status = null;
+        $order->sub_status = $order->is_paid ? null : 'order_accepted_waiting_payment';
         $order->save();
 
         // Update the new_order notification type to hide action buttons in the app
         $this->updateNotificationType($user->id, $order->id, \App\Models\Notification::TYPE_ORDER_ACCEPTED);
 
-        // Notify client or company?
-        // Notify Company that tech accepted?
+        // Notify Company that tech accepted
         if ($order->maintenance_company_id) {
             $companyUser = \App\Models\MaintenanceCompany::find($order->maintenance_company_id)->user_id ?? null;
             if ($companyUser) {
@@ -1873,20 +2059,51 @@ class OrderController extends Controller
                     'title_en' => 'Technician Accepted Task',
                     'body_ar' => "قام الفني {$technician->name_ar} بقبول المهمة رقم {$order->order_number}",
                     'body_en' => "Technician {$technician->name_en} accepted task #{$order->order_number}",
-                    'data' => ['order_id' => $order->id]
+                    'data' => [
+                        'type' => 'status_update',
+                        'order_id' => $order->id,
+                        'order_number' => $order->order_number,
+                        'status' => 'accepted',
+                        'sub_status' => $order->sub_status,
+                    ]
                 ]);
             }
         }
 
-        // Notify Client that the technician has confirmed
-        $this->sendNotification($order->user_id, [
-            'type' => \App\Models\Notification::TYPE_ORDER_ACCEPTED,
-            'title_ar' => 'تأكيد الموعد من قبل الفني',
-            'title_en' => 'Appointment Confirmed by Technician',
-            'body_ar' => "قام الفني {$technician->name_ar} بتأكيد موعد الزيارة لطلبك رقم {$order->order_number}. الفني سيصلك في الموعد المحدد.",
-            'body_en' => "Technician {$technician->name_en} has confirmed the appointment for your order #{$order->order_number}. The technician will arrive at the scheduled time.",
-            'data' => ['order_id' => $order->id]
-        ]);
+        // Notify Client
+        if ($order->sub_status === 'order_accepted_waiting_payment') {
+            $this->sendNotification($order->user_id, [
+                'type' => \App\Models\Notification::TYPE_ORDER_ACCEPTED_WAITING_PAYMENT,
+                'title_ar' => 'تم قبول طلبك من قبل الفني',
+                'title_en' => 'Order Accepted by Technician',
+                'body_ar' => 'تم قبول طلبك من قبل الفني، يرجى سداد قيمة الخدمة أولاً لكي يتوجه الفني إليكم.',
+                'body_en' => 'Your order has been accepted by the technician. Please pay the service fee first so the technician can head to your location.',
+                'data' => [
+                    'type' => 'order_accepted_waiting_payment',
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'status' => 'accepted',
+                    'sub_status' => 'order_accepted_waiting_payment',
+                    'total_price' => (float) $order->total_price,
+                    'payment_required' => true,
+                ]
+            ]);
+        } else {
+            $this->sendNotification($order->user_id, [
+                'type' => \App\Models\Notification::TYPE_ORDER_ACCEPTED,
+                'title_ar' => 'تأكيد الموعد من قبل الفني',
+                'title_en' => 'Appointment Confirmed by Technician',
+                'body_ar' => "قام الفني {$technician->name_ar} بتأكيد موعد الزيارة لطلبك رقم {$order->order_number}. الفني سيصلك في الموعد المحدد.",
+                'body_en' => "Technician {$technician->name_en} has confirmed the appointment for your order #{$order->order_number}. The technician will arrive at the scheduled time.",
+                'data' => [
+                    'type' => 'order_accepted',
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'status' => 'accepted',
+                    'sub_status' => $order->sub_status,
+                ]
+            ]);
+        }
 
         return response()->json(['status' => true, 'message' => 'Order accepted successfully', 'data' => $order]);
     }
@@ -2115,8 +2332,7 @@ class OrderController extends Controller
             ]);
         }
 
-        // 2. Broadcast to Independent Platform Technicians (Available & Online only)
-        $capacity = (int) \App\Models\Setting::getByKey('hourly_booking_capacity', 5);
+        // 2. Broadcast to Independent Platform Technicians (Available & Free at this slot)
         $time = $order->scheduled_at ?? now();
         $start = (clone $time)->subHours(1)->addMinute();
         $end = (clone $time)->addHours(1)->subMinute();
@@ -2136,12 +2352,12 @@ class OrderController extends Controller
                           ->orWhereNull('users.city_id');
                   });
             })
-            ->where(function($q) use ($start, $end, $capacity) {
+            ->where(function($q) use ($start, $end) {
                 $q->whereRaw("(
                     (SELECT COUNT(*) FROM orders WHERE orders.technician_id = technicians.id AND orders.status IN ('new', 'accepted', 'scheduled', 'in_progress') AND orders.scheduled_at BETWEEN ? AND ?)
                     +
                     (SELECT COUNT(*) FROM appointments WHERE appointments.technician_id = technicians.id AND appointments.status IN ('scheduled', 'in_progress') AND appointments.appointment_date BETWEEN ? AND ?)
-                ) < ?", [$start, $end, $start, $end, $capacity]);
+                ) = 0", [$start, $end, $start, $end]);
             })
             ->get();
 

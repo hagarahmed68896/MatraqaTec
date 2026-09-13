@@ -166,6 +166,20 @@ class TechnicianRequestController extends Controller
         }
 
         $techRequest = TechnicianRequest::create($data);
+
+        // Notify Admins
+        \App\Models\Notification::notifyAdmins([
+            'type' => 'alert',
+            'title_ar' => 'طلب انضمام فني جديد',
+            'title_en' => 'New Technician Application',
+            'body_ar' => "تم استلام طلب انضمام فني جديد من {$techRequest->name}",
+            'body_en' => "New technician application from {$techRequest->name}",
+            'data' => [
+                'request_id' => $techRequest->id,
+                'candidate_name' => $techRequest->name,
+            ]
+        ]);
+
         return response()->json(['status' => true, 'message' => 'Request submitted successfully', 'data' => $techRequest]);
     }
 

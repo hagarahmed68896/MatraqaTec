@@ -547,16 +547,41 @@ class OrderController extends Controller
             ]);
         }
 
-        // Send cancellation notification to user & technician
+        // Send cancellation notification to user & technician and refund to wallet
         if ($statusChangedToCancelled) {
+            // Auto refund any completed payments to user wallet
+            $totalPaid = (float) $item->payments()->where('status', 'completed')->sum('amount');
+            if ($totalPaid > 0 && $item->user) {
+                $user = $item->user;
+                $user->wallet_balance = ($user->wallet_balance ?? 0) + $totalPaid;
+                $user->save();
+
+                \App\Models\WalletTransaction::create([
+                    'user_id' => $user->id,
+                    'amount' => $totalPaid,
+                    'type' => 'refund',
+                    'note' => 'استرداد قيمة الطلب الملغي رقم #' . $item->order_number . ' إلى المحفظة',
+                    'reference_id' => $item->id,
+                    'reference_type' => Order::class,
+                ]);
+
+                $item->payments()->where('status', 'completed')->update(['status' => 'refunded']);
+            }
+
             if ($item->user_id) {
+                $refundMsgAr = ($totalPaid > 0) ? " وتم استرداد مبلغ {$totalPaid} ريال إلى محفظتك بنجاح." : "";
+                $refundMsgEn = ($totalPaid > 0) ? " and {$totalPaid} SAR has been refunded to your wallet." : "";
                 $this->sendNotification($item->user_id, [
                     'type' => \App\Models\Notification::TYPE_ORDER_CANCELLED,
                     'title_ar' => 'تم إلغاء الطلب',
                     'title_en' => 'Order Cancelled',
-                    'body_ar' => "تم إلغاء طلبك رقم #{$item->order_number} من قبل الإدارة",
-                    'body_en' => "Your order #{$item->order_number} has been cancelled by administration",
-                    'data' => ['order_id' => $item->id]
+                    'body_ar' => "تم إلغاء طلبك رقم #{$item->order_number} من قبل الإدارة" . $refundMsgAr,
+                    'body_en' => "Your order #{$item->order_number} has been cancelled by administration" . $refundMsgEn,
+                    'data' => [
+                        'order_id' => $item->id,
+                        'refunded' => $totalPaid > 0,
+                        'refund_amount' => $totalPaid,
+                    ]
                 ]);
             }
             if ($item->technician_id && $item->technician && $item->technician->user_id) {
@@ -569,6 +594,11 @@ class OrderController extends Controller
                     'data' => ['order_id' => $item->id]
                 ]);
             }
+        }
+
+        // Release technician availability if order is no longer in progress
+        if ($item->technician && in_array($item->status, ['completed', 'cancelled', 'rejected', 'expired'])) {
+            $item->technician->update(['availability_status' => 'available']);
         }
 
         // Sync Appointment
@@ -862,14 +892,39 @@ class OrderController extends Controller
             'status' => 'cancelled',
         ]);
 
+        // Auto refund any completed payments to user wallet
+        $totalPaid = (float) $order->payments()->where('status', 'completed')->sum('amount');
+        if ($totalPaid > 0 && $order->user) {
+            $user = $order->user;
+            $user->wallet_balance = ($user->wallet_balance ?? 0) + $totalPaid;
+            $user->save();
+
+            \App\Models\WalletTransaction::create([
+                'user_id' => $user->id,
+                'amount' => $totalPaid,
+                'type' => 'refund',
+                'note' => 'استرداد قيمة الطلب الملغي رقم #' . $order->order_number . ' إلى المحفظة',
+                'reference_id' => $order->id,
+                'reference_type' => Order::class,
+            ]);
+
+            $order->payments()->where('status', 'completed')->update(['status' => 'refunded']);
+        }
+
         if ($order->user_id) {
+            $refundMsgAr = ($totalPaid > 0) ? " وتم استرداد مبلغ {$totalPaid} ريال إلى محفظتك بنجاح." : "";
+            $refundMsgEn = ($totalPaid > 0) ? " and {$totalPaid} SAR has been refunded to your wallet." : "";
             $this->sendNotification($order->user_id, [
                 'type' => \App\Models\Notification::TYPE_ORDER_CANCELLED,
                 'title_ar' => 'تم إلغاء الطلب',
                 'title_en' => 'Order Cancelled',
-                'body_ar' => "تم إلغاء طلبك رقم #{$order->order_number} من قبل الإدارة",
-                'body_en' => "Your order #{$order->order_number} has been cancelled by administration",
-                'data' => ['order_id' => $order->id]
+                'body_ar' => "تم إلغاء طلبك رقم #{$order->order_number} من قبل الإدارة" . $refundMsgAr,
+                'body_en' => "Your order #{$order->order_number} has been cancelled by administration" . $refundMsgEn,
+                'data' => [
+                    'order_id' => $order->id,
+                    'refunded' => $totalPaid > 0,
+                    'refund_amount' => $totalPaid,
+                ]
             ]);
         }
 
@@ -882,6 +937,11 @@ class OrderController extends Controller
                 'body_en' => "Task #{$order->order_number} has been cancelled by administration",
                 'data' => ['order_id' => $order->id]
             ]);
+        }
+
+        // Release technician availability
+        if ($order->technician) {
+            $order->technician->update(['availability_status' => 'available']);
         }
 
         return redirect()->back()->with('success', __('Order cancelled successfully.'));

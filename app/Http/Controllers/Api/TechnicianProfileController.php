@@ -460,7 +460,11 @@ class TechnicianProfileController extends Controller
         // Auto-detach expired unaccepted orders for all technicians before retrieving the list
         \App\Models\Order::syncExpiredOrders();
 
-        $assignedQuery = Order::where('technician_id', $technician->id ?? null);
+        $assignedQuery = Order::where('technician_id', $technician->id ?? null)
+            ->where(function($q) {
+                $q->whereNull('sub_status')
+                  ->orWhere('sub_status', '!=', 'waiting_payment');
+            });
         if ($technician && $technician->maintenance_company_id) {
             $assignedQuery->where('status', '!=', 'new');
         }
@@ -470,9 +474,13 @@ class TechnicianProfileController extends Controller
         // 2. Auto-assigned orders (status=scheduled, assigned to THIS tech)
         if ($technician && !$technician->maintenance_company_id) {
             $newOrdersQuery = Order::where(function($q) use ($user, $technician) {
-                // Scenario 1: Pure New Marketplace Orders
+                // Scenario 1: Pure New Marketplace Orders (Must be paid)
                 $q->where(function($sq) use ($user, $technician) {
                     $sq->where('status', 'new')
+                       ->where(function($subStatus) {
+                           $subStatus->whereNull('sub_status')
+                                     ->orWhere('sub_status', '!=', 'waiting_payment');
+                       })
                        ->where('city_id', $user->city_id)
                        ->whereNull('technician_id')
                        ->where(function($q_rej) use ($user) {

@@ -21,6 +21,25 @@ class Complaint extends Model
         'status',
     ];
 
+    protected static function booted()
+    {
+        static::created(function ($complaint) {
+            Notification::notifyAdmins([
+                'type' => 'new_complaint',
+                'title_ar' => 'شكوى جديدة',
+                'title_en' => 'New Complaint',
+                'body_ar' => "تم تقديم شكوى جديدة برقم #{$complaint->ticket_number}",
+                'body_en' => "A new complaint #{$complaint->ticket_number} has been submitted",
+                'data' => [
+                    'type' => 'complaint',
+                    'complaint_id' => $complaint->id,
+                    'ticket_number' => $complaint->ticket_number,
+                    'phone' => $complaint->phone,
+                ]
+            ]);
+        });
+    }
+
     protected $appends = ['attachment_url'];
 
     public function getAttachmentUrlAttribute()

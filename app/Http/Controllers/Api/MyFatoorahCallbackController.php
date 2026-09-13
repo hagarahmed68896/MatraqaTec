@@ -56,11 +56,51 @@ class MyFatoorahCallbackController extends Controller
                     ]
                 );
 
-                // Update Order Payment Method
-                $order->update(['payment_method' => 'online']);
+                // Update Order Payment Method and clear waiting_payment / order_accepted_waiting_payment
+                $updates = ['payment_method' => 'online'];
+                if (in_array($order->sub_status, ['waiting_payment', 'order_accepted_waiting_payment'])) {
+                    $updates['sub_status'] = null;
+                }
+                $order->update($updates);
 
-                // Option: Update order status to paid or anything specific
-                // $order->update(['is_paid' => true]);
+                // Notify Technician that client has paid and he can now start the trip
+                $technicianUserId = $order->technician->user_id ?? ($order->technician->user->id ?? null);
+                if ($technicianUserId) {
+                    $techUser = \App\Models\User::find($technicianUserId);
+                    if ($techUser) {
+                        $techUser->sendFcmNotification([
+                            'type' => 'order_paid',
+                            'title_ar' => 'تم دفع قيمة الخدمة',
+                            'title_en' => 'Service Fee Paid',
+                            'body_ar' => "قام العميل بسداد قيمة الخدمة للطلب رقم #{$order->order_number}. يمكنك الآن بدء الرحلة والتوجه للعميل.",
+                            'body_en' => "Client has paid the service fee for order #{$order->order_number}. You can now start the trip to the client location.",
+                            'data' => [
+                                'type' => 'order_paid',
+                                'order_id' => $order->id,
+                                'order_number' => $order->order_number,
+                                'status' => $order->status,
+                                'sub_status' => $order->sub_status,
+                            ]
+                        ], true);
+                    }
+                }
+
+                // Notify Client of successful payment
+                $clientUser = \App\Models\User::find($order->user_id);
+                if ($clientUser) {
+                    $clientUser->sendFcmNotification([
+                        'type' => 'payment_successful',
+                        'title_ar' => 'تم سداد قيمة الخدمة بنجاح',
+                        'title_en' => 'Payment Successful',
+                        'body_ar' => "تم سداد قيمة الخدمة للطلب رقم #{$order->order_number} بنجاح. الفني سيتوجه إليكم قريباً.",
+                        'body_en' => "Payment for order #{$order->order_number} was successful. The technician will head to your location shortly.",
+                        'data' => [
+                            'type' => 'payment_successful',
+                            'order_id' => $order->id,
+                            'order_number' => $order->order_number,
+                        ]
+                    ], true);
+                }
 
                 Log::info("MyFatoorah Payment Success for Order: {$order->id}");
                 

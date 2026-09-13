@@ -137,8 +137,34 @@ class PaymentController extends Controller
                     'payment_date' => now(),
                 ]);
 
-                // Update Order Payment Method
-                $order->update(['payment_method' => $request->payment_method]);
+                // Update Order Payment Method and clear waiting_payment / order_accepted_waiting_payment
+                $updates = ['payment_method' => $request->payment_method];
+                if (in_array($order->sub_status, ['waiting_payment', 'order_accepted_waiting_payment'])) {
+                    $updates['sub_status'] = null;
+                }
+                $order->update($updates);
+
+                // Notify Technician that client has paid and he can now start the trip
+                $technicianUserId = $order->technician->user_id ?? ($order->technician->user->id ?? null);
+                if ($technicianUserId) {
+                    $techUser = \App\Models\User::find($technicianUserId);
+                    if ($techUser) {
+                        $techUser->sendFcmNotification([
+                            'type' => 'order_paid',
+                            'title_ar' => 'تم دفع قيمة الخدمة',
+                            'title_en' => 'Service Fee Paid',
+                            'body_ar' => "قام العميل بسداد قيمة الخدمة للطلب رقم #{$order->order_number}. يمكنك الآن بدء الرحلة والتوجه للعميل.",
+                            'body_en' => "Client has paid the service fee for order #{$order->order_number}. You can now start the trip to the client location.",
+                            'data' => [
+                                'type' => 'order_paid',
+                                'order_id' => $order->id,
+                                'order_number' => $order->order_number,
+                                'status' => $order->status,
+                                'sub_status' => $order->sub_status,
+                            ]
+                        ], true);
+                    }
+                }
 
                 return response()->json([
                     'status' => true,

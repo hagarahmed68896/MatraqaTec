@@ -18,23 +18,8 @@ trait HasAutoAssignment
             return $this->findAvailableTechnician($serviceId, $cityId, $time, $lat, $lng) !== null;
         }
 
-        // Fallback logic if no service provided (e.g., general capacity check)
-        $start = (clone $time)->startOfHour();
-        $end = (clone $time)->endOfHour();
-        
-        $orderCount = Order::where(function($q) use ($cityId, $lat, $lng) {
-                if ($lat && $lng) {
-                    // Approximate check for orders in same area (within 50km)
-                    $q->whereRaw("( 6371 * acos( cos( radians(?) ) * cos( radians(latitude) ) * cos( radians(longitude) - radians(?) ) + sin( radians(?) ) * sin( radians(latitude) ) ) ) < 50", [$lat, $lng, $lat]);
-                } else {
-                    $q->where('city_id', $cityId);
-                }
-            })
-            ->whereBetween('scheduled_at', [$start, $end])
-            ->whereIn('status', ['new', 'accepted', 'scheduled', 'in_progress'])
-            ->count();
-
-        $techQuery = Technician::whereHas('user', function($q) use ($cityId, $lat, $lng) {
+        // Check if there are active available technicians in this city/location
+        return Technician::whereHas('user', function($q) use ($cityId, $lat, $lng) {
             $q->where('status', 'active');
             if ($lat && $lng) {
                 $q->where(function($sub) use ($lat, $lng, $cityId) {
@@ -50,15 +35,14 @@ trait HasAutoAssignment
             } else {
                 $q->where('city_id', $cityId);
             }
-        });
-
-        $techCount = $techQuery->count() ?: 1;
-
-        return $orderCount < ($techCount * 2);
+        })
+        ->where('availability_status', 'available')
+        ->exists();
     }
 
     /**
      * Find the first available technician for a given service and time.
+     * Assigns order as long as technician is available and free at that specific time slot.
      */
     protected function findAvailableTechnician($serviceId, $cityId, $time, $lat = null, $lng = null)
     {
@@ -66,11 +50,9 @@ trait HasAutoAssignment
         if (!$service) return null;
         $categoryId = $service->parent_id ?? $service->id;
 
-        // Job protection window (e.g., +/- 1 hour from requested time)
+        // Job protection window (e.g., +/- 1 hour from requested time to avoid overlapping conflicts)
         $start = (clone $time)->subHours(1)->addMinute();
         $end = (clone $time)->addHours(1)->subMinute();
-
-        $capacity = (int) \App\Models\Setting::getByKey('hourly_booking_capacity', 5);
 
         $query = Technician::query()
             ->join('users', 'technicians.user_id', '=', 'users.id')
@@ -79,18 +61,22 @@ trait HasAutoAssignment
             ->where(function($q) use ($serviceId, $categoryId) {
                 $q->where('technicians.service_id', $serviceId)
                   ->orWhere('technicians.category_id', $categoryId)
+                  ->orWhere('technicians.category_id', $serviceId)
+                  ->orWhere('technicians.service_id', $categoryId)
                   ->orWhereJsonContains('technicians.service_ids', (int)$serviceId)
                   ->orWhereJsonContains('technicians.service_ids', (string)$serviceId);
             })
-            ->where(function($q) use ($start, $end, $capacity) {
+            // Must have NO overlapping active order or appointment at this specific time slot (فاضي تماماً)
+            // Exclude unpaid orders (waiting_payment) so they don't block available slots
+            ->where(function($q) use ($start, $end) {
                 $q->whereRaw("(
-                    (SELECT COUNT(*) FROM orders WHERE orders.technician_id = technicians.id AND orders.status IN ('new', 'accepted', 'scheduled', 'in_progress') AND orders.scheduled_at BETWEEN ? AND ?)
+                    (SELECT COUNT(*) FROM orders WHERE orders.technician_id = technicians.id AND orders.status IN ('new', 'accepted', 'scheduled', 'in_progress') AND (orders.sub_status IS NULL OR orders.sub_status NOT IN ('waiting_payment', 'order_accepted_waiting_payment')) AND orders.scheduled_at BETWEEN ? AND ?)
                     +
                     (SELECT COUNT(*) FROM appointments WHERE appointments.technician_id = technicians.id AND appointments.status IN ('scheduled', 'in_progress') AND appointments.appointment_date BETWEEN ? AND ?)
-                ) < ?", [$start, $end, $start, $end, $capacity]);
+                ) = 0", [$start, $end, $start, $end]);
             });
 
-        // Location filtering: Use distance if coords provided, else city
+        // Location filtering: Use distance if coords provided, else city if provided
         if ($lat && $lng) {
             $query->where(function($q) use ($lat, $lng, $cityId) {
                 $q->whereRaw("( 6371 * acos( cos( radians(?) ) * cos( radians(users.latitude) ) * cos( radians(users.longitude) - radians(?) ) + sin( radians(?) ) * sin( radians(users.latitude) ) ) ) < 50", [$lat, $lng, $lat])
@@ -105,8 +91,10 @@ trait HasAutoAssignment
             $query->selectRaw("technicians.*, (CASE WHEN users.latitude IS NOT NULL AND users.longitude IS NOT NULL THEN ( 6371 * acos( cos( radians(?) ) * cos( radians(users.latitude) ) * cos( radians(users.longitude) - radians(?) ) + sin( radians(?) ) * sin( radians(users.latitude) ) ) ) ELSE 9999 END) AS distance", [$lat, $lng, $lat])
                   ->orderBy('distance');
         } else {
-            $query->where('users.city_id', $cityId)
-                  ->select('technicians.*');
+            if ($cityId) {
+                $query->where('users.city_id', $cityId);
+            }
+            $query->select('technicians.*');
         }
         $techs = $query->with('schedules')->get();
 
@@ -168,7 +156,9 @@ trait HasAutoAssignment
                   });
             });
         } else {
-            $hasAnyTechQuery->where('users.city_id', $cityId);
+            if ($cityId) {
+                $hasAnyTechQuery->where('users.city_id', $cityId);
+            }
         }
 
         if (!$hasAnyTechQuery->exists()) return null;
@@ -263,8 +253,6 @@ trait HasAutoAssignment
                 $rejectionReasons[] = "Location mismatch: " . $locReason;
             }
 
-            $capacity = (int) \App\Models\Setting::getByKey('hourly_booking_capacity', 5);
-
             $orderCount = Order::where('technician_id', $tech->id)
                 ->whereIn('status', ['new', 'accepted', 'scheduled', 'in_progress'])
                 ->whereBetween('scheduled_at', [$start, $end])
@@ -275,8 +263,8 @@ trait HasAutoAssignment
                 ->whereBetween('appointment_date', [$start, $end])
                 ->count();
 
-            if (($orderCount + $appointmentCount) >= $capacity) {
-                $rejectionReasons[] = "Hourly booking capacity reached ({$orderCount} orders, {$appointmentCount} appointments, capacity: {$capacity})";
+            if (($orderCount + $appointmentCount) > 0) {
+                $rejectionReasons[] = "Technician is busy with another order at this time slot ({$orderCount} orders, {$appointmentCount} appointments)";
             }
 
             if (empty($rejectionReasons)) {

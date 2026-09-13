@@ -91,6 +91,8 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 // Public Read-Only Resources
 Route::get('services/favorites', [\App\Http\Controllers\Api\ServiceController::class, 'favorites'])->middleware('auth:sanctum'); // Must be before apiResource('services')
+Route::get('services/{id}/available-slots', [\App\Http\Controllers\Api\ServiceController::class, 'availableSlots']);
+Route::get('services/{id}/slots', [\App\Http\Controllers\Api\ServiceController::class, 'availableSlots']);
 Route::apiResource('cities', CityController::class)->only(['index', 'show']);
 Route::apiResource('districts', DistrictController::class)->only(['index', 'show']);
 Route::apiResource('services', ServiceController::class)->only(['index', 'show']);

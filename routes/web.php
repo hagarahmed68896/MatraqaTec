@@ -90,6 +90,8 @@ Route::prefix('admin')->group(function () {
         Route::post('/logout', [AdminController::class, 'logout'])->name('admin.logout');
         
         // Admin Notifications
+        Route::get('/notifications/unread-count', [AdminController::class, 'unreadNotificationsCount'])->name('admin.notifications.unreadCount');
+        Route::get('/notifications/dropdown-items', [AdminController::class, 'dropdownNotifications'])->name('admin.notifications.dropdownItems');
         Route::get('/notifications', [AdminController::class, 'notifications'])->name('admin.notifications.index');
         Route::post('/notifications/mark-all-read', [AdminController::class, 'markAllNotificationsRead'])->name('admin.notifications.markAllRead');
         Route::post('/notifications/{id}/read', [AdminController::class, 'markNotificationRead'])->name('admin.notifications.markRead');

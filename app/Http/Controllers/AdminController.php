@@ -587,10 +587,44 @@ class AdminController extends Controller
         return redirect()->back();
     }
 
+    public function unreadNotificationsCount()
+    {
+        $userId = Auth::id();
+
+        try {
+            \App\Models\Order::syncExpiredOrders();
+        } catch (\Exception $e) {}
+
+        $count = \App\Models\Notification::forAdmin($userId)
+            ->where('is_read', false)
+            ->count();
+
+        return response()->json([
+            'count' => $count,
+        ]);
+    }
+
+    public function dropdownNotifications()
+    {
+        $userId = Auth::id();
+
+        try {
+            \App\Models\Order::syncExpiredOrders();
+        } catch (\Exception $e) {}
+
+        $adminNotifications = \App\Models\Notification::forAdmin($userId)
+            ->latest()
+            ->take(15)
+            ->get();
+
+        return view('admin.notifications.partials.dropdown_items', compact('adminNotifications'));
+    }
+
     public function markNotificationRead($id)
     {
-        $notification = \App\Models\Notification::where('id', $id)
-            ->where('user_id', Auth::id())
+        $userId = Auth::id();
+        $notification = \App\Models\Notification::forAdmin($userId)
+            ->where('id', $id)
             ->first();
         if ($notification) {
             $notification->update(['is_read' => true]);
@@ -600,15 +634,17 @@ class AdminController extends Controller
 
     public function notifications()
     {
-        $notifications = \App\Models\Notification::where('user_id', Auth::id())
+        $userId = Auth::id();
+        $notifications = \App\Models\Notification::forAdmin($userId)
             ->latest()
-            ->paginate(10);
+            ->paginate(15);
         return view('admin.notifications.system', compact('notifications'));
     }
 
     public function markAllNotificationsRead()
     {
-        \App\Models\Notification::where('user_id', Auth::id())
+        $userId = Auth::id();
+        \App\Models\Notification::forAdmin($userId)
             ->where('is_read', false)
             ->update(['is_read' => true]);
         return response()->json(['success' => true]);
@@ -616,8 +652,9 @@ class AdminController extends Controller
 
     public function deleteNotification($id)
     {
-        $notification = \App\Models\Notification::where('id', $id)
-            ->where('user_id', Auth::id())
+        $userId = Auth::id();
+        $notification = \App\Models\Notification::forAdmin($userId)
+            ->where('id', $id)
             ->first();
         if ($notification) {
             $notification->delete();

@@ -21,6 +21,8 @@ class TechnicianController extends Controller
 {
     public function index(Request $request)
     {
+        \App\Models\Order::syncExpiredOrders();
+
         $query = Technician::whereHas('user', function ($q) {
             $q->where('type', 'technician');
         })->with(['user', 'service', 'category', 'maintenanceCompany'])
