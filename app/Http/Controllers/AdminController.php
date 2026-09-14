@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Order;
+use App\Models\Payment;
 use App\Models\Technician;
 use App\Models\Service;
 use App\Models\MaintenanceCompany;
@@ -225,17 +226,17 @@ class AdminController extends Controller
         $availableTechsChange = $getChange($availableTechsCount, $availableTechsPrevious);
 
         // Revenue
-        $currentRevenue = Order::where('status', 'completed')->sum('total_price');
-        $revenueThisPeriod = Order::where('status', 'completed')
-            ->where('created_at', '>=', $compareDate)->sum('total_price');
+        $currentRevenue = (float) Payment::whereIn('status', ['completed', 'paid', 'success'])->sum('amount');
+        $revenueThisPeriod = (float) Payment::whereIn('status', ['completed', 'paid', 'success'])
+            ->where('created_at', '>=', $compareDate)->sum('amount');
         
         $prevCompareDate = match($period) {
             'monthly' => $compareDate->copy()->subMonth(),
             'yearly' => $compareDate->copy()->subYear(),
             default => $compareDate->copy()->subWeek(),
         };
-        $revenueLastPeriod = Order::where('status', 'completed')
-            ->whereBetween('created_at', [$prevCompareDate, $compareDate])->sum('total_price');
+        $revenueLastPeriod = (float) Payment::whereIn('status', ['completed', 'paid', 'success'])
+            ->whereBetween('created_at', [$prevCompareDate, $compareDate])->sum('amount');
         $revenueChange = $getChange($revenueThisPeriod, $revenueLastPeriod);
 
         // New Orders
@@ -280,16 +281,16 @@ class AdminController extends Controller
         for ($i = $revenue_limit - 1; $i >= 0; $i--) {
             if ($revenue_period == 'yearly') {
                 $date = Carbon::now()->subMonths($i);
-                $revenueChart[] = Order::where('status', 'completed')
+                $revenueChart[] = (float) Payment::whereIn('status', ['completed', 'paid', 'success'])
                     ->whereMonth('created_at', $date->month)
                     ->whereYear('created_at', $date->year)
-                    ->sum('total_price');
+                    ->sum('amount');
                 $revenueLabels[] = $date->locale(App::getLocale())->monthName;
             } else {
                 $date = Carbon::now()->subDays($i);
-                $revenueChart[] = Order::where('status', 'completed')
+                $revenueChart[] = (float) Payment::whereIn('status', ['completed', 'paid', 'success'])
                     ->whereDate('created_at', $date)
-                    ->sum('total_price');
+                    ->sum('amount');
                 $revenueLabels[] = $revenue_limit == 7 ? $date->locale(App::getLocale())->dayName : $date->format('d/m');
             }
         }
@@ -495,16 +496,16 @@ class AdminController extends Controller
         for ($i = $limit - 1; $i >= 0; $i--) {
             if ($period == 'yearly') {
                 $date = Carbon::now()->subMonths($i);
-                $revenueChart[] = Order::where('status', 'completed')
+                $revenueChart[] = (float) Payment::whereIn('status', ['completed', 'paid', 'success'])
                     ->whereMonth('created_at', $date->month)
                     ->whereYear('created_at', $date->year)
-                    ->sum('total_price');
+                    ->sum('amount');
                 $revenueLabels[] = $date->locale($locale)->monthName;
             } else {
                 $date = Carbon::now()->subDays($i);
-                $revenueChart[] = Order::where('status', 'completed')
+                $revenueChart[] = (float) Payment::whereIn('status', ['completed', 'paid', 'success'])
                     ->whereDate('created_at', $date)
-                    ->sum('total_price');
+                    ->sum('amount');
                 $revenueLabels[] = $limit == 7 ? $date->locale($locale)->dayName : $date->format('d/m');
             }
         }

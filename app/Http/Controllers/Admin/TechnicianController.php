@@ -298,8 +298,24 @@ class TechnicianController extends Controller
         if ($request->filled('order_status') && $request->order_status !== 'all') {
             $ordersQuery->where('status', $request->order_status);
         }
+
+        if ($request->filled('customer_type') && $request->customer_type !== 'all') {
+            $ordersQuery->whereHas('user', function($q) use ($request) {
+                $q->where('type', $request->customer_type);
+            });
+        }
+
+        if ($request->filled('date')) {
+            $ordersQuery->whereDate('created_at', $request->date);
+        }
+
+        if ($request->get('sort_by') === 'oldest') {
+            $ordersQuery->oldest();
+        } else {
+            $ordersQuery->latest();
+        }
         
-        $orders = $ordersQuery->latest()->get();
+        $orders = $ordersQuery->get();
 
         // Fetch Financial Settlements
         $settlements = FinancialSettlement::where('user_id', $item->user_id)

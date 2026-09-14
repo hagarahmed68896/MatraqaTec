@@ -208,6 +208,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // User Financials/Misc
     Route::post('payments/pay-order', [PaymentController::class, 'payOrder']);
+    Route::post('payments/verify', [PaymentController::class, 'verifyPayment']);
     Route::apiResource('payments', PaymentController::class)->only(['index', 'store', 'show']);
     Route::apiResource('inquiries', InquiryController::class)->only(['index', 'store', 'show']);
     Route::apiResource('notifications', NotificationController::class)->only(['index']);

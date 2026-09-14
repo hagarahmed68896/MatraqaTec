@@ -77,7 +77,98 @@ Route::prefix('admin')->group(function () {
 
     Route::get('/clear-cache', function() {
         \Illuminate\Support\Facades\Artisan::call('optimize:clear');
-        return "Cache cleared successfully!";
+        return response()->json([
+            'status' => true,
+            'message' => 'Cache cleared successfully!',
+            'output' => \Illuminate\Support\Facades\Artisan::output()
+        ]);
+    });
+
+    Route::get('/fcm-diagnostic', function (\Illuminate\Http\Request $request) {
+        $data = [];
+        
+        // 1. Env & Credentials Check
+        $envCredentials = env('FIREBASE_CREDENTIALS');
+        $resolvedCredentials = config('firebase.projects.app.credentials');
+        $fileExists = $resolvedCredentials && file_exists($resolvedCredentials);
+
+        $data['env_FIREBASE_CREDENTIALS'] = $envCredentials ?: 'NOT SET (NULL)';
+        $data['resolved_credentials_path'] = $resolvedCredentials ?: 'NOT SET (NULL)';
+        $data['credentials_file_exists'] = $fileExists;
+
+        if ($fileExists) {
+            $jsonContent = @file_get_contents($resolvedCredentials);
+            $parsedJson = @json_decode($jsonContent, true);
+            $data['credentials_project_id'] = $parsedJson['project_id'] ?? 'Invalid JSON';
+            $data['credentials_client_email'] = $parsedJson['client_email'] ?? 'Invalid JSON';
+        }
+
+        // 2. Firebase SDK messaging initialization test
+        try {
+            $messaging = app('firebase.messaging');
+            $data['firebase_sdk_status'] = 'CONNECTED (Service Initialized Successfully)';
+        } catch (\Throwable $e) {
+            $data['firebase_sdk_status'] = 'ERROR: ' . $e->getMessage();
+        }
+
+        // 3. User Statistics
+        $data['total_users'] = \App\Models\User::count();
+        $data['users_with_fcm_token'] = \App\Models\User::whereNotNull('fcm_token')->where('fcm_token', '!=', '')->count();
+        $data['users_notifications_enabled'] = \App\Models\User::where(function($q) {
+            $q->whereNull('notification_enabled')->orWhere('notification_enabled', true)->orWhere('notification_enabled', 1);
+        })->count();
+
+        // 4. Test Send if user_id passed
+        if ($request->filled('user_id')) {
+            $testUser = \App\Models\User::find($request->user_id);
+            if (!$testUser) {
+                $data['test_send_result'] = "User ID {$request->user_id} not found.";
+            } elseif (!$testUser->fcm_token) {
+                $data['test_send_result'] = "User ID {$request->user_id} ({$testUser->name}) has NO fcm_token in database.";
+            } else {
+                try {
+                    $result = $testUser->sendFcmNotification([
+                        'type' => 'diagnostic_test',
+                        'title_ar' => 'فحص إشعارات منصة مطرقة',
+                        'title_en' => 'Matraqah Diagnostic Test',
+                        'body_ar' => 'هذا إشعار تجريبي من أداة التشخيص بالسيرفر للتأكد من وصول الإشعار لجهازك',
+                        'body_en' => 'This is a test notification from the server diagnostic tool to verify push delivery to your device',
+                        'data' => ['test' => true, 'sent_at' => now()->toDateTimeString()]
+                    ]);
+                    $data['test_send_result'] = [
+                        'status' => 'SENT_TRIGGERED',
+                        'user_name' => $testUser->name,
+                        'user_phone' => $testUser->phone,
+                        'user_token_snippet' => substr($testUser->fcm_token, 0, 15) . '...',
+                        'db_notification_id' => $result ? $result->id : null,
+                    ];
+                } catch (\Throwable $e) {
+                    $data['test_send_result'] = 'EXCEPTION: ' . $e->getMessage();
+                }
+            }
+        }
+
+        // 5. Recent Users with tokens
+        $recentUsers = \App\Models\User::whereNotNull('fcm_token')
+            ->where('fcm_token', '!=', '')
+            ->latest('updated_at')
+            ->take(15)
+            ->get(['id', 'name', 'phone', 'type', 'notification_enabled', 'updated_at', 'fcm_token'])
+            ->map(function($u) {
+                return [
+                    'id' => $u->id,
+                    'name' => $u->name,
+                    'phone' => $u->phone,
+                    'type' => $u->type,
+                    'notification_enabled' => $u->notification_enabled,
+                    'token_preview' => substr($u->fcm_token, 0, 15) . '...',
+                    'test_url' => url('/admin/fcm-diagnostic?user_id=' . $u->id),
+                ];
+            });
+
+        $data['users_with_tokens_sample'] = $recentUsers;
+
+        return response()->json($data, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     });
 
     // Protected Routes

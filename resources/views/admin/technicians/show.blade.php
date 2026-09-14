@@ -4,7 +4,7 @@
 
 @section('content')
 <div x-data="{ 
-    activeTab: 'overview',
+    activeTab: '{{ request('tab', 'overview') }}',
     chartType: '{{ $chartType }}',
     performanceData: @js($performanceData),
     chart: null,
@@ -339,13 +339,81 @@
                         <div class="h-1.5 w-12 bg-primary mt-2 rounded-full"></div>
                     </div>
                     <div class="flex gap-4">
-                         <div class="relative group" x-data="{ open: false }">
-                            <button @click="open = !open" class="px-6 py-3 bg-slate-100 dark:bg-white/5 rounded-2xl text-xs font-black text-slate-600 dark:text-slate-400 flex items-center gap-3 transition-all hover:bg-slate-200">
+                         <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open" class="px-6 py-3 bg-slate-100 dark:bg-white/5 rounded-2xl text-xs font-black text-slate-600 dark:text-slate-400 flex items-center gap-3 transition-all hover:bg-slate-200 dark:hover:bg-white/10 shadow-sm relative">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
                                 {{ __('Filter by') }}
-                                <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                <svg class="w-4 h-4 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                @if(request('order_status') || request('customer_type') || request('date') || request('sort_by'))
+                                    <span class="w-2.5 h-2.5 bg-rose-500 rounded-full absolute -top-1 -right-1"></span>
+                                @endif
                             </button>
+
                             <!-- Dropdown content for task filtering -->
+                            <div x-show="open" @click.away="open = false" x-cloak
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+                                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                                 class="absolute {{ app()->getLocale() == 'ar' ? 'left-0' : 'right-0' }} mt-3 w-80 bg-white dark:bg-[#1A1A31] rounded-[2rem] shadow-2xl border border-slate-100 dark:border-white/10 z-[100] p-6 space-y-6 text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
+                                
+                                <form action="{{ route('admin.technicians.show', $item->id) }}" method="GET" class="space-y-6">
+                                    <input type="hidden" name="tab" value="tasks">
+
+                                    <!-- Status Filter -->
+                                    <div class="space-y-2">
+                                        <label class="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider block">{{ __('Order Status') }}</label>
+                                        <select name="order_status" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                            <option value="all" {{ request('order_status') == 'all' ? 'selected' : '' }}>{{ __('All Statuses') }}</option>
+                                            <option value="new" {{ request('order_status') == 'new' ? 'selected' : '' }}>{{ __('New') }}</option>
+                                            <option value="scheduled" {{ request('order_status') == 'scheduled' ? 'selected' : '' }}>{{ __('Scheduled / Accepted') }}</option>
+                                            <option value="in_progress" {{ request('order_status') == 'in_progress' ? 'selected' : '' }}>{{ __('In Progress') }}</option>
+                                            <option value="completed" {{ request('order_status') == 'completed' ? 'selected' : '' }}>{{ __('Completed') }}</option>
+                                            <option value="cancelled" {{ request('order_status') == 'cancelled' ? 'selected' : '' }}>{{ __('Cancelled') }}</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Customer Type Filter -->
+                                    <div class="space-y-2">
+                                        <label class="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider block">{{ __('Customer Type') }}</label>
+                                        <select name="customer_type" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                            <option value="all" {{ request('customer_type') == 'all' ? 'selected' : '' }}>{{ __('All Customers') }}</option>
+                                            <option value="individual" {{ request('customer_type') == 'individual' ? 'selected' : '' }}>{{ __('Individual') }}</option>
+                                            <option value="corporate_customer" {{ request('customer_type') == 'corporate_customer' ? 'selected' : '' }}>{{ __('Corporate') }}</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Date Filter -->
+                                    <div class="space-y-2">
+                                        <label class="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider block">{{ __('Date') }}</label>
+                                        <input type="date" name="date" value="{{ request('date') }}" class="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                    </div>
+
+                                    <!-- Sort By -->
+                                    <div class="space-y-2">
+                                        <label class="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider block">{{ __('Sort by') }}</label>
+                                        <div class="flex items-center gap-4">
+                                            <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300">
+                                                <input type="radio" name="sort_by" value="newest" {{ request('sort_by', 'newest') == 'newest' ? 'checked' : '' }} class="text-primary focus:ring-0">
+                                                {{ __('Newest') }}
+                                            </label>
+                                            <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300">
+                                                <input type="radio" name="sort_by" value="oldest" {{ request('sort_by') == 'oldest' ? 'checked' : '' }} class="text-primary focus:ring-0">
+                                                {{ __('Oldest') }}
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Actions -->
+                                    <div class="flex items-center gap-3 pt-2">
+                                        <button type="submit" class="flex-1 py-2.5 bg-primary text-white rounded-xl text-xs font-black shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
+                                            {{ __('Apply Filter') }}
+                                        </button>
+                                        <a href="{{ route('admin.technicians.show', ['id' => $item->id, 'tab' => 'tasks']) }}" class="px-4 py-2.5 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-300 rounded-xl text-xs font-black hover:bg-slate-200 dark:hover:bg-white/10 transition-all text-center">
+                                            {{ __('Reset') }}
+                                        </a>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>

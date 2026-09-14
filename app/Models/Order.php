@@ -152,10 +152,10 @@ class Order extends Model
 
     public function getIsPaidAttribute()
     {
-        $totalPaid = (float) $this->payments()->where('status', 'completed')->sum('amount');
+        $totalPaid = (float) $this->payments()->whereIn('status', ['completed', 'paid', 'success'])->sum('amount');
         $totalRequired = (float) $this->total_price;
         
-        if ($totalRequired <= 0) return false;
+        if ($totalRequired <= 0) return true;
 
         // Allow 1.0 SAR tolerance for small differences
         $tolerance = 1.0; 
@@ -164,7 +164,7 @@ class Order extends Model
 
     public function getPaidAmountAttribute()
     {
-        return round((float) $this->payments()->where('status', 'completed')->sum('amount'), 2);
+        return round((float) $this->payments()->whereIn('status', ['completed', 'paid', 'success'])->sum('amount'), 2);
     }
 
     public function getRemainingAmountAttribute()
@@ -561,6 +561,16 @@ class Order extends Model
 
     public function getSubStatusAttribute($value)
     {
+        // Terminal closed orders (completed, cancelled, rejected) never show sub_status like expired or waiting_payment
+        if (in_array($this->attributes['status'] ?? null, ['completed', 'cancelled', 'rejected'])) {
+            return null;
+        }
+
+        // If the order is paid, NEVER return waiting_payment
+        if ($this->is_paid && in_array($value, ['waiting_payment', 'order_accepted_waiting_payment'])) {
+            return null;
+        }
+
         if ($value !== null) {
             return $value;
         }
@@ -586,13 +596,18 @@ class Order extends Model
             'expired' => 'منتهية / متأخرة',
         ];
 
+        // Terminal statuses (Completed, Cancelled, Rejected) have absolute priority!
+        if (in_array($this->status, ['completed', 'cancelled', 'rejected'])) {
+            return $mainLabels[$this->status];
+        }
+
         // Handle expired sub-status or status for overdue appointments
         if ($this->sub_status === 'expired' || $this->status === 'expired') {
             return 'يحتاج لإعادة جدولة';
         }
 
         // Sub-status label for waiting payment
-        if (in_array($this->sub_status, ['waiting_payment', 'order_accepted_waiting_payment'])) {
+        if (in_array($this->sub_status, ['waiting_payment', 'order_accepted_waiting_payment']) && !$this->is_paid) {
             return 'بانتظار الدفع من العميل';
         }
 
@@ -627,14 +642,6 @@ class Order extends Model
 
     public function getStatusColorAttribute()
     {
-        if ($this->sub_status === 'expired') {
-            return '#FF8C00'; // DarkOrange
-        }
-
-        if (in_array($this->sub_status, ['waiting_payment', 'order_accepted_waiting_payment', 'pending_tech_acceptance', 'additional_visit', 'reschedule_requested'])) {
-            return '#FF9800'; // Amber - awaiting action/confirmation
-        }
-
         $colors = [
             'new' => '#FFA500', // Orange
             'accepted' => '#4CAF50', // Green
@@ -645,6 +652,23 @@ class Order extends Model
             'cancelled' => '#9E9E9E', // Grey
             'expired' => '#FF8C00', // DarkOrange
         ];
+
+        // Terminal statuses have absolute priority!
+        if (in_array($this->status, ['completed', 'cancelled', 'rejected'])) {
+            return $colors[$this->status];
+        }
+
+        if ($this->sub_status === 'expired' || $this->status === 'expired') {
+            return '#FF8C00'; // DarkOrange
+        }
+
+        if (in_array($this->sub_status, ['waiting_payment', 'order_accepted_waiting_payment']) && !$this->is_paid) {
+            return '#FFA500'; // Amber/Orange for waiting payment
+        }
+
+        if (in_array($this->sub_status, ['pending_tech_acceptance', 'additional_visit', 'reschedule_requested'])) {
+            return '#3B82F6'; // Blue
+        }
 
         return $colors[$this->status] ?? '#000000';
     }

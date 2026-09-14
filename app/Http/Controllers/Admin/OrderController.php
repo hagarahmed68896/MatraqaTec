@@ -755,7 +755,7 @@ class OrderController extends Controller
         $categoryId = $service?->parent_id ?? $service?->id;
         $cityId = $order->city_id ?? ($order->user->city_id ?? null);
 
-        $query = Technician::with(['user', 'service'])
+        $query = Technician::with(['user', 'service', 'category'])
             ->whereHas('user', function($q) use ($cityId) {
                 // If order has a city, show techs in that city OR techs with no city specified (all cities)
                 $q->when($cityId, function($sub) use ($cityId) {
@@ -765,14 +765,16 @@ class OrderController extends Controller
                     });
                 })
                 ->where('status', 'active');
-                // ->where('is_online', true); // Removed online requirement for Admin Dashboard
-        })
-        // ->where('availability_status', 'available') // Removed availability requirement for Admin Dashboard
+            })
             ->where(function($q) use ($order, $categoryId) {
-                // Show techs with matching service OR no service specified (generalists)
-                $q->where('service_id', $order->service_id)
+                // Strictly match technician's service or category with the order's service or category
+                $targetServiceId = $order->service_id;
+                $q->where('service_id', $targetServiceId)
                   ->orWhere('category_id', $categoryId)
-                  ->orWhereNull('service_id');
+                  ->orWhere('category_id', $targetServiceId)
+                  ->orWhere('service_id', $categoryId)
+                  ->orWhereJsonContains('service_ids', (int)$targetServiceId)
+                  ->orWhereJsonContains('service_ids', (string)$targetServiceId);
             });
 
         // Availability check (only if order has a scheduled time)
@@ -810,12 +812,15 @@ class OrderController extends Controller
                     $lng += (rand(-100, 100) / 100);
                 }
 
+                $serviceName = $tech->service->name_ar 
+                    ?? ($tech->category->name_ar ?? __('Technician'));
+
                 return [
                     'id' => $tech->id,
                     'name' => $tech->user->name,
                     'avatar' => $tech->user->avatar_url,
-                    'specialty' => __('Specialist in maintenance services'),
-                    'service_name' => $tech->service->name_ar ?? __('Technician'),
+                    'specialty' => $serviceName,
+                    'service_name' => $serviceName,
                     'rating' => round($tech->reviews_avg_rating ?? 0, 1),
                     'district' => is_array($tech->districts) && count($tech->districts) > 0 
                                     ? implode(', ', array_column($tech->districts, 'name')) 

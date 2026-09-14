@@ -145,7 +145,11 @@ class NotificationController extends Controller
             } else {
                 $query = \App\Models\User::whereNotNull('fcm_token')
                     ->where('fcm_token', '!=', '')
-                    ->where('notification_enabled', true);
+                    ->where(function ($q) {
+                        $q->whereNull('notification_enabled')
+                          ->orWhere('notification_enabled', true)
+                          ->orWhere('notification_enabled', 1);
+                    });
                 
                 switch ($notification->target_audience) {
                     case 'clients':
@@ -264,7 +268,11 @@ class NotificationController extends Controller
         } else {
             $query = \App\Models\User::whereNotNull('fcm_token')
                 ->where('fcm_token', '!=', '')
-                ->where('notification_enabled', true);
+                ->where(function ($q) {
+                    $q->whereNull('notification_enabled')
+                      ->orWhere('notification_enabled', true)
+                      ->orWhere('notification_enabled', 1);
+                });
             
             switch ($notification->target_audience) {
                 case 'clients':

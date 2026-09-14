@@ -12,6 +12,8 @@ use App\Services\MyFatoorahService;
 
 class PaymentController extends Controller
 {
+    use \App\Traits\HasAutoAssignment, \App\Traits\HandlesLocation;
+
     public function index()
     {
         $payments = Payment::with(['user', 'order'])
@@ -43,7 +45,7 @@ class PaymentController extends Controller
 
         // --- Check if Order is fully paid ---
         $totalPaid = Payment::where('order_id', $order->id)
-            ->where('status', 'completed')
+            ->whereIn('status', ['completed', 'paid', 'success'])
             ->sum('amount');
 
         if ($totalPaid >= $order->total_price && $order->total_price > 0) {
@@ -137,12 +139,10 @@ class PaymentController extends Controller
                     'payment_date' => now(),
                 ]);
 
-                // Update Order Payment Method and clear waiting_payment / order_accepted_waiting_payment
-                $updates = ['payment_method' => $request->payment_method];
-                if (in_array($order->sub_status, ['waiting_payment', 'order_accepted_waiting_payment'])) {
-                    $updates['sub_status'] = null;
-                }
-                $order->update($updates);
+                // Update Order Payment Method and clear sub_status
+                $order->sub_status = null;
+                $order->payment_method = $request->payment_method;
+                $order->save();
 
                 // Notify Technician that client has paid and he can now start the trip
                 $technicianUserId = $order->technician->user_id ?? ($order->technician->user->id ?? null);
@@ -186,5 +186,138 @@ class PaymentController extends Controller
         if (!$payment) return response()->json(['status' => false, 'message' => 'Not found'], 404);
         return response()->json(['status' => true, 'message' => 'Payment retrieved', 'data' => $payment]);
     }
-    
+
+    /**
+     * Verify payment status directly via API (Mobile App fallback)
+     */
+    public function verifyPayment(Request $request)
+    {
+        $request->validate([
+            'order_id' => 'required|exists:orders,id',
+            'payment_id' => 'nullable|string',
+        ]);
+
+        $user = auth()->user();
+        $order = Order::find($request->order_id);
+
+        if (!$order || ($order->user_id !== $user->id && $user->type !== 'admin')) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized or Order not found'], 403);
+        }
+
+        // 1. If already marked as paid in database
+        if ($order->is_paid) {
+            $order->sub_status = null;
+            $order->save();
+            return response()->json([
+                'status' => true,
+                'message' => 'الطلب مسدد بالفعل',
+                'data' => $order->fresh(['payments', 'technician', 'service'])
+            ]);
+        }
+
+        // 2. Extract payment ID from request or search via MyFatoorah
+        $paymentId = $request->input('payment_id') 
+            ?? $request->input('paymentId') 
+            ?? $request->input('PaymentId') 
+            ?? $request->input('Id');
+
+        $myFatoorahService = app(\App\Services\MyFatoorahService::class);
+        $paymentData = null;
+
+        if ($paymentId) {
+            $paymentData = $myFatoorahService->getPaymentStatus($paymentId);
+        }
+
+        if ($paymentData && in_array(strtolower($paymentData['InvoiceStatus'] ?? ''), ['paid', 'completed', 'success'])) {
+            $paidAmount = (float) (
+                $paymentData['InvoiceDisplayValue'] 
+                ?? $paymentData['InvoiceTransactions'][0]['PaidCurrencyValue'] 
+                ?? $paymentData['InvoiceTransactions'][0]['TransationValue'] 
+                ?? $order->total_price
+            );
+
+            if ($paidAmount < ($order->total_price - 1.0) && $order->total_price > 0) {
+                $paidAmount = (float) ($paymentData['InvoiceDisplayValue'] ?? $order->total_price);
+            }
+
+            // Record Payment in Database
+            Payment::updateOrCreate(
+                [
+                    'order_id' => $order->id,
+                    'payment_method' => 'online',
+                ],
+                [
+                    'user_id' => $order->user_id,
+                    'amount' => $paidAmount,
+                    'status' => 'completed',
+                    'payment_date' => now(),
+                    'transaction_id' => (string) $paymentId,
+                ]
+            );
+
+            $order->sub_status = null;
+            $order->payment_method = 'online';
+
+            // If technician was not assigned yet, try auto-assignment now that payment is confirmed
+            if (!$order->technician_id && $order->scheduled_at) {
+                try {
+                    $availableTech = $this->findAvailableTechnician(
+                        $order->service_id,
+                        $order->city_id,
+                        \Carbon\Carbon::parse($order->scheduled_at),
+                        $order->latitude,
+                        $order->longitude
+                    );
+
+                    if ($availableTech) {
+                        $order->technician_id = $availableTech->id;
+                        $order->maintenance_company_id = $availableTech->maintenance_company_id;
+                        $order->status = $availableTech->maintenance_company_id ? 'new' : 'scheduled';
+                        $order->assigned_at = now();
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning("Auto-assignment on verify payment error: " . $e->getMessage());
+                }
+            }
+
+            $order->save();
+
+            // Send FCM Notifications safely
+            try {
+                if ($order->technician_id) {
+                    $techUser = \App\Models\User::find($order->technician->user_id ?? $order->technician->user?->id);
+                    if ($techUser) {
+                        $techUser->sendFcmNotification([
+                            'type' => 'order_paid',
+                            'title_ar' => 'تم دفع قيمة الخدمة',
+                            'title_en' => 'Service Fee Paid',
+                            'body_ar' => "قام العميل بسداد قيمة الخدمة للطلب رقم #{$order->order_number}. يمكنك الآن بدء الرحلة والتوجه للعميل.",
+                            'body_en' => "Client has paid the service fee for order #{$order->order_number}. You can now start the trip to the client location.",
+                            'data' => [
+                                'type' => 'order_paid',
+                                'order_id' => $order->id,
+                                'order_number' => $order->order_number,
+                                'status' => $order->status,
+                                'sub_status' => $order->sub_status,
+                            ]
+                        ], true);
+                    }
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning("FCM Notification error for tech: " . $e->getMessage());
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'تم التحقق من الدفع وتحديث حالة الطلب بنجاح',
+                'data' => $order->fresh(['payments', 'technician', 'service'])
+            ]);
+        }
+
+        return response()->json([
+            'status' => false,
+            'message' => 'لم يتم التحقق من الدفع، حالة الفاتورة غير مكتملة أو معرّف الدفع غير صالح.',
+            'debug_data' => $paymentData
+        ], 400);
+    }
 }

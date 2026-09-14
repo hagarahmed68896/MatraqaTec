@@ -935,15 +935,16 @@ class OrderController extends Controller
             }
         }
 
-        // Calculate Grand Total (Service + Parts + Tax) using separate rates
+        // Calculate Grand Total (Service + Parts + Additional Fees + Tax) using separate rates
         $basePrice = $order->service->price ?? 50;
         $serviceTaxRate = (float) \App\Models\Setting::getByKey('vat_rate_services', 15) / 100;
         $partsTaxRate = (float) \App\Models\Setting::getByKey('vat_rate_parts', 15) / 100;
 
-        $serviceTax = $basePrice * $serviceTaxRate;
+        $additionalFees = (float) ($order->additional_fees ?? 0);
+        $serviceTax = ($basePrice + $additionalFees) * $serviceTaxRate;
         $partsTax = $sparePartsTotal * $partsTaxRate;
 
-        $subTotal = $basePrice + $sparePartsTotal;
+        $subTotal = $basePrice + $sparePartsTotal + $additionalFees;
         $tax = $serviceTax + $partsTax;
         $grandTotal = $subTotal + $tax;
 
@@ -965,6 +966,70 @@ class OrderController extends Controller
         return response()->json([
             'status' => true,
             'message' => __('Spare parts updated successfully'),
+            'data' => $order
+        ]);
+    }
+
+    /**
+     * Update additional fees for the order (إضافة رسوم إضافية)
+     */
+    public function updateAdditionalFees(Request $request, $id)
+    {
+        $order = $this->getOrderIfAuthorized($id);
+        if (!$order) return response()->json(['status' => false, 'message' => __('Order not found')], 404);
+
+        $request->validate([
+            'additional_fees' => 'required|numeric|min:0',
+            'additional_fees_description' => 'nullable|string|max:1000',
+        ]);
+
+        $additionalFees = (float) $request->additional_fees;
+        $additionalFeesDescription = $request->additional_fees_description;
+
+        // Calculate Spare parts total
+        $sparePartsTotal = 0;
+        if (is_array($order->spare_parts_metadata)) {
+            foreach ($order->spare_parts_metadata as $part) {
+                $sparePartsTotal += isset($part['total']) ? $part['total'] : ($part['qty'] * $part['price']);
+            }
+        }
+
+        // Calculate Grand Total (Service + Additional Fees + Parts + Tax)
+        $basePrice = $order->service->price ?? 50;
+        $serviceTaxRate = (float) \App\Models\Setting::getByKey('vat_rate_services', 15) / 100;
+        $partsTaxRate = (float) \App\Models\Setting::getByKey('vat_rate_parts', 15) / 100;
+
+        $serviceTax = ($basePrice + $additionalFees) * $serviceTaxRate;
+        $partsTax = $sparePartsTotal * $partsTaxRate;
+
+        $subTotal = $basePrice + $sparePartsTotal + $additionalFees;
+        $tax = $serviceTax + $partsTax;
+        $grandTotal = $subTotal + $tax;
+
+        $order->update([
+            'additional_fees' => $additionalFees,
+            'additional_fees_description' => $additionalFeesDescription,
+            'total_price' => $grandTotal
+        ]);
+
+        // Send notification to the user about additional fees / updated invoice
+        $this->sendNotification($order->user_id, [
+            'type' => 'additional_fees_added',
+            'title_ar' => 'تم إضافة رسوم إضافية وتحديث الفاتورة',
+            'title_en' => 'Additional fees added and invoice updated',
+            'body_ar' => "قام الفني بإضافة رسوم إضافية بقيمة {$additionalFees} ريال لطلبك رقم #{$order->order_number}." . ($additionalFeesDescription ? " (السبب: {$additionalFeesDescription})" : ''),
+            'body_en' => "The technician added additional fees of {$additionalFees} SAR for your order #{$order->order_number}." . ($additionalFeesDescription ? " (Reason: {$additionalFeesDescription})" : ''),
+            'data' => [
+                'order_id' => $order->id,
+                'additional_fees' => $additionalFees,
+                'additional_fees_description' => $additionalFeesDescription,
+                'total_price' => $grandTotal
+            ]
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => __('Additional fees updated successfully'),
             'data' => $order
         ]);
     }
@@ -1040,22 +1105,28 @@ class OrderController extends Controller
 
         // Calculate current total
         $basePrice = $order->service->price ?? 50;
+        $additionalFees = (float) ($order->additional_fees ?? 0);
         $sparePartsTotal = 0;
         if ($order->spare_parts_metadata) {
             foreach ($order->spare_parts_metadata as $part) {
-                $sparePartsTotal += ($part['qty'] * $part['price']);
+                $sparePartsTotal += isset($part['total']) ? $part['total'] : (($part['qty'] ?? 1) * ($part['price'] ?? 0));
             }
         }
 
-        $taxRate = (float) \App\Models\Setting::getByKey('vat_rate', 15) / 100;
-        $subTotal = $basePrice + $sparePartsTotal;
-        $tax = $subTotal * $taxRate;
+        $serviceTaxRate = (float) \App\Models\Setting::getByKey('vat_rate_services', 15) / 100;
+        $partsTaxRate = (float) \App\Models\Setting::getByKey('vat_rate_parts', 15) / 100;
+
+        $serviceTax = ($basePrice + $additionalFees) * $serviceTaxRate;
+        $partsTax = $sparePartsTotal * $partsTaxRate;
+
+        $subTotal = $basePrice + $sparePartsTotal + $additionalFees;
+        $tax = $serviceTax + $partsTax;
         $grandTotal = $subTotal + $tax;
 
         // Update total_price in DB now so client sees it
         $order->update(['total_price' => $grandTotal]);
 
-        $totalPaid = round((float) $order->payments()->where('status', 'completed')->sum('amount'), 2);
+        $totalPaid = round((float) $order->payments()->whereIn('status', ['completed', 'paid', 'success'])->sum('amount'), 2);
         $remaining = max(0, round($grandTotal - $totalPaid, 2));
 
         $this->sendNotification($order->user_id, [
@@ -1070,6 +1141,8 @@ class OrderController extends Controller
                 'total' => $grandTotal,
                 'paid_amount' => $totalPaid,
                 'remaining_amount' => $remaining,
+                'additional_fees' => $additionalFees,
+                'additional_fees_description' => $order->additional_fees_description,
                 'spare_parts' => $order->spare_parts_metadata
             ]
         ]);
@@ -1081,6 +1154,8 @@ class OrderController extends Controller
                 'total_price' => $grandTotal,
                 'paid_amount' => $totalPaid,
                 'remaining_amount' => $remaining,
+                'additional_fees' => $additionalFees,
+                'additional_fees_description' => $order->additional_fees_description,
                 'spare_parts' => $order->spare_parts_metadata
             ]
         ]);
@@ -1200,19 +1275,20 @@ class OrderController extends Controller
         if (empty($sparePartsMetadata) && $order->spare_parts_metadata) {
             $sparePartsMetadata = $order->spare_parts_metadata;
             foreach ($sparePartsMetadata as $part) {
-                $sparePartsTotal += $part['total'];
+                $sparePartsTotal += isset($part['total']) ? $part['total'] : (($part['qty'] ?? 1) * ($part['price'] ?? 0));
             }
         }
 
-        $serviceTax = $basePrice * $serviceTaxRate;
+        $additionalFees = (float) ($order->additional_fees ?? 0);
+        $serviceTax = ($basePrice + $additionalFees) * $serviceTaxRate;
         $partsTax = $sparePartsTotal * $partsTaxRate;
 
-        $subTotal = $basePrice + $sparePartsTotal;
+        $subTotal = $basePrice + $sparePartsTotal + $additionalFees;
         $tax = $serviceTax + $partsTax;
         $finalGrandTotal = $subTotal + $tax;
 
         // Re-verify payment against the final calculated total
-        $totalPaid = $order->payments()->where('status', 'completed')->sum('amount');
+        $totalPaid = $order->payments()->whereIn('status', ['completed', 'paid', 'success'])->sum('amount');
         
         $roundedFinalTotal = round((float)$finalGrandTotal, 2);
         $roundedTotalPaid = round((float)$totalPaid, 2);
@@ -1716,15 +1792,16 @@ class OrderController extends Controller
         $partsCommissionRate = (float) \App\Models\Setting::getByKey('platform_commission_parts', 15);
 
         $serviceBase = $order->service->price ?? 50;
-        $serviceTax = $serviceBase * $serviceTaxRate;
-        $serviceTotal = $serviceBase + $serviceTax;
-        $serviceCommission = $serviceBase * ($serviceCommissionRate / 100);
-        $serviceCompanyShare = $serviceBase - $serviceCommission;
+        $additionalFees = (float) ($order->additional_fees ?? 0);
+        $serviceTax = ($serviceBase + $additionalFees) * $serviceTaxRate;
+        $serviceTotal = ($serviceBase + $additionalFees) + $serviceTax;
+        $serviceCommission = ($serviceBase + $additionalFees) * ($serviceCommissionRate / 100);
+        $serviceCompanyShare = ($serviceBase + $additionalFees) - $serviceCommission;
 
         $sparePartsBase = 0;
         if (is_array($order->spare_parts_metadata)) {
             foreach ($order->spare_parts_metadata as $part) {
-                $sparePartsBase += isset($part['total']) ? $part['total'] : ($part['qty'] * $part['price']);
+                $sparePartsBase += isset($part['total']) ? $part['total'] : (($part['qty'] ?? 1) * ($part['price'] ?? 0));
             }
         }
         $sparePartsTax = $sparePartsBase * $partsTaxRate;
@@ -1732,13 +1809,13 @@ class OrderController extends Controller
         $sparePartsCommission = $sparePartsBase * ($partsCommissionRate / 100);
         $sparePartsCompanyShare = $sparePartsBase - $sparePartsCommission;
 
-        $totalBase = $serviceBase + $sparePartsBase;
+        $totalBase = $serviceBase + $additionalFees + $sparePartsBase;
         $totalTax = $serviceTax + $sparePartsTax;
         $totalCommission = $serviceCommission + $sparePartsCommission;
         $totalCompanyShare = $serviceCompanyShare + $sparePartsCompanyShare;
         $grandTotal = $totalBase + $totalTax;
 
-        $totalPaid = round((float) $order->payments()->where('status', 'completed')->sum('amount'), 2);
+        $totalPaid = round((float) $order->payments()->whereIn('status', ['completed', 'paid', 'success'])->sum('amount'), 2);
         $remainingAmount = max(0, round($grandTotal - $totalPaid, 2));
         $isPaid = ($remainingAmount <= 1.0);
         $isServicePrepaid = ($totalPaid >= round($serviceTotal - 1.0, 2));
@@ -1752,6 +1829,8 @@ class OrderController extends Controller
                 'is_paid' => $isPaid,
                 'service' => $order->service->name_ar ?? 'خدمة',
                 'service_amount' => number_format($serviceBase, 2),
+                'additional_fees' => number_format($additionalFees, 2),
+                'additional_fees_description' => $order->additional_fees_description ?? '',
                 'service_tax' => number_format($serviceTax, 2),
                 'service_total' => number_format($serviceTotal, 2),
                 'service_is_prepaid' => $isServicePrepaid,
@@ -2397,7 +2476,7 @@ class OrderController extends Controller
             ]);
 
             // Only send FCM push if user has a token AND has not disabled notifications
-            if ($user->fcm_token && $user->notification_enabled) {
+            if ($user->fcm_token && $user->notification_enabled !== false) {
                 $user->sendFcmNotification($details, false);
             }
         }

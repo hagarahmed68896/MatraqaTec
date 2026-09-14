@@ -21,7 +21,7 @@ class FcmService
         $titleEn = $details['title_en'] ?? '';
         $bodyAr = $details['body_ar'] ?? '';
         $bodyEn = $details['body_en'] ?? '';
-        $user->load('settings');
+        
         // Select title/body based on user language
         $lang = $user->language ?? 'ar';
         $title = ($lang === 'en' && !empty($titleEn)) ? $titleEn : $titleAr;
@@ -40,8 +40,8 @@ class FcmService
             self::$sentTokens[] = $messageHash;
         }
 
-        // Check if user has notifications enabled
-        if (!$user->notification_enabled) {
+        // Check if user has explicitly disabled notifications
+        if ($user->notification_enabled === false || $user->notification_enabled === 0 || $user->notification_enabled === '0') {
              \Log::info("FCM: User {$user->id} has notifications disabled.");
              if ($saveToDb) {
                  return $this->saveToDatabase($user, $type, $titleAr, $titleEn, $bodyAr, $bodyEn, $data, 'unsent');
@@ -69,7 +69,7 @@ class FcmService
                 'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
             ]);
 
-            // Cast all values to strings recursively if needed, but here a simple map works for first level
+            // Cast all values to strings recursively if needed
             $payloadData = array_map(function($val) {
                 return (is_array($val) || is_object($val)) ? json_encode($val) : (string)$val;
             }, $payloadData);
@@ -80,12 +80,29 @@ class FcmService
                 ->withNotification($notification)
                 ->withData($payloadData)
                 ->withAndroidConfig([
-                    'priority' => 'high'
+                    'priority' => 'high',
+                    'notification' => [
+                        'sound' => 'default',
+                        'default_sound' => true,
+                        'default_vibrate_timings' => true,
+                        'notification_priority' => 'PRIORITY_HIGH',
+                        'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                        'channel_id' => 'high_importance_channel',
+                    ],
                 ])
                 ->withApnsConfig([
+                    'headers' => [
+                        'apns-priority' => '10',
+                    ],
                     'payload' => [
                         'aps' => [
+                            'alert' => [
+                                'title' => $title,
+                                'body' => $body,
+                            ],
                             'sound' => 'default',
+                            'badge' => 1,
+                            'content-available' => 1,
                         ],
                     ],
                 ]);
@@ -134,12 +151,29 @@ class FcmService
                 ->withNotification($notification)
                 ->withData($payloadData)
                 ->withAndroidConfig([
-                    'priority' => 'high'
+                    'priority' => 'high',
+                    'notification' => [
+                        'sound' => 'default',
+                        'default_sound' => true,
+                        'default_vibrate_timings' => true,
+                        'notification_priority' => 'PRIORITY_HIGH',
+                        'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                        'channel_id' => 'high_importance_channel',
+                    ],
                 ])
                 ->withApnsConfig([
+                    'headers' => [
+                        'apns-priority' => '10',
+                    ],
                     'payload' => [
                         'aps' => [
+                            'alert' => [
+                                'title' => $title,
+                                'body' => $body,
+                            ],
                             'sound' => 'default',
+                            'badge' => 1,
+                            'content-available' => 1,
                         ],
                     ],
                 ]);
