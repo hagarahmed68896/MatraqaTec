@@ -273,7 +273,7 @@ Route::prefix('admin')->group(function () {
                 Route::get('/create', [$controller, 'create'])->name('create');
                 Route::post('/', [$controller, 'store'])->name('store');
 
-                if (in_array($prefix, ['reviews', 'orders', 'technicians', 'terms', 'privacy-policies', 'privacy_policies', 'faqs', 'complaints', 'supervisors', 'individual-customers', 'individual_customers', 'corporate-customers', 'corporate_customers', 'maintenance-companies', 'maintenance_companies'])) {
+                if (in_array($prefix, ['reviews', 'orders', 'technicians', 'terms', 'privacy-policies', 'privacy_policies', 'faqs', 'complaints', 'supervisors', 'individual-customers', 'individual_customers', 'corporate-customers', 'corporate_customers', 'maintenance-companies', 'maintenance_companies', 'contracts'])) {
                     Route::match(['post', 'delete'], '/bulk-destroy', [$controller, 'bulkDestroy'])->name('bulk-destroy');
                     Route::match(['post', 'delete'], '/bulk_destroy', [$controller, 'bulkDestroy'])->name('bulk_destroy');
                 }
@@ -298,7 +298,7 @@ Route::prefix('admin')->group(function () {
                     Route::post('/{id}/refuse', [$controller, 'refuse'])->name('refuse');
                 }
                 
-                if ($prefix === 'technicians') {
+                if (in_array($prefix, ['technicians', 'maintenance-companies', 'maintenance_companies'])) {
                     Route::post('/{id}/schedules', [$controller, 'updateSchedules'])->name('update-schedules');
                 }
                 
@@ -366,4 +366,67 @@ Route::prefix('admin')->group(function () {
         Route::post('maintenance_companies/bulk_unblock', [App\Http\Controllers\Admin\MaintenanceCompanyController::class, 'bulkUnblock'])->name('admin.maintenance_companies.bulk_unblock');
     });
 });
+
+// Media / Uploads Fallback Routes (Prevents 404s for uploaded media across storage/uploads directories)
+Route::get('/technician_requests/{type}/{filename}', function ($type, $filename) {
+    $paths = [
+        public_path("uploads/technician_requests/{$type}/{$filename}"),
+        public_path("storage/technician_requests/{$type}/{$filename}"),
+        storage_path("app/public/technician_requests/{$type}/{$filename}"),
+        public_path("uploads/technicians/{$type}/{$filename}"),
+    ];
+
+    foreach ($paths as $path) {
+        if (file_exists($path) && !is_dir($path)) {
+            return response()->file($path);
+        }
+    }
+    abort(404);
+})->where('filename', '.*');
+
+Route::get('/technicians/{type}/{filename}', function ($type, $filename) {
+    $paths = [
+        public_path("uploads/technicians/{$type}/{$filename}"),
+        public_path("storage/technicians/{$type}/{$filename}"),
+        storage_path("app/public/technicians/{$type}/{$filename}"),
+        public_path("uploads/technician_requests/{$type}/{$filename}"),
+    ];
+
+    foreach ($paths as $path) {
+        if (file_exists($path) && !is_dir($path)) {
+            return response()->file($path);
+        }
+    }
+    abort(404);
+})->where('filename', '.*');
+
+Route::get('/storage/{path}', function ($path) {
+    $candidates = [
+        public_path("storage/{$path}"),
+        public_path("uploads/{$path}"),
+        storage_path("app/public/{$path}"),
+    ];
+
+    foreach ($candidates as $candidate) {
+        if (file_exists($candidate) && !is_dir($candidate)) {
+            return response()->file($candidate);
+        }
+    }
+    abort(404);
+})->where('path', '.*');
+
+Route::get('/uploads/{path}', function ($path) {
+    $candidates = [
+        public_path("uploads/{$path}"),
+        public_path("storage/{$path}"),
+        storage_path("app/public/{$path}"),
+    ];
+
+    foreach ($candidates as $candidate) {
+        if (file_exists($candidate) && !is_dir($candidate)) {
+            return response()->file($candidate);
+        }
+    }
+    abort(404);
+})->where('path', '.*');
 

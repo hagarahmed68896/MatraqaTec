@@ -447,7 +447,7 @@
 
             <!-- Modal Footer (Action Buttons) -->
             <div class="px-8 py-6 bg-slate-50 dark:bg-white/5 border-t border-slate-100 dark:border-white/5 flex gap-3">
-                <a :href="'{{ route('admin.supervisors.edit', '') }}/' + (selectedSupervisor ? selectedSupervisor.id : '')" 
+                <a :href="'{{ route('admin.supervisors.edit', ':id') }}'.replace(':id', selectedSupervisor ? selectedSupervisor.id : '')" 
                    class="flex-1 py-3.5 bg-primary text-white text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 text-center">
                     {{ __('Edit Supervisor') }}
                 </a>

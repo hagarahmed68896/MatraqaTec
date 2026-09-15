@@ -108,8 +108,7 @@ class SupervisorController extends Controller
 
     public function show($id)
     {
-        $item = User::where('type', 'supervisor')->with('roles')->findOrFail($id);
-        return view('admin.supervisors.show', compact('item'));
+        return redirect()->route('admin.supervisors.edit', $id);
     }
 
     public function edit($id)

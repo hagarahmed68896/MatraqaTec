@@ -37,18 +37,14 @@ class MaintenanceCompanyController extends Controller
         }
 
         // 2. Filter by Status
-        if ($request->has('status') && $request->status) {
+        if ($request->filled('status') && $request->status !== 'all') {
             $status = $request->status; 
             $query->whereHas('user', function ($q) use ($status) {
-                if ($status === 'inactive') {
+                if ($status === 'inactive' || $status === 'blocked') {
                     $q->whereIn('status', ['inactive', 'blocked']);
                 } else {
                     $q->where('status', $status);
                 }
-            });
-        } else {
-            $query->whereHas('user', function ($q) {
-                $q->where('status', 'active');
             });
         }
 
@@ -286,33 +282,14 @@ class MaintenanceCompanyController extends Controller
         ];
 
         // Performance Chart Data (Revenue)
-        $chartType = $request->get('chart_type', 'monthly');
+        $chartType = $request->get('chart_type', 'weekly');
         $performanceData = [];
+        $locale = app()->getLocale();
         
-        if ($chartType === 'weekly') {
-            for ($i = 7; $i >= 0; $i--) {
-                $date = Carbon::now()->subWeeks($i);
-                $label = __('Week') . ' ' . $date->weekOfYear;
-                $sum = Order::where('maintenance_company_id', $company->id)
-                    ->where('status', 'completed')
-                    ->whereBetween('created_at', [$date->startOfWeek()->toDateTimeString(), $date->endOfWeek()->toDateTimeString()])
-                    ->sum('total_price');
-                $performanceData[] = ['label' => $label, 'count' => $sum];
-            }
-        } elseif ($chartType === 'yearly') {
-            for ($i = 2; $i >= 0; $i--) {
-                $date = Carbon::now()->subYears($i);
-                $label = $date->year;
-                $sum = Order::where('maintenance_company_id', $company->id)
-                    ->where('status', 'completed')
-                    ->whereYear('created_at', $date->year)
-                    ->sum('total_price');
-                $performanceData[] = ['label' => $label, 'count' => $sum];
-            }
-        } else { // monthly
-            for ($i = 5; $i >= 0; $i--) {
+        if ($chartType === 'yearly') {
+            for ($i = 11; $i >= 0; $i--) {
                 $date = Carbon::now()->subMonths($i);
-                $label = $date->translatedFormat('F');
+                $label = $date->locale($locale)->translatedFormat('M');
                 $sum = Order::where('maintenance_company_id', $company->id)
                     ->where('status', 'completed')
                     ->whereMonth('created_at', $date->month)
@@ -320,13 +297,80 @@ class MaintenanceCompanyController extends Controller
                     ->sum('total_price');
                 $performanceData[] = ['label' => $label, 'count' => $sum];
             }
+        } elseif ($chartType === 'monthly') {
+            for ($i = 3; $i >= 0; $i--) {
+                $start = Carbon::now()->subWeeks($i)->startOfWeek();
+                $end = $start->copy()->endOfWeek();
+                $weekNum = 4 - $i;
+                $label = __('Week :number', ['number' => $weekNum]);
+                $sum = Order::where('maintenance_company_id', $company->id)
+                    ->where('status', 'completed')
+                    ->whereBetween('created_at', [$start->toDateTimeString(), $end->toDateTimeString()])
+                    ->sum('total_price');
+                $performanceData[] = ['label' => $label, 'count' => $sum];
+            }
+        } else { // weekly
+            for ($i = 6; $i >= 0; $i--) {
+                $date = Carbon::now()->subDays($i);
+                $label = $date->locale($locale)->translatedFormat('l');
+                $sum = Order::where('maintenance_company_id', $company->id)
+                    ->where('status', 'completed')
+                    ->whereDate('created_at', $date->toDateString())
+                    ->sum('total_price');
+                $performanceData[] = ['label' => $label, 'count' => $sum];
+            }
         }
+
+        $days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
         if ($request->ajax()) {
             return response()->json(['performanceData' => $performanceData]);
         }
         
-        return view('admin.maintenance_companies.show', compact('company', 'stats', 'technicians', 'orders', 'settlements', 'invoices', 'payments', 'reviews', 'performanceData', 'chartType', 'company_services'));
+        return view('admin.maintenance_companies.show', compact('company', 'stats', 'technicians', 'orders', 'settlements', 'invoices', 'payments', 'reviews', 'performanceData', 'chartType', 'company_services', 'days'));
+    }
+
+    public function updateSchedules(Request $request, $id)
+    {
+        $company = MaintenanceCompany::where('user_id', $id)->orWhere('id', $id)->firstOrFail();
+
+        $request->validate([
+            'schedules' => 'nullable|array',
+        ]);
+
+        $days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+        // Validate first
+        foreach ($days as $day) {
+            $input = $request->input("schedules.{$day}");
+            if ($input && !empty($input['active'])) {
+                if (empty($input['start_time']) || empty($input['end_time'])) {
+                    return back()->withErrors(["schedules.{$day}.start_time" => __('Start and end times are required for active days.')])->withInput();
+                }
+                if ($input['end_time'] <= $input['start_time']) {
+                    return back()->withErrors(["schedules.{$day}.end_time" => __('End time must be after start time.')])->withInput();
+                }
+            }
+        }
+
+        // Sync to database
+        foreach ($days as $day) {
+            $input = $request->input("schedules.{$day}");
+
+            if ($input && !empty($input['active'])) {
+                $company->schedules()->updateOrCreate(
+                    ['day' => $day],
+                    [
+                        'start_time' => $input['start_time'],
+                        'end_time' => $input['end_time']
+                    ]
+                );
+            } else {
+                $company->schedules()->where('day', $day)->delete();
+            }
+        }
+
+        return redirect()->route('admin.maintenance-companies.show', $company->id)->with('success', __('Working hours updated successfully.'));
     }
 
     public function edit($id)

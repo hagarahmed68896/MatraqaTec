@@ -13,7 +13,6 @@
     reviewSearch: '',
     chartType: '{{ $chartType }}',
     performanceData: @js($performanceData),
-    chart: null,
     updateChart(type) {
         this.chartType = type;
         fetch(`{{ route('admin.maintenance-companies.show', $company->id) }}?chart_type=${type}`, {
@@ -23,22 +22,26 @@
         .then(data => {
             this.performanceData = data.performanceData;
             this.renderChart();
-        });
+        })
+        .catch(err => console.error('Error fetching chart data:', err));
     },
     renderChart() {
-        const ctx = document.getElementById('performanceChart').getContext('2d');
-        if (this.chart) this.chart.destroy();
+        const canvas = document.getElementById('performanceChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const existingChart = Chart.getChart(canvas);
+        if (existingChart) existingChart.destroy();
         
         const gradient = ctx.createLinearGradient(0, 0, 0, 400);
         gradient.addColorStop(0, 'rgba(79, 70, 229, 0.5)'); // Indigo-600
         gradient.addColorStop(1, 'rgba(79, 70, 229, 0)');
 
-        this.chart = new Chart(ctx, {
+        new Chart(ctx, {
             type: 'line',
             data: {
                 labels: this.performanceData.map(d => d.label || d.month),
                 datasets: [{
-                    label: '{{ __('Orders') }}',
+                    label: '{{ __('Revenue') }}',
                     data: this.performanceData.map(d => d.count),
                     borderColor: '#4F46E5',
                     backgroundColor: gradient,
@@ -73,7 +76,7 @@
                         displayColors: false,
                         callbacks: {
                             label: function(context) {
-                                return ' ' + context.parsed.y + ' ' + '{{ __('Orders') }}';
+                                return ' ' + context.parsed.y + ' ' + '{{ __('SAR') }}';
                             }
                         }
                     }
@@ -88,8 +91,7 @@
                         },
                         ticks: { 
                             font: { weight: 'bold', size: 11 },
-                            padding: 10,
-                            stepSize: 1
+                            padding: 10
                         }
                     },
                     x: {
@@ -103,7 +105,7 @@
             }
         });
     }
-}" x-init="renderChart" class="space-y-8 animate-in fade-in slide-in-from-bottom duration-700">
+}" x-init="$nextTick(() => renderChart())" class="space-y-8 animate-in fade-in slide-in-from-bottom duration-700">
     
     <!-- Header -->
     <div class="flex items-center justify-between">
@@ -919,7 +921,7 @@
     </div>
 
     <!-- Working Hours Modal -->
-    <div x-data="{ open: false }" 
+    <div x-data="{ open: false, isEditing: {{ $company->schedules->isEmpty() ? 'true' : 'false' }} }" 
          @open-working-hours.window="open = true"
          @keydown.escape.window="open = false"
          x-show="open" 
@@ -950,55 +952,135 @@
             <!-- Header -->
             <div class="flex items-center justify-between px-8 py-6 border-b border-slate-50 dark:border-white/5">
                 <h3 class="text-xl font-black text-slate-800 dark:text-white">{{ __('Company Working Hours') }}</h3>
-                <button @click="open = false" class="text-slate-400 hover:text-slate-600 dark:text-white dark:hover:text-white transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
+                <div class="flex items-center gap-2">
+                    <button type="button" @click="isEditing = !isEditing" class="px-4 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white rounded-xl text-xs font-black transition-all flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        <span x-text="isEditing ? '{{ __('Cancel') }}' : '{{ __('Edit Working Hours') }}'"></span>
+                    </button>
+                    <button @click="open = false" class="text-slate-400 hover:text-slate-600 dark:text-white dark:hover:text-white transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
             </div>
 
             <!-- Body -->
             <div class="p-8 max-h-[70vh] overflow-y-auto no-scrollbar">
-                @if($company->schedules->isEmpty())
-                <div class="py-12 border border-dashed border-slate-200 dark:border-white/10 rounded-[1.5rem] flex flex-col items-center justify-center text-slate-400">
-                    <svg class="w-12 h-12 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <p class="text-sm font-bold">{{ __('No working hours found') }}</p>
-                </div>
-                @else
-                <div class="space-y-4">
-                    @php
-                        $daysMapAr = [
-                            'Sunday' => 'الأحد',
-                            'Monday' => 'الإثنين',
-                            'Tuesday' => 'الثلاثاء',
-                            'Wednesday' => 'الأربعاء',
-                            'Thursday' => 'الخميس',
-                            'Friday' => 'الجمعة',
-                            'Saturday' => 'السبت',
-                        ];
-                    @endphp
-                    @foreach($company->schedules as $schedule)
-                    <div class="flex items-center justify-between p-6 rounded-[1.5rem] bg-slate-50/70 dark:bg-white/5 border border-slate-100 dark:border-white/5">
-                        <div class="flex-1 text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
-                            <h4 class="text-base font-black text-slate-800 dark:text-white mb-2">
-                                {{ app()->getLocale() == 'ar' ? ($daysMapAr[$schedule->day] ?? __($schedule->day)) : __($schedule->day) }}
-                            </h4>
-                            <p class="text-xs font-bold text-slate-500 dark:text-slate-400">
-                                {{ __('From') }} 
-                                <span class="font-black text-slate-700 dark:text-white/80 mx-1">
-                                    {{ \Carbon\Carbon::parse($schedule->start_time)->translatedFormat('g:i A') }}
-                                </span>
-                                {{ __('To') }}
-                                <span class="font-black text-slate-700 dark:text-white/80 mx-1">
-                                    {{ \Carbon\Carbon::parse($schedule->end_time)->translatedFormat('g:i A') }}
-                                </span>
-                            </p>
-                        </div>
-                        <div class="w-12 h-12 rounded-[1rem] bg-white dark:bg-[#1A1A31] shadow-sm flex items-center justify-center text-slate-500 dark:text-slate-400 shrink-0 border border-slate-100 dark:border-white/5 ml-4">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                        </div>
-                    </div>
+                @if($errors->any())
+                <div class="mb-6 p-4 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 text-xs font-bold space-y-1">
+                    @foreach($errors->all() as $error)
+                        <p>{{ $error }}</p>
                     @endforeach
                 </div>
                 @endif
+
+                @php
+                    $daysList = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                    $daysMapAr = [
+                        'Sunday' => 'الأحد',
+                        'Monday' => 'الإثنين',
+                        'Tuesday' => 'الثلاثاء',
+                        'Wednesday' => 'الأربعاء',
+                        'Thursday' => 'الخميس',
+                        'Friday' => 'الجمعة',
+                        'Saturday' => 'السبت',
+                    ];
+                @endphp
+
+                <!-- View Mode -->
+                <div x-show="!isEditing" class="space-y-4">
+                    @if($company->schedules->isEmpty())
+                    <div class="py-12 border border-dashed border-slate-200 dark:border-white/10 rounded-[1.5rem] flex flex-col items-center justify-center text-slate-400">
+                        <svg class="w-12 h-12 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <p class="text-sm font-bold mb-4">{{ __('No working hours found') }}</p>
+                        <button type="button" @click="isEditing = true" class="px-6 py-3 bg-[#1A1A31] dark:bg-indigo-600 text-white rounded-xl text-xs font-black shadow-md hover:scale-[1.02] transition-all">
+                            {{ __('Edit Working Hours') }}
+                        </button>
+                    </div>
+                    @else
+                    <div class="space-y-4">
+                        @foreach($company->schedules as $schedule)
+                        <div class="flex items-center justify-between p-6 rounded-[1.5rem] bg-slate-50/70 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                            <div class="flex-1 text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
+                                <h4 class="text-base font-black text-slate-800 dark:text-white mb-2">
+                                    {{ app()->getLocale() == 'ar' ? ($daysMapAr[$schedule->day] ?? __($schedule->day)) : __($schedule->day) }}
+                                </h4>
+                                <p class="text-xs font-bold text-slate-500 dark:text-slate-400">
+                                    {{ __('From') }} 
+                                    <span class="font-black text-slate-700 dark:text-white/80 mx-1">
+                                        {{ \Carbon\Carbon::parse($schedule->start_time)->translatedFormat('g:i A') }}
+                                    </span>
+                                    {{ __('To') }}
+                                    <span class="font-black text-slate-700 dark:text-white/80 mx-1">
+                                        {{ \Carbon\Carbon::parse($schedule->end_time)->translatedFormat('g:i A') }}
+                                    </span>
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 rounded-[1rem] bg-white dark:bg-[#1A1A31] shadow-sm flex items-center justify-center text-slate-500 dark:text-slate-400 shrink-0 border border-slate-100 dark:border-white/5 ml-4">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
+                </div>
+
+                <!-- Edit Mode Form -->
+                <div x-show="isEditing" class="space-y-6">
+                    <form action="{{ route('admin.maintenance-companies.update-schedules', $company->id) }}" method="POST" class="space-y-6">
+                        @csrf
+                        <div class="space-y-4">
+                            @foreach($daysList as $day)
+                                @php
+                                    $schedule = $company->schedules->where('day', $day)->first();
+                                    $isActive = !empty($schedule);
+                                    $startTime = $isActive ? \Carbon\Carbon::parse($schedule->start_time)->format('H:i') : '08:00';
+                                    $endTime = $isActive ? \Carbon\Carbon::parse($schedule->end_time)->format('H:i') : '17:00';
+                                @endphp
+                                
+                                <div x-data="{ active: {{ $isActive ? 'true' : 'false' }} }" class="flex flex-col md:flex-row md:items-center justify-between p-6 rounded-[1.5rem] bg-slate-50/70 dark:bg-white/5 border border-slate-100 dark:border-white/5 gap-4">
+                                    <!-- Day Name & Active Switch -->
+                                    <div class="flex items-center gap-4 min-w-[150px]">
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" name="schedules[{{ $day }}][active]" value="1" x-model="active" class="sr-only">
+                                            <div :class="active ? 'bg-[#1A1A31] dark:bg-white/20' : 'bg-slate-200 dark:bg-slate-700'" class="w-11 h-6 rounded-full transition-colors relative">
+                                                <div :style="active ? '{{ app()->getLocale() == 'ar' ? 'right: 22px' : 'left: 22px' }}' : '{{ app()->getLocale() == 'ar' ? 'right: 2px' : 'left: 2px' }}'" class="absolute top-0.5 bg-white rounded-full h-5 w-5 transition-all duration-200 shadow-sm"></div>
+                                            </div>
+                                        </label>
+                                        <span class="text-base font-black text-slate-800 dark:text-white">
+                                            {{ app()->getLocale() == 'ar' ? ($daysMapAr[$day] ?? __($day)) : __($day) }}
+                                        </span>
+                                    </div>
+
+                                    <!-- Time Pickers -->
+                                    <div class="flex items-center gap-4 flex-1 max-w-md" x-show="active" x-transition>
+                                        <div class="flex items-center gap-2 flex-1">
+                                            <span class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ __('From') }}</span>
+                                            <input type="time" name="schedules[{{ $day }}][start_time]" value="{{ $startTime }}" class="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-white/10 dark:bg-[#1A1A31] text-sm font-bold text-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                        </div>
+                                        <div class="flex items-center gap-2 flex-1">
+                                            <span class="text-xs font-bold text-slate-500 dark:text-slate-400">{{ __('To') }}</span>
+                                            <input type="time" name="schedules[{{ $day }}][end_time]" value="{{ $endTime }}" class="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-white/10 dark:bg-[#1A1A31] text-sm font-bold text-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                        </div>
+                                    </div>
+                                    <div class="flex-1 text-slate-400 text-sm font-bold" x-show="!active">
+                                        {{ __('Off/Closed') }}
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-4">
+                            @if($company->schedules->isNotEmpty())
+                            <button type="button" @click="isEditing = false" class="px-6 py-4 bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-white rounded-2xl font-black text-sm transition-all">
+                                {{ __('Cancel') }}
+                            </button>
+                            @endif
+                            <button type="submit" class="px-8 py-4 bg-[#1A1A31] dark:bg-indigo-600 text-white rounded-2xl font-black text-sm shadow-lg hover:scale-[1.02] transition-all">
+                                {{ __('Save Changes') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

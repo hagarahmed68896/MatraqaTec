@@ -391,6 +391,51 @@ class ContractController extends Controller
         return redirect()->route('admin.contracts.index')->with('success', __('Contract deleted successfully.'));
     }
 
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->input('ids');
+        if (is_string($ids)) {
+            $ids = explode(',', $ids);
+        }
+        $ids = array_filter((array) $ids);
+
+        if (empty($ids)) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => __('No contracts selected.')]);
+            }
+            return back()->with('error', __('No contracts selected.'));
+        }
+
+        $contracts = Contract::whereIn('id', $ids)->get();
+        foreach ($contracts as $contract) {
+            $files = [
+                $contract->contract_file,
+                $contract->price_offer_file,
+                $contract->boq_file,
+                $contract->drawings_file,
+                $contract->other_docs_file,
+                $contract->signed_contract_file
+            ];
+
+            foreach ($files as $file) {
+                if ($file) {
+                    $oldPath = public_path($file);
+                    if (file_exists($oldPath)) {
+                        @unlink($oldPath);
+                    }
+                }
+            }
+
+            $contract->delete();
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => __('Contracts deleted successfully.')]);
+        }
+
+        return redirect()->route('admin.contracts.index')->with('success', __('Contracts deleted successfully.'));
+    }
+
     public function download()
     {
         $contracts = Contract::with('maintenanceCompany')->get();

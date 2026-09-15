@@ -34,7 +34,17 @@ class MaintenanceCompany extends Model
 
     public function getCommercialRecordUrlAttribute()
     {
-        return $this->commercial_record_file ? asset($this->commercial_record_file) : null;
+        if (!$this->commercial_record_file) return null;
+        if (str_starts_with($this->commercial_record_file, 'http://') || str_starts_with($this->commercial_record_file, 'https://')) return $this->commercial_record_file;
+        
+        $cleanPath = ltrim($this->commercial_record_file, '/');
+        if (str_starts_with($cleanPath, 'uploads/')) return asset($cleanPath);
+        if (str_starts_with($cleanPath, 'storage/')) return asset($cleanPath);
+
+        if (file_exists(public_path('uploads/' . $cleanPath))) return asset('uploads/' . $cleanPath);
+        if (file_exists(public_path('storage/' . $cleanPath))) return asset('storage/' . $cleanPath);
+
+        return asset('uploads/' . $cleanPath);
     }
 
     public function user()

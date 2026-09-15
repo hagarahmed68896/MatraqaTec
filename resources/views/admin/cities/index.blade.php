@@ -88,47 +88,45 @@
             </div>
 
             {{-- Stats Grid --}}
-            <div class="grid grid-cols-2 gap-y-6 pt-2 border-t border-slate-50 dark:border-white/5">
+            <div class="grid grid-cols-2 gap-x-4 gap-y-5 pt-4 border-t border-slate-50 dark:border-white/5">
                 {{-- Companies --}}
-                <div class="flex items-center gap-3 text-right">
-                    <div class="w-10 h-10 rounded-xl bg-[#F8F9FE] dark:bg-white/5 flex items-center justify-center text-slate-400">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-[#F8F9FE] dark:bg-white/5 flex items-center justify-center text-slate-400 shrink-0">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                     </div>
-                    <div>
-                        <p class="text-[11px]  text-[#1A1A31] dark:text-white leading-tight">{{ $item->companies_count }} {{ __('Companies') }}</p>
+                    <div class="min-w-0">
+                        <p class="text-xs font-bold text-[#1A1A31] dark:text-white leading-tight whitespace-nowrap">{{ $item->companies_count }} {{ __('Companies') }}</p>
                     </div>
                 </div>
 
                 {{-- Users --}}
-                <div class="flex items-center gap-3 justify-end text-left">
-                 
-                    <div class="w-10 h-10 rounded-xl bg-[#F8F9FE] dark:bg-white/5 flex items-center justify-center text-slate-400">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-[#F8F9FE] dark:bg-white/5 flex items-center justify-center text-slate-400 shrink-0">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                     </div>
-                       <div>
-                        <p class="text-[11px]  text-[#1A1A31] dark:text-white text-right leading-tight">{{ $item->users_count }} {{ __('Total Users') }}</p>
+                    <div class="min-w-0">
+                        <p class="text-xs font-bold text-[#1A1A31] dark:text-white leading-tight whitespace-nowrap">{{ $item->users_count }} {{ __('Users') }}</p>
                     </div>
                 </div>
 
                 {{-- Orders --}}
-                <div class="flex items-center gap-3 text-right">
-                    <div class="w-10 h-10 rounded-xl bg-[#F8F9FE] dark:bg-white/5 flex items-center justify-center text-slate-400">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-[#F8F9FE] dark:bg-white/5 flex items-center justify-center text-slate-400 shrink-0">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
                     </div>
-                    <div>
-                        <p class="text-[11px]  text-[#1A1A31] dark:text-white leading-tight">{{ $item->orders_count }} {{ __('Orders') }}</p>
+                    <div class="min-w-0">
+                        <p class="text-xs font-bold text-[#1A1A31] dark:text-white leading-tight whitespace-nowrap">{{ $item->orders_count }} {{ __('Orders') }}</p>
                     </div>
                 </div>
 
                 {{-- Services --}}
-                <div class="flex items-center gap-3 justify-end text-left">
-                  <div class="w-10 h-10 rounded-xl bg-[#F8F9FE] dark:bg-white/5 flex items-center justify-center text-slate-400">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-[#F8F9FE] dark:bg-white/5 flex items-center justify-center text-slate-400 shrink-0">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                     </div>    
-                <div>
-                        <p class="text-[11px]  text-[#1A1A31] dark:text-white text-right leading-tight">{{ $item->services_count }} {{ __('Services') }}</p>
+                    <div class="min-w-0">
+                        <p class="text-xs font-bold text-[#1A1A31] dark:text-white leading-tight whitespace-nowrap">{{ $item->services_count }} {{ __('Services') }}</p>
                     </div>
-                  
                 </div>
             </div>
 

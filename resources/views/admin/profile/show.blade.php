@@ -62,10 +62,12 @@
         <div class="flex flex-col md:flex-row items-center justify-between gap-8">
             <!-- Left Side: Buttons -->
             <div class="flex items-center gap-4 order-2 md:order-1">
+                @if($user->avatar)
                 <button @click="deleteModal = true" type="button" class="px-6 py-3 bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 rounded-xl text-xs font-black flex items-center gap-2 hover:bg-red-50 hover:text-red-500 transition-all">
                     {{ __('Delete Photo') }}
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </button>
+                @endif
                 
                 <button @click="$refs.avatarInput.click()" class="px-8 py-3 bg-[#1A1A31] dark:bg-primary text-white rounded-xl text-xs font-black flex items-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-indigo-500/10">
                     {{ __('Edit Photo') }}

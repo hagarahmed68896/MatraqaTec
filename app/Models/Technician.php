@@ -56,29 +56,35 @@ class Technician extends Model
     public function getImageUrlAttribute()
     {
         if (!$this->image) return null;
-        if (str_starts_with($this->image, 'http')) return $this->image;
-        if (str_starts_with($this->image, 'uploads/')) return asset($this->image);
+        if (str_starts_with($this->image, 'http://') || str_starts_with($this->image, 'https://')) return $this->image;
         
-        // Check if exists in uploads directly (for paths missing 'uploads/')
-        if (file_exists(public_path('uploads/technicians/' . $this->image))) {
-            return asset('uploads/technicians/' . $this->image);
-        }
+        $cleanPath = ltrim($this->image, '/');
+        if (str_starts_with($cleanPath, 'uploads/')) return asset($cleanPath);
+        if (str_starts_with($cleanPath, 'storage/')) return asset($cleanPath);
 
-        return asset('storage/' . $this->image);
+        if (file_exists(public_path('uploads/' . $cleanPath))) return asset('uploads/' . $cleanPath);
+        if (file_exists(public_path('uploads/technicians/' . basename($cleanPath)))) return asset('uploads/technicians/' . basename($cleanPath));
+        if (file_exists(public_path('uploads/technician_requests/photos/' . basename($cleanPath)))) return asset('uploads/technician_requests/photos/' . basename($cleanPath));
+        if (file_exists(public_path('storage/' . $cleanPath))) return asset('storage/' . $cleanPath);
+
+        return asset('uploads/' . $cleanPath);
     }
 
     public function getNationalIdImageUrlAttribute()
     {
         if (!$this->national_id_image) return null;
-        if (str_starts_with($this->national_id_image, 'http')) return $this->national_id_image;
-        if (str_starts_with($this->national_id_image, 'uploads/')) return asset($this->national_id_image);
+        if (str_starts_with($this->national_id_image, 'http://') || str_starts_with($this->national_id_image, 'https://')) return $this->national_id_image;
 
-        // Check if exists in uploads directly
-        if (file_exists(public_path('uploads/technicians/ids/' . $this->national_id_image))) {
-            return asset('uploads/technicians/ids/' . $this->national_id_image);
-        }
+        $cleanPath = ltrim($this->national_id_image, '/');
+        if (str_starts_with($cleanPath, 'uploads/')) return asset($cleanPath);
+        if (str_starts_with($cleanPath, 'storage/')) return asset($cleanPath);
 
-        return asset('storage/' . $this->national_id_image);
+        if (file_exists(public_path('uploads/' . $cleanPath))) return asset('uploads/' . $cleanPath);
+        if (file_exists(public_path('uploads/technicians/ids/' . basename($cleanPath)))) return asset('uploads/technicians/ids/' . basename($cleanPath));
+        if (file_exists(public_path('uploads/technician_requests/iqamas/' . basename($cleanPath)))) return asset('uploads/technician_requests/iqamas/' . basename($cleanPath));
+        if (file_exists(public_path('storage/' . $cleanPath))) return asset('storage/' . $cleanPath);
+
+        return asset('uploads/' . $cleanPath);
     }
 
     public function getDistrictsAttribute($value)

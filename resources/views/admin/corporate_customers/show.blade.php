@@ -12,7 +12,6 @@
     contractSearch: '',
     chartType: '{{ $chartType }}',
     performanceData: @js($performanceData),
-    chart: null,
     updateChart(type) {
         this.chartType = type;
         fetch(`{{ route('admin.corporate-customers.show', $item->id) }}?chart_type=${type}`, {
@@ -22,17 +21,21 @@
         .then(data => {
             this.performanceData = data.performanceData;
             this.renderChart();
-        });
+        })
+        .catch(err => console.error('Error fetching chart data:', err));
     },
     renderChart() {
-        const ctx = document.getElementById('performanceChart').getContext('2d');
-        if (this.chart) this.chart.destroy();
+        const canvas = document.getElementById('performanceChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const existingChart = Chart.getChart(canvas);
+        if (existingChart) existingChart.destroy();
         
         const gradient = ctx.createLinearGradient(0, 0, 0, 400);
         gradient.addColorStop(0, 'rgba(79, 70, 229, 0.5)'); // Indigo-600
         gradient.addColorStop(1, 'rgba(79, 70, 229, 0)');
 
-        this.chart = new Chart(ctx, {
+        new Chart(ctx, {
             type: 'line',
             data: {
                 labels: this.performanceData.map(d => d.label || d.month),
@@ -88,6 +91,7 @@
                         ticks: { 
                             font: { weight: 'bold', size: 11 },
                             padding: 10,
+                            precision: 0,
                             stepSize: 1
                         }
                     },
@@ -102,7 +106,7 @@
             }
         });
     }
-}" x-init="renderChart" class="space-y-8 animate-in fade-in slide-in-from-bottom duration-700">
+}" x-init="$nextTick(() => renderChart())" class="space-y-8 animate-in fade-in slide-in-from-bottom duration-700">
     
     <!-- Header -->
     <div class="flex items-center justify-between">

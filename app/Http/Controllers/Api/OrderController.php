@@ -1246,7 +1246,9 @@ class OrderController extends Controller
             'spare_parts.*.name' => 'required_with:spare_parts|string',
             'spare_parts.*.qty' => 'required_with:spare_parts|integer|min:1',
             'spare_parts.*.price' => 'required_with:spare_parts|numeric|min:0',
-            'client_signature' => 'nullable|string', // Base64 signature
+            'client_signature' => 'required|string', // Base64 signature
+        ], [
+            'client_signature.required' => __('يرجى أخذ توقيع العميل لإتمام الطلب.'),
         ]);
 
         $sparePartsTotal = 0;

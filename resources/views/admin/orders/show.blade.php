@@ -37,6 +37,28 @@
                 selectedCompanyId: null,
                 rejectionReason: '',
                 showAll: false,
+                rescheduleTechId: {{ $item->technician_id ?? 'null' }},
+                rescheduleCompanyId: {{ $item->maintenance_company_id ?? 'null' }},
+                rescheduleTab: '{{ $item->maintenance_company_id ? 'company' : 'platform' }}',
+                rescheduleSearch: '',
+
+                get filteredRescheduleTechs() {
+                    if (!this.rescheduleSearch || !this.rescheduleSearch.trim()) return this.technicians;
+                    const q = this.rescheduleSearch.toLowerCase();
+                    return this.technicians.filter(t => 
+                        (t.name && t.name.toLowerCase().includes(q)) || 
+                        (t.service_name && t.service_name.toLowerCase().includes(q)) ||
+                        (t.specialty && t.specialty.toLowerCase().includes(q))
+                    );
+                },
+
+                get filteredRescheduleCompanies() {
+                    if (!this.rescheduleSearch || !this.rescheduleSearch.trim()) return this.companies;
+                    const q = this.rescheduleSearch.toLowerCase();
+                    return this.companies.filter(c => 
+                        (c.name && c.name.toLowerCase().includes(q))
+                    );
+                },
 
                 async openAcceptModal() {
                     this.showAcceptModal = true;
@@ -46,6 +68,20 @@
                     this.viewMode = 'list';
                     this.showAll = false;
                     await this.fetchTechnicians();
+                },
+
+                async openRescheduleModal() {
+                    this.showRescheduleModal = true;
+                    this.rescheduleTechId = {{ $item->technician_id ?? 'null' }};
+                    this.rescheduleCompanyId = {{ $item->maintenance_company_id ?? 'null' }};
+                    this.rescheduleTab = '{{ $item->maintenance_company_id ? 'company' : 'platform' }}';
+                    this.rescheduleSearch = '';
+                    if (this.technicians.length === 0) {
+                        await this.fetchTechnicians();
+                    }
+                    if (this.companies.length === 0) {
+                        await this.fetchCompanies();
+                    }
                 },
 
                 async toggleViewMode() {
@@ -233,7 +269,7 @@
                 </a>
 
                 <!-- Reschedule Appointment -->
-                <button @click="showRescheduleModal = true" class="px-5 py-2 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-all flex items-center gap-2">
+                <button @click="openRescheduleModal()" class="px-5 py-2 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-all flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                     {{ __('Reschedule') }}
                 </button>

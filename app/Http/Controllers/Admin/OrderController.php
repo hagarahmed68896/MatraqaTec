@@ -956,6 +956,8 @@ class OrderController extends Controller
     {
         $request->validate([
             'scheduled_at' => 'required|date',
+            'technician_id' => 'nullable|exists:technicians,id',
+            'maintenance_company_id' => 'nullable|exists:maintenance_companies,id',
         ]);
 
         $order = Order::findOrFail($id);
@@ -967,12 +969,28 @@ class OrderController extends Controller
 
         $order->scheduled_at = $request->scheduled_at;
 
-        // Restore status if it was expired
-        if ($order->status === 'expired') {
+        // Handle technician / company assignment
+        if ($request->filled('technician_id')) {
+            $order->technician_id = $request->technician_id;
+            $order->maintenance_company_id = null;
+            $tech = \App\Models\Technician::find($request->technician_id);
+            $order->status = ($tech && !$tech->maintenance_company_id) ? 'scheduled' : 'new';
+            $order->assigned_at = now();
+        } elseif ($request->filled('maintenance_company_id')) {
+            $order->maintenance_company_id = $request->maintenance_company_id;
+            $order->technician_id = null;
+            $order->status = 'new';
+            $order->assigned_at = now();
+        } elseif ($order->technician_id) {
+            $tech = $order->technician;
+            $order->status = ($tech && !$tech->maintenance_company_id) ? 'scheduled' : 'new';
+        } elseif ($order->maintenance_company_id) {
+            $order->status = 'new';
+        } elseif ($order->status === 'expired') {
             $order->status = $order->technician_id ? 'scheduled' : 'new';
         }
-        $order->sub_status = null; // Clear expired/reschedule_requested sub_status
 
+        $order->sub_status = null; // Clear expired/reschedule_requested sub_status
         $order->save();
 
         \App\Models\Appointment::updateOrCreate(
@@ -980,12 +998,13 @@ class OrderController extends Controller
             [
                 'technician_id' => $order->technician_id,
                 'appointment_date' => $order->scheduled_at,
-                'status' => $order->status === 'cancelled' ? 'cancelled' : ($order->status === 'completed' ? 'completed' : ($order->status === 'in_progress' ? 'in_progress' : 'scheduled')),
+                'status' => in_array($order->status, ['cancelled', 'completed', 'in_progress']) ? $order->status : 'scheduled',
             ]
         );
 
+        // Notify client
         if ($order->user_id) {
-            $formattedTime = $order->scheduled_at->format('Y-m-d g:i A');
+            $formattedTime = \Carbon\Carbon::parse($order->scheduled_at)->format('Y-m-d g:i A');
             $this->sendNotification($order->user_id, [
                 'type' => \App\Models\Notification::TYPE_ORDER_RESCHEDULED,
                 'title_ar' => 'إعادة جدولة الطلب',
@@ -996,16 +1015,37 @@ class OrderController extends Controller
             ]);
         }
 
-        if ($order->technician_id && $order->technician && $order->technician->user_id) {
-            $formattedTime = $order->scheduled_at->format('Y-m-d g:i A');
-            $this->sendNotification($order->technician->user_id, [
-                'type' => \App\Models\Notification::TYPE_ORDER_RESCHEDULED,
-                'title_ar' => 'إعادة جدولة المهمة',
-                'title_en' => 'Task Rescheduled',
-                'body_ar' => "تم تغيير موعد المهمة رقم #{$order->order_number} إلى {$formattedTime}",
-                'body_en' => "Task #{$order->order_number} has been rescheduled to {$formattedTime}",
-                'data' => ['order_id' => $order->id]
-            ]);
+        // Notify technician if assigned
+        if ($order->technician_id) {
+            $tech = \App\Models\Technician::find($order->technician_id);
+            if ($tech && $tech->user && !$tech->maintenance_company_id) {
+                $formattedTime = \Carbon\Carbon::parse($order->scheduled_at)->format('Y-m-d g:i A');
+                $duration = (int) \App\Models\Setting::getByKey('order_acceptance_duration', 15);
+                $this->sendNotification($tech->user_id, [
+                    'type' => \App\Models\Notification::TYPE_ORDER_RESCHEDULED,
+                    'title_ar' => 'تعديل موعد المهمة',
+                    'title_en' => 'Task Rescheduled',
+                    'body_ar' => "تم تغيير موعد المهمة رقم #{$order->order_number} إلى {$formattedTime}",
+                    'body_en' => "Task #{$order->order_number} has been rescheduled to {$formattedTime}",
+                    'data' => ['order_id' => $order->id]
+                ]);
+            }
+        }
+
+        // Notify maintenance company if assigned
+        if ($order->maintenance_company_id) {
+            $company = \App\Models\MaintenanceCompany::find($order->maintenance_company_id);
+            if ($company && $company->user) {
+                $formattedTime = \Carbon\Carbon::parse($order->scheduled_at)->format('Y-m-d g:i A');
+                $this->sendNotification($company->user_id, [
+                    'type' => \App\Models\Notification::TYPE_ORDER_RESCHEDULED,
+                    'title_ar' => 'تعديل موعد طلب الصيانة',
+                    'title_en' => 'Maintenance Request Rescheduled',
+                    'body_ar' => "تم تعديل موعد طلب الصيانة رقم #{$order->order_number} إلى {$formattedTime}",
+                    'body_en' => "Maintenance request #{$order->order_number} has been rescheduled to {$formattedTime}",
+                    'data' => ['order_id' => $order->id]
+                ]);
+            }
         }
 
         return redirect()->back()->with('success', __('Order rescheduled successfully.'));

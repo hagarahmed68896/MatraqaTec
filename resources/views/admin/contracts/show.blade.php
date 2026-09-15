@@ -4,7 +4,7 @@
 @section('page_title', __('Contract Details'))
 
 @section('content')
-<div class="max-w-4xl mx-auto pb-20" dir="rtl" x-data="{ openOfferModal: false, openRejectModal: false }">
+<div class="max-w-4xl mx-auto pb-20" dir="rtl" x-data="{ openOfferModal: false, openRejectModal: false, showDeleteModal: false }">
 
     {{-- Header --}}
     <div class="flex items-center justify-between mb-8">
@@ -58,6 +58,14 @@
                 {{ __('Download Contract') }}
             </a>
             @endif
+
+            <button type="button" @click="showDeleteModal = true"
+                    class="px-6 py-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-500/20 rounded-xl font-black text-xs hover:bg-red-100 dark:hover:bg-red-500/20 transition-all flex items-center gap-2 uppercase tracking-widest">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                {{ __('Delete') }}
+            </button>
         </div>
     </div>
 
@@ -432,6 +440,67 @@
             </form>
         </div>
     </div>
+
+    <!-- Hidden Delete Form -->
+    <form id="delete-contract-form" action="{{ route('admin.contracts.destroy', $item->id) }}" method="POST" class="hidden">
+        @csrf
+        @method('DELETE')
+    </form>
+
+    <!-- Delete Confirmation Modal -->
+    <template x-teleport="body">
+        <div x-show="showDeleteModal" 
+             class="fixed inset-0 z-[1000] flex items-center justify-center p-4 overflow-x-hidden overflow-y-auto"
+             x-cloak>
+            
+            <!-- Backdrop -->
+            <div x-show="showDeleteModal" 
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 @click="showDeleteModal = false"
+                 class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+
+            <!-- Modal Content -->
+            <div x-show="showDeleteModal"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+                 class="relative bg-white dark:bg-[#1A1A31] w-full max-w-md rounded-[2.5rem] shadow-2xl border border-slate-100 dark:border-white/10 overflow-hidden transform transition-all">
+                
+                <div class="p-10 text-center">
+                    <div class="mx-auto w-24 h-24 bg-rose-50 dark:bg-rose-500/10 rounded-full flex items-center justify-center mb-8 relative">
+                        <div class="absolute inset-0 rounded-full bg-rose-500/10 animate-ping"></div>
+                        <svg class="w-10 h-10 text-rose-500 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </div>
+                    
+                    <h3 class="text-2xl font-black text-slate-800 dark:text-white mb-4">{{ __('Confirm Deletion') }}</h3>
+                    <p class="text-slate-500 dark:text-slate-400 font-bold leading-relaxed mb-10">
+                        {{ __('Are you sure you want to delete this contract?') }}
+                    </p>
+                    
+                    <div class="flex gap-4">
+                        <button type="button" @click="showDeleteModal = false" 
+                                class="flex-1 py-4 bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-2xl font-black hover:bg-slate-200 dark:hover:bg-white/10 transition-all uppercase tracking-widest text-md">
+                            {{ __('Cancel') }}
+                        </button>
+                        <button type="button" @click="document.getElementById('delete-contract-form').submit()" 
+                                class="flex-1 py-4 bg-rose-500 text-white rounded-2xl font-black hover:bg-rose-600 transition-all shadow-lg shadow-rose-500/20 uppercase tracking-widest text-md">
+                            {{ __('Delete') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
 </div>
 
 @endsection

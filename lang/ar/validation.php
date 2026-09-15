@@ -172,5 +172,6 @@ return [
         'price' => 'السعر',
         'district_id' => 'الحي',
         'city_id' => 'المدينة',
+        'client_signature' => 'توقيع العميل',
     ],
 ];

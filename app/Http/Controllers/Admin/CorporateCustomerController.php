@@ -40,18 +40,14 @@ class CorporateCustomerController extends Controller
         }
 
         // 2. Filter by Status
-        if ($request->has('status') && $request->status) {
+        if ($request->filled('status') && $request->status !== 'all') {
             $status = $request->status;
             $query->whereHas('user', function ($q) use ($status) {
-                if ($status === 'inactive') {
+                if ($status === 'inactive' || $status === 'blocked') {
                     $q->whereIn('status', ['inactive', 'blocked']);
                 } else {
                     $q->where('status', $status);
                 }
-            });
-        } else {
-            $query->whereHas('user', function ($q) {
-                $q->where('status', 'active');
             });
         }
 
@@ -243,34 +239,37 @@ class CorporateCustomerController extends Controller
         ];
 
         // Performance Chart Data
-        $chartType = $request->get('chart_type', 'monthly');
+        $chartType = $request->get('chart_type', 'weekly');
         $performanceData = [];
+        $locale = app()->getLocale();
         
-        if ($chartType === 'weekly') {
-            for ($i = 7; $i >= 0; $i--) {
-                $date = Carbon::now()->subWeeks($i);
-                $label = __('Week') . ' ' . $date->weekOfYear;
-                $count = Order::where('user_id', $userId)
-                    ->whereBetween('created_at', [$date->startOfWeek()->toDateTimeString(), $date->endOfWeek()->toDateTimeString()])
-                    ->count();
-                $performanceData[] = ['label' => $label, 'count' => $count];
-            }
-        } elseif ($chartType === 'yearly') {
-            for ($i = 2; $i >= 0; $i--) {
-                $date = Carbon::now()->subYears($i);
-                $label = $date->year;
-                $count = Order::where('user_id', $userId)
-                    ->whereYear('created_at', $date->year)
-                    ->count();
-                $performanceData[] = ['label' => $label, 'count' => $count];
-            }
-        } else { // monthly
-            for ($i = 5; $i >= 0; $i--) {
+        if ($chartType === 'yearly') {
+            for ($i = 11; $i >= 0; $i--) {
                 $date = Carbon::now()->subMonths($i);
-                $label = $date->translatedFormat('F');
+                $label = $date->locale($locale)->translatedFormat('M');
                 $count = Order::where('user_id', $userId)
                     ->whereMonth('created_at', $date->month)
                     ->whereYear('created_at', $date->year)
+                    ->count();
+                $performanceData[] = ['label' => $label, 'count' => $count];
+            }
+        } elseif ($chartType === 'monthly') {
+            for ($i = 3; $i >= 0; $i--) {
+                $start = Carbon::now()->subWeeks($i)->startOfWeek();
+                $end = $start->copy()->endOfWeek();
+                $weekNum = 4 - $i;
+                $label = __('Week :number', ['number' => $weekNum]);
+                $count = Order::where('user_id', $userId)
+                    ->whereBetween('created_at', [$start->toDateTimeString(), $end->toDateTimeString()])
+                    ->count();
+                $performanceData[] = ['label' => $label, 'count' => $count];
+            }
+        } else { // weekly
+            for ($i = 6; $i >= 0; $i--) {
+                $date = Carbon::now()->subDays($i);
+                $label = $date->locale($locale)->translatedFormat('l');
+                $count = Order::where('user_id', $userId)
+                    ->whereDate('created_at', $date->toDateString())
                     ->count();
                 $performanceData[] = ['label' => $label, 'count' => $count];
             }

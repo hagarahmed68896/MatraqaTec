@@ -7,7 +7,6 @@
     activeTab: '{{ request('tab', 'overview') }}',
     chartType: '{{ $chartType }}',
     performanceData: @js($performanceData),
-    chart: null,
     updateChart(type) {
         this.chartType = type;
         fetch(`{{ route('admin.technicians.show', $item->id) }}?chart_type=${type}`, {
@@ -17,20 +16,24 @@
         .then(data => {
             this.performanceData = data.performanceData;
             this.renderChart();
-        });
+        })
+        .catch(err => console.error('Error fetching chart data:', err));
     },
     renderChart() {
-        const ctx = document.getElementById('performanceChart').getContext('2d');
-        if (this.chart) this.chart.destroy();
+        const canvas = document.getElementById('performanceChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const existingChart = Chart.getChart(canvas);
+        if (existingChart) existingChart.destroy();
         
         const gradient = ctx.createLinearGradient(0, 0, 0, 300);
         gradient.addColorStop(0, 'rgba(26, 26, 49, 0.1)');
         gradient.addColorStop(1, 'rgba(26, 26, 49, 0)');
 
-        this.chart = new Chart(ctx, {
+        new Chart(ctx, {
             type: 'line',
             data: {
-                labels: this.performanceData.map(d => d.label),
+                labels: this.performanceData.map(d => d.label || d.month),
                 datasets: [{
                     label: '{{ __('Orders') }}',
                     data: this.performanceData.map(d => d.count),
@@ -39,7 +42,7 @@
                     borderWidth: 3,
                     fill: true,
                     tension: 0.4,
-                    pointRadius: 0,
+                    pointRadius: 4,
                     pointHoverRadius: 6,
                     pointHoverBackgroundColor: '#1A1A31',
                     pointHoverBorderColor: '#fff',
@@ -63,7 +66,7 @@
                     y: {
                         beginAtZero: true,
                         grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false },
-                        ticks: { font: { size: 10, weight: '600' } }
+                        ticks: { font: { size: 10, weight: '600' }, precision: 0 }
                     },
                     x: {
                         grid: { display: false },
@@ -73,7 +76,7 @@
             }
         });
     }
-}" x-init="renderChart" class="pb-20 space-y-8 px-4 md:px-8">
+}" x-init="$nextTick(() => renderChart())" class="pb-20 space-y-8 px-4 md:px-8">
     
     <!-- Header -->
     <div class="flex items-center justify-between mb-8">
@@ -332,7 +335,7 @@
         </div>
 
             <!-- Tasks Tab Content -->
-            <div x-show="activeTab === 'tasks'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-100 transform translate-y-0" class="bg-white dark:bg-[#1A1A31] rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-sm overflow-hidden">
+            <div x-show="activeTab === 'tasks'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-100 transform translate-y-0" class="bg-white dark:bg-[#1A1A31] rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-sm relative">
                 <div class="p-10 flex items-center justify-between border-b border-slate-100 dark:border-white/5">
                     <div>
                         <h3 class="text-xl font-black text-slate-800 dark:text-white">{{ __('Tasks') }}</h3>
@@ -354,7 +357,7 @@
                                  x-transition:enter="transition ease-out duration-200"
                                  x-transition:enter-start="opacity-0 scale-95 translate-y-2"
                                  x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                                 class="absolute {{ app()->getLocale() == 'ar' ? 'left-0' : 'right-0' }} mt-3 w-80 bg-white dark:bg-[#1A1A31] rounded-[2rem] shadow-2xl border border-slate-100 dark:border-white/10 z-[100] p-6 space-y-6 text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
+                                 class="absolute {{ app()->getLocale() == 'ar' ? 'left-0' : 'right-0' }} mt-3 w-80 max-h-[85vh] overflow-y-auto bg-white dark:bg-[#1A1A31] rounded-[2rem] shadow-2xl border border-slate-100 dark:border-white/10 z-[100] p-6 space-y-6 text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
                                 
                                 <form action="{{ route('admin.technicians.show', $item->id) }}" method="GET" class="space-y-6">
                                     <input type="hidden" name="tab" value="tasks">
@@ -417,7 +420,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto rounded-b-[2.5rem]">
                     <table class="w-full text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
                         <thead>
                             <tr class="bg-slate-50 dark:bg-white/5 text-slate-400 text-[10px] font-black uppercase tracking-widest">

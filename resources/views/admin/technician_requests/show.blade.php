@@ -28,7 +28,7 @@
             <div class="relative flex flex-col md:flex-row items-end gap-6 -mt-16 mb-10">
                 <div class="w-32 h-32 rounded-[2rem] border-4 border-white dark:border-[#1A1A31] bg-slate-100 dark:bg-white/5 shadow-xl overflow-hidden relative z-10">
                     @if($item->photo)
-                        <img src="{{ asset($item->photo) }}" class="w-full h-full object-cover">
+                        <img src="{{ $item->photo_url }}" class="w-full h-full object-cover">
                     @else
                         <div class="w-full h-full flex items-center justify-center text-3xl font-black text-slate-300">
                             {{ mb_substr($item->name_ar ?? $item->name, 0, 1) }}
@@ -90,13 +90,27 @@
                 </div>
 
                 <!-- Districts -->
-                <div class="flex items-center gap-4 group">
-                    <div class="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-primary dark:hover:text-white transition-all">
+                <div class="flex items-start gap-4 group">
+                    <div class="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-primary dark:hover:text-white transition-all shrink-0">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     </div>
-                    <div>
-                        <p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">{{ __('Working Districts') }}</p>
-                        <p class="text-md font-bold text-slate-900 dark:text-white">{{ is_array($item->districts) ? implode(', ', $item->districts) : ($item->districts ?? __('All Areas')) }}</p>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">{{ __('Working Districts') }}</p>
+                        @php
+                            $districtsList = $item->district_list;
+                            $locale = app()->getLocale();
+                        @endphp
+                        @if($districtsList && $districtsList->isNotEmpty())
+                            <div class="flex flex-wrap gap-1.5">
+                                @foreach($districtsList as $district)
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-bold">
+                                        {{ $locale == 'ar' ? ($district->name_ar ?? $district->name_en) : ($district->name_en ?? $district->name_ar) }}
+                                    </span>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-md font-bold text-slate-900 dark:text-white">{{ __('All Areas') }}</p>
+                        @endif
                     </div>
                 </div>
 
