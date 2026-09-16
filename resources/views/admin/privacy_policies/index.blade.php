@@ -61,7 +61,9 @@
                          status: '{{ request('status', 'all') }}'
                      }">
                         <button @click="filterOpen = !filterOpen" class="w-14 h-14 flex items-center justify-center bg-slate-50 dark:bg-white/5 text-slate-400 rounded-2xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all focus:ring-2 focus:ring-primary/20 relative" :class="{ 'bg-primary/10 text-primary': filterOpen }">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4.5h18m-18 5h18m-18 5h18m-18 5h18"></path></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-sliders" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z"/>
+                            </svg>
                             <!-- Red Dot Indicator -->
                             @if(request('status') || request('sort') || request('target'))
                             <div class="absolute top-3 right-4 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-slate-800"></div>
@@ -76,7 +78,7 @@
                              x-transition:leave="transition ease-in duration-150"
                              x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                              x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-                             class="absolute {{ app()->getLocale() == 'en' ? 'right-0' : 'left-0' }} mt-4 w-[350px] bg-white dark:bg-[#1A1A31] rounded-[2rem] shadow-2xl border border-slate-100 dark:border-white/10 z-[110]"
+                             class="absolute {{ app()->getLocale() == 'ar' ? 'right-0' : 'left-0' }} mt-4 w-[350px] bg-white dark:bg-[#1A1A31] rounded-[2rem] shadow-2xl border border-slate-100 dark:border-white/10 z-[110]"
                              x-cloak>
                             
                             <form action="{{ url()->current() }}" method="GET" class="p-6 space-y-6 text-{{ app()->getLocale() == 'ar' ? 'right' : 'left' }}">
@@ -173,10 +175,6 @@
                         {{ request()->routeIs('admin.terms.*') ? __('Add Terms') : __('New Policy') }}
                     </a>
                 </div>
-
-                <!-- Left Side: Add Button -->
-                <!-- Spacer for Desktop -->
-                <div class="hidden md:block h-10 w-px bg-slate-100 dark:bg-white/5 md:order-3"></div>
             </div>
 
             <!-- Bulk Selection Bar (Visible when items ARE selected) -->

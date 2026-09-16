@@ -843,5 +843,9 @@
     "Confirm Reschedule & Assignment": "Confirm Reschedule & Assignment",
     "No technicians found": "No technicians found",
     "No maintenance companies found": "No maintenance companies found",
-    "Search by name...": "Search by name..."
+    "Search by name...": "Search by name...",
+    "No evaluations found.": "No evaluations found.",
+    "No evaluations found": "No evaluations found",
+    "Total Evaluations": "Total Evaluations",
+    "All Evaluations": "All Evaluations"
 }

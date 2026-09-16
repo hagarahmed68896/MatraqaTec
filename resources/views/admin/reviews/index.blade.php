@@ -386,7 +386,7 @@
             <div class="text-[11px] font-bold text-slate-400">
                 {{ __('Showing') }} {{ $items->firstItem() }} {{ __('to') }} {{ $items->lastItem() }} {{ __('of') }} {{ $items->total() }} {{ __('entries') }}
             </div>
-            {{ $items->appends(request()->all())->links('vendor.pagination.tailwind') }}
+            {{ $items->appends(request()->all())->links('vendor.pagination.custom-admin') }}
         </div>
         @endif
     </div>

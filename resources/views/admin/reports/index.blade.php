@@ -28,8 +28,9 @@
                 </div>
             </div>
             <!-- Consolidated Date Range Pill -->
-            <div class="flex items-center bg-white dark:bg-[#1A1A31] border border-slate-50 dark:border-white/5 rounded-2xl px-3 h-11 shadow-sm gap-3">
-                <div class="flex items-center gap-2">
+            <div class="relative flex items-center bg-white dark:bg-[#1A1A31] border border-slate-50 dark:border-white/5 rounded-2xl px-3 h-11 shadow-sm gap-3 cursor-pointer hover:border-primary transition-all select-none"
+                 onclick="try { const input = this.querySelector('input[type=date]'); if (input.showPicker) { input.showPicker(); } else { input.focus(); } } catch(e) { this.querySelector('input[type=date]').focus(); }">
+                <div class="flex items-center gap-2 pointer-events-none">
                     <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     <div class="flex items-center gap-1 text-[11px] font-bold text-[#1A1A31] dark:text-white whitespace-nowrap">
                         <span>{{ \Carbon\Carbon::parse($data['filters']['date_from'])->locale('ar')->translatedFormat('j F Y') }}</span>
@@ -37,10 +38,10 @@
                         <span>{{ \Carbon\Carbon::parse($data['filters']['date_to'])->locale('ar')->translatedFormat('j F Y') }}</span>
                     </div>
                 </div>
-                <div class="w-8 h-8 rounded-lg bg-[#1A1A31] flex items-center justify-center text-white relative cursor-pointer overflow-hidden">
-                    <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                    <input type="date" name="date_from" value="{{ $data['filters']['date_from'] }}" onchange="this.form.submit()" class="absolute inset-0 opacity-0 cursor-pointer">
+                <div class="w-8 h-8 rounded-lg bg-[#1A1A31] flex items-center justify-center text-white relative pointer-events-none">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                 </div>
+                <input type="date" name="date_from" value="{{ $data['filters']['date_from'] }}" onchange="this.form.submit()" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer pointer-events-none">
             </div>
 
         
@@ -228,9 +229,9 @@
             <div class="flex flex-col items-center">
                 <div class="relative w-48 h-24 mb-6">
                     <canvas id="gaugeChart"></canvas>
-                    <div class="absolute inset-0 flex flex-col items-end justify-center pt-8">
-                        <span class="text-4xl font-black text-[#1A1A31] dark:text-white">{{ $data['service_quality']['level'] }}%</span>
-                        <p class="text-[10px] font-bold text-slate-400 mt-1">{{ __('Based on customer feedback') }}</p>
+                    <div class="absolute inset-0 flex flex-col items-center justify-end pb-1 text-center pointer-events-none">
+                        <span class="text-3xl font-black text-[#1A1A31] dark:text-white leading-tight">{{ $data['service_quality']['level'] }}%</span>
+                        <p class="text-[10px] font-bold text-slate-400">{{ __('Based on customer feedback') }}</p>
                     </div>
                 </div>
 

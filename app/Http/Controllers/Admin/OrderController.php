@@ -19,15 +19,20 @@ class OrderController extends Controller
     {
         Order::syncExpiredOrders();
 
-        $query = Order::with(['user', 'technician.user', 'maintenanceCompany.user', 'service.parent'])
-            ->whereIn('status', ['scheduled', 'accepted', 'in_progress', 'completed']);
+        $query = Order::with(['user', 'technician.user', 'maintenanceCompany.user', 'service.parent']);
 
         // 1. Filter by status via tabs
-        $currentTab = $request->get('tab', 'scheduled');
+        $currentTab = $request->get('tab', 'all');
         if ($currentTab === 'scheduled') {
             $query->whereIn('status', ['scheduled', 'accepted']);
-        } elseif (in_array($currentTab, ['in_progress', 'completed'])) {
-            $query->where('status', $currentTab);
+        } elseif ($currentTab === 'in_progress') {
+            $query->where('status', 'in_progress');
+        } elseif ($currentTab === 'completed') {
+            $query->where('status', 'completed');
+        } elseif ($currentTab === 'expired') {
+            $query->where('status', 'expired');
+        } elseif ($currentTab === 'cancelled') {
+            $query->whereIn('status', ['cancelled', 'rejected']);
         }
 
         // 1b. Filter by specific sub_status
@@ -49,6 +54,7 @@ class OrderController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('id', 'like', "%{$search}%")
+                  ->orWhere('order_number', 'like', "%{$search}%")
                   ->orWhereHas('user', function ($q2) use ($search) {
                       $q2->where('name', 'like', "%{$search}%")
                          ->orWhere('phone', 'like', "%{$search}%");
@@ -129,35 +135,49 @@ class OrderController extends Controller
 
         $items = $query->paginate(25);
         
-        $totalPremium = Order::whereIn('status', ['scheduled', 'accepted', 'in_progress', 'completed'])->count();
-        $totalPremiumLastWeek = Order::whereIn('status', ['scheduled', 'accepted', 'in_progress', 'completed'])->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
-        $totalPremiumGrowth = $totalPremiumLastWeek > 0 ? (($totalPremium - $totalPremiumLastWeek) / $totalPremiumLastWeek) * 100 : ($totalPremium > 0 ? 100 : 0);
+        $totalOrders = Order::count();
+        $totalOrdersLastWeek = Order::where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
+        $totalGrowth = $totalOrdersLastWeek > 0 ? (($totalOrders - $totalOrdersLastWeek) / $totalOrdersLastWeek) * 100 : ($totalOrders > 0 ? 100 : 0);
 
-        $scheduledPremium = Order::whereIn('status', ['scheduled', 'accepted'])->count();
-        $scheduledPremiumLastWeek = Order::whereIn('status', ['scheduled', 'accepted'])->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
-        $scheduledPremiumGrowth = $scheduledPremiumLastWeek > 0 ? (($scheduledPremium - $scheduledPremiumLastWeek) / $scheduledPremiumLastWeek) * 100 : ($scheduledPremium > 0 ? 100 : 0);
+        $scheduledOrders = Order::whereIn('status', ['scheduled', 'accepted'])->count();
+        $scheduledLastWeek = Order::whereIn('status', ['scheduled', 'accepted'])->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
+        $scheduledGrowth = $scheduledLastWeek > 0 ? (($scheduledOrders - $scheduledLastWeek) / $scheduledLastWeek) * 100 : ($scheduledOrders > 0 ? 100 : 0);
 
-        $inProgressPremium = Order::where('status', 'in_progress')->count();
-        $inProgressPremiumLastWeek = Order::where('status', 'in_progress')->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
-        $inProgressPremiumGrowth = $inProgressPremiumLastWeek > 0 ? (($inProgressPremium - $inProgressPremiumLastWeek) / $inProgressPremiumLastWeek) * 100 : ($inProgressPremium > 0 ? 100 : 0);
+        $inProgressOrders = Order::where('status', 'in_progress')->count();
+        $inProgressLastWeek = Order::where('status', 'in_progress')->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
+        $inProgressGrowth = $inProgressLastWeek > 0 ? (($inProgressOrders - $inProgressLastWeek) / $inProgressLastWeek) * 100 : ($inProgressOrders > 0 ? 100 : 0);
 
-        $completedPremium = Order::where('status', 'completed')->count();
-        $completedPremiumLastWeek = Order::where('status', 'completed')->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
-        $completedPremiumGrowth = $completedPremiumLastWeek > 0 ? (($completedPremium - $completedPremiumLastWeek) / $completedPremiumLastWeek) * 100 : ($completedPremium > 0 ? 100 : 0);
+        $completedOrders = Order::where('status', 'completed')->count();
+        $completedLastWeek = Order::where('status', 'completed')->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
+        $completedGrowth = $completedLastWeek > 0 ? (($completedOrders - $completedLastWeek) / $completedLastWeek) * 100 : ($completedOrders > 0 ? 100 : 0);
+
+        $expiredOrders = Order::where('status', 'expired')->count();
+        $expiredLastWeek = Order::where('status', 'expired')->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
+        $expiredGrowth = $expiredLastWeek > 0 ? (($expiredOrders - $expiredLastWeek) / $expiredLastWeek) * 100 : ($expiredOrders > 0 ? 100 : 0);
+
+        $cancelledOrders = Order::whereIn('status', ['cancelled', 'rejected'])->count();
+        $cancelledLastWeek = Order::whereIn('status', ['cancelled', 'rejected'])->where('created_at', '<', \Carbon\Carbon::now()->subWeek())->count();
+        $cancelledGrowth = $cancelledLastWeek > 0 ? (($cancelledOrders - $cancelledLastWeek) / $cancelledLastWeek) * 100 : ($cancelledOrders > 0 ? 100 : 0);
 
         $stats = [
-            'total' => $totalPremium,
-            'total_trend' => ($totalPremiumGrowth >= 0 ? '+' : '') . number_format($totalPremiumGrowth, 2) . '%',
-            'total_trend_value' => $totalPremiumGrowth,
-            'scheduled' => $scheduledPremium,
-            'scheduled_trend' => ($scheduledPremiumGrowth >= 0 ? '+' : '') . number_format($scheduledPremiumGrowth, 2) . '%',
-            'scheduled_trend_value' => $scheduledPremiumGrowth,
-            'in_progress' => $inProgressPremium,
-            'in_progress_trend' => ($inProgressPremiumGrowth >= 0 ? '+' : '') . number_format($inProgressPremiumGrowth, 2) . '%',
-            'in_progress_trend_value' => $inProgressPremiumGrowth,
-            'completed' => $completedPremium,
-            'completed_trend' => ($completedPremiumGrowth >= 0 ? '+' : '') . number_format($completedPremiumGrowth, 2) . '%',
-            'completed_trend_value' => $completedPremiumGrowth,
+            'total' => $totalOrders,
+            'total_trend' => ($totalGrowth >= 0 ? '+' : '') . number_format($totalGrowth, 2) . '%',
+            'total_trend_value' => $totalGrowth,
+            'scheduled' => $scheduledOrders,
+            'scheduled_trend' => ($scheduledGrowth >= 0 ? '+' : '') . number_format($scheduledGrowth, 2) . '%',
+            'scheduled_trend_value' => $scheduledGrowth,
+            'in_progress' => $inProgressOrders,
+            'in_progress_trend' => ($inProgressGrowth >= 0 ? '+' : '') . number_format($inProgressGrowth, 2) . '%',
+            'in_progress_trend_value' => $inProgressGrowth,
+            'completed' => $completedOrders,
+            'completed_trend' => ($completedGrowth >= 0 ? '+' : '') . number_format($completedGrowth, 2) . '%',
+            'completed_trend_value' => $completedGrowth,
+            'expired' => $expiredOrders,
+            'expired_trend' => ($expiredGrowth >= 0 ? '+' : '') . number_format($expiredGrowth, 2) . '%',
+            'expired_trend_value' => $expiredGrowth,
+            'cancelled' => $cancelledOrders,
+            'cancelled_trend' => ($cancelledGrowth >= 0 ? '+' : '') . number_format($cancelledGrowth, 2) . '%',
+            'cancelled_trend_value' => $cancelledGrowth,
         ];
 
         // Get categories and services for filters
@@ -373,7 +393,7 @@ class OrderController extends Controller
     public function create()
     {
         $users = User::all();
-        $services = Service::whereNotNull('parent_id')->get();
+        $services = Service::with('parent')->get();
         $technicians = Technician::with('user')->get();
         $companies = MaintenanceCompany::with('user')->get();
         return view('admin.orders.create', compact('users', 'services', 'technicians', 'companies'));
@@ -415,7 +435,7 @@ class OrderController extends Controller
     {
         $item = Order::findOrFail($id);
         $users = User::all();
-        $services = Service::whereNotNull('parent_id')->get();
+        $services = Service::with('parent')->get();
         $technicians = Technician::with('user')->get();
         $companies = MaintenanceCompany::with('user')->get();
         return view('admin.orders.edit', compact('item', 'users', 'services', 'technicians', 'companies'));

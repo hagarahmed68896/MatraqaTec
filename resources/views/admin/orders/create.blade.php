@@ -55,8 +55,8 @@
                     <select name="service_id" required class="h-12 px-4 ltr:pr-10 rtl:pl-10 rounded-xl border border-slate-200 dark:border-white/5 dark:bg-white/5 text-sm font-bold focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-[#1A1A31] dark:text-white">
                         <option value="" class="bg-white dark:bg-[#1A1A31] text-[#1A1A31] dark:text-white">{{ __('Select Service') }}</option>
                         @foreach($services as $srv)
-                            <option value="{{ $srv->id }}" class="bg-white dark:bg-[#1A1A31] text-[#1A1A31] dark:text-white">
-                                {{ app()->getLocale() == 'ar' ? $srv->name_ar : $srv->name_en }}
+                            <option value="{{ $srv->id }}" class="bg-white dark:bg-[#1A1A31] text-[#1A1A31] dark:text-white" {{ old('service_id') == $srv->id ? 'selected' : '' }}>
+                                {{ app()->getLocale() == 'ar' ? $srv->name_ar : $srv->name_en }}@if($srv->parent) ({{ app()->getLocale() == 'ar' ? $srv->parent->name_ar : $srv->parent->name_en }})@endif
                             </option>
                         @endforeach
                     </select>

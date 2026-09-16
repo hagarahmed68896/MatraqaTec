@@ -160,7 +160,7 @@
     {{-- Pagination --}}
     @if($items->hasPages())
     <div class="flex items-center justify-center pt-8">
-        {{ $items->links('vendor.pagination.tailwind') }}
+        {{ $items->links('vendor.pagination.custom-admin') }}
     </div>
     @endif
 

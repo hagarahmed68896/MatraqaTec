@@ -79,6 +79,12 @@ class ReportController extends Controller
             });
         }
 
+        if ($techType === 'company') {
+            $techQuery->whereNotNull('maintenance_company_id');
+        } elseif ($techType === 'platform') {
+            $techQuery->whereNull('maintenance_company_id');
+        }
+
         // 1. Users Statistics (Multi-series Bar Chart)
         $labels = [];
         $activeUsersTrend = [];
@@ -180,6 +186,18 @@ class ReportController extends Controller
             return collect($meta)->sum('price');
         });
 
+        $totalRevQuery = clone $paymentQuery;
+        if ($revenueType && $revenueType !== 'all') {
+            $totalRevQuery->whereHas('user', fn($q) => $q->where('type', $revenueType));
+        }
+
+        $totalSetQuery = clone $settlementQuery;
+        if ($settlementType === 'company') {
+            $totalSetQuery->whereNotNull('maintenance_company_id');
+        } elseif ($settlementType === 'technician') {
+            $totalSetQuery->whereNull('maintenance_company_id');
+        }
+
         $data = [
             'labels' => $labels,
             'users' => [
@@ -195,8 +213,8 @@ class ReportController extends Controller
             'financials' => [
                 'revenue' => $revenueTrend,
                 'settlements' => $settlementsTrend,
-                'total_revenue' => (clone $paymentQuery)->whereBetween('created_at', [$startDate, $endDate])->sum('amount'),
-                'total_settlements' => (clone $settlementQuery)->whereBetween('created_at', [$startDate, $endDate])->sum('amount')
+                'total_revenue' => $totalRevQuery->whereBetween('created_at', [$startDate, $endDate])->sum('amount'),
+                'total_settlements' => $totalSetQuery->whereBetween('created_at', [$startDate, $endDate])->sum('amount')
             ],
             'categories' => $categoryData,
             'service_quality' => [

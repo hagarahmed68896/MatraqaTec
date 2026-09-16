@@ -118,7 +118,7 @@
                     <input type="text" readonly value="{{ number_format($stats['total_profit'] ?? 0, 2) }}" 
                            class="w-full pl-16 pr-4 bg-slate-100 dark:bg-white/10 border border-transparent rounded-2xl py-4 text-sm font-black text-slate-400 dark:text-slate-500 cursor-not-allowed text-right">
                     <div class="absolute left-0 top-0 bottom-0 w-16 flex items-center justify-center bg-slate-100 dark:bg-white/10 border-r border-slate-100 dark:border-white/10 rounded-l-2xl">
-                        <span class="text-xs font-black text-slate-400">SAR</span>
+                        <span class="text-xs font-black text-slate-400">{{ app()->getLocale() == 'ar' ? 'ريال' : 'SAR' }}</span>
                     </div>
                 </div>
                 <p class="text-[10px] font-bold text-slate-400 text-right px-2">

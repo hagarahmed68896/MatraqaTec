@@ -240,7 +240,7 @@
     </script>
 @endsection
 
-@section('title', __('Order Details') . ' #' . $item->id)
+@section('title', __('Order Details') . ' #' . ($item->order_number ?? $item->id))
 
 @section('content')
 <div class="space-y-8" x-data="orderManagementShow()">
@@ -257,7 +257,7 @@
             <a href="{{ $backUrl }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-[#1A1A31] dark:text-white hover:bg-slate-50 dark:hover:bg-white/10 transition-all">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ app()->getLocale() == 'ar' ? 'M14 5l7 7m0 0l-7 7m7-7H3' : 'M10 19l-7-7m0 0l7-7m-7 7h18' }}"></path></svg>
             </a>
-            <h1 class="text-2xl font-black text-[#1A1A31] dark:text-white">{{ __('Order') }} - #{{ $item->id }}</h1>
+            <h1 class="text-2xl font-black text-[#1A1A31] dark:text-white">{{ __('Order') }} - #{{ $item->order_number ?? $item->id }}</h1>
         </div>
 
         <div class="flex items-center gap-3">
@@ -274,11 +274,13 @@
                     {{ __('Reschedule') }}
                 </button>
 
+                @if($item->status !== 'expired')
                 <!-- Cancel Order -->
                 <button @click="showCancelModal = true" class="px-5 py-2 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-500 font-bold text-xs hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-all flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                     {{ __('Cancel Order') }}
                 </button>
+                @endif
             @endif
 
             @if($item->status == 'new')

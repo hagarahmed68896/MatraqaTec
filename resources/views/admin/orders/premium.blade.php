@@ -15,9 +15,9 @@
         @php
             $cardStats = [
                 ['label' => 'Total Orders', 'value' => $stats['total'], 'color' => '#10B981', 'trend_str' => $stats['total_trend'] ?? '+0.00%', 'trend_val' => $stats['total_trend_value'] ?? 0, 'icon' => 'orders'],
-                ['label' => 'Scheduled', 'value' => $stats['scheduled'], 'color' => '#10B981', 'trend_str' => $stats['scheduled_trend'] ?? '+0.00%', 'trend_val' => $stats['scheduled_trend_value'] ?? 0, 'icon' => 'accepted'],
-                ['label' => 'In Progress', 'value' => $stats['in_progress'], 'color' => '#EF4444', 'trend_str' => $stats['in_progress_trend'] ?? '+0.00%', 'trend_val' => $stats['in_progress_trend_value'] ?? 0, 'icon' => 'rejected'],
-                ['label' => 'Completed', 'value' => $stats['completed'], 'color' => '#64748B', 'trend_str' => $stats['completed_trend'] ?? '+0.00%', 'trend_val' => $stats['completed_trend_value'] ?? 0, 'icon' => 'review'],
+                ['label' => 'Scheduled', 'value' => $stats['scheduled'], 'color' => '#3B82F6', 'trend_str' => $stats['scheduled_trend'] ?? '+0.00%', 'trend_val' => $stats['scheduled_trend_value'] ?? 0, 'icon' => 'accepted'],
+                ['label' => 'In Progress', 'value' => $stats['in_progress'], 'color' => '#F59E0B', 'trend_str' => $stats['in_progress_trend'] ?? '+0.00%', 'trend_val' => $stats['in_progress_trend_value'] ?? 0, 'icon' => 'in_progress'],
+                ['label' => 'Completed', 'value' => $stats['completed'], 'color' => '#10B981', 'trend_str' => $stats['completed_trend'] ?? '+0.00%', 'trend_val' => $stats['completed_trend_value'] ?? 0, 'icon' => 'completed'],
             ];
         @endphp
 
@@ -50,22 +50,24 @@
     </div>
 
     <!-- Tabs Navigation -->
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-3 flex-wrap">
         @php
             $tabs = [
                 ['id' => 'all', 'label' => 'All', 'count' => $stats['total']],
                 ['id' => 'scheduled', 'label' => 'Scheduled', 'count' => $stats['scheduled']],
                 ['id' => 'in_progress', 'label' => 'In Progress', 'count' => $stats['in_progress']],
                 ['id' => 'completed', 'label' => 'Completed', 'count' => $stats['completed']],
+                ['id' => 'expired', 'label' => 'Expired', 'count' => $stats['expired'] ?? 0],
+                ['id' => 'cancelled', 'label' => 'Cancelled', 'count' => $stats['cancelled'] ?? 0],
             ];
-            $currentTab = request('tab', 'scheduled');
+            $currentTab = request('tab', 'all');
         @endphp
 
         @foreach($tabs as $tab)
         <a href="{{ request()->fullUrlWithQuery(['tab' => $tab['id']]) }}" 
-           class="flex items-center gap-3 px-8 py-3 rounded-2xl font-black text-md transition-all {{ $currentTab == $tab['id'] ? 'bg-[#1A1A31] text-white dark:bg-white/10 dark:text-white shadow-lg' : 'bg-white dark:bg-[#1A1A31] text-[#1A1A31] dark:text-white border border-slate-100 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5' }}">
+           class="flex items-center gap-2.5 px-6 py-3 rounded-2xl font-black text-sm transition-all {{ $currentTab == $tab['id'] ? 'bg-[#1A1A31] text-white dark:bg-white/10 dark:text-white shadow-lg' : 'bg-white dark:bg-[#1A1A31] text-[#1A1A31] dark:text-white border border-slate-100 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5' }}">
             {{ __($tab['label']) }}
-            <span class="w-6 h-6 rounded-lg {{ $currentTab == $tab['id'] ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-white/10 text-[#1A1A31] dark:text-white' }} flex items-center justify-center text-[11px]">{{ $tab['count'] }}</span>
+            <span class="px-2 py-0.5 rounded-lg {{ $currentTab == $tab['id'] ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-white/10 text-[#1A1A31] dark:text-white' }} flex items-center justify-center text-[11px] font-mono">{{ $tab['count'] }}</span>
         </a>
         @endforeach
     </div>
@@ -419,6 +421,12 @@
                                 </span>
                             @elseif($item->status == 'completed')
                                 <span class="px-3 py-1 rounded-lg bg-green-50 text-green-600 text-[10px] font-bold">{{ __('Completed') }}</span>
+                            @elseif($item->status == 'expired')
+                                <span class="px-3 py-1 rounded-lg bg-amber-50 text-amber-600 text-[10px] font-bold">{{ __('Expired') }}</span>
+                            @elseif($item->status == 'cancelled' || $item->status == 'rejected')
+                                <span class="px-3 py-1 rounded-lg bg-red-50 text-red-600 text-[10px] font-bold">{{ __('Cancelled') }}</span>
+                            @elseif($item->status == 'new')
+                                <span class="px-3 py-1 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-bold">{{ __('New') }}</span>
                             @else
                                 <span class="px-3 py-1 rounded-lg {{ $item->technician_id || $item->maintenance_company_id ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-600' }} text-[10px] font-bold">
                                     {{ $item->technician_id || $item->maintenance_company_id ? __('Assigned') : __('Waiting') }}
@@ -441,7 +449,7 @@
         <!-- PAGINATION -->
         @if($items->hasPages())
         <div class="p-10 border-t border-slate-50 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
-            {{ $items->appends(request()->all())->links('vendor.pagination.tailwind') }}
+            {{ $items->appends(request()->all())->links('vendor.pagination.custom-admin') }}
         </div>
         @endif
     <!-- Delete Confirmation Modal -->

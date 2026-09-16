@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', __('Edit Order') . ' #' . $item->id)
+@section('title', __('Edit Order') . ' #' . ($item->order_number ?? $item->id))
 
 @section('content')
 <div class="space-y-8 pb-20" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
@@ -9,7 +9,7 @@
         <a href="{{ route('admin.orders.show', $item->id) }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 text-[#1A1A31] dark:text-white hover:bg-slate-50 dark:hover:bg-white/10 transition-all shadow-sm">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ app()->getLocale() == 'ar' ? 'M14 5l7 7m0 0l-7 7m7-7H3' : 'M10 19l-7-7m0 0l7-7m-7 7h18' }}"></path></svg>
         </a>
-        <h1 class="text-2xl font-black text-[#1A1A31] dark:text-white">{{ __('Edit Order') }} - #{{ $item->id }}</h1>
+        <h1 class="text-2xl font-black text-[#1A1A31] dark:text-white">{{ __('Edit Order') }} - #{{ $item->order_number ?? $item->id }}</h1>
     </div>
 
     <!-- Edit Form Card -->
@@ -55,7 +55,7 @@
                     <select name="service_id" required class="h-12 px-4 ltr:pr-10 rtl:pl-10 rounded-xl border border-slate-200 dark:border-white/5 dark:bg-white/5 text-sm font-bold focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-[#1A1A31] dark:text-white">
                         @foreach($services as $srv)
                             <option value="{{ $srv->id }}" class="bg-white dark:bg-[#1A1A31] text-[#1A1A31] dark:text-white" {{ $item->service_id == $srv->id ? 'selected' : '' }}>
-                                {{ app()->getLocale() == 'ar' ? $srv->name_ar : $srv->name_en }}
+                                {{ app()->getLocale() == 'ar' ? $srv->name_ar : $srv->name_en }}@if($srv->parent) ({{ app()->getLocale() == 'ar' ? $srv->parent->name_ar : $srv->parent->name_en }})@endif
                             </option>
                         @endforeach
                     </select>

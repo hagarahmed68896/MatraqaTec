@@ -1507,5 +1507,13 @@
     "Confirm Reschedule & Assignment": "تأكيد إعادة الجدولة والتعيين",
     "No technicians found": "لم يتم العثور على أي فنيين",
     "No maintenance companies found": "لم يتم العثور على أي شركات صيانة",
-    "Search by name...": "البحث بالاسم..."
+    "Search by name...": "البحث بالاسم...",
+    "No evaluations found.": "لا توجد تقييمات",
+    "No evaluations found": "لا توجد تقييمات",
+    "Total Evaluations": "إجمالي التقييمات",
+    "All Evaluations": "جميع التقييمات",
+    "Expired": "منتهي",
+    "Cancelled": "ملغي",
+    "Scheduled": "مجدولة",
+    "In Progress": "قيد التنفيذ"
 }
