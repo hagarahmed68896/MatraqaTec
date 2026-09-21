@@ -31,6 +31,7 @@ use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\TrackingController;
 use App\Http\Controllers\Api\PrivacyPolicyController;
 use App\Http\Controllers\Api\UserSettingController;
+use App\Http\Controllers\Api\AppVersionController;
 
 // Admin Controllers
 use App\Http\Controllers\Admin\IndividualCustomerController as AdminIndividualCustomerController;
@@ -114,6 +115,10 @@ Route::post('/technician-requests', [TechnicianRequestController::class, 'store'
 Route::any('payment/myfatoorah/callback', [\App\Http\Controllers\Api\MyFatoorahCallbackController::class, 'success']);
 Route::any('payment/myfatoorah/error', [\App\Http\Controllers\Api\MyFatoorahCallbackController::class, 'error']);
 Route::get('/home', [\App\Http\Controllers\Api\HomeController::class, 'index']);
+
+// App Version & Force Update Check (Public)
+Route::match(['get', 'post'], 'app-version', [AppVersionController::class, 'checkVersion']);
+Route::match(['get', 'post'], 'check-version', [AppVersionController::class, 'checkVersion']);
 
 // --- Protected Routes (User Scope) ---
 Route::middleware('auth:sanctum')->group(function () {
