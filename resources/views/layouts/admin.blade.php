@@ -3,6 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        (function() {
+            try {
+                const platformSetting = '{{ \App\Models\Setting::getByKey("system_mode", "light") }}';
+                const forcedTheme = '{{ session("force_theme") }}';
+                const isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                let theme = localStorage.getItem('theme');
+
+                if (forcedTheme) {
+                    theme = (forcedTheme === 'auto') ? (isSystemDark ? 'dark' : 'light') : forcedTheme;
+                    localStorage.setItem('theme', theme);
+                    if (forcedTheme === 'auto') localStorage.removeItem('user_manual_toggle');
+                } else if (platformSetting !== 'auto' && !localStorage.getItem('user_manual_toggle')) {
+                    theme = platformSetting;
+                    localStorage.setItem('theme', theme);
+                } else if (platformSetting === 'auto' && !localStorage.getItem('user_manual_toggle')) {
+                    theme = isSystemDark ? 'dark' : 'light';
+                    localStorage.setItem('theme', theme);
+                }
+
+                if (!theme) {
+                    theme = 'light';
+                }
+
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
     <title>@yield('title', __('MatraqaTec Admin'))</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,7 +68,7 @@
     <div x-data="{ sidebarOpen: false }" class="flex h-screen overflow-hidden relative">
         
         <!-- Sidebar Overlay (Mobile) -->
-        <div x-show="sidebarOpen" 
+        <div x-show="sidebarOpen" x-cloak 
              x-transition:enter="transition-opacity ease-linear duration-300"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
@@ -392,7 +424,7 @@
                             <div class="px-5 py-3 border-b border-slate-50 dark:border-white/5 flex items-center justify-between">
                                 <h3 class="font-bold text-sm text-slate-800 dark:text-white">{{ __('Notifications') }}</h3>
                                 <div class="flex items-center gap-3">
-                                    <button x-show="count > 0" @click="markAllRead()" class="text-[10px] font-bold text-primary hover:text-primary dark:hover:text-white-dark transition-colors">{{ __('Mark all as read') }}</button>
+                                    <button x-show="count > 0" x-cloak @click="markAllRead()" class="text-[10px] font-bold text-primary hover:text-primary dark:hover:text-white-dark transition-colors">{{ __('Mark all as read') }}</button>
                                     <button @click="dropdownOpen = false" class="text-slate-400 hover:text-slate-600 dark:text-white dark:hover:text-white transition-colors md:hidden">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                     </button>
@@ -445,7 +477,7 @@
                         </button>
 
                         <!-- Profile Dropdown -->
-                        <div x-show="open" @click.away="open = false" 
+                        <div x-show="open" x-cloak @click.away="open = false" 
                              x-transition:enter="transition ease-out duration-200"
                              x-transition:enter-start="opacity-0 scale-95"
                              x-transition:enter-end="opacity-100 scale-100"
@@ -526,12 +558,14 @@
             document.documentElement.classList.toggle('dark', theme === 'dark');
         };
 
-        themeToggle.addEventListener('click', () => {
-            const isDark = document.documentElement.classList.toggle('dark');
-            const newTheme = isDark ? 'dark' : 'light';
-            localStorage.setItem('theme', newTheme);
-            localStorage.setItem('user_manual_toggle', 'true');
-        });
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                const isDark = document.documentElement.classList.toggle('dark');
+                const newTheme = isDark ? 'dark' : 'light';
+                localStorage.setItem('theme', newTheme);
+                localStorage.setItem('user_manual_toggle', 'true');
+            });
+        }
 
         updateTheme();
         
