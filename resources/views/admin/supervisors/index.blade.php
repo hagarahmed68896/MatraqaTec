@@ -98,7 +98,7 @@
                                         <label class="flex items-center justify-between cursor-pointer group">
                                             <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ __($label) }}</span>
                                             <div class="relative flex items-center">
-                                                <input type="radio" name="sort" value="{{ $val }}" {{ request('sort', 'all') == $val ? 'checked' : '' }} class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
+                                                <input type="radio" name="sort" value="{{ $val }}" {{ request('sort', 'all') == $val ? 'checked' : '' }} class="appearance-none w-5 h-5 border-2 border-slate-200 dark:border-white/30 rounded-full checked:border-primary dark:checked:border-white checked:border-[6px] transition-all cursor-pointer">
                                             </div>
                                         </label>
                                         @endforeach
@@ -110,12 +110,12 @@
                                     <div class="space-y-3">
                                         <label class="flex items-center justify-between cursor-pointer group">
                                             <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ __('All') }}</span>
-                                            <input type="radio" name="role_id" value="all" {{ request('role_id', 'all') == 'all' ? 'checked' : '' }} class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
+                                            <input type="radio" name="role_id" value="all" {{ request('role_id', 'all') == 'all' ? 'checked' : '' }} class="appearance-none w-5 h-5 border-2 border-slate-200 dark:border-white/30 rounded-full checked:border-primary dark:checked:border-white checked:border-[6px] transition-all cursor-pointer">
                                         </label>
                                         @foreach($roles as $role)
                                         <label class="flex items-center justify-between cursor-pointer group">
                                             <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ $role->name_ar ?? $role->name }}</span>
-                                            <input type="radio" name="role_id" value="{{ $role->id }}" {{ request('role_id') == $role->id ? 'checked' : '' }} class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
+                                            <input type="radio" name="role_id" value="{{ $role->id }}" {{ request('role_id') == $role->id ? 'checked' : '' }} class="appearance-none w-5 h-5 border-2 border-slate-200 dark:border-white/30 rounded-full checked:border-primary dark:checked:border-white checked:border-[6px] transition-all cursor-pointer">
                                         </label>
                                         @endforeach
                                     </div>
@@ -127,7 +127,7 @@
                                         @foreach(['all' => 'All', 'active' => 'Active', 'blocked' => 'Blocked'] as $val => $label)
                                         <label class="flex items-center justify-between cursor-pointer group">
                                             <span class="text-sm font-bold text-slate-500 dark:text-white transition-colors">{{ __($label) }}</span>
-                                            <input type="radio" name="status" value="{{ $val }}" {{ request('status', 'all') == $val ? 'checked' : '' }} class="appearance-none w-5 h-5 border-2 border-slate-200 rounded-full checked:border-primary checked:border-[6px] transition-all cursor-pointer">
+                                            <input type="radio" name="status" value="{{ $val }}" {{ request('status', 'all') == $val ? 'checked' : '' }} class="appearance-none w-5 h-5 border-2 border-slate-200 dark:border-white/30 rounded-full checked:border-primary dark:checked:border-white checked:border-[6px] transition-all cursor-pointer">
                                         </label>
                                         @endforeach
                                     </div>

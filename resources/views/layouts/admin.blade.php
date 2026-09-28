@@ -61,6 +61,28 @@
         .dark img[src*="Vector%20(1)"] {
             filter: brightness(0) invert(1);
         }
+        /* Custom radio buttons appearance for dark and light modes */
+        input[type="radio"].appearance-none {
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+        }
+        input[type="radio"].appearance-none:checked {
+            border-color: #1A1A31 !important;
+            border-width: 2px !important;
+            padding: 3px !important;
+            background-color: #1A1A31 !important;
+            background-clip: content-box !important;
+        }
+        .dark input[type="radio"].appearance-none {
+            border-color: rgba(255, 255, 255, 0.3) !important;
+        }
+        .dark input[type="radio"].appearance-none:checked {
+            border-color: #ffffff !important;
+            border-width: 2px !important;
+            padding: 3px !important;
+            background-color: #ffffff !important;
+            background-clip: content-box !important;
+        }
     </style>
     @yield('styles')
 </head>

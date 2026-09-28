@@ -29,7 +29,13 @@ class TaqnyatOTP
      */
     public function sendOTP(string $phone, string $otp): bool
     {
-        $phone = ltrim(trim($phone), '+');
+        $phone = preg_replace('/[^0-9]/', '', $phone);
+        if (str_starts_with($phone, '0')) {
+            $phone = substr($phone, 1);
+        }
+        if (!str_starts_with($phone, '966')) {
+            $phone = '966' . $phone;
+        }
 
         Log::info("[TaqnyatOTP] Sending OTP to: {$phone}");
 
@@ -58,7 +64,13 @@ class TaqnyatOTP
      */
     public function sendSMS(string $phone, string $body): bool
     {
-        $phone = ltrim(trim($phone), '+');
+        $phone = preg_replace('/[^0-9]/', '', $phone);
+        if (str_starts_with($phone, '0')) {
+            $phone = substr($phone, 1);
+        }
+        if (!str_starts_with($phone, '966')) {
+            $phone = '966' . $phone;
+        }
 
         Log::info("[TaqnyatOTP] Sending SMS to: {$phone}");
 
