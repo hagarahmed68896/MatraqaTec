@@ -222,5 +222,5 @@ This project is proprietary software. All rights reserved.
 ---
 
 <p align="center">
-  Built with ❤️ by <strong>MatraqaTec Team</strong>
+  Built with ❤️ by <strong>Hagar Ahmed</strong>
 </p>
